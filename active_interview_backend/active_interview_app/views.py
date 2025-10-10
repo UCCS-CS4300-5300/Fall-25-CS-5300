@@ -43,9 +43,25 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 
-# Init openai client
-client = OpenAI(api_key=settings.OPENAI_API_KEY)
+# OpenAI client configuration
 MAX_TOKENS = 15000
+_openai_client = None
+
+
+def get_openai_client():
+    """
+    Lazy initialization of OpenAI client.
+    This prevents import-time errors when API key is not set.
+    """
+    global _openai_client
+    if _openai_client is None:
+        if not settings.OPENAI_API_KEY:
+            raise ValueError(
+                "OPENAI_API_KEY is not set. Please configure it in your "
+                ".env file or environment variables."
+            )
+        _openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
+    return _openai_client
 
 
 # Create your views here.
@@ -248,7 +264,7 @@ class CreateChat(LoginRequiredMixin, View):
                 ]
 
                 # Make ai speak first
-                response = client.chat.completions.create(
+                response = get_openai_client().chat.completions.create(
                     model="gpt-4o",
                     messages=chat.messages,
                     max_tokens=MAX_TOKENS
@@ -373,7 +389,7 @@ class CreateChat(LoginRequiredMixin, View):
                 ]
 
                 # Make ai speak first
-                response = client.chat.completions.create(
+                response = get_openai_client().chat.completions.create(
                     model="gpt-4o",
                     messages=timed_question_messages,
                     max_tokens=MAX_TOKENS
@@ -416,7 +432,7 @@ class ChatView(LoginRequiredMixin, UserPassesTestMixin, View):
         new_messages = chat.messages
         new_messages.append({"role": "user", "content": user_message})
 
-        response = client.chat.completions.create(
+        response = get_openai_client().chat.completions.create(
             model="gpt-4o",
             messages=new_messages,
             max_tokens=MAX_TOKENS
@@ -652,7 +668,7 @@ class KeyQuestionsView(LoginRequiredMixin, UserPassesTestMixin, View):
             }
         ]
 
-        response = client.chat.completions.create(
+        response = get_openai_client().chat.completions.create(
             model="gpt-4o",
             messages=ai_input,
             max_tokens=MAX_TOKENS
@@ -685,7 +701,7 @@ class ResultsChat(LoginRequiredMixin, UserPassesTestMixin, View):
         input_messages = chat.messages
         input_messages.append({"role": "user", "content": feedback_prompt})
 
-        response = client.chat.completions.create(
+        response = get_openai_client().chat.completions.create(
             model="gpt-4o",
             messages=input_messages,
             max_tokens=MAX_TOKENS
@@ -734,7 +750,7 @@ class ResultCharts(LoginRequiredMixin, UserPassesTestMixin, View):
 
         input_messages.append({"role": "user", "content": scores_prompt})
 
-        response = client.chat.completions.create(
+        response = get_openai_client().chat.completions.create(
             model="gpt-4o",
             messages=input_messages,
             max_tokens=MAX_TOKENS
@@ -767,7 +783,7 @@ class ResultCharts(LoginRequiredMixin, UserPassesTestMixin, View):
             interview
         """)
         input_messages.append({"role": "user", "content": explain})
-        response = client.chat.completions.create(
+        response = get_openai_client().chat.completions.create(
             model="gpt-4o",
             messages=input_messages,
             max_tokens=MAX_TOKENS
