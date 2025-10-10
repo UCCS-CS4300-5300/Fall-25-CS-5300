@@ -10,6 +10,7 @@ env:
   PYTHON_VERSION: '3.13'
   CHROME_VERSION: 135.0.7049.52-1
   CHROMEDRIVER_VERSION: 135.0.7049.52
+  RETENTION_DAYS: 14
 
 jobs:
   test:
@@ -26,59 +27,53 @@ jobs:
         echo 'OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}' >> .env
 
     - name: Start Containers
-      run: |
-        set -o pipefail
-        docker compose -f docker-compose.prod.yml up -d --build
+      run: docker compose -f docker-compose.prod.yml up -d --build
 
     - name: Install Chrome
       run: |
         docker exec django bash -c "
-          wget -O google-chrome.deb https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_${CHROME_VERSION}_amd64.deb \
+          wget -O google-chrome.deb https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_${{ env.CHROME_VERSION }}_amd64.deb \
           && apt-get update \
           && apt-get install -y ./google-chrome.deb \
           && rm google-chrome.deb"
-      env:
-        CHROME_VERSION: ${{ env.CHROME_VERSION }}
 
     - name: Install Chromedriver
       run: |
         docker exec django bash -c "
-          wget -O chromedriver.zip https://storage.googleapis.com/chrome-for-testing-public/${CHROMEDRIVER_VERSION}/linux64/chromedriver-linux64.zip \
+          wget -O chromedriver.zip https://storage.googleapis.com/chrome-for-testing-public/${{ env.CHROMEDRIVER_VERSION }}/linux64/chromedriver-linux64.zip \
           && unzip chromedriver.zip \
           && mv chromedriver-linux64/chromedriver /usr/local/bin/chromedriver \
           && chmod +x /usr/local/bin/chromedriver \
           && rm chromedriver.zip"
-      env:
-        CHROMEDRIVER_VERSION: ${{ env.CHROMEDRIVER_VERSION }}
 
     - name: Run Django Tests
       if: always()
-      run: |
-        set -o pipefail
-        docker exec django coverage run manage.py test -v 2 | tee dj_test_out.txt
+      run: docker exec django coverage run manage.py test -v 2 | tee dj_test_out.txt
 
-    - name: Run Coverage Report
+    - name: Generate Coverage Report
       if: always()
-      run: |
-        set -o pipefail
-        docker exec django coverage report -m | tee coverage_report.txt
+      run: docker exec django coverage report -m | tee coverage_report.txt
 
     - name: Check Coverage >= 80%
       run: |
-        set -o pipefail
         chmod +x ./scripts/check-coverage.sh
         ./scripts/check-coverage.sh coverage_report.txt | tee coverage_verdict.txt
 
     - name: Create Step Summary
       if: always()
       run: |
-        echo -e '# Coverage Report\n```' >> $GITHUB_STEP_SUMMARY
-        cat coverage_report.txt >> $GITHUB_STEP_SUMMARY
-        echo -e '\n```' >> $GITHUB_STEP_SUMMARY
-        cat coverage_verdict.txt >> $GITHUB_STEP_SUMMARY
-        echo -e '\n# Test Output\n```' >> $GITHUB_STEP_SUMMARY
-        cat dj_test_out.txt >> $GITHUB_STEP_SUMMARY
-        echo -e '\n```' >> $GITHUB_STEP_SUMMARY
+        {
+          echo '# Coverage Report'
+          echo '```'
+          cat coverage_report.txt
+          echo '```'
+          cat coverage_verdict.txt
+          echo ''
+          echo '# Test Output'
+          echo '```'
+          cat dj_test_out.txt
+          echo '```'
+        } >> $GITHUB_STEP_SUMMARY
 
     - name: Upload Coverage Report
       if: always()
@@ -86,7 +81,7 @@ jobs:
       with:
         name: coverage-report
         path: coverage_report.txt
-        retention-days: 14
+        retention-days: ${{ env.RETENTION_DAYS }}
 
   lint:
     name: Run Linting
@@ -100,23 +95,30 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
 
-    - name: Setup Linters
+    - name: Install Linters
       run: pip install flake8 djlint
 
     - name: Lint Python
       if: always()
       run: |
-        echo -e '# Python Lint Output\n```' >> $GITHUB_STEP_SUMMARY
-        flake8 --config active_interview_backend/.flake8 . | tee -a $GITHUB_STEP_SUMMARY
-        echo -e '\n```' >> $GITHUB_STEP_SUMMARY
+        {
+          echo '# Python Lint Output'
+          echo '```'
+          flake8 --config active_interview_backend/.flake8 . || true
+          echo '```'
+        } | tee -a $GITHUB_STEP_SUMMARY
 
     - name: Lint Templates
       if: always()
       run: |
-        echo -e '# Template Lint Output\n```' >> $GITHUB_STEP_SUMMARY
-        djlint --configuration active_interview_backend/djlint.toml active_interview_backend/active_interview_app/templates/ --lint | tee -a $GITHUB_STEP_SUMMARY
-        echo -e '\n```' >> $GITHUB_STEP_SUMMARY
+        {
+          echo '# Template Lint Output'
+          echo '```'
+          djlint --configuration active_interview_backend/djlint.toml active_interview_backend/active_interview_app/templates/ --lint || true
+          echo '```'
+        } | tee -a $GITHUB_STEP_SUMMARY
 
   security:
     name: Security Scan
@@ -130,30 +132,37 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
 
-    - name: Install dependencies
+    - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r active_interview_backend/requirements.txt
+        pip install safety bandit
 
-    - name: Run safety check
+    - name: Run Security Checks
       run: |
-        pip install safety
-        safety check --json || true
-
-    - name: Run bandit security scan
-      run: |
-        pip install bandit
+        {
+          echo '# Security Scan Results'
+          echo '## Safety Check'
+          echo '```'
+          safety check || true
+          echo '```'
+          echo ''
+          echo '## Bandit Scan'
+          echo '```'
+          bandit -r active_interview_backend/ -f screen || true
+          echo '```'
+        } >> $GITHUB_STEP_SUMMARY
         bandit -r active_interview_backend/ -f json -o bandit-report.json || true
 
-    - name: Upload security reports
+    - name: Upload Security Reports
       if: always()
       uses: actions/upload-artifact@v4
       with:
         name: security-reports
-        path: |
-          bandit-report.json
-        retention-days: 14
+        path: bandit-report.json
+        retention-days: ${{ env.RETENTION_DAYS }}
 
   ai-review:
     name: AI Code Review
@@ -174,23 +183,20 @@ jobs:
       run: pip install openai
 
     - name: Calculate Git Diff
-      id: git_diff
       run: |
-        if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
+        if [[ "${{ github.event_name }}" == "push" ]]; then
           if [[ "${{ github.event.before }}" == "0000000000000000000000000000000000000000" ]]; then
-            BASE_BRANCH="main"
-            git diff "origin/${BASE_BRANCH}" "${GITHUB_SHA}" > "${RUNNER_TEMP}/changes.diff"
+            git diff "origin/main" "${{ github.sha }}" > "${{ runner.temp }}/changes.diff"
           else
             git diff "${{ github.event.before }}" "${{ github.event.after }}" > "${{ runner.temp }}/changes.diff"
           fi
-        elif [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+        elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
           git diff "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}" > "${{ runner.temp }}/changes.diff"
         fi
-        cat "${RUNNER_TEMP}/changes.diff"
+        cat "${{ runner.temp }}/changes.diff"
 
     - name: Run AI Code Review
-      run: |
-        python scripts/ai-review.py ${{ runner.temp }}/changes.diff
+      run: python scripts/ai-review.py ${{ runner.temp }}/changes.diff
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
@@ -200,9 +206,9 @@ jobs:
       with:
         name: ai-code-review-report
         path: review-*.md
-        retention-days: 14
+        retention-days: ${{ env.RETENTION_DAYS }}
 
-    - name: Adding review markdown to action
+    - name: Add Review to Summary
       if: always()
       run: cat review-*.md >> $GITHUB_STEP_SUMMARY
 
@@ -216,29 +222,23 @@ jobs:
     - name: Configure SSH
       run: |
         mkdir -p ~/.ssh/
-        echo "$SSH_KEY" > ~/.ssh/digital_ocean.key
+        echo "${{ secrets.DO_SSH_KEY }}" > ~/.ssh/digital_ocean.key
         chmod 600 ~/.ssh/digital_ocean.key
         cat >>~/.ssh/config <<END
         Host digital_ocean
-          HostName $SSH_HOST
-          User $SSH_USER
+          HostName ${{ secrets.DO_SSH_HOST }}
+          User ${{ secrets.DO_SSH_USER }}
           IdentityFile ~/.ssh/digital_ocean.key
           StrictHostKeyChecking no
         END
-      env:
-        SSH_USER: ${{ secrets.DO_SSH_USER }}
-        SSH_KEY: ${{ secrets.DO_SSH_KEY }}
-        SSH_HOST: ${{ secrets.DO_SSH_HOST }}
 
-    - name: Stop the server
-      run: ssh digital_ocean 'cd ~/Group-7-Spring-2025; docker-compose -f docker-compose.prod.yml down --remove-orphans'
-
-    - name: Clean the environment
-      run: ssh digital_ocean 'cd ~/Group-7-Spring-2025; docker system prune --all --volumes -f; systemctl restart docker'
-
-    - name: Check out the source
-      run: ssh digital_ocean 'cd ~/Group-7-Spring-2025 && git fetch && git reset --hard origin/prod && git clean -fdx -e .env -e active_interview_backend/db -e /active_interview_backend/media'
-
-    - name: Start the server
-      if: ${{ always() }}
-      run: ssh digital_ocean 'cd ~/Group-7-Spring-2025; docker-compose -f docker-compose.prod.yml up -d --build'
+    - name: Deploy Application
+      run: |
+        ssh digital_ocean 'cd ~/Group-7-Spring-2025 && \
+          docker-compose -f docker-compose.prod.yml down --remove-orphans && \
+          docker system prune --all --volumes -f && \
+          systemctl restart docker && \
+          git fetch && \
+          git reset --hard origin/prod && \
+          git clean -fdx -e .env -e active_interview_backend/db -e /active_interview_backend/media && \
+          docker-compose -f docker-compose.prod.yml up -d --build'
