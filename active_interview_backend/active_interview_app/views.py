@@ -373,15 +373,26 @@ class CreateChat(LoginRequiredMixin, View):
                 ]
 
                 # Make ai speak first
-                response = client.chat.completions.create(
-                    model="gpt-4o",
-                    messages=timed_question_messages,
-                    max_tokens=MAX_TOKENS
-                )
-                ai_message = response.choices[0].message.content
-                cleaned_message = re.search(r"(\[[\s\S]+\])", ai_message)\
-                        .group(0).strip()
-                chat.key_questions = json.loads(cleaned_message)
+                if not _ai_available():
+                    messages.error(request, "AI features are disabled on this server.")
+                    ai_message = "[]"
+                else:
+                    response = client.chat.completions.create(
+                        model="gpt-4o",
+                        messages=timed_question_messages,
+                        max_tokens=MAX_TOKENS
+                    )
+                    ai_message = response.choices[0].message.content
+
+                # Extract JSON array from the AI response
+                match = re.search(r"(\[[\s\S]+\])", ai_message)
+                if match:
+                    cleaned_message = match.group(0).strip()
+                    chat.key_questions = json.loads(cleaned_message)
+                else:
+                    # Fallback if regex doesn't match
+                    messages.error(request, "Failed to generate key questions. Please try again.")
+                    chat.key_questions = []
 
                 chat.save()
 
