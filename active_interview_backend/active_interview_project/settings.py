@@ -14,9 +14,15 @@ import os
 import mimetypes
 from django.core.management.utils import get_random_secret_key
 from pathlib import Path
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from .env file
+# Look for .env in project root (parent of active_interview_backend)
+env_path = BASE_DIR.parent / '.env'
+load_dotenv(dotenv_path=env_path)
 
 # media paths
 MEDIA_URL = '/media/'
@@ -30,11 +36,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # OLD AND COMPROMISED
 # SECRET_KEY =
 #   'django-insecure-!qu0*#gq2vxvl4+ve+2!c^+y24aj%t5$wo-8daxq8s#r(-&%4h'
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY",
-                            get_random_secret_key()
-                            if os.environ.get("PROD", "true").lower()
-                            == "false"
-                            else None)
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY") or get_random_secret_key()
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 

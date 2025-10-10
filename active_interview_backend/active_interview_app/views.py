@@ -43,9 +43,45 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 
-# Init openai client
-client = OpenAI(api_key=settings.OPENAI_API_KEY)
+# OpenAI client configuration with lazy loading and graceful degradation
 MAX_TOKENS = 15000
+_openai_client = None
+
+
+def get_openai_client():
+    """
+    Lazy initialization of OpenAI client.
+    This prevents import-time errors when API key is not set.
+    """
+    global _openai_client
+    if _openai_client is None:
+        if not settings.OPENAI_API_KEY:
+            raise ValueError(
+                "OPENAI_API_KEY is not set. Please configure it in your "
+                ".env file or environment variables."
+            )
+        try:
+            _openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
+        except Exception as e:
+            raise ValueError(f"Failed to initialize OpenAI client: {e}")
+    return _openai_client
+
+
+def _ai_available():
+    """
+    Return True if the OpenAI client can be initialized and is usable.
+    This checks without raising exceptions.
+    """
+    try:
+        get_openai_client()
+        return True
+    except (ValueError, Exception):
+        return False
+
+
+def _ai_unavailable_json():
+    """Return a JSON response for when AI features are disabled."""
+    return JsonResponse({'error': 'AI features are disabled on this server.'}, status=503)
 
 
 # Create your views here.
@@ -82,39 +118,39 @@ def results(request):
 #                 },
 #             ]
 #         )
-
+#
 #         owner_chats = Chat.objects.filter(owner=request.user) \
 #               .order_by('-modified_date')
-
+#
 #         request.session['chat_id'] = chat.id
-
+#
 #         context = {}
 #         context['chat'] = chat
 #         context['owner_chats'] = owner_chats
-
+#
 #         return render(request, os.path.join('chat', 'chat-view.html'),
 #                       context)
-
+#
 #     elif request.method == 'POST':
 #         chat_id = request.session.get('chat_id')
 #         chat = Chat.objects.get(id=chat_id)
-
+#
 #         user_message = request.POST.get('message', '')
-
+#
 #         new_messages = chat.messages
 #         new_messages.append({"role": "user", "content": user_message})
-
-#         response = client.chat.completions.create(
+#
+#         response = get_openai_client().chat.completions.create(
 #             model="gpt-4o",
 #             messages=new_messages,
 #             max_tokens=500
 #         )
 #         ai_message = response.choices[0].message.content
 #         new_messages.append({"role": "assistant", "content": ai_message})
-
+#
 #         chat.messages = new_messages
 #         chat.save()
-
+#
 #         return JsonResponse({'message': ai_message})
 
 
@@ -164,7 +200,7 @@ class CreateChat(LoginRequiredMixin, View):
                 if chat.resume:  # if resume is present
                     system_prompt = textwrap.dedent("""\
                         You are a professional interviewer for a company
-                        preparing for a candidate’s interview. You will act as
+                        preparing for a candidate's interview. You will act as
                         the interviewer and engage in a roleplaying session
                         with the candidate.
 
@@ -206,7 +242,7 @@ class CreateChat(LoginRequiredMixin, View):
                 else:  # if no resume
                     system_prompt = textwrap.dedent("""\
                         You are a professional interviewer for a company
-                        preparing for a candidate’s interview. You will act as
+                        preparing for a candidate's interview. You will act as
                         the interviewer and engage in a roleplaying session
                         with the candidate.
 
@@ -248,12 +284,16 @@ class CreateChat(LoginRequiredMixin, View):
                 ]
 
                 # Make ai speak first
-                response = client.chat.completions.create(
-                    model="gpt-4o",
-                    messages=chat.messages,
-                    max_tokens=MAX_TOKENS
-                )
-                ai_message = response.choices[0].message.content
+                if not _ai_available():
+                    messages.error(request, "AI features are disabled on this server.")
+                    ai_message = ""
+                else:
+                    response = get_openai_client().chat.completions.create(
+                        model="gpt-4o",
+                        messages=chat.messages,
+                        max_tokens=MAX_TOKENS
+                    )
+                    ai_message = response.choices[0].message.content
                 chat.messages.append(
                     {
                         "role": "assistant",
@@ -265,7 +305,7 @@ class CreateChat(LoginRequiredMixin, View):
                 if chat.resume:  # if resume is present
                     system_prompt = textwrap.dedent("""\
                         You are a professional interviewer for a company
-                        preparing for a candidate’s interview. You will act as
+                        preparing for a candidate's interview. You will act as
                         the interviewer and engage in a roleplaying session
                         with the candidate.
 
@@ -319,7 +359,7 @@ class CreateChat(LoginRequiredMixin, View):
                 else:  # if no resume"
                     system_prompt = textwrap.dedent("""\
                         You are a professional interviewer for a company
-                        preparing for a candidate’s interview. You will act as
+                        preparing for a candidate's interview. You will act as
                         the interviewer and engage in a roleplaying session
                         with the candidate.
 
@@ -373,15 +413,26 @@ class CreateChat(LoginRequiredMixin, View):
                 ]
 
                 # Make ai speak first
-                response = client.chat.completions.create(
-                    model="gpt-4o",
-                    messages=timed_question_messages,
-                    max_tokens=MAX_TOKENS
-                )
-                ai_message = response.choices[0].message.content
-                cleaned_message = re.search(r"(\[[\s\S]+\])", ai_message)\
-                        .group(0).strip()
-                chat.key_questions = json.loads(cleaned_message)
+                if not _ai_available():
+                    messages.error(request, "AI features are disabled on this server.")
+                    ai_message = "[]"
+                else:
+                    response = get_openai_client().chat.completions.create(
+                        model="gpt-4o",
+                        messages=timed_question_messages,
+                        max_tokens=MAX_TOKENS
+                    )
+                    ai_message = response.choices[0].message.content
+
+                # Extract JSON array from the AI response
+                match = re.search(r"(\[[\s\S]+\])", ai_message)
+                if match:
+                    cleaned_message = match.group(0).strip()
+                    chat.key_questions = json.loads(cleaned_message)
+                else:
+                    # Fallback if regex doesn't match
+                    messages.error(request, "Failed to generate key questions. Please try again.")
+                    chat.key_questions = []
 
                 chat.save()
 
@@ -416,7 +467,10 @@ class ChatView(LoginRequiredMixin, UserPassesTestMixin, View):
         new_messages = chat.messages
         new_messages.append({"role": "user", "content": user_message})
 
-        response = client.chat.completions.create(
+        if not _ai_available():
+            return _ai_unavailable_json()
+
+        response = get_openai_client().chat.completions.create(
             model="gpt-4o",
             messages=new_messages,
             max_tokens=MAX_TOKENS
@@ -548,7 +602,7 @@ class KeyQuestionsView(LoginRequiredMixin, UserPassesTestMixin, View):
         if chat.resume:  # if resume is present
             system_prompt = textwrap.dedent(f"""\
                 You are a professional interviewer for a company
-                preparing for a candidate’s interview. You will act as
+                preparing for a candidate's interview. You will act as
                 the interviewer and engage in a roleplaying session
                 with the candidate.
 
@@ -601,7 +655,7 @@ class KeyQuestionsView(LoginRequiredMixin, UserPassesTestMixin, View):
         else:  # if no resume"
             system_prompt = textwrap.dedent(f"""\
                 You are a professional interviewer for a company
-                preparing for a candidate’s interview. You will act as
+                preparing for a candidate's interview. You will act as
                 the interviewer and engage in a roleplaying session
                 with the candidate.
 
@@ -652,7 +706,10 @@ class KeyQuestionsView(LoginRequiredMixin, UserPassesTestMixin, View):
             }
         ]
 
-        response = client.chat.completions.create(
+        if not _ai_available():
+            return _ai_unavailable_json()
+
+        response = get_openai_client().chat.completions.create(
             model="gpt-4o",
             messages=ai_input,
             max_tokens=MAX_TOKENS
@@ -685,12 +742,15 @@ class ResultsChat(LoginRequiredMixin, UserPassesTestMixin, View):
         input_messages = chat.messages
         input_messages.append({"role": "user", "content": feedback_prompt})
 
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=input_messages,
-            max_tokens=MAX_TOKENS
-        )
-        ai_message = response.choices[0].message.content
+        if not _ai_available():
+            ai_message = "AI features are currently unavailable."
+        else:
+            response = get_openai_client().chat.completions.create(
+                model="gpt-4o",
+                messages=input_messages,
+                max_tokens=MAX_TOKENS
+            )
+            ai_message = response.choices[0].message.content
 
         context = {}
         context['chat'] = chat
@@ -734,25 +794,26 @@ class ResultCharts(LoginRequiredMixin, UserPassesTestMixin, View):
 
         input_messages.append({"role": "user", "content": scores_prompt})
 
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=input_messages,
-            max_tokens=MAX_TOKENS
-        )
-        ai_message = response.choices[0].message.content
+        if not _ai_available():
+            professionalism, subject_knowledge, clarity, overall = [0, 0, 0, 0]
+        else:
+            response = get_openai_client().chat.completions.create(
+                model="gpt-4o",
+                messages=input_messages,
+                max_tokens=MAX_TOKENS
+            )
+            ai_message = response.choices[0].message.content.strip()
+            scores = [int(line.strip())
+                          for line in ai_message.splitlines() if line.strip()
+                            .isdigit()]
+            if len(scores) == 4:
+                professionalism, subject_knowledge, clarity, overall = scores
+            else:
+                professionalism, subject_knowledge, clarity, overall = [0, 0, 0, 0]
 
         context = {}
         context['chat'] = chat
         context['owner_chats'] = owner_chats
-
-        ai_message = response.choices[0].message.content.strip()
-        scores = [int(line.strip())
-                      for line in ai_message.splitlines() if line.strip()
-                        .isdigit()]
-        if len(scores) == 4:
-            professionalism, subject_knowledge, clarity, overall = scores
-        else:
-            professionalism, subject_knowledge, clarity, overall = [0, 0, 0, 0]
 
         context['scores'] = {
             'Professionalism': professionalism,
@@ -767,12 +828,15 @@ class ResultCharts(LoginRequiredMixin, UserPassesTestMixin, View):
             interview
         """)
         input_messages.append({"role": "user", "content": explain})
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=input_messages,
-            max_tokens=MAX_TOKENS
-        )
-        ai_message = response.choices[0].message.content
+        if not _ai_available():
+            ai_message = "AI features are currently unavailable."
+        else:
+            response = get_openai_client().chat.completions.create(
+                model="gpt-4o",
+                messages=input_messages,
+                max_tokens=MAX_TOKENS
+            )
+            ai_message = response.choices[0].message.content
         context['feedback'] = ai_message
 
         return render(request, os.path.join('chat', 'chat-results.html'),
