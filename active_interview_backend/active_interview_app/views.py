@@ -44,8 +44,28 @@ from rest_framework.views import APIView
 
 
 # Init openai client
-client = OpenAI(api_key=settings.OPENAI_API_KEY)
+# Initialize OpenAI client only if an API key is configured. This avoids
+# failing imports (which block management commands like `migrate`) when the
+# environment variable isn't set and lets the app run without AI features.
+client = None
+if getattr(settings, 'OPENAI_API_KEY', None):
+    try:
+        client = OpenAI(api_key=settings.OPENAI_API_KEY)
+    except Exception:
+        # If client creation fails for any reason, leave client as None and
+        # let runtime views handle missing AI functionality gracefully.
+        client = None
+
 MAX_TOKENS = 15000
+
+
+def _ai_available():
+    """Return True if the OpenAI client is initialized and usable."""
+    return client is not None
+
+
+def _ai_unavailable_json():
+    return JsonResponse({'error': 'AI features are disabled on this server.'}, status=503)
 
 
 # Create your views here.
@@ -248,12 +268,16 @@ class CreateChat(LoginRequiredMixin, View):
                 ]
 
                 # Make ai speak first
-                response = client.chat.completions.create(
-                    model="gpt-4o",
-                    messages=chat.messages,
-                    max_tokens=MAX_TOKENS
-                )
-                ai_message = response.choices[0].message.content
+                if not _ai_available():
+                    messages.error(request, "AI features are disabled on this server.")
+                    ai_message = ""
+                else:
+                    response = client.chat.completions.create(
+                        model="gpt-4o",
+                        messages=chat.messages,
+                        max_tokens=MAX_TOKENS
+                    )
+                    ai_message = response.choices[0].message.content
                 chat.messages.append(
                     {
                         "role": "assistant",
@@ -426,6 +450,9 @@ class ChatView(LoginRequiredMixin, UserPassesTestMixin, View):
 
         new_messages = chat.messages
         new_messages.append({"role": "user", "content": user_message})
+
+        if not _ai_available():
+            return _ai_unavailable_json()
 
         response = client.chat.completions.create(
             model="gpt-4o",
@@ -663,6 +690,9 @@ class KeyQuestionsView(LoginRequiredMixin, UserPassesTestMixin, View):
             }
         ]
 
+        if not _ai_available():
+            return _ai_unavailable_json()
+
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=ai_input,
@@ -696,12 +726,15 @@ class ResultsChat(LoginRequiredMixin, UserPassesTestMixin, View):
         input_messages = chat.messages
         input_messages.append({"role": "user", "content": feedback_prompt})
 
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=input_messages,
-            max_tokens=MAX_TOKENS
-        )
-        ai_message = response.choices[0].message.content
+        if not _ai_available():
+            ai_message = "AI features are currently unavailable."
+        else:
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=input_messages,
+                max_tokens=MAX_TOKENS
+            )
+            ai_message = response.choices[0].message.content
 
         context = {}
         context['chat'] = chat
@@ -745,25 +778,26 @@ class ResultCharts(LoginRequiredMixin, UserPassesTestMixin, View):
 
         input_messages.append({"role": "user", "content": scores_prompt})
 
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=input_messages,
-            max_tokens=MAX_TOKENS
-        )
-        ai_message = response.choices[0].message.content
+        if not _ai_available():
+            professionalism, subject_knowledge, clarity, overall = [0, 0, 0, 0]
+        else:
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=input_messages,
+                max_tokens=MAX_TOKENS
+            )
+            ai_message = response.choices[0].message.content.strip()
+            scores = [int(line.strip())
+                          for line in ai_message.splitlines() if line.strip()
+                            .isdigit()]
+            if len(scores) == 4:
+                professionalism, subject_knowledge, clarity, overall = scores
+            else:
+                professionalism, subject_knowledge, clarity, overall = [0, 0, 0, 0]
 
         context = {}
         context['chat'] = chat
         context['owner_chats'] = owner_chats
-
-        ai_message = response.choices[0].message.content.strip()
-        scores = [int(line.strip())
-                      for line in ai_message.splitlines() if line.strip()
-                        .isdigit()]
-        if len(scores) == 4:
-            professionalism, subject_knowledge, clarity, overall = scores
-        else:
-            professionalism, subject_knowledge, clarity, overall = [0, 0, 0, 0]
 
         context['scores'] = {
             'Professionalism': professionalism,
@@ -778,12 +812,15 @@ class ResultCharts(LoginRequiredMixin, UserPassesTestMixin, View):
             interview
         """)
         input_messages.append({"role": "user", "content": explain})
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=input_messages,
-            max_tokens=MAX_TOKENS
-        )
-        ai_message = response.choices[0].message.content
+        if not _ai_available():
+            ai_message = "AI features are currently unavailable."
+        else:
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=input_messages,
+                max_tokens=MAX_TOKENS
+            )
+            ai_message = response.choices[0].message.content
         context['feedback'] = ai_message
 
         return render(request, os.path.join('chat', 'chat-results.html'),
