@@ -109,7 +109,7 @@ jobs:
         if: always()
         run: |
           set -o pipefail;
-          docker exec django coverage run manage.py test -v 2 | tee dj_test_out.txt;
+          docker exec -e DJANGO_SECRET_KEY="${{ secrets.DJANGO_SECRET_KEY }}" django coverage run manage.py test -v 2 | tee dj_test_out.txt;
 
       - name: Run Coverage Report
         if: always()
