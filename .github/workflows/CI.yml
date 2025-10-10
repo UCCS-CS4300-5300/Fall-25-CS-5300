@@ -76,8 +76,9 @@ jobs:
 
       - name: Configure Environment
         run: |
-          echo 'DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}' > .env;
-          echo 'OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}' >> .env;
+          echo "DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}" > .env;
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env;
+          cat .env
 
       - name: Start Containers
         run: |
@@ -105,11 +106,15 @@ jobs:
         env:
           CHROMEDRIVER_VERSION: 135.0.7049.52
 
+      - name: Debug Environment
+        run: |
+          docker exec django bash -c "echo DJANGO_SECRET_KEY=\$DJANGO_SECRET_KEY"
+
       - name: Run Django Tests
         if: always()
         run: |
           set -o pipefail;
-          docker exec django bash -c "export DJANGO_SECRET_KEY='${{ secrets.DJANGO_SECRET_KEY }}' && coverage run manage.py test -v 2" | tee dj_test_out.txt;
+          docker exec django bash -c "coverage run manage.py test -v 2" | tee dj_test_out.txt;
 
       - name: Run Coverage Report
         if: always()
