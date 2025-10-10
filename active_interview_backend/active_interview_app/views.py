@@ -43,28 +43,44 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 
-# Init openai client
-# Initialize OpenAI client only if an API key is configured. This avoids
-# failing imports (which block management commands like `migrate`) when the
-# environment variable isn't set and lets the app run without AI features.
-client = None
-if getattr(settings, 'OPENAI_API_KEY', None):
-    try:
-        client = OpenAI(api_key=settings.OPENAI_API_KEY)
-    except Exception:
-        # If client creation fails for any reason, leave client as None and
-        # let runtime views handle missing AI functionality gracefully.
-        client = None
-
+# OpenAI client configuration with lazy loading and graceful degradation
 MAX_TOKENS = 15000
+_openai_client = None
+
+
+def get_openai_client():
+    """
+    Lazy initialization of OpenAI client.
+    This prevents import-time errors when API key is not set.
+    """
+    global _openai_client
+    if _openai_client is None:
+        if not settings.OPENAI_API_KEY:
+            raise ValueError(
+                "OPENAI_API_KEY is not set. Please configure it in your "
+                ".env file or environment variables."
+            )
+        try:
+            _openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
+        except Exception as e:
+            raise ValueError(f"Failed to initialize OpenAI client: {e}")
+    return _openai_client
 
 
 def _ai_available():
-    """Return True if the OpenAI client is initialized and usable."""
-    return client is not None
+    """
+    Return True if the OpenAI client can be initialized and is usable.
+    This checks without raising exceptions.
+    """
+    try:
+        get_openai_client()
+        return True
+    except (ValueError, Exception):
+        return False
 
 
 def _ai_unavailable_json():
+    """Return a JSON response for when AI features are disabled."""
     return JsonResponse({'error': 'AI features are disabled on this server.'}, status=503)
 
 
@@ -102,39 +118,39 @@ def results(request):
 #                 },
 #             ]
 #         )
-
+#
 #         owner_chats = Chat.objects.filter(owner=request.user) \
 #               .order_by('-modified_date')
-
+#
 #         request.session['chat_id'] = chat.id
-
+#
 #         context = {}
 #         context['chat'] = chat
 #         context['owner_chats'] = owner_chats
-
+#
 #         return render(request, os.path.join('chat', 'chat-view.html'),
 #                       context)
-
+#
 #     elif request.method == 'POST':
 #         chat_id = request.session.get('chat_id')
 #         chat = Chat.objects.get(id=chat_id)
-
+#
 #         user_message = request.POST.get('message', '')
-
+#
 #         new_messages = chat.messages
 #         new_messages.append({"role": "user", "content": user_message})
-
-#         response = client.chat.completions.create(
+#
+#         response = get_openai_client().chat.completions.create(
 #             model="gpt-4o",
 #             messages=new_messages,
 #             max_tokens=500
 #         )
 #         ai_message = response.choices[0].message.content
 #         new_messages.append({"role": "assistant", "content": ai_message})
-
+#
 #         chat.messages = new_messages
 #         chat.save()
-
+#
 #         return JsonResponse({'message': ai_message})
 
 
@@ -184,7 +200,7 @@ class CreateChat(LoginRequiredMixin, View):
                 if chat.resume:  # if resume is present
                     system_prompt = textwrap.dedent("""\
                         You are a professional interviewer for a company
-                        preparing for a candidate’s interview. You will act as
+                        preparing for a candidate's interview. You will act as
                         the interviewer and engage in a roleplaying session
                         with the candidate.
 
@@ -226,7 +242,7 @@ class CreateChat(LoginRequiredMixin, View):
                 else:  # if no resume
                     system_prompt = textwrap.dedent("""\
                         You are a professional interviewer for a company
-                        preparing for a candidate’s interview. You will act as
+                        preparing for a candidate's interview. You will act as
                         the interviewer and engage in a roleplaying session
                         with the candidate.
 
@@ -272,7 +288,7 @@ class CreateChat(LoginRequiredMixin, View):
                     messages.error(request, "AI features are disabled on this server.")
                     ai_message = ""
                 else:
-                    response = client.chat.completions.create(
+                    response = get_openai_client().chat.completions.create(
                         model="gpt-4o",
                         messages=chat.messages,
                         max_tokens=MAX_TOKENS
@@ -289,7 +305,7 @@ class CreateChat(LoginRequiredMixin, View):
                 if chat.resume:  # if resume is present
                     system_prompt = textwrap.dedent("""\
                         You are a professional interviewer for a company
-                        preparing for a candidate’s interview. You will act as
+                        preparing for a candidate's interview. You will act as
                         the interviewer and engage in a roleplaying session
                         with the candidate.
 
@@ -343,7 +359,7 @@ class CreateChat(LoginRequiredMixin, View):
                 else:  # if no resume"
                     system_prompt = textwrap.dedent("""\
                         You are a professional interviewer for a company
-                        preparing for a candidate’s interview. You will act as
+                        preparing for a candidate's interview. You will act as
                         the interviewer and engage in a roleplaying session
                         with the candidate.
 
@@ -401,7 +417,7 @@ class CreateChat(LoginRequiredMixin, View):
                     messages.error(request, "AI features are disabled on this server.")
                     ai_message = "[]"
                 else:
-                    response = client.chat.completions.create(
+                    response = get_openai_client().chat.completions.create(
                         model="gpt-4o",
                         messages=timed_question_messages,
                         max_tokens=MAX_TOKENS
@@ -454,7 +470,7 @@ class ChatView(LoginRequiredMixin, UserPassesTestMixin, View):
         if not _ai_available():
             return _ai_unavailable_json()
 
-        response = client.chat.completions.create(
+        response = get_openai_client().chat.completions.create(
             model="gpt-4o",
             messages=new_messages,
             max_tokens=MAX_TOKENS
@@ -586,7 +602,7 @@ class KeyQuestionsView(LoginRequiredMixin, UserPassesTestMixin, View):
         if chat.resume:  # if resume is present
             system_prompt = textwrap.dedent(f"""\
                 You are a professional interviewer for a company
-                preparing for a candidate’s interview. You will act as
+                preparing for a candidate's interview. You will act as
                 the interviewer and engage in a roleplaying session
                 with the candidate.
 
@@ -639,7 +655,7 @@ class KeyQuestionsView(LoginRequiredMixin, UserPassesTestMixin, View):
         else:  # if no resume"
             system_prompt = textwrap.dedent(f"""\
                 You are a professional interviewer for a company
-                preparing for a candidate’s interview. You will act as
+                preparing for a candidate's interview. You will act as
                 the interviewer and engage in a roleplaying session
                 with the candidate.
 
@@ -693,7 +709,7 @@ class KeyQuestionsView(LoginRequiredMixin, UserPassesTestMixin, View):
         if not _ai_available():
             return _ai_unavailable_json()
 
-        response = client.chat.completions.create(
+        response = get_openai_client().chat.completions.create(
             model="gpt-4o",
             messages=ai_input,
             max_tokens=MAX_TOKENS
@@ -729,7 +745,7 @@ class ResultsChat(LoginRequiredMixin, UserPassesTestMixin, View):
         if not _ai_available():
             ai_message = "AI features are currently unavailable."
         else:
-            response = client.chat.completions.create(
+            response = get_openai_client().chat.completions.create(
                 model="gpt-4o",
                 messages=input_messages,
                 max_tokens=MAX_TOKENS
@@ -781,7 +797,7 @@ class ResultCharts(LoginRequiredMixin, UserPassesTestMixin, View):
         if not _ai_available():
             professionalism, subject_knowledge, clarity, overall = [0, 0, 0, 0]
         else:
-            response = client.chat.completions.create(
+            response = get_openai_client().chat.completions.create(
                 model="gpt-4o",
                 messages=input_messages,
                 max_tokens=MAX_TOKENS
@@ -815,7 +831,7 @@ class ResultCharts(LoginRequiredMixin, UserPassesTestMixin, View):
         if not _ai_available():
             ai_message = "AI features are currently unavailable."
         else:
-            response = client.chat.completions.create(
+            response = get_openai_client().chat.completions.create(
                 model="gpt-4o",
                 messages=input_messages,
                 max_tokens=MAX_TOKENS

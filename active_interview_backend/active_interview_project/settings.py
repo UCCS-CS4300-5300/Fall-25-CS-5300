@@ -14,9 +14,15 @@ import os
 import mimetypes
 from django.core.management.utils import get_random_secret_key
 from pathlib import Path
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from .env file
+# Look for .env in project root (parent of active_interview_backend)
+env_path = BASE_DIR.parent / '.env'
+load_dotenv(dotenv_path=env_path)
 
 # media paths
 MEDIA_URL = '/media/'
