@@ -15,6 +15,7 @@ import mimetypes
 from django.core.management.utils import get_random_secret_key
 from pathlib import Path
 from dotenv import load_dotenv
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -45,10 +46,19 @@ OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 PROD = os.environ.get("PROD", "true").lower() == "true"
 DEBUG = not PROD
 
-ALLOWED_HOSTS = ['app.activeinterviewservice.me',
-                 'localhost', '127.0.0.1', 'localhost:3000', '127.0.0.1:3000',
-                 '172.17.0.2', 'django']
-CSRF_TRUSTED_ORIGINS = ['https://app.activeinterviewservice.me']
+ALLOWED_HOSTS = [
+    'app.activeinterviewservice.me',
+    'localhost',
+    '127.0.0.1',
+    '.railway.app',
+    '.up.railway.app',
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.railway.app',
+    'https://*.up.railway.app',
+    'https://app.activeinterviewservice.me',
+]
 
 # Application definition
 
@@ -67,6 +77,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -100,10 +111,10 @@ WSGI_APPLICATION = 'active_interview_project.wsgi.application'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db', 'db.sqlite3'),
-    }
+    'default': dj_database_url.config(
+        default='sqlite:///' + os.path.join(BASE_DIR, 'db', 'db.sqlite3'),
+        conn_max_age=600
+    )
 }
 
 # Password validation
@@ -174,3 +185,6 @@ LOGGING = {
         },
     },
 }
+
+# WhiteNoise configuration for serving static files
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'

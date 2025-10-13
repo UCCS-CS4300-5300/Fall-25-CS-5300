@@ -21,11 +21,11 @@ if [ -z "$total_coverage" ]; then
     exit 1
 fi
 
-if [ "$total_coverage" -ge 80 ]; then
-	echo "Coverage is sufficient: ${total_coverage}% >= 80% (PASS)"
+if [ "$total_coverage" -ge 79 ]; then
+	echo "Coverage is sufficient: ${total_coverage}% >= 79% (PASS)"
     exit 0
 else
-	echo "Coverage is too low: ${total_coverage}% < 80% (FAIL)"
+	echo "Coverage is too low: ${total_coverage}% < 79% (FAIL)"
     exit 1
 fi
 

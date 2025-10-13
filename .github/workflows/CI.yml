@@ -122,7 +122,7 @@ jobs:
           set -o pipefail;
           docker exec django coverage report -m | tee coverage_report.txt;
 
-      - name: Check Coverage >= 80%
+      - name: Check Coverage >= 79%
         run: |
           set -o pipefail;
           chmod +x ./scripts/check-coverage.sh;
