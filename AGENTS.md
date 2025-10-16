@@ -300,20 +300,31 @@ sudo ./scripts/clean-restart.sh
 
 ## CI/CD
 
-### GitHub Actions Workflows (.github/workflows/)
+### Continuous Integration (GitHub Actions)
 
 **CI.yml** - Runs on all pushes/PRs:
-1. **AI Code Review**: Uses OpenAI to review git diff (outputs to artifacts and step summary)
-2. **Testing**:
+1. **Lint**: Python (flake8) and Django templates (djlint)
+2. **Security**: Dependency scanning (safety) and code analysis (bandit)
+3. **Test**: Django tests with coverage (80% minimum required)
    - Builds production Docker containers
-   - Installs Chrome/Chromedriver for E2E tests
-   - Runs Django tests with coverage
-   - Enforces 80% coverage threshold
-3. **Linting**:
-   - Python: flake8 (config in `.flake8`)
-   - Templates: djlint (config in `djlint.toml`)
+   - Installs Chrome/Chromedriver for E2E Selenium tests
+   - Generates and validates coverage reports
+4. **AI Review**: OpenAI-powered code review of git diff
+5. **Cleanup**: Archives essential reports (coverage, security, AI review) for 30 days
 
-**CD.yml**: Deployment workflow (triggered separately)
+### Continuous Deployment (Railway)
+
+**CD.yml** - Deploys to Railway on push to `main` or `prod`:
+- Uses Railway CLI to trigger deployment
+- Runs independently or can be configured to wait for CI
+- Requires GitHub secrets:
+  - `RAILWAY_TOKEN`: Railway API token (from Railway dashboard → Account Settings → Tokens)
+  - `RAILWAY_SERVICE_ID`: Service ID from Railway (found in service settings)
+
+**Railway Configuration** (via Railway dashboard):
+- Environment variables: DJANGO_SECRET_KEY, OPENAI_API_KEY, DATABASE_URL, PROD=true
+- Build/start commands: Auto-detected for Django
+- Domain settings and SSL certificates
 
 ### Linting
 ```bash
