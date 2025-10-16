@@ -28,9 +28,9 @@ while IFS= read -r line; do
         continue
     fi
 
-    # Extract coverage percentage (last column before "Missing" info)
-    coverage=$(echo "$line" | awk '{print $(NF-1)}' | tr -d '%')
+    # Extract filename (column 1) and coverage percentage (column 4)
     filename=$(echo "$line" | awk '{print $1}')
+    coverage=$(echo "$line" | awk '{print $4}' | tr -d '%')
 
     # Skip if we couldn't extract coverage (empty lines, etc.)
     if [ -z "$coverage" ] || [ -z "$filename" ]; then
