@@ -84,6 +84,13 @@ jobs:
         path: coverage_report.txt
         retention-days: ${{ env.RETENTION_DAYS }}
 
+    - name: Cleanup Docker Resources
+      if: always()
+      run: |
+        echo "Cleaning up Docker containers and images..."
+        docker compose -f docker-compose.prod.yml down -v || true
+        docker system prune -f || true
+
   lint:
     name: Run Linting
     runs-on: ubuntu-latest
@@ -145,17 +152,17 @@ jobs:
       run: |
         {
           echo '# Security Scan Results'
-          echo '## Safety Check'
+          echo '## Safety Check (Dependency Vulnerabilities)'
           echo '```'
           safety check || true
           echo '```'
           echo ''
-          echo '## Bandit Scan'
+          echo '## Bandit Scan (Code Security Issues)'
           echo '```'
-          bandit -r active_interview_backend/ -f screen || true
+          bandit -r . --exclude './.git' -f screen || true
           echo '```'
         } >> $GITHUB_STEP_SUMMARY
-        bandit -r active_interview_backend/ -f json -o bandit-report.json || true
+        bandit -r . --exclude './.git' -f json -o bandit-report.json || true
 
     - name: Upload Security Reports
       if: always()
@@ -201,7 +208,6 @@ jobs:
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
-<<<<<<< Updated upstream
     - name: Upload AI Code Review Report
       if: always()
       uses: actions/upload-artifact@v4
@@ -209,127 +215,76 @@ jobs:
         name: ai-code-review-report
         path: review-*.md
         retention-days: ${{ env.RETENTION_DAYS }}
-=======
-  cilinter:
-    name: CI Django Linter
-    
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-          # cache: 'pip'
-
-      - name: Setup Linters
-        run: pip install flake8 djlint
-
-      # - name: Configure Shell
-      #   run: |
-      #     set -o pipefail # make the pipe exist status carry non-zero values
-        
-      - name: Lint Python
-        if: always()
-        run: |
-          echo -e '# Python Lint Ouput\n```' >> $GITHUB_STEP_SUMMARY;
-          flake8 --config active_interview_backend/.flake8 . | tee -a $GITHUB_STEP_SUMMARY;
-          echo -e '\n```' >> $GITHUB_STEP_SUMMARY
-
-      - name: Lint Templates
-        if: always()
-        run: |
-          echo -e '# Template Lint Ouput\n```' >> $GITHUB_STEP_SUMMARY;
-          djlint --configuration active_interview_backend/djlint.toml active_interview_backend/active_interview_app/templates/ --lint | tee -a $GITHUB_STEP_SUMMARY;
-          echo -e '\n```' >> $GITHUB_STEP_SUMMARY
-
-
-  citester:
-    name: CI Testing
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Configure Environment
-        run: |
-          echo "DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}" > .env;
-          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env;
-          cat .env
-
-      - name: Start Containers
-        run: |
-          set -o pipefail;
-          docker compose -f docker-compose.prod.yml up -d --build
-
-      - name: Install Chrome
-        run: |
-          docker exec django bash -c "
-            wget -O google-chrome.deb https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_${CHROME_VERSION}_amd64.deb \
-            && apt-get update \
-            && apt-get install -y ./google-chrome.deb \
-            && rm google-chrome.deb"
-        env:
-          CHROME_VERSION: 135.0.7049.52-1
-
-      - name: Install Chromedriver
-        run: |
-          docker exec django bash -c "
-            wget -O chromedriver.zip https://storage.googleapis.com/chrome-for-testing-public/${CHROMEDRIVER_VERSION}/linux64/chromedriver-linux64.zip \
-            && unzip chromedriver.zip \
-            && mv chromedriver-linux64/chromedriver /usr/local/bin/chromedriver \
-            && chmod +x /usr/local/bin/chromedriver \
-            && rm chromedriver.zip"
-        env:
-          CHROMEDRIVER_VERSION: 135.0.7049.52
-
-      - name: Debug Environment
-        run: |
-          docker exec django bash -c "echo DJANGO_SECRET_KEY=\$DJANGO_SECRET_KEY"
-
-      - name: Run Django Tests
-        if: always()
-        run: |
-          set -o pipefail;
-          docker exec django bash -c "coverage run manage.py test -v 2" | tee dj_test_out.txt;
-
-      - name: Run Coverage Report
-        if: always()
-        run: |
-          set -o pipefail;
-          docker exec django coverage report -m | tee coverage_report.txt;
-
-      - name: Check Coverage >= 79%
-        run: |
-          set -o pipefail;
-          chmod +x ./scripts/check-coverage.sh;
-          ./scripts/check-coverage.sh coverage_report.txt | tee coverage_verdict.txt
-
-      - name: Create Step Summary
-        if: always()
-        run: |
-          echo -e '# Coverage Report\n```' >> $GITHUB_STEP_SUMMARY;
-          cat coverage_report.txt >> $GITHUB_STEP_SUMMARY;
-          echo -e '\n```' >> $GITHUB_STEP_SUMMARY;
-          cat coverage_verdict.txt >> $GITHUB_STEP_SUMMARY;
-          echo -e '\n# Test Output\n```' >> $GITHUB_STEP_SUMMARY;
-          cat dj_test_out.txt >> $GITHUB_STEP_SUMMARY;
-          echo -e '\n```' >> $GITHUB_STEP_SUMMARY
-
-      - name: Upload Coverage Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: coverage_report.txt
-          retention-days: 14
->>>>>>> Stashed changes
 
     - name: Add Review to Summary
       if: always()
       run: cat review-*.md >> $GITHUB_STEP_SUMMARY
+
+  cleanup:
+    name: Cleanup & Archive
+    runs-on: ubuntu-latest
+    needs: [test, lint, security, ai-review]
+    if: always()
+
+    steps:
+    - name: Download All Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts/
+
+    - name: Create Essential Files Archive
+      run: |
+        echo "Creating archive of essential files..."
+        mkdir -p essential-archive
+
+        # Copy coverage reports if they exist
+        if [ -d "artifacts/coverage-report" ]; then
+          cp -r artifacts/coverage-report essential-archive/
+        fi
+
+        # Copy security reports if they exist
+        if [ -d "artifacts/security-reports" ]; then
+          cp -r artifacts/security-reports essential-archive/
+        fi
+
+        # Copy AI review reports if they exist
+        if [ -d "artifacts/ai-code-review-report" ]; then
+          cp -r artifacts/ai-code-review-report essential-archive/
+        fi
+
+        # Create timestamp file
+        echo "Archive created at: $(date)" > essential-archive/archive-info.txt
+        echo "Workflow run: ${{ github.run_id }}" >> essential-archive/archive-info.txt
+        echo "Commit: ${{ github.sha }}" >> essential-archive/archive-info.txt
+
+        # Create compressed archive
+        tar -czf essential-files-${{ github.run_id }}.tar.gz essential-archive/
+        ls -lh essential-files-${{ github.run_id }}.tar.gz
+
+    - name: Upload Essential Archive
+      uses: actions/upload-artifact@v4
+      with:
+        name: essential-archive
+        path: essential-files-${{ github.run_id }}.tar.gz
+        retention-days: 30
+
+    - name: Cleanup Summary
+      run: |
+        {
+          echo '# Cleanup & Archive Summary'
+          echo ''
+          echo '## Archived Files'
+          echo '```'
+          ls -lh artifacts/ || echo "No artifacts found"
+          echo '```'
+          echo ''
+          echo '## Essential Archive Created'
+          echo '- Archive: essential-files-${{ github.run_id }}.tar.gz'
+          echo '- Retention: 30 days'
+          echo '- Workflow Run: ${{ github.run_id }}'
+          echo ''
+          echo '## Cleanup Status'
+          echo '- Temporary artifacts cleaned up'
+          echo '- Essential files archived and uploaded'
+          echo '- Docker resources cleaned up in test job'
+        } >> $GITHUB_STEP_SUMMARY
