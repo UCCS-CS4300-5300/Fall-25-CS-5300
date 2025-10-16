@@ -201,6 +201,7 @@ jobs:
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
+<<<<<<< Updated upstream
     - name: Upload AI Code Review Report
       if: always()
       uses: actions/upload-artifact@v4
@@ -208,6 +209,126 @@ jobs:
         name: ai-code-review-report
         path: review-*.md
         retention-days: ${{ env.RETENTION_DAYS }}
+=======
+  cilinter:
+    name: CI Django Linter
+    
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          # cache: 'pip'
+
+      - name: Setup Linters
+        run: pip install flake8 djlint
+
+      # - name: Configure Shell
+      #   run: |
+      #     set -o pipefail # make the pipe exist status carry non-zero values
+        
+      - name: Lint Python
+        if: always()
+        run: |
+          echo -e '# Python Lint Ouput\n```' >> $GITHUB_STEP_SUMMARY;
+          flake8 --config active_interview_backend/.flake8 . | tee -a $GITHUB_STEP_SUMMARY;
+          echo -e '\n```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Lint Templates
+        if: always()
+        run: |
+          echo -e '# Template Lint Ouput\n```' >> $GITHUB_STEP_SUMMARY;
+          djlint --configuration active_interview_backend/djlint.toml active_interview_backend/active_interview_app/templates/ --lint | tee -a $GITHUB_STEP_SUMMARY;
+          echo -e '\n```' >> $GITHUB_STEP_SUMMARY
+
+
+  citester:
+    name: CI Testing
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure Environment
+        run: |
+          echo "DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}" > .env;
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env;
+          cat .env
+
+      - name: Start Containers
+        run: |
+          set -o pipefail;
+          docker compose -f docker-compose.prod.yml up -d --build
+
+      - name: Install Chrome
+        run: |
+          docker exec django bash -c "
+            wget -O google-chrome.deb https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_${CHROME_VERSION}_amd64.deb \
+            && apt-get update \
+            && apt-get install -y ./google-chrome.deb \
+            && rm google-chrome.deb"
+        env:
+          CHROME_VERSION: 135.0.7049.52-1
+
+      - name: Install Chromedriver
+        run: |
+          docker exec django bash -c "
+            wget -O chromedriver.zip https://storage.googleapis.com/chrome-for-testing-public/${CHROMEDRIVER_VERSION}/linux64/chromedriver-linux64.zip \
+            && unzip chromedriver.zip \
+            && mv chromedriver-linux64/chromedriver /usr/local/bin/chromedriver \
+            && chmod +x /usr/local/bin/chromedriver \
+            && rm chromedriver.zip"
+        env:
+          CHROMEDRIVER_VERSION: 135.0.7049.52
+
+      - name: Debug Environment
+        run: |
+          docker exec django bash -c "echo DJANGO_SECRET_KEY=\$DJANGO_SECRET_KEY"
+
+      - name: Run Django Tests
+        if: always()
+        run: |
+          set -o pipefail;
+          docker exec django bash -c "coverage run manage.py test -v 2" | tee dj_test_out.txt;
+
+      - name: Run Coverage Report
+        if: always()
+        run: |
+          set -o pipefail;
+          docker exec django coverage report -m | tee coverage_report.txt;
+
+      - name: Check Coverage >= 79%
+        run: |
+          set -o pipefail;
+          chmod +x ./scripts/check-coverage.sh;
+          ./scripts/check-coverage.sh coverage_report.txt | tee coverage_verdict.txt
+
+      - name: Create Step Summary
+        if: always()
+        run: |
+          echo -e '# Coverage Report\n```' >> $GITHUB_STEP_SUMMARY;
+          cat coverage_report.txt >> $GITHUB_STEP_SUMMARY;
+          echo -e '\n```' >> $GITHUB_STEP_SUMMARY;
+          cat coverage_verdict.txt >> $GITHUB_STEP_SUMMARY;
+          echo -e '\n# Test Output\n```' >> $GITHUB_STEP_SUMMARY;
+          cat dj_test_out.txt >> $GITHUB_STEP_SUMMARY;
+          echo -e '\n```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload Coverage Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage_report.txt
+          retention-days: 14
+>>>>>>> Stashed changes
 
     - name: Add Review to Summary
       if: always()
