@@ -1,0 +1,37 @@
+name: Continuous Deployment
+
+on:
+  push:
+    branches:
+      - prod
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to Digital Ocean
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Configure SSH
+      run: |
+        mkdir -p ~/.ssh/
+        echo "${{ secrets.DO_SSH_KEY }}" > ~/.ssh/digital_ocean.key
+        chmod 600 ~/.ssh/digital_ocean.key
+        cat >>~/.ssh/config <<END
+        Host digital_ocean
+          HostName ${{ secrets.DO_SSH_HOST }}
+          User ${{ secrets.DO_SSH_USER }}
+          IdentityFile ~/.ssh/digital_ocean.key
+          StrictHostKeyChecking no
+        END
+
+    - name: Deploy Application
+      run: |
+        ssh digital_ocean 'cd ~/Group-7-Spring-2025 && \
+          docker-compose -f docker-compose.prod.yml down --remove-orphans && \
+          docker system prune --all --volumes -f && \
+          systemctl restart docker && \
+          git fetch && \
+          git reset --hard origin/prod && \
+          git clean -fdx -e .env -e active_interview_backend/db -e /active_interview_backend/media && \
+          docker-compose -f docker-compose.prod.yml up -d --build'
