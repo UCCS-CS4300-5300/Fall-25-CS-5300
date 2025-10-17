@@ -91,39 +91,77 @@ I have created an linux/mac script that should make cleanly restarting local dep
 
 ## CI/CD Pipeline
 
-### Workflow: `django-cicd.yml`
+The project uses separate Continuous Integration (CI) and Continuous Deployment (CD) workflows to ensure code quality and automated deployments.
 
-The project uses a unified CI/CD pipeline that runs on push/PR to `main`, `develop`, and `prod` branches.
+### Workflow: `CI.yml` (Continuous Integration)
+
+Runs on push to `main` branch, pull requests to `main`, or manual dispatch (`workflow_dispatch`).
 
 **Jobs:**
 
-1. **Test** - Runs Django tests with coverage (80% minimum)
-   - Spins up Docker containers with `docker-compose.prod.yml`
-   - Installs Chrome/Chromedriver for Selenium tests
-   - Generates coverage reports and uploads artifacts
-
-2. **Lint** - Code quality checks
+1. **Lint** - Code quality checks
    - Python linting with `flake8`
    - Django template linting with `djlint`
+   - Outputs results to GitHub Step Summary
 
-3. **Security** - Security scanning
+2. **Security** - Security scanning (depends on Lint)
    - Dependency vulnerability scanning with `safety`
    - Static code analysis with `bandit`
+   - Generates JSON reports and uploads as artifacts
+   - Retention: 14 days
 
-4. **AI Review** - Automated code review using OpenAI
-   - Analyzes git diffs and provides feedback
+3. **Test** - Runs Django tests with coverage validation (depends on Security)
+   - Spins up Docker containers with `docker-compose.prod.yml`
+   - Installs Chrome (v135.0.7049.52-1) and Chromedriver for Selenium tests
+   - Runs Django test suite with coverage tracking
+   - Enforces minimum 80% code coverage requirement
+   - Uploads coverage reports as artifacts
+   - Cleans up Docker resources after completion
 
-5. **Deploy** (prod branch only)
-   - Deploys to Digital Ocean after tests pass
-   - Runs on push to `prod` branch only
-   - SSH into server, pulls latest code, restarts containers
+4. **AI Review** - Automated code review using OpenAI (runs in parallel)
+   - Analyzes git diffs for pushes and pull requests
+   - Generates AI-powered code review feedback
+   - Uploads review reports as artifacts
+   - Adds review summary to GitHub Step Summary
 
-**Required Secrets:**
-- `DJANGO_SECRET_KEY` - Django secret key
-- `OPENAI_API_KEY` - OpenAI API key for AI reviews
-- `DO_SSH_USER` - Digital Ocean SSH username
-- `DO_SSH_KEY` - Digital Ocean SSH private key
-- `DO_SSH_HOST` - Digital Ocean droplet IP/hostname
+5. **Cleanup** - Archive and cleanup (runs after all jobs complete)
+   - Downloads all artifacts from previous jobs
+   - Creates compressed archive of essential files (coverage, security, AI review)
+   - Uploads consolidated archive with 30-day retention
+   - Generates cleanup summary
+
+**Environment Variables:**
+- `PYTHON_VERSION`: 3.13
+- `CHROME_VERSION`: 135.0.7049.52-1
+- `CHROMEDRIVER_VERSION`: 135.0.7049.52
+- `RETENTION_DAYS`: 14
+
+### Workflow: `CD.yml` (Continuous Deployment)
+
+Runs on push to `prod` or `main` branches, or manual dispatch (`workflow_dispatch`).
+
+**Jobs:**
+
+1. **Deploy** - Deploys to Railway
+   - Checks out code
+   - Installs Railway CLI via npm
+   - Deploys using Railway service
+   - Generates deployment summary with status, branch, commit, and timestamp
+
+**Deployment Details:**
+- Target: Railway platform
+- Triggers: Push to `prod` or `main` branches, or manual trigger
+- Method: Railway CLI (`railway up`)
+
+### Required Secrets
+
+**For CI Pipeline:**
+- `DJANGO_SECRET_KEY` - Django secret key for testing environment
+- `OPENAI_API_KEY` - OpenAI API key for AI code reviews
+
+**For CD Pipeline:**
+- `RAILWAY_TOKEN` - Railway authentication token
+- `RAILWAY_SERVICE_ID` - Railway service identifier for deployment
 
 ## AI Use
 1. The git diff script in CI.yml was iteratively designed with the help of chatgpt.
