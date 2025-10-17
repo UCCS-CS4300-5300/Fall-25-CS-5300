@@ -12,7 +12,7 @@ This guide explains how to set up automated Railway deployment via GitHub Action
 
 ### 1. Get Railway Token
 
-1. Go to Railway dashboard: https://railway.app/account/tokens
+1. Go to Railway Project Setting -> Tokens
 2. Click "Create Token"
 3. Copy the token (you won't see it again!)
 4. Store it securely
