@@ -177,7 +177,6 @@ jobs:
   ai-review:
     name: AI Code Review
     runs-on: ubuntu-latest
-    needs: [test]
 
     steps:
     - name: Checkout Code
@@ -226,7 +225,7 @@ jobs:
   cleanup:
     name: Cleanup & Archive
     runs-on: ubuntu-latest
-    needs: [ai-review]
+    needs: [lint, security, test, ai-review]
     if: always()
 
     steps:
