@@ -853,7 +853,7 @@ def register(request):
     if form.is_valid():
         user = form.save()
         username = form.cleaned_data.get('username')
-        group = Group.objects.get(name='average_role')
+        group, created = Group.objects.get_or_create(name='average_role')
         user.groups.add(group)
         # user = User.objects.create(user=user)
         user.save()
