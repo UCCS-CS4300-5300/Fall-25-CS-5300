@@ -97,3 +97,46 @@ jobs:
           echo "- Triggered by: ${{ github.actor }}"
           echo "- Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
         } >> $GITHUB_STEP_SUMMARY
+
+  deploy:
+    name: Deploy to Railway
+    runs-on: ubuntu-latest
+    needs: docker-release
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install Railway CLI
+      run: npm install -g @railway/cli
+
+    - name: Deploy Docker Image to Railway
+      id: deploy
+      continue-on-error: true
+      run: |
+        railway link ${{ secrets.RAILWAY_SERVICE_ID }}
+        railway up --service=${{ secrets.RAILWAY_SERVICE_ID }} --detach
+      env:
+        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+    - name: Deployment Summary
+      if: always()
+      run: |
+        {
+          echo '# Railway Deployment'
+          echo ''
+          echo '## Status'
+          if [ "${{ steps.deploy.outcome }}" == "success" ]; then
+            echo '✅ Deployment successful'
+          else
+            echo '❌ Deployment failed'
+          fi
+          echo ''
+          echo '## Details'
+          echo "- Docker Image: ghcr.io/${{ github.repository }}:${{ needs.docker-release.outputs.version }}"
+          echo "- Version: ${{ needs.docker-release.outputs.version }}"
+          echo "- Branch: ${{ github.ref_name }}"
+          echo "- Commit: ${{ github.sha }}"
+          echo "- Triggered by: ${{ github.actor }}"
+          echo "- Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+        } >> $GITHUB_STEP_SUMMARY
