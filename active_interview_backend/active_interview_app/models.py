@@ -72,3 +72,8 @@ class Chat(models.Model):
 
     def __str__(self):
         return self.title
+
+
+# Import token tracking models (must be at end to avoid circular imports)
+from .token_usage_models import TokenUsage  # noqa: E402, F401
+from .merge_stats_models import MergeTokenStats  # noqa: E402, F401
