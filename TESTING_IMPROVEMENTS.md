@@ -416,8 +416,12 @@ Tests verify:
 - `active_interview_backend/active_interview_app/tests/test_additional_views.py`
 - `active_interview_backend/active_interview_app/tests/test_token_tracking.py`
 - `active_interview_backend/active_interview_app/tests/test_views_extended.py`
+- `active_interview_backend/active_interview_app/tests/test_views_comprehensive.py` ⭐ **NEW**
 - `run_tests_with_coverage.bat`
 - `TESTING_IMPROVEMENTS.md` (this file)
+
+### Modified:
+- `.github/workflows/CI.yml` - AI review now depends on test coverage passing
 
 ### Existing (Not Modified):
 - All existing test files remain unchanged
