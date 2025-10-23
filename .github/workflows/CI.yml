@@ -180,6 +180,7 @@ jobs:
   ai-review:
     name: AI Code Review
     runs-on: ubuntu-latest
+    needs: [test]
 
     steps:
     - name: Checkout Code
