@@ -19,30 +19,13 @@ from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 from reportlab.pdfgen import canvas
 
 
-def generate_pdf_report(exportable_report):
+def _create_styles():
     """
-    Generate a PDF report from an ExportableReport instance.
-
-    Args:
-        exportable_report: An ExportableReport model instance
+    Create and return custom PDF styles.
 
     Returns:
-        BytesIO: A file-like object containing the generated PDF
+        tuple: (title_style, heading_style, normal_style)
     """
-    buffer = BytesIO()
-    doc = SimpleDocTemplate(
-        buffer,
-        pagesize=letter,
-        rightMargin=72,
-        leftMargin=72,
-        topMargin=72,
-        bottomMargin=18,
-    )
-
-    # Container for the 'Flowable' objects
-    elements = []
-
-    # Define styles
     styles = getSampleStyleSheet()
     title_style = ParagraphStyle(
         'CustomTitle',
@@ -64,13 +47,23 @@ def generate_pdf_report(exportable_report):
     normal_style.fontSize = 11
     normal_style.leading = 14
 
-    # Title
-    chat = exportable_report.chat
-    title_text = f"Interview Report: {chat.title}"
-    elements.append(Paragraph(title_text, title_style))
-    elements.append(Spacer(1, 0.2 * inch))
+    return title_style, heading_style, normal_style
 
-    # Interview Metadata Section
+
+def _create_metadata_section(exportable_report, heading_style):
+    """
+    Create the interview metadata section.
+
+    Args:
+        exportable_report: An ExportableReport model instance
+        heading_style: The heading style to use
+
+    Returns:
+        list: List of flowable elements for the metadata section
+    """
+    elements = []
+    chat = exportable_report.chat
+
     elements.append(Paragraph("Interview Details", heading_style))
     elements.append(HRFlowable(width="100%", thickness=1,
                               color=colors.HexColor('#1a73e8')))
@@ -102,7 +95,23 @@ def generate_pdf_report(exportable_report):
     elements.append(metadata_table)
     elements.append(Spacer(1, 0.3 * inch))
 
-    # Performance Scores Section
+    return elements
+
+
+def _create_performance_scores_section(exportable_report, heading_style, normal_style):
+    """
+    Create the performance assessment section.
+
+    Args:
+        exportable_report: An ExportableReport model instance
+        heading_style: The heading style to use
+        normal_style: The normal text style to use
+
+    Returns:
+        list: List of flowable elements for the performance scores section
+    """
+    elements = []
+
     elements.append(Paragraph("Performance Assessment", heading_style))
     elements.append(HRFlowable(width="100%", thickness=1,
                               color=colors.HexColor('#1a73e8')))
@@ -158,7 +167,23 @@ def generate_pdf_report(exportable_report):
         ))
         elements.append(Spacer(1, 0.2 * inch))
 
-    # AI Feedback Section
+    return elements
+
+
+def _create_feedback_section(exportable_report, heading_style, normal_style):
+    """
+    Create the AI feedback section.
+
+    Args:
+        exportable_report: An ExportableReport model instance
+        heading_style: The heading style to use
+        normal_style: The normal text style to use
+
+    Returns:
+        list: List of flowable elements for the feedback section
+    """
+    elements = []
+
     if exportable_report.feedback_text:
         elements.append(Paragraph("AI Feedback", heading_style))
         elements.append(HRFlowable(width="100%", thickness=1,
@@ -172,7 +197,22 @@ def generate_pdf_report(exportable_report):
                 elements.append(Spacer(1, 0.05 * inch))
         elements.append(Spacer(1, 0.2 * inch))
 
-    # Question Responses Section
+    return elements
+
+
+def _create_question_responses_section(exportable_report, heading_style):
+    """
+    Create the question responses section.
+
+    Args:
+        exportable_report: An ExportableReport model instance
+        heading_style: The heading style to use
+
+    Returns:
+        list: List of flowable elements for the question responses section
+    """
+    elements = []
+
     if exportable_report.question_responses:
         elements.append(PageBreak())
         elements.append(Paragraph("Interview Questions and Responses", heading_style))
@@ -180,6 +220,7 @@ def generate_pdf_report(exportable_report):
                                   color=colors.HexColor('#1a73e8')))
         elements.append(Spacer(1, 0.2 * inch))
 
+        styles = getSampleStyleSheet()
         for idx, qa in enumerate(exportable_report.question_responses, 1):
             # Question
             question_style = ParagraphStyle(
@@ -229,7 +270,22 @@ def generate_pdf_report(exportable_report):
                                       color=colors.HexColor('#cccccc'),
                                       spaceAfter=0.15 * inch))
 
-    # Summary Statistics
+    return elements
+
+
+def _create_statistics_section(exportable_report, heading_style):
+    """
+    Create the statistics section.
+
+    Args:
+        exportable_report: An ExportableReport model instance
+        heading_style: The heading style to use
+
+    Returns:
+        list: List of flowable elements for the statistics section
+    """
+    elements = []
+
     elements.append(PageBreak())
     elements.append(Paragraph("Interview Statistics", heading_style))
     elements.append(HRFlowable(width="100%", thickness=1,
@@ -254,7 +310,19 @@ def generate_pdf_report(exportable_report):
     ]))
     elements.append(stats_table)
 
-    # Footer
+    return elements
+
+
+def _create_footer():
+    """
+    Create the footer section.
+
+    Returns:
+        list: List of flowable elements for the footer
+    """
+    elements = []
+
+    styles = getSampleStyleSheet()
     elements.append(Spacer(1, 0.5 * inch))
     footer_style = ParagraphStyle(
         'Footer',
@@ -268,6 +336,49 @@ def generate_pdf_report(exportable_report):
         f"{datetime.now().strftime('%B %d, %Y at %I:%M %p')}."
     )
     elements.append(Paragraph(footer_text, footer_style))
+
+    return elements
+
+
+def generate_pdf_report(exportable_report):
+    """
+    Generate a PDF report from an ExportableReport instance.
+
+    Args:
+        exportable_report: An ExportableReport model instance
+
+    Returns:
+        BytesIO: A file-like object containing the generated PDF
+    """
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=letter,
+        rightMargin=72,
+        leftMargin=72,
+        topMargin=72,
+        bottomMargin=18,
+    )
+
+    # Container for the 'Flowable' objects
+    elements = []
+
+    # Create styles
+    title_style, heading_style, normal_style = _create_styles()
+
+    # Add title
+    chat = exportable_report.chat
+    title_text = f"Interview Report: {chat.title}"
+    elements.append(Paragraph(title_text, title_style))
+    elements.append(Spacer(1, 0.2 * inch))
+
+    # Add sections
+    elements.extend(_create_metadata_section(exportable_report, heading_style))
+    elements.extend(_create_performance_scores_section(exportable_report, heading_style, normal_style))
+    elements.extend(_create_feedback_section(exportable_report, heading_style, normal_style))
+    elements.extend(_create_question_responses_section(exportable_report, heading_style))
+    elements.extend(_create_statistics_section(exportable_report, heading_style))
+    elements.extend(_create_footer())
 
     # Build PDF
     doc.build(elements)
