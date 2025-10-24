@@ -534,3 +534,372 @@ class DeleteResumeTest(TestCase):
         self.assertEqual(response.status_code, 302)
         # Resume should still exist (only POST deletes)
         self.assertTrue(UploadedResume.objects.filter(id=self.resume.id).exists())
+
+
+class DeleteJobTest(TestCase):
+    """Test delete_job view"""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='testpass123'
+        )
+        self.client.login(username='testuser', password='testpass123')
+
+        fake_file = SimpleUploadedFile("job.txt", b"job content")
+        self.job = UploadedJobListing.objects.create(
+            user=self.user,
+            title='My Job',
+            content='Job description',
+            filepath='/fake/path',
+            filename='job.txt',
+            file=fake_file
+        )
+
+    def test_delete_job_post(self):
+        """Test deleting job via POST"""
+        response = self.client.post(
+            reverse('delete_job', kwargs={'job_id': self.job.id})
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(UploadedJobListing.objects.filter(id=self.job.id).exists())
+
+    def test_delete_job_get_redirect(self):
+        """Test GET request to delete_job redirects"""
+        response = self.client.get(
+            reverse('delete_job', kwargs={'job_id': self.job.id})
+        )
+
+        self.assertEqual(response.status_code, 302)
+
+
+class ResumeDetailTest(TestCase):
+    """Test resume_detail view"""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='testpass123'
+        )
+        self.client.login(username='testuser', password='testpass123')
+
+        fake_file = SimpleUploadedFile("resume.pdf", b"resume content")
+        self.resume = UploadedResume.objects.create(
+            user=self.user,
+            title='My Resume',
+            content='Resume content',
+            filesize=100,
+            original_filename='resume.pdf',
+            file=fake_file
+        )
+
+    def test_resume_detail_view(self):
+        """Test resume detail page renders"""
+        response = self.client.get(
+            reverse('resume_detail', kwargs={'resume_id': self.resume.id})
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'documents/resume_detail.html')
+        self.assertEqual(response.context['resume'], self.resume)
+
+
+class JobPostingDetailTest(TestCase):
+    """Test job_posting_detail view"""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='testpass123'
+        )
+        self.client.login(username='testuser', password='testpass123')
+
+        fake_file = SimpleUploadedFile("job.txt", b"job content")
+        self.job = UploadedJobListing.objects.create(
+            user=self.user,
+            title='My Job',
+            content='Job description',
+            filepath='/fake/path',
+            filename='job.txt',
+            file=fake_file
+        )
+
+    def test_job_posting_detail_view(self):
+        """Test job posting detail page renders"""
+        response = self.client.get(
+            reverse('job_posting_detail', kwargs={'job_id': self.job.id})
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'documents/job_posting_detail.html')
+        self.assertEqual(response.context['job'], self.job)
+
+
+class LoggedInViewTest(TestCase):
+    """Test loggedin view"""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='testpass123'
+        )
+
+    def test_loggedin_view(self):
+        """Test loggedin page renders for authenticated user"""
+        self.client.login(username='testuser', password='testpass123')
+        response = self.client.get(reverse('loggedin'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'loggedinindex.html')
+
+
+class AboutUsViewTest(TestCase):
+    """Test aboutus view"""
+
+    def test_aboutus_view(self):
+        """Test about us page renders"""
+        client = Client()
+        response = client.get(reverse('aboutus'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'about-us.html')
+
+
+class ResultsViewTest(TestCase):
+    """Test results view"""
+
+    def test_results_view(self):
+        """Test results page renders"""
+        client = Client()
+        response = client.get(reverse('results'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'results.html')
+
+
+class UploadedResumeAPIViewTest(TestCase):
+    """Test UploadedResumeView API"""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='testpass123'
+        )
+        self.client.force_login(self.user)
+
+    def test_uploaded_resume_get(self):
+        """Test GET request to UploadedResumeView"""
+        fake_file = SimpleUploadedFile("resume.pdf", b"resume content")
+        UploadedResume.objects.create(
+            user=self.user,
+            title='Test Resume',
+            content='Resume content',
+            filesize=100,
+            original_filename='resume.pdf',
+            file=fake_file
+        )
+
+        response = self.client.get(reverse('files_list'))
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]['title'], 'Test Resume')
+
+    def test_uploaded_resume_post_invalid(self):
+        """Test POST with invalid data to UploadedResumeView"""
+        response = self.client.post(
+            reverse('files_list'),
+            data=json.dumps({'invalid': 'data'}),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 400)
+
+
+class ChatListViewTest(TestCase):
+    """Test chat_list view"""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='testpass123'
+        )
+        self.client.login(username='testuser', password='testpass123')
+
+        fake_job_file = SimpleUploadedFile("job.txt", b"job content")
+        self.job_listing = UploadedJobListing.objects.create(
+            user=self.user,
+            title='Test Job',
+            content='Job description',
+            filepath='/fake/path',
+            filename='job.txt',
+            file=fake_job_file
+        )
+
+    def test_chat_list_view(self):
+        """Test chat list page renders"""
+        Chat.objects.create(
+            owner=self.user,
+            title='Test Chat',
+            job_listing=self.job_listing,
+            difficulty=5,
+            type='GEN',
+            messages=[{"role": "system", "content": "test"}]
+        )
+
+        response = self.client.get(reverse('chat-list'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'chat/chat-list.html')
+        self.assertEqual(len(response.context['owner_chats']), 1)
+
+
+class RestartChatTest(TestCase):
+    """Test RestartChat view"""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='testpass123'
+        )
+        self.client.login(username='testuser', password='testpass123')
+
+        fake_job_file = SimpleUploadedFile("job.txt", b"job content")
+        self.job_listing = UploadedJobListing.objects.create(
+            user=self.user,
+            title='Test Job',
+            content='Job description',
+            filepath='/fake/path',
+            filename='job.txt',
+            file=fake_job_file
+        )
+
+        self.chat = Chat.objects.create(
+            owner=self.user,
+            title='Test Chat',
+            job_listing=self.job_listing,
+            difficulty=5,
+            type='GEN',
+            messages=[
+                {"role": "system", "content": "test"},
+                {"role": "assistant", "content": "greeting"},
+                {"role": "user", "content": "hello"},
+                {"role": "assistant", "content": "response"}
+            ]
+        )
+
+    def test_restart_chat(self):
+        """Test restarting chat clears messages except first 2"""
+        response = self.client.post(
+            reverse('chat-restart', kwargs={'chat_id': self.chat.id}),
+            {'restart': 'true'}
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.chat.refresh_from_db()
+        self.assertEqual(len(self.chat.messages), 2)
+        self.assertEqual(self.chat.messages[0]['role'], 'system')
+        self.assertEqual(self.chat.messages[1]['role'], 'assistant')
+
+
+class UploadedJobListingViewPostTest(TestCase):
+    """Test UploadedJobListingView POST edge cases"""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='testpass123'
+        )
+        self.client.login(username='testuser', password='testpass123')
+
+    def test_upload_job_listing_empty_text(self):
+        """Test posting job listing with empty text"""
+        response = self.client.post(reverse('save_pasted_text'), {
+            'paste-text': '',
+            'title': 'Empty Job'
+        })
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(
+            UploadedJobListing.objects.filter(title='Empty Job').exists()
+        )
+
+    def test_upload_job_listing_empty_title(self):
+        """Test posting job listing with empty title"""
+        response = self.client.post(reverse('save_pasted_text'), {
+            'paste-text': 'Some job description',
+            'title': ''
+        })
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(
+            UploadedJobListing.objects.filter(content='Some job description').exists()
+        )
+
+    def test_upload_job_listing_whitespace_only(self):
+        """Test posting job listing with whitespace only"""
+        response = self.client.post(reverse('save_pasted_text'), {
+            'paste-text': '   ',
+            'title': 'Whitespace Job'
+        })
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(
+            UploadedJobListing.objects.filter(title='Whitespace Job').exists()
+        )
+
+
+class DocxFileUploadTest(TestCase):
+    """Test DOCX file upload functionality"""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='testpass123'
+        )
+        self.client.login(username='testuser', password='testpass123')
+
+    @patch('active_interview_app.views.filetype.guess')
+    @patch('active_interview_app.views.Document')
+    @patch('active_interview_app.views.md')
+    def test_upload_docx_file_success(self, mock_md, mock_document, mock_filetype):
+        """Test successfully uploading a DOCX file"""
+        # Mock filetype to return DOCX
+        mock_file_type = MagicMock()
+        mock_file_type.extension = 'docx'
+        mock_filetype.return_value = mock_file_type
+
+        # Mock DOCX parsing
+        mock_doc_instance = MagicMock()
+        mock_paragraph = MagicMock()
+        mock_paragraph.text = 'Resume paragraph'
+        mock_doc_instance.paragraphs = [mock_paragraph]
+        mock_document.return_value = mock_doc_instance
+
+        # Mock markdown conversion
+        mock_md.return_value = '# Resume Markdown'
+
+        file_content = b'fake docx content'
+        file = SimpleUploadedFile(
+            "resume.docx",
+            file_content,
+            content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        )
+
+        response = self.client.post(reverse('upload_file'), {
+            'file': file,
+            'title': 'My DOCX Resume'
+        })
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(UploadedResume.objects.filter(title='My DOCX Resume').exists())
+        resume = UploadedResume.objects.get(title='My DOCX Resume')
+        self.assertEqual(resume.content, '# Resume Markdown')

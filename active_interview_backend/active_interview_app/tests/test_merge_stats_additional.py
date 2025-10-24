@@ -418,3 +418,147 @@ class MergeTokenStatsEdgeCasesTest(TestCase):
         cost_field = MergeTokenStats._meta.get_field('cumulative_cost')
         self.assertEqual(cost_field.max_digits, 10)
         self.assertEqual(cost_field.decimal_places, 2)
+
+    def test_create_from_branch_with_mixed_models(self):
+        """Test create_from_branch aggregates Claude and ChatGPT tokens properly"""
+        # Create mixed token usage records
+        TokenUsage.objects.create(
+            user=self.user,
+            git_branch='feature/mixed',
+            model_name='claude-sonnet-4',
+            endpoint='/v1/messages',
+            prompt_tokens=100,
+            completion_tokens=50
+        )
+        TokenUsage.objects.create(
+            user=self.user,
+            git_branch='feature/mixed',
+            model_name='gpt-4o',
+            endpoint='/v1/chat/completions',
+            prompt_tokens=200,
+            completion_tokens=100
+        )
+
+        merge_stats = MergeTokenStats.create_from_branch(
+            branch_name='feature/mixed',
+            commit_sha='abc123mixed',
+            merged_by=self.user,
+            pr_number=456
+        )
+
+        # Check Claude tokens
+        self.assertEqual(merge_stats.claude_prompt_tokens, 100)
+        self.assertEqual(merge_stats.claude_completion_tokens, 50)
+        self.assertEqual(merge_stats.claude_request_count, 1)
+
+        # Check ChatGPT tokens
+        self.assertEqual(merge_stats.chatgpt_prompt_tokens, 200)
+        self.assertEqual(merge_stats.chatgpt_completion_tokens, 100)
+        self.assertEqual(merge_stats.chatgpt_request_count, 1)
+
+        # Check totals
+        self.assertEqual(merge_stats.total_prompt_tokens, 300)
+        self.assertEqual(merge_stats.total_completion_tokens, 150)
+        self.assertEqual(merge_stats.total_tokens, 450)
+        self.assertEqual(merge_stats.request_count, 2)
+
+        # Check user and PR number were set
+        self.assertEqual(merge_stats.merged_by, self.user)
+        self.assertEqual(merge_stats.pr_number, 456)
+
+    def test_get_breakdown_summary_structure(self):
+        """Test that get_breakdown_summary returns all expected keys and structure"""
+        merge_stats = MergeTokenStats.objects.create(
+            source_branch='feature/structure-test',
+            merge_commit_sha='abc123structure',
+            claude_prompt_tokens=100,
+            claude_completion_tokens=50,
+            claude_request_count=2,
+            chatgpt_prompt_tokens=200,
+            chatgpt_completion_tokens=100,
+            chatgpt_request_count=3
+        )
+
+        breakdown = merge_stats.get_breakdown_summary()
+
+        # Check top-level keys
+        self.assertIn('branch', breakdown)
+        self.assertIn('merge_date', breakdown)
+        self.assertIn('claude', breakdown)
+        self.assertIn('chatgpt', breakdown)
+        self.assertIn('totals', breakdown)
+        self.assertIn('cumulative', breakdown)
+
+        # Check Claude section
+        self.assertIn('prompt_tokens', breakdown['claude'])
+        self.assertIn('completion_tokens', breakdown['claude'])
+        self.assertIn('total_tokens', breakdown['claude'])
+        self.assertIn('requests', breakdown['claude'])
+
+        # Check ChatGPT section
+        self.assertIn('prompt_tokens', breakdown['chatgpt'])
+        self.assertIn('completion_tokens', breakdown['chatgpt'])
+        self.assertIn('total_tokens', breakdown['chatgpt'])
+        self.assertIn('requests', breakdown['chatgpt'])
+
+        # Check totals section
+        self.assertIn('prompt_tokens', breakdown['totals'])
+        self.assertIn('completion_tokens', breakdown['totals'])
+        self.assertIn('total_tokens', breakdown['totals'])
+        self.assertIn('requests', breakdown['totals'])
+        self.assertIn('cost', breakdown['totals'])
+
+        # Check cumulative section
+        self.assertIn('claude_tokens', breakdown['cumulative'])
+        self.assertIn('chatgpt_tokens', breakdown['cumulative'])
+        self.assertIn('total_tokens', breakdown['cumulative'])
+        self.assertIn('cost', breakdown['cumulative'])
+
+    def test_branch_cost_with_large_values(self):
+        """Test branch_cost calculation with large token values"""
+        merge_stats = MergeTokenStats.objects.create(
+            source_branch='feature/large-cost',
+            merge_commit_sha='abc123largecost',
+            claude_prompt_tokens=1000000,
+            claude_completion_tokens=500000,
+            chatgpt_prompt_tokens=1000000,
+            chatgpt_completion_tokens=500000
+        )
+
+        # Claude: (1000000/1000 * 0.003) + (500000/1000 * 0.015) = 3 + 7.5 = 10.5
+        # ChatGPT: (1000000/1000 * 0.03) + (500000/1000 * 0.06) = 30 + 30 = 60
+        # Total: 70.5
+        expected_cost = 70.5
+        self.assertAlmostEqual(merge_stats.branch_cost, expected_cost, places=2)
+
+    def test_unique_constraint_on_merge_commit_sha(self):
+        """Test that duplicate merge_commit_sha raises IntegrityError"""
+        from django.db import IntegrityError
+
+        MergeTokenStats.objects.create(
+            source_branch='feature/unique1',
+            merge_commit_sha='uniquesha123',
+            claude_prompt_tokens=100,
+            claude_completion_tokens=50
+        )
+
+        with self.assertRaises(IntegrityError):
+            MergeTokenStats.objects.create(
+                source_branch='feature/unique2',
+                merge_commit_sha='uniquesha123',
+                claude_prompt_tokens=200,
+                claude_completion_tokens=100
+            )
+
+    def test_str_includes_arrow_between_branches(self):
+        """Test that __str__ method includes arrow notation between branches"""
+        merge_stats = MergeTokenStats.objects.create(
+            source_branch='feature/arrow-test',
+            target_branch='develop',
+            merge_commit_sha='abc123arrow'
+        )
+
+        str_repr = str(merge_stats)
+        self.assertIn('→', str_repr)
+        self.assertIn('feature/arrow-test', str_repr)
+        self.assertIn('develop', str_repr)
