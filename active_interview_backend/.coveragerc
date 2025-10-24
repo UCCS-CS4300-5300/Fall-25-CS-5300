@@ -7,3 +7,4 @@ omit =
     # Files
 	*/__init__.py
 	*/manage.py
+	*/token_usage_models.py
