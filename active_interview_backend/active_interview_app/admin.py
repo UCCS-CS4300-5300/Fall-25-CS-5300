@@ -33,12 +33,16 @@ class MergeTokenStatsAdmin(admin.ModelAdmin):
     readonly_fields = ('merge_date', 'cumulative_total_tokens', 'cumulative_cost')
     date_hierarchy = 'merge_date'
 
+    def estimated_cost(self, obj):
+        return f"${obj.branch_cost:.4f}"
+    estimated_cost.short_description = 'Est. Cost'
+
     fieldsets = (
         ('Merge Information', {
             'fields': ('source_branch', 'target_branch', 'merge_date', 'merge_commit_sha', 'merged_by', 'pr_number')
         }),
         ('Token Usage', {
-            'fields': ('total_tokens', 'prompt_tokens', 'completion_tokens', 'request_count', 'estimated_cost')
+            'fields': ('total_tokens', 'total_prompt_tokens', 'total_completion_tokens', 'request_count')
         }),
         ('Cumulative Totals', {
             'fields': ('cumulative_total_tokens', 'cumulative_cost'),
