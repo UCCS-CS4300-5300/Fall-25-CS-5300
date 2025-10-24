@@ -78,6 +78,14 @@ urlpatterns = [
     path('job-posting/edit/<int:job_id>/',
          views.edit_job_posting, name='edit_job_posting'),
 
+    # Exportable Report urls
+    path('chat/<int:chat_id>/generate-report/',
+         views.GenerateReportView.as_view(), name='generate_report'),
+    path('chat/<int:chat_id>/export-report/',
+         views.ExportReportView.as_view(), name='export_report'),
+    path('chat/<int:chat_id>/download-pdf/',
+         views.DownloadPDFReportView.as_view(), name='download_pdf_report'),
+
 
 
 

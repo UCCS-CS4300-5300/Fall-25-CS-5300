@@ -5,3 +5,4 @@ from .models import *
 admin.site.register(Chat)
 admin.site.register(UploadedJobListing)
 admin.site.register(UploadedResume)
+admin.site.register(ExportableReport)

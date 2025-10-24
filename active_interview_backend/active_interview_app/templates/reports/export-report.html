@@ -1,0 +1,305 @@
+{% extends "base-sidebar.html" %}
+{% block title %}
+  AIS - Export Report - {{ chat.title }}
+{% endblock title %}
+{% block content %}
+  <head>
+    <style>
+      .export-header {
+        margin: 2rem auto;
+        max-width: 1200px;
+        text-align: center;
+      }
+      .export-header h1 {
+        color: #4482a6;
+        font-family: Verdana, Geneva, Tahoma, sans-serif;
+        margin-bottom: 1rem;
+      }
+      .export-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+      .report-section {
+        background: white;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      .report-section h2 {
+        color: #4482a6;
+        font-family: Verdana, Geneva, Tahoma, sans-serif;
+        margin-bottom: 1rem;
+        border-bottom: 2px solid lightblue;
+        padding-bottom: 0.5rem;
+      }
+      .metadata-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+      }
+      .metadata-table td {
+        padding: 0.75rem;
+        border-bottom: 1px solid #e0e0e0;
+      }
+      .metadata-table td:first-child {
+        font-weight: bold;
+        color: #555;
+        width: 30%;
+      }
+      .scores-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .score-card {
+        background: #f5f5f5;
+        padding: 1.5rem;
+        border-radius: 8px;
+        text-align: center;
+        border: 2px solid #e0e0e0;
+      }
+      .score-card h3 {
+        color: #555;
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+      }
+      .score-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #4482a6;
+      }
+      .score-rating {
+        color: #777;
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+      }
+      .feedback-text {
+        background: #f9f9f9;
+        padding: 1.5rem;
+        border-radius: 8px;
+        border-left: 4px solid #4482a6;
+        line-height: 1.6;
+        white-space: pre-wrap;
+      }
+      .export-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin: 2rem 0;
+        flex-wrap: wrap;
+      }
+      .export-btn {
+        padding: 1rem 2rem;
+        font-size: 1rem;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+      }
+      .export-btn-pdf {
+        background: #e74c3c;
+        color: white;
+      }
+      .export-btn-pdf:hover {
+        background: #c0392b;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      }
+      .export-btn-back {
+        background: #95a5a6;
+        color: white;
+      }
+      .export-btn-back:hover {
+        background: #7f8c8d;
+      }
+      .statistics {
+        display: flex;
+        gap: 2rem;
+        flex-wrap: wrap;
+        margin: 1rem 0;
+      }
+      .stat-item {
+        flex: 1;
+        min-width: 200px;
+      }
+      .stat-item strong {
+        display: block;
+        color: #555;
+        margin-bottom: 0.25rem;
+      }
+      .qa-section {
+        max-height: 500px;
+        overflow-y: auto;
+        padding: 1rem;
+        background: #f9f9f9;
+        border-radius: 8px;
+      }
+      .qa-item {
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        background: white;
+        border-radius: 8px;
+        border-left: 4px solid #4482a6;
+      }
+      .qa-question {
+        font-weight: bold;
+        color: #4482a6;
+        margin-bottom: 0.5rem;
+      }
+      .qa-answer {
+        margin-left: 1rem;
+        color: #333;
+        line-height: 1.5;
+      }
+    </style>
+  </head>
+
+  <div class="export-header">
+    <h1>Exportable Report: {{ chat.title }}</h1>
+  </div>
+
+  <div class="export-container">
+    <!-- Export Actions -->
+    <div class="export-actions">
+      <a href="{% url 'download_pdf_report' chat.id %}" class="export-btn export-btn-pdf">
+        Download as PDF
+      </a>
+      <a href="{% url 'chat-results' chat.id %}" class="export-btn export-btn-back">
+        Back to Results
+      </a>
+    </div>
+
+    <!-- Interview Metadata -->
+    <div class="report-section">
+      <h2>Interview Details</h2>
+      <table class="metadata-table">
+        <tr>
+          <td>Interview Type:</td>
+          <td>{{ chat.get_type_display }}</td>
+        </tr>
+        <tr>
+          <td>Difficulty Level:</td>
+          <td>{{ chat.difficulty }}/10</td>
+        </tr>
+        <tr>
+          <td>Date Completed:</td>
+          <td>{{ chat.modified_date|date:"F d, Y" }}</td>
+        </tr>
+        <tr>
+          <td>Report Generated:</td>
+          <td>{{ report.generated_at|date:"F d, Y \a\t h:i A" }}</td>
+        </tr>
+        {% if chat.job_listing %}
+        <tr>
+          <td>Job Position:</td>
+          <td>{{ chat.job_listing.title }}</td>
+        </tr>
+        {% endif %}
+        {% if chat.resume %}
+        <tr>
+          <td>Resume:</td>
+          <td>{{ chat.resume.title }}</td>
+        </tr>
+        {% endif %}
+      </table>
+    </div>
+
+    <!-- Performance Scores -->
+    {% if report.overall_score %}
+    <div class="report-section">
+      <h2>Performance Assessment</h2>
+      <div class="scores-grid">
+        <div class="score-card">
+          <h3>Professionalism</h3>
+          <div class="score-value">{{ report.professionalism_score|default:"N/A" }}</div>
+          <div class="score-rating">/100</div>
+        </div>
+        <div class="score-card">
+          <h3>Subject Knowledge</h3>
+          <div class="score-value">{{ report.subject_knowledge_score|default:"N/A" }}</div>
+          <div class="score-rating">/100</div>
+        </div>
+        <div class="score-card">
+          <h3>Clarity</h3>
+          <div class="score-value">{{ report.clarity_score|default:"N/A" }}</div>
+          <div class="score-rating">/100</div>
+        </div>
+        <div class="score-card">
+          <h3>Overall Score</h3>
+          <div class="score-value">{{ report.overall_score|default:"N/A" }}</div>
+          <div class="score-rating">/100</div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- AI Feedback -->
+    {% if report.feedback_text %}
+    <div class="report-section">
+      <h2>AI Feedback</h2>
+      <div class="feedback-text">{{ report.feedback_text }}</div>
+    </div>
+    {% endif %}
+
+    <!-- Interview Statistics -->
+    <div class="report-section">
+      <h2>Interview Statistics</h2>
+      <div class="statistics">
+        <div class="stat-item">
+          <strong>Total Questions Asked:</strong>
+          <span>{{ report.total_questions_asked }}</span>
+        </div>
+        <div class="stat-item">
+          <strong>Total Responses Given:</strong>
+          <span>{{ report.total_responses_given }}</span>
+        </div>
+        {% if report.interview_duration_minutes %}
+        <div class="stat-item">
+          <strong>Interview Duration:</strong>
+          <span>{{ report.interview_duration_minutes }} minutes</span>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Question & Answer Preview -->
+    {% if report.question_responses %}
+    <div class="report-section">
+      <h2>Interview Questions & Responses (Preview)</h2>
+      <div class="qa-section">
+        {% for qa in report.question_responses|slice:":5" %}
+        <div class="qa-item">
+          <div class="qa-question">Q{{ forloop.counter }}: {{ qa.question|truncatewords:50 }}</div>
+          <div class="qa-answer"><strong>Answer:</strong> {{ qa.answer|truncatewords:50 }}</div>
+          {% if qa.score %}
+          <div class="qa-answer"><strong>Score:</strong> {{ qa.score }}/10</div>
+          {% endif %}
+        </div>
+        {% endfor %}
+        {% if report.question_responses|length > 5 %}
+        <p style="text-align: center; color: #777; margin-top: 1rem;">
+          And {{ report.question_responses|length|add:"-5" }} more questions... Download PDF for full report.
+        </p>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Export Actions (Bottom) -->
+    <div class="export-actions">
+      <a href="{% url 'download_pdf_report' chat.id %}" class="export-btn export-btn-pdf">
+        Download as PDF
+      </a>
+      <a href="{% url 'chat-results' chat.id %}" class="export-btn export-btn-back">
+        Back to Results
+      </a>
+    </div>
+  </div>
+{% endblock content %}
