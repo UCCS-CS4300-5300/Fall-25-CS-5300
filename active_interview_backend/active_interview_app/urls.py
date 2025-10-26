@@ -19,15 +19,10 @@ urlpatterns = [
     path('features/', views.features, name='features'),
 
     # Auth urls
-    # path('', views.index, name='login'),
-    # path('', views.index, name='login'),
+    # Note: allauth handles accounts/* URLs in project urls.py
+    # We keep custom register for backward compatibility
     path('testlogged/', views.loggedin, name='loggedin'),
-    path('accounts/', include('django.contrib.auth.urls')),
     path('accounts/register/', views.register, name='register_page'),
-    path('accounts/logout/',
-         auth_views.LogoutView.as_view(
-             template_name='registration/logged_out.html'),
-         name='logout'),
     path('profile/', views.profile, name='profile'),
     path('results/', views.results, name='results'),
 
