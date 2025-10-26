@@ -15,7 +15,7 @@ services:
       #      - "8000:8000"
     expose:
       - "8000"  # Exposed internally
-    command: bash ./start.sh
+    command: bash ./paracord_runner.sh
 #     network_mode: "host"
 #     networks:
 #       - ext_network

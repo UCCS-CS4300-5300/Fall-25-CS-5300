@@ -17,7 +17,7 @@ RUN python -m venv /opt/venv && \
 ENV PATH=/opt/venv/bin:$PATH
 
 # Install packages and cleanup in same layer
-COPY active_interview_backend/requirements.txt /tmp/
+COPY requirements.txt /tmp/
 RUN pip install --upgrade pip && \
     pip install -r /tmp/requirements.txt gunicorn && \
     rm -rf /root/.cache/pip/* /tmp/requirements.txt
@@ -44,7 +44,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     DJANGO_SETTINGS_MODULE=${PROJ_NAME}.settings
 
 WORKDIR /app
-COPY active_interview_backend /app
+COPY . /app
 
 # Add this line to copy gunicorn config
 #COPY gunicorn.conf.py /app/
