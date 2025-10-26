@@ -3,6 +3,7 @@ services:
     build:
       context: active_interview_backend
       target: ci
+    user: root  # Start as root, entrypoint will fix permissions then drop to paracord
     environment:
       - PROD=false
     env_file:

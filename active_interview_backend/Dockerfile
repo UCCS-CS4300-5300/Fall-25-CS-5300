@@ -92,6 +92,31 @@ RUN groupadd -r paracord && useradd -r -g paracord paracord && \
     chown -R paracord:paracord /opt/venv && \
     mkdir -p /home/paracord && chown -R paracord:paracord /home/paracord
 
-USER paracord
+# Create entrypoint wrapper that fixes permissions then drops to paracord user
+RUN printf "#!/bin/bash\n" > ./docker-entrypoint.sh && \
+    printf "set -e\n\n" >> ./docker-entrypoint.sh && \
+    printf "# Fix permissions on volume mount points if running as root\n" >> ./docker-entrypoint.sh && \
+    printf "if [ \"\$(id -u)\" = '0' ]; then\n" >> ./docker-entrypoint.sh && \
+    printf "  echo 'Fixing permissions on volume mount points...'\n" >> ./docker-entrypoint.sh && \
+    printf "  chown -R paracord:paracord /app/staticfiles /app/media /app/db 2>/dev/null || true\n" >> ./docker-entrypoint.sh && \
+    printf "  chmod -R 755 /app/staticfiles /app/media /app/db 2>/dev/null || true\n" >> ./docker-entrypoint.sh && \
+    printf "  echo 'Permissions fixed. Switching to paracord user...'\n" >> ./docker-entrypoint.sh && \
+    printf "  exec gosu paracord \"\$@\"\n" >> ./docker-entrypoint.sh && \
+    printf "else\n" >> ./docker-entrypoint.sh && \
+    printf "  exec \"\$@\"\n" >> ./docker-entrypoint.sh && \
+    printf "fi\n" >> ./docker-entrypoint.sh && \
+    chmod +x docker-entrypoint.sh
 
-CMD ./paracord_runner.sh
+# Install gosu for user switching
+RUN apt-get update && \
+    apt-get install -y gosu && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create CI-specific default command that just keeps container running
+RUN printf "#!/bin/bash\n" > ./ci_wait.sh && \
+    printf "echo 'CI container ready. Waiting for commands...'\n" >> ./ci_wait.sh && \
+    printf "tail -f /dev/null\n" >> ./ci_wait.sh && \
+    chmod +x ci_wait.sh
+
+ENTRYPOINT ["./docker-entrypoint.sh"]
+CMD ["./ci_wait.sh"]

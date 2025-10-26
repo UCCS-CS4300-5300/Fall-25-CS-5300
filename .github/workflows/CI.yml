@@ -127,28 +127,15 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
-    - name: Cache Docker layers
-      uses: actions/cache@v4
-      with:
-        path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-buildx-${{ hashFiles('active_interview_backend/Dockerfile', 'active_interview_backend/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-buildx-
-
-    - name: Build Docker image with cache
+    - name: Build Docker image with GitHub Actions cache
       run: |
         docker buildx build \
           --target ci \
-          --cache-from type=local,src=/tmp/.buildx-cache \
-          --cache-to type=local,dest=/tmp/.buildx-cache-new,mode=max \
+          --cache-from type=gha \
+          --cache-to type=gha,mode=max \
           --load \
           -t fall-25-cs-5300-backend \
           active_interview_backend
-
-    - name: Move cache
-      run: |
-        rm -rf /tmp/.buildx-cache
-        mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
     - name: Start Containers
       run: docker compose -f docker-compose.prod.yml up -d --no-build
@@ -157,14 +144,31 @@ jobs:
       run: |
         echo "Waiting for django container to be ready..."
         echo "Container is starting and running migrations + collectstatic via paracord_runner.sh..."
-        sleep 15
-        docker ps | grep django || (echo "Container not running!" && docker logs django && exit 1)
-        echo "Container ready!"
 
-    - name: Collect Static Files for Tests
-      run: |
-        echo "Ensuring static files are collected and accessible for tests..."
-        docker exec django python manage.py collectstatic --no-input --clear
+        # Retry loop with timeout
+        MAX_RETRIES=30
+        RETRY_INTERVAL=2
+        COUNTER=0
+
+        while [ $COUNTER -lt $MAX_RETRIES ]; do
+          if docker exec django python -c "import django; django.setup()" 2>/dev/null; then
+            echo "✓ Container is ready! (took $((COUNTER * RETRY_INTERVAL)) seconds)"
+            exit 0
+          fi
+
+          COUNTER=$((COUNTER + 1))
+          if [ $COUNTER -lt $MAX_RETRIES ]; then
+            echo "Waiting for container... (attempt $COUNTER/$MAX_RETRIES)"
+            sleep $RETRY_INTERVAL
+          fi
+        done
+
+        echo "❌ Container failed to become ready after $((MAX_RETRIES * RETRY_INTERVAL)) seconds"
+        echo "Container status:"
+        docker ps -a | grep django || echo "Container not found!"
+        echo "Container logs:"
+        docker logs django
+        exit 1
 
     - name: Run Django Tests
       if: always()
