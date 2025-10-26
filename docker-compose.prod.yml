@@ -1,6 +1,8 @@
 services:
   backend:
-    build: active_interview_backend/.
+    build:
+      context: active_interview_backend
+      target: ci
     environment:
       - PROD=true
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}

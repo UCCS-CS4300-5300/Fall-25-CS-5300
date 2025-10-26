@@ -118,40 +118,16 @@ jobs:
     - name: Wait for Container to be Ready
       run: |
         echo "Waiting for django container to be ready..."
-        sleep 10
+        sleep 5
         docker ps | grep django || (echo "Container not running!" && docker logs django && exit 1)
-
-    - name: Fix Database Permissions
-      run: |
-        docker exec -u root django bash -c "
-          chown -R root:root /app/db /app/staticfiles /app/media || true
-          python manage.py migrate --no-input
-          python manage.py collectstatic --no-input"
-
-    - name: Install Chrome
-      run: |
-        docker exec -u root django bash -c "
-          wget -O google-chrome.deb https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_${{ env.CHROME_VERSION }}_amd64.deb \
-          && apt-get update \
-          && apt-get install -y ./google-chrome.deb \
-          && rm google-chrome.deb"
-
-    - name: Install Chromedriver
-      run: |
-        docker exec -u root django bash -c "
-          wget -O chromedriver.zip https://storage.googleapis.com/chrome-for-testing-public/${{ env.CHROMEDRIVER_VERSION }}/linux64/chromedriver-linux64.zip \
-          && unzip chromedriver.zip \
-          && mv chromedriver-linux64/chromedriver /usr/local/bin/chromedriver \
-          && chmod +x /usr/local/bin/chromedriver \
-          && rm chromedriver.zip"
 
     - name: Run Django Tests
       if: always()
-      run: docker exec -u root django coverage run manage.py test -v 2 | tee dj_test_out.txt
+      run: docker exec django coverage run manage.py test -v 2 | tee dj_test_out.txt
 
     - name: Generate Coverage Report
       if: always()
-      run: docker exec -u root django coverage report -m | tee coverage_report.txt
+      run: docker exec django coverage report -m | tee coverage_report.txt
 
     - name: Check Coverage >= 80%
       run: |

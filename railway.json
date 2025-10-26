@@ -2,6 +2,7 @@
   "build": {
     "builder": "DOCKERFILE",
     "dockerfilePath": "active_interview_backend/Dockerfile",
-    "buildContext": "active_interview_backend"
+    "buildContext": "active_interview_backend",
+    "dockerTarget": "production"
   }
 }

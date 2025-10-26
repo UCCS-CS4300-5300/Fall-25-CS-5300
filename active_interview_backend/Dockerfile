@@ -22,8 +22,8 @@ RUN pip install --upgrade pip && \
     pip install -r /tmp/requirements.txt gunicorn && \
     rm -rf /root/.cache/pip/* /tmp/requirements.txt
 
-# Final stage
-FROM python:${PYTHON_VERSION}
+# Runtime base stage
+FROM python:${PYTHON_VERSION} AS runtime
 
 # Copy virtual env from builder
 COPY --from=builder /opt/venv /opt/venv
@@ -33,12 +33,10 @@ ENV PATH=/opt/venv/bin:$PATH
 RUN apt-get update && apt-get install -y \
     libpq5 \
     curl \
-    wget \
-    unzip \
     libcairo2 \
     && rm -rf /var/lib/apt/lists/*
 
-    # Create runtime script
+# Create runtime script
 ARG PROJ_NAME="active_interview_project"
 # Set Python environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -48,21 +46,51 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 COPY . /app
 
-# Add this line to copy gunicorn config
-#COPY gunicorn.conf.py /app/
-
 RUN printf "#!/bin/bash\n" > ./paracord_runner.sh && \
     printf "RUN_PORT=\"\${PORT:-8080}\"\n\n" >> ./paracord_runner.sh && \
     printf "python manage.py migrate --no-input\n" >> ./paracord_runner.sh && \
     printf "python manage.py collectstatic --no-input\n" >> ./paracord_runner.sh && \
-    printf "gunicorn ${PROJ_NAME}.wsgi:application --bind \"[::]:\$RUN_PORT\" --workers 3\n" >> ./paracord_runner.sh
+    printf "gunicorn ${PROJ_NAME}.wsgi:application --bind \"[::]:\$RUN_PORT\" --workers 3\n" >> ./paracord_runner.sh && \
+    chmod +x paracord_runner.sh
+
+# Production stage (default)
+FROM runtime AS production
 
 # Setup non-root user
 RUN groupadd -r paracord && useradd -r -g paracord paracord && \
     chown -R paracord:paracord /app && \
+    chown -R paracord:paracord /opt/venv
+
+USER paracord
+
+CMD ./paracord_runner.sh
+
+# CI stage (for testing)
+FROM runtime AS ci
+
+# Install Chrome, Chromedriver, and testing tools
+ARG CHROME_VERSION=135.0.7049.52-1
+ARG CHROMEDRIVER_VERSION=135.0.7049.52
+
+RUN apt-get update && apt-get install -y \
+    wget \
+    unzip \
+    gnupg \
+    && wget -O google-chrome.deb https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_${CHROME_VERSION}_amd64.deb \
+    && apt-get install -y ./google-chrome.deb \
+    && rm google-chrome.deb \
+    && wget -O chromedriver.zip https://storage.googleapis.com/chrome-for-testing-public/${CHROMEDRIVER_VERSION}/linux64/chromedriver-linux64.zip \
+    && unzip chromedriver.zip \
+    && mv chromedriver-linux64/chromedriver /usr/local/bin/chromedriver \
+    && chmod +x /usr/local/bin/chromedriver \
+    && rm -rf chromedriver.zip chromedriver-linux64 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Setup non-root user with proper permissions for testing
+RUN groupadd -r paracord && useradd -r -g paracord paracord && \
+    chown -R paracord:paracord /app && \
     chown -R paracord:paracord /opt/venv && \
-    chmod +x paracord_runner.sh && \
-    chown paracord:paracord paracord_runner.sh
+    mkdir -p /home/paracord && chown -R paracord:paracord /home/paracord
 
 USER paracord
 
