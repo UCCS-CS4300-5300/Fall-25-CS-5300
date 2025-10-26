@@ -161,6 +161,11 @@ jobs:
         docker ps | grep django || (echo "Container not running!" && docker logs django && exit 1)
         echo "Container ready!"
 
+    - name: Collect Static Files for Tests
+      run: |
+        echo "Ensuring static files are collected and accessible for tests..."
+        docker exec django python manage.py collectstatic --no-input --clear
+
     - name: Run Django Tests
       if: always()
       run: |
