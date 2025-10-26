@@ -1,7 +1,6 @@
 {
   "build": {
     "builder": "DOCKERFILE",
-    "dockerfilePath": "active_interview_backend/Dockerfile",
-    "dockerContext": "active_interview_backend"
+    "dockerfilePath": "active_interview_backend/Dockerfile"
   }
 }
