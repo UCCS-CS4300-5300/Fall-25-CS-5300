@@ -115,6 +115,16 @@ jobs:
     - name: Start Containers
       run: docker compose -f docker-compose.prod.yml up -d --build
 
+    - name: Check Container Status
+      run: |
+        echo "Checking container status..."
+        sleep 5
+        docker ps -a
+        echo "Django container logs:"
+        docker logs django
+        echo "Checking if container is running..."
+        docker ps | grep django || (echo "Container not running!" && exit 1)
+
     - name: Install Chrome
       run: |
         docker exec django bash -c "
