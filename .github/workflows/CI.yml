@@ -112,8 +112,34 @@ jobs:
         echo 'DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}' > .env
         echo 'OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}' >> .env
 
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Cache Docker layers
+      uses: actions/cache@v4
+      with:
+        path: /tmp/.buildx-cache
+        key: ${{ runner.os }}-buildx-${{ hashFiles('active_interview_backend/Dockerfile', 'active_interview_backend/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-buildx-
+
+    - name: Build Docker image with cache
+      run: |
+        docker buildx build \
+          --target ci \
+          --cache-from type=local,src=/tmp/.buildx-cache \
+          --cache-to type=local,dest=/tmp/.buildx-cache-new,mode=max \
+          --load \
+          -t fall-25-cs-5300-backend \
+          active_interview_backend
+
+    - name: Move cache
+      run: |
+        rm -rf /tmp/.buildx-cache
+        mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
     - name: Start Containers
-      run: docker compose -f docker-compose.prod.yml up -d --build
+      run: docker compose -f docker-compose.prod.yml up -d --no-build
 
     - name: Wait for Container to be Ready
       run: |
@@ -121,9 +147,60 @@ jobs:
         sleep 5
         docker ps | grep django || (echo "Container not running!" && docker logs django && exit 1)
 
+    - name: Ensure Static Files Collected
+      run: docker exec django python manage.py collectstatic --no-input
+
     - name: Run Django Tests
       if: always()
-      run: docker exec django coverage run manage.py test -v 2 | tee dj_test_out.txt
+      run: |
+        set -o pipefail
+        docker exec django coverage run manage.py test -v 2 | tee dj_test_out.txt
+        TEST_EXIT_CODE=$?
+        echo $TEST_EXIT_CODE > test_exit_code.txt
+        exit 0  # Don't fail yet, let other steps run
+
+    - name: Display Test Results Summary
+      if: always()
+      run: |
+        # Read the exit code
+        if [ -f test_exit_code.txt ]; then
+          EXIT_CODE=$(cat test_exit_code.txt)
+        else
+          EXIT_CODE="unknown"
+        fi
+
+        echo "========================================="
+        echo "TEST RESULTS SUMMARY"
+        echo "========================================="
+        echo ""
+        echo "Exit Code: $EXIT_CODE"
+        echo ""
+
+        # Extract and display test summary
+        grep -E "Ran [0-9]+ tests? in" dj_test_out.txt || echo "No test summary found"
+        grep -E "^(OK|FAILED)" dj_test_out.txt || echo "Unknown result"
+        echo ""
+
+        # Count errors and failures
+        ERROR_COUNT=$(grep -c "^ERROR:" dj_test_out.txt || echo "0")
+        FAIL_COUNT=$(grep -c "^FAIL:" dj_test_out.txt || echo "0")
+
+        echo "Errors: $ERROR_COUNT"
+        echo "Failures: $FAIL_COUNT"
+        echo ""
+
+        # Show list of failed tests if any
+        if [ "$EXIT_CODE" -ne 0 ] 2>/dev/null; then
+          echo "❌ TESTS FAILED"
+          echo "========================================="
+          echo "FAILED TESTS:"
+          echo "========================================="
+          grep -E "^(ERROR|FAIL):" dj_test_out.txt || echo "No errors or failures found"
+        else
+          echo "✅ ALL TESTS PASSED!"
+        fi
+        echo ""
+        echo "========================================="
 
     - name: Generate Coverage Report
       if: always()
@@ -165,6 +242,22 @@ jobs:
         echo "Cleaning up Docker containers and images..."
         docker compose -f docker-compose.prod.yml down -v || true
         docker system prune -f || true
+
+    - name: Fail if Tests Failed
+      if: always()
+      run: |
+        if [ -f test_exit_code.txt ]; then
+          EXIT_CODE=$(cat test_exit_code.txt)
+          if [ "$EXIT_CODE" -ne 0 ]; then
+            echo "❌ Tests failed with exit code $EXIT_CODE"
+            exit 1
+          else
+            echo "✅ All tests passed!"
+          fi
+        else
+          echo "⚠️ No test exit code found, assuming failure"
+          exit 1
+        fi
 
   ai-review:
     name: AI Code Review

@@ -1,5 +1,6 @@
 services:
   backend:
+    image: fall-25-cs-5300-backend
     build:
       context: active_interview_backend
       target: ci
