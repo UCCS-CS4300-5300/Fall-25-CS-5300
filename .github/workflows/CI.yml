@@ -180,6 +180,7 @@ jobs:
   ai-review:
     name: AI Code Review
     runs-on: ubuntu-latest
+    needs: [test]
 
     steps:
     - name: Checkout Code
@@ -225,10 +226,89 @@ jobs:
       if: always()
       run: cat review-*.md >> $GITHUB_STEP_SUMMARY
 
+  loc-metrics:
+    name: Lines of Code Metrics
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Calculate Git Diff
+      run: |
+        # Calculate diff from the previous commit to current for the merge
+        if [[ "${{ github.event.before }}" == "0000000000000000000000000000000000000000" ]]; then
+          # First push to branch - compare against HEAD~1
+          git diff "HEAD~1" "${{ github.sha }}" > "${{ runner.temp }}/changes.diff"
+        else
+          # Normal merge - compare before and after
+          git diff "${{ github.event.before }}" "${{ github.event.after }}" > "${{ runner.temp }}/changes.diff"
+        fi
+
+    - name: Calculate LOC Metrics
+      run: |
+        DIFF_FILE="${{ runner.temp }}/changes.diff"
+
+        # Count lines added (lines starting with + but not +++)
+        LINES_ADDED=$(grep -E '^\+[^+]' "$DIFF_FILE" | wc -l || echo "0")
+
+        # Count lines removed/changed (lines starting with - but not ---)
+        LINES_REMOVED=$(grep -E '^\-[^-]' "$DIFF_FILE" | wc -l || echo "0")
+
+        # Calculate net change
+        NET_CHANGE=$((LINES_ADDED - LINES_REMOVED))
+
+        # Save metrics to file
+        {
+          echo "LINES_ADDED=$LINES_ADDED"
+          echo "LINES_REMOVED=$LINES_REMOVED"
+          echo "NET_CHANGE=$NET_CHANGE"
+        } > "${{ runner.temp }}/loc_metrics.txt"
+
+        # Display metrics
+        cat "${{ runner.temp }}/loc_metrics.txt"
+
+    - name: Create LOC Metrics Summary
+      if: always()
+      run: |
+        source "${{ runner.temp }}/loc_metrics.txt"
+
+        {
+          echo '# Lines of Code Metrics'
+          echo ''
+          echo '## Summary'
+          echo "- **Lines Added:** $LINES_ADDED"
+          echo "- **Lines Changed/Removed:** $LINES_REMOVED"
+          echo "- **Net Change:** $NET_CHANGE"
+          echo ''
+          echo '## Details'
+          if [ $NET_CHANGE -gt 0 ]; then
+            echo "✅ Net addition of $NET_CHANGE lines"
+          elif [ $NET_CHANGE -lt 0 ]; then
+            echo "♻️ Net reduction of $((NET_CHANGE * -1)) lines"
+          else
+            echo "➖ No net change in lines of code"
+          fi
+          echo ''
+          echo '---'
+          echo '*Metrics calculated from changes merged into main*'
+        } >> $GITHUB_STEP_SUMMARY
+
+    - name: Upload LOC Metrics
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: loc-metrics
+        path: ${{ runner.temp }}/loc_metrics.txt
+        retention-days: ${{ env.RETENTION_DAYS }}
+
   cleanup:
     name: Cleanup & Archive
     runs-on: ubuntu-latest
-    needs: [lint, security, test, ai-review]
+    needs: [lint, security, test, ai-review, loc-metrics]
     if: always()
 
     steps:
@@ -255,6 +335,11 @@ jobs:
         # Copy AI review reports if they exist
         if [ -d "artifacts/ai-code-review-report" ]; then
           cp -r artifacts/ai-code-review-report essential-archive/
+        fi
+
+        # Copy LOC metrics if they exist
+        if [ -d "artifacts/loc-metrics" ]; then
+          cp -r artifacts/loc-metrics essential-archive/
         fi
 
         # Create timestamp file
