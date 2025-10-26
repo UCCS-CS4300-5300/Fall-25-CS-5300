@@ -122,7 +122,16 @@ jobs:
         docker ps -a
         echo "Django container logs:"
         docker logs django
-        echo "Checking if container is running..."
+
+        echo "Checking file system in container..."
+        docker run --rm --entrypoint ls fall-25-cs-5300-backend -la /app/
+
+        echo "Checking if paracord_runner.sh exists..."
+        docker run --rm --entrypoint cat fall-25-cs-5300-backend /app/paracord_runner.sh || echo "File not found!"
+
+        echo "Restarting container for debugging..."
+        docker start django
+        sleep 2
         docker ps | grep django || (echo "Container not running!" && exit 1)
 
     - name: Install Chrome
