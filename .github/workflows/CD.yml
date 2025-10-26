@@ -5,6 +5,10 @@ on:
     branches:
       - prod
       - main  # Deploy from main branch to Railway
+    paths:
+      - 'active_interview_backend/**'
+      - 'railway.json'
+      - '.github/workflows/CD.yml'
   workflow_dispatch:  # Allow manual triggers
 
 jobs:
