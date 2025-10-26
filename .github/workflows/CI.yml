@@ -125,7 +125,8 @@ jobs:
       run: |
         docker exec -u root django bash -c "
           chown -R root:root /app/db /app/staticfiles /app/media || true
-          python manage.py migrate --no-input"
+          python manage.py migrate --no-input
+          python manage.py collectstatic --no-input"
 
     - name: Install Chrome
       run: |
