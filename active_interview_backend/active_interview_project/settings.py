@@ -70,10 +70,18 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',  # Required for allauth
     'bootstrap5',
     'rest_framework',
     'filetype',
+    # Django Allauth
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
 ]
+
+SITE_ID = 1
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -84,6 +92,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',  # Required for allauth
 ]
 
 ROOT_URLCONF = 'active_interview_project.urls'
@@ -196,3 +205,41 @@ LOGGING = {
 
 # WhiteNoise configuration for serving static files
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Authentication Backends
+AUTHENTICATION_BACKENDS = [
+    # Django backend for username/password authentication
+    'django.contrib.auth.backends.ModelBackend',
+    # Allauth backend for social authentication
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+# Django Allauth Configuration
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_EMAIL_VERIFICATION = 'none'  # Can be 'mandatory', 'optional', or 'none'
+ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
+ACCOUNT_USERNAME_REQUIRED = False
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_ADAPTER = 'active_interview_app.adapters.CustomSocialAccountAdapter'
+
+# Google OAuth Configuration
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        },
+        'APP': {
+            'client_id': os.environ.get('GOOGLE_OAUTH_CLIENT_ID', ''),
+            'secret': os.environ.get('GOOGLE_OAUTH_CLIENT_SECRET', ''),
+            'key': ''
+        }
+    }
+}
+
+# Login/Logout redirects
+LOGIN_REDIRECT_URL = '/testlogged/'
+ACCOUNT_LOGOUT_REDIRECT_URL = '/'
