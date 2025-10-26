@@ -33,6 +33,8 @@ ENV PATH=/opt/venv/bin:$PATH
 RUN apt-get update && apt-get install -y \
     libpq5 \
     curl \
+    wget \
+    unzip \
     libcairo2 \
     && rm -rf /var/lib/apt/lists/*
 
