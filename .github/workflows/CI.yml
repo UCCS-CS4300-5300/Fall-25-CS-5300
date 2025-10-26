@@ -174,14 +174,24 @@ jobs:
       if: always()
       run: |
         set -o pipefail
-        docker exec django coverage run manage.py test -v 2 | tee dj_test_out.txt
-        TEST_EXIT_CODE=$?
+        docker exec django coverage run manage.py test -v 2 2>&1 | tee dj_test_out.txt
+        TEST_EXIT_CODE=${PIPESTATUS[0]}
+        echo "Test exit code: $TEST_EXIT_CODE"
         echo $TEST_EXIT_CODE > test_exit_code.txt
         exit 0  # Don't fail yet, let other steps run
 
     - name: Display Test Results Summary
       if: always()
       run: |
+        # Verify test output file exists
+        if [ ! -f dj_test_out.txt ]; then
+          echo "⚠️ WARNING: dj_test_out.txt not found!"
+          ls -la
+          exit 1
+        fi
+
+        echo "Test output file size: $(wc -l < dj_test_out.txt) lines"
+
         # Read the exit code
         if [ -f test_exit_code.txt ]; then
           EXIT_CODE=$(cat test_exit_code.txt)
@@ -202,8 +212,8 @@ jobs:
         echo ""
 
         # Count errors and failures
-        ERROR_COUNT=$(grep -c "^ERROR:" dj_test_out.txt || echo "0")
-        FAIL_COUNT=$(grep -c "^FAIL:" dj_test_out.txt || echo "0")
+        ERROR_COUNT=$(grep -E "^ERROR:" dj_test_out.txt 2>/dev/null | wc -l)
+        FAIL_COUNT=$(grep -E "^FAIL:" dj_test_out.txt 2>/dev/null | wc -l)
 
         echo "Errors: $ERROR_COUNT"
         echo "Failures: $FAIL_COUNT"
@@ -215,7 +225,7 @@ jobs:
           echo "========================================="
           echo "FAILED TESTS:"
           echo "========================================="
-          grep -E "^(ERROR|FAIL):" dj_test_out.txt || echo "No errors or failures found"
+          grep -E "^(ERROR|FAIL):" dj_test_out.txt 2>/dev/null || echo "No errors or failures found in output (check test output above)"
         else
           echo "✅ ALL TESTS PASSED!"
         fi
