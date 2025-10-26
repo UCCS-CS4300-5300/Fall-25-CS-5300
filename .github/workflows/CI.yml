@@ -222,6 +222,14 @@ jobs:
         path: review-*.md
         retention-days: ${{ env.RETENTION_DAYS }}
 
+
+    - name: Post AI Report PR Comment
+      if: github.event_name == 'pull_request'
+      uses: mshick/add-pr-comment@v2
+      with: 
+        name: ai-code-review-report
+        message-path: review-*.md
+
     - name: Add Review to Summary
       if: always()
       run: cat review-*.md >> $GITHUB_STEP_SUMMARY
