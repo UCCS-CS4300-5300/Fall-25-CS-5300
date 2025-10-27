@@ -1,6 +1,9 @@
 services:
   django:
-    build: active_interview_backend/.
+    build:
+      context: active_interview_backend
+      target: ci
+    user: root  # Start as root, entrypoint will fix permissions then drop to paracord
     environment:
       - PROD=false
     env_file:
@@ -15,7 +18,7 @@ services:
       #      - "8000:8000"
     expose:
       - "8000"  # Exposed internally
-    command: bash ./paracord_runner.sh
+    command: bash ./start.sh
 #     network_mode: "host"
 #     networks:
 #       - ext_network

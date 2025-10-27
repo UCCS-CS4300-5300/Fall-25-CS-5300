@@ -62,9 +62,36 @@ DJANGO_SECRET_KEY=<your secret key>
 OPENAI_API_KEY=<your api key>
 ```
 
-#### Startup
+#### Startup - Development Mode (default)
+For local development with live code editing and full testing capabilities:
 1. Navigate to the root of the project.
-2. Run `docker-compose up -d --build`.  Same a production environment for now.
+2. Run `docker-compose up -d --build`
+   - Uses `docker-compose.yml`
+   - Mounts local code directory for live editing
+   - Runs `start.sh` script
+   - Includes Chrome/Chromedriver for running E2E tests locally
+   - Code changes reflect immediately without rebuilding
+
+#### Startup - CI/Production Testing Mode
+To test the exact CI environment locally (without volume mounts):
+1. Navigate to the root of the project.
+2. Run `docker-compose -f docker-compose.prod.yml up -d --build`
+   - Uses `docker-compose.prod.yml`
+   - No volume mounts (production-like environment)
+   - Runs `paracord_runner.sh` script
+   - Includes Chrome/Chromedriver for E2E tests
+   - Requires full rebuild to see code changes
+   - Useful for verifying behavior matches CI exactly
+
+#### Key Differences
+
+| Feature | Development (`docker-compose.yml`) | CI/Production Testing (`docker-compose.prod.yml`) |
+|---------|-------------------------------------|---------------------------------------------------|
+| Volume Mount | ✅ Local code mounted | ❌ Code copied during build |
+| Live Editing | ✅ Changes reflect immediately | ❌ Requires rebuild |
+| Startup Script | `start.sh` | `paracord_runner.sh` |
+| Chrome/Testing | ✅ Pre-installed | ✅ Pre-installed |
+| Use Case | Day-to-day development + testing | Verify CI environment locally |
 
 #### Accessing
 `http://127.0.0.1`
