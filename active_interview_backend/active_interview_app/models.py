@@ -81,12 +81,12 @@ class Chat(models.Model):
     SKILLS = "ISK"
     PERSONALITY = "PER"
     FINAL_SCREENING = "FSC"
-    INTERVIEW_TYPES = {
-        (GENERAL, "General"),
-        (SKILLS, "Industry Skills"),
+    INTERVIEW_TYPES = [
         (PERSONALITY, "Personality/Preliminary"),
+        (SKILLS, "Industry Skills"),
+        (GENERAL, "General"),
         (FINAL_SCREENING, "Final Screening"),
-    }
+    ]
     type = models.CharField(max_length=3, choices=INTERVIEW_TYPES,
                             default=GENERAL)
 
