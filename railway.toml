@@ -1,0 +1,5 @@
+# Railway builds the last stage in multi-stage Dockerfiles
+# Production stage is intentionally last in Dockerfile
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "active_interview_backend/Dockerfile"
