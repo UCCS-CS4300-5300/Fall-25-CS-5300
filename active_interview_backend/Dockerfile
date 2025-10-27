@@ -1,3 +1,6 @@
+#Railway should be building using the last stage in the dockerfile
+#As such production should get built and not ci
+
 # Build stage
 ARG PYTHON_VERSION=3.12-slim-bullseye
 FROM python:${PYTHON_VERSION} AS builder
@@ -52,18 +55,6 @@ RUN printf "#!/bin/bash\n" > ./paracord_runner.sh && \
     printf "python manage.py collectstatic --no-input\n" >> ./paracord_runner.sh && \
     printf "gunicorn ${PROJ_NAME}.wsgi:application --bind \"[::]:\$RUN_PORT\" --workers 3\n" >> ./paracord_runner.sh && \
     chmod +x paracord_runner.sh
-
-# Production stage (default)
-FROM runtime AS production
-
-# Setup non-root user
-RUN groupadd -r paracord && useradd -r -g paracord paracord && \
-    chown -R paracord:paracord /app && \
-    chown -R paracord:paracord /opt/venv
-
-USER paracord
-
-CMD ./paracord_runner.sh
 
 # CI stage (for testing)
 FROM runtime AS ci
@@ -120,3 +111,15 @@ RUN printf "#!/bin/bash\n" > ./ci_wait.sh && \
 
 ENTRYPOINT ["./docker-entrypoint.sh"]
 CMD ["./ci_wait.sh"]
+
+# Production stage (default - must be last for Railway)
+FROM runtime AS production
+
+# Setup non-root user
+RUN groupadd -r paracord && useradd -r -g paracord paracord && \
+    chown -R paracord:paracord /app && \
+    chown -R paracord:paracord /opt/venv
+
+USER paracord
+
+CMD ./paracord_runner.sh
