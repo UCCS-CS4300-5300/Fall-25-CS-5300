@@ -134,8 +134,8 @@ jobs:
         target: ci
         load: true
         tags: fall-25-cs-5300-backend:latest
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+        cache-from: type=gha,scope=build-cache
+        cache-to: type=gha,mode=max,scope=build-cache
 
     - name: Start Containers
       run: docker compose -f docker-compose.prod.yml up -d --no-build
