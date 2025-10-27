@@ -439,10 +439,33 @@ jobs:
     if: always()
 
     steps:
-    - name: Download All Artifacts
+    - name: Download Coverage Report
       uses: actions/download-artifact@v4
+      continue-on-error: true
       with:
-        path: artifacts/
+        name: coverage-report
+        path: artifacts/coverage-report
+
+    - name: Download Security Reports
+      uses: actions/download-artifact@v4
+      continue-on-error: true
+      with:
+        name: security-reports
+        path: artifacts/security-reports
+
+    - name: Download AI Code Review Report
+      uses: actions/download-artifact@v4
+      continue-on-error: true
+      with:
+        name: ai-code-review-report
+        path: artifacts/ai-code-review-report
+
+    - name: Download LOC Metrics
+      uses: actions/download-artifact@v4
+      continue-on-error: true
+      with:
+        name: loc-metrics
+        path: artifacts/loc-metrics
 
     - name: Create Essential Files Archive
       run: |
