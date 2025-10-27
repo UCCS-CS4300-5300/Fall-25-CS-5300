@@ -23,6 +23,7 @@ from .serializers import (
     UploadedJobListingSerializer,
     ExportableReportSerializer
 )
+from .pdf_export import generate_pdf_report
 
 
 from django.conf import settings
@@ -34,6 +35,7 @@ from django.contrib.auth.models import Group
 from django.forms.models import model_to_dict
 from django.http import JsonResponse, HttpResponse, FileResponse
 from django.shortcuts import render, redirect, get_object_or_404
+from django.utils.text import slugify
 from django.utils.timezone import now
 from django.views import View
 
@@ -1165,8 +1167,7 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
 
         report.save()
 
-        from django.contrib import messages as django_messages
-        django_messages.success(request, 'Report generated successfully!')
+        messages.success(request, 'Report generated successfully!')
         return redirect('export_report', chat_id=chat_id)
 
     def _extract_scores_from_chat(self, chat):
@@ -1277,8 +1278,7 @@ class ExportReportView(LoginRequiredMixin, UserPassesTestMixin, View):
         try:
             report = ExportableReport.objects.get(chat=chat)
         except ExportableReport.DoesNotExist:
-            from django.contrib import messages as django_messages
-            django_messages.warning(request,
+            messages.warning(request,
                            'No report exists yet. Generating one now...')
             return redirect('generate_report', chat_id=chat_id)
 
@@ -1301,15 +1301,12 @@ class DownloadPDFReportView(LoginRequiredMixin, UserPassesTestMixin, View):
 
     def get(self, request, chat_id):
         """Generate and download PDF report"""
-        from .pdf_export import generate_pdf_report
-
         chat = get_object_or_404(Chat, id=chat_id)
 
         try:
             report = ExportableReport.objects.get(chat=chat)
         except ExportableReport.DoesNotExist:
-            from django.contrib import messages as django_messages
-            django_messages.error(request, 'No report exists. Please generate one first.')
+            messages.error(request, 'No report exists. Please generate one first.')
             return redirect('chat_results', chat_id=chat_id)
 
         # Generate PDF
@@ -1317,7 +1314,7 @@ class DownloadPDFReportView(LoginRequiredMixin, UserPassesTestMixin, View):
 
         # Create response
         response = HttpResponse(pdf_content, content_type='application/pdf')
-        filename = f"interview_report_{chat.title.replace(' ', '_')}_{report.generated_at.strftime('%Y%m%d')}.pdf"
+        filename = f"interview_report_{slugify(chat.title)}_{report.generated_at.strftime('%Y%m%d')}.pdf"
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
 
         # Mark PDF as generated
