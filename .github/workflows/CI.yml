@@ -339,8 +339,8 @@ jobs:
     - name: Post AI Report PR Comment
       if: github.event_name == 'pull_request'
       uses: mshick/add-pr-comment@v2
-      with: 
-        name: ai-code-review-report
+      with:
+        message-id: ai-code-review-report
         message-path: review-*.md
 
     - name: Add Review to Summary
