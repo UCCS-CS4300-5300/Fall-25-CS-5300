@@ -8,7 +8,7 @@ on:
       - 'active_interview_backend/**'
       - 'scripts/**'
       - 'docker-compose*.yml'
-      - 'railway.json'
+      - 'railway.toml'
       - '.github/workflows/CI.yml'
   pull_request:
     branches:
@@ -17,7 +17,7 @@ on:
       - 'active_interview_backend/**'
       - 'scripts/**'
       - 'docker-compose*.yml'
-      - 'railway.json'
+      - 'railway.toml'
       - '.github/workflows/CI.yml'
   workflow_dispatch:
 
