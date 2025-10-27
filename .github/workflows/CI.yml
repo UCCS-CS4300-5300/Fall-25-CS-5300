@@ -173,11 +173,17 @@ jobs:
     - name: Run Django Tests
       if: always()
       run: |
-        set -o pipefail
-        docker exec django coverage run manage.py test -v 2 2>&1 | tee dj_test_out.txt
-        TEST_EXIT_CODE=${PIPESTATUS[0]}
+        set +e  # Don't exit on error
+        docker exec django coverage run manage.py test -v 2 > dj_test_out.txt 2>&1
+        TEST_EXIT_CODE=$?
+        set -e  # Re-enable exit on error
+
         echo "Test exit code: $TEST_EXIT_CODE"
         echo $TEST_EXIT_CODE > test_exit_code.txt
+
+        # Display the output
+        cat dj_test_out.txt
+
         exit 0  # Don't fail yet, let other steps run
 
     - name: Display Test Results Summary
