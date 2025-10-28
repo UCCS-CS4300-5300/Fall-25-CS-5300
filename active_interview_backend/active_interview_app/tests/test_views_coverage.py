@@ -51,6 +51,7 @@ class RegisterViewCoverageTest(TestCase):
         """Test successful user registration"""
         response = self.client.post(reverse('register_page'), {
             'username': 'newuser',
+            'email': 'newuser@example.com',
             'password1': 'ComplexPass123!',
             'password2': 'ComplexPass123!',
         })

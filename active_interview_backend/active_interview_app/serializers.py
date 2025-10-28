@@ -3,6 +3,8 @@ from .models import *
 
 
 class UploadedResumeSerializer(serializers.ModelSerializer):
+    file = serializers.FileField(required=False, allow_null=True)
+
     class Meta:
         model = UploadedResume
         fields = ['id', 'file', 'user', 'uploaded_at', 'title']

@@ -360,10 +360,10 @@ class ChatModelTest(TestCase):
         self.assertEqual(chat.key_questions, key_questions)
 
     def test_chat_default_key_questions(self):
-        """Test that key_questions defaults to empty dict"""
+        """Test that key_questions defaults to empty list"""
         chat = Chat.objects.create(
             owner=self.user,
             title="Test Chat",
             messages=[]
         )
-        self.assertEqual(chat.key_questions, {})
+        self.assertEqual(chat.key_questions, [])

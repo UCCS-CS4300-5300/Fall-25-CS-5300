@@ -43,9 +43,9 @@ class Chat(models.Model):
     difficulty = models.IntegerField(default=5,
                                      validators=[MinValueValidator(1),
                                                  MaxValueValidator(10)])
-    messages = models.JSONField()  # Json of the messages object
-    key_questions = models.JSONField(default=dict)  # Json of the key questions
-    job_listing = models.ForeignKey(UploadedJobListing, null=True,
+    messages = models.JSONField(blank=True, default=list)  # Json of the messages object
+    key_questions = models.JSONField(blank=True, default=list)  # Json of the key questions
+    job_listing = models.ForeignKey(UploadedJobListing, null=True, blank=True,
                                     on_delete=models.SET_NULL)
     resume = models.ForeignKey(UploadedResume, null=True, blank=True,
                                on_delete=models.SET_NULL)
