@@ -440,8 +440,16 @@ class CreateChat(LoginRequiredMixin, View):
                 chat.save()
 
                 return redirect("chat-view", chat_id=chat.id)
-            # else:
-            #     print("chat form invalid")
+            else:
+                # Form is invalid, render the form again with errors
+                owner_chats = Chat.objects.filter(owner=request.user).order_by('-modified_date')
+                return render(request, os.path.join('chat', 'chat-create.html'), {
+                    'form': form,
+                    'owner_chats': owner_chats
+                })
+        else:
+            # 'create' not in POST, redirect to chat list
+            return redirect('chat-list')
 
 
 class ChatView(LoginRequiredMixin, UserPassesTestMixin, View):
