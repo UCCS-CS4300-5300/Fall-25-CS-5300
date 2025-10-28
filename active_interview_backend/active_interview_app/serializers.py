@@ -6,12 +6,17 @@ class UploadedResumeSerializer(serializers.ModelSerializer):
     class Meta:
         model = UploadedResume
         fields = ['id', 'file', 'user', 'uploaded_at', 'title']
+        read_only_fields = ['id', 'uploaded_at', 'user']
 
 
 class UploadedJobListingSerializer(serializers.ModelSerializer):
+    filename = serializers.CharField(required=False, allow_blank=True, default='')
+    file = serializers.FileField(required=False, allow_null=True)
+
     class Meta:
         model = UploadedJobListing
-        fields = ['id', 'user', 'filename', 'content', 'created_at', 'title']
+        fields = ['id', 'user', 'filename', 'content', 'created_at', 'title', 'file']
+        read_only_fields = ['id', 'created_at', 'user']
 
 
 class ExportableReportSerializer(serializers.ModelSerializer):

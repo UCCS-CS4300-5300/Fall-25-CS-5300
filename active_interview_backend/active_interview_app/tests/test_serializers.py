@@ -40,7 +40,7 @@ class UploadedResumeSerializerTest(TestCase):
     def test_serializer_fields(self):
         """Test that serializer has correct fields"""
         serializer = UploadedResumeSerializer(instance=self.resume)
-        expected_fields = {'id', 'file', 'user', 'uploaded_at'}
+        expected_fields = {'id', 'file', 'user', 'uploaded_at', 'title'}
         self.assertEqual(set(serializer.data.keys()), expected_fields)
 
     def test_deserialize_valid_data(self):
@@ -54,7 +54,8 @@ class UploadedResumeSerializerTest(TestCase):
 
         data = {
             'file': uploaded_file,
-            'user': self.user.id
+            'user': self.user.id,
+            'title': 'Test Resume'
         }
 
         serializer = UploadedResumeSerializer(data=data)
@@ -75,7 +76,7 @@ class UploadedResumeSerializerTest(TestCase):
 
         serializer = UploadedResumeSerializer(data=data)
         self.assertFalse(serializer.is_valid())
-        self.assertIn('user', serializer.errors)
+        self.assertIn('title', serializer.errors)
 
     def test_create_resume_via_serializer(self):
         """Test creating a resume through serializer"""
@@ -166,7 +167,7 @@ class UploadedJobListingSerializerTest(TestCase):
     def test_serializer_fields(self):
         """Test that serializer has correct fields"""
         serializer = UploadedJobListingSerializer(instance=self.job_listing)
-        expected_fields = {'id', 'user', 'filename', 'content', 'created_at'}
+        expected_fields = {'id', 'user', 'filename', 'content', 'created_at', 'title'}
         self.assertEqual(set(serializer.data.keys()), expected_fields)
 
     def test_deserialize_valid_data(self):

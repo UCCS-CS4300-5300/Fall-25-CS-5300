@@ -230,7 +230,9 @@ class ChatModelTest(TestCase):
                 owner=self.user,
                 title=f"Test Chat {difficulty}",
                 difficulty=difficulty,
-                messages=[]
+                messages=[{"role": "system", "content": "Test"}],
+                key_questions={},
+                job_listing=self.job_listing
             )
             # Should not raise an exception
             chat.full_clean()
