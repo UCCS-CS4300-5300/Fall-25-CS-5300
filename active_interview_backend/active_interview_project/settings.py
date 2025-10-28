@@ -74,7 +74,7 @@ INSTALLED_APPS = [
     'bootstrap5',
     'rest_framework',
     'filetype',
-    # Django Allauth
+    # Django allauth - provides OAuth authentication (Google login)
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
@@ -206,23 +206,28 @@ LOGGING = {
 # WhiteNoise configuration for serving static files
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Authentication Backends
+# Authentication backends
 AUTHENTICATION_BACKENDS = [
-    # Django backend for username/password authentication
+    # Needed to login by username in Django admin, regardless of `allauth`
     'django.contrib.auth.backends.ModelBackend',
-    # Allauth backend for social authentication
+    # `allauth` specific authentication methods, such as login by e-mail
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
-# Django Allauth Configuration
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_EMAIL_VERIFICATION = 'none'  # Can be 'mandatory', 'optional', or 'none'
+# Django-allauth configuration
 ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_EMAIL_VERIFICATION = 'optional'  # Can be 'mandatory', 'optional', or 'none'
 ACCOUNT_USERNAME_REQUIRED = False
 SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_EMAIL_VERIFICATION = 'optional'
 SOCIALACCOUNT_ADAPTER = 'active_interview_app.adapters.CustomSocialAccountAdapter'
 
-# Google OAuth Configuration
+# Login/Logout redirects
+LOGIN_REDIRECT_URL = '/testlogged/'
+ACCOUNT_LOGOUT_REDIRECT_URL = '/'
+
+# Google OAuth settings
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'SCOPE': [
@@ -239,7 +244,3 @@ SOCIALACCOUNT_PROVIDERS = {
         }
     }
 }
-
-# Login/Logout redirects
-LOGIN_REDIRECT_URL = '/testlogged/'
-ACCOUNT_LOGOUT_REDIRECT_URL = '/'
