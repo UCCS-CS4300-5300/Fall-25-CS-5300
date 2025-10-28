@@ -5,13 +5,13 @@ from .models import *
 class UploadedResumeSerializer(serializers.ModelSerializer):
     class Meta:
         model = UploadedResume
-        fields = ['id', 'file', 'user', 'uploaded_at']
+        fields = ['id', 'file', 'user', 'uploaded_at', 'title']
 
 
 class UploadedJobListingSerializer(serializers.ModelSerializer):
     class Meta:
         model = UploadedJobListing
-        fields = ['id', 'user', 'filename', 'content', 'created_at']
+        fields = ['id', 'user', 'filename', 'content', 'created_at', 'title']
 
 
 class ExportableReportSerializer(serializers.ModelSerializer):

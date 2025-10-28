@@ -45,7 +45,7 @@ class RegisterViewCoverageTest(TestCase):
     def setUp(self):
         self.client = Client()
         # Create the required group
-        Group.objects.create(name='average_role')
+        Group.objects.get_or_create(name='average_role')
 
     def test_register_success(self):
         """Test successful user registration"""
