@@ -19,7 +19,8 @@ urlpatterns = [
     path('features/', views.features, name='features'),
 
     # Auth urls
-    # Note: allauth URLs are included in main urls.py
+    # Note: allauth handles accounts/* URLs in project urls.py
+    # We keep custom register for backward compatibility
     path('testlogged/', views.loggedin, name='loggedin'),
     path('register/', views.register, name='register_page'),
     path('profile/', views.profile, name='profile'),
