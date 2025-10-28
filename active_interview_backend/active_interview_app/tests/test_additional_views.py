@@ -28,7 +28,7 @@ class AboutUsViewTest(TestCase):
 
     def test_aboutus_view_get(self):
         """Test GET request to about us view"""
-        response = self.client.get(reverse('aboutus'))
+        response = self.client.get(reverse('about-us'))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'about-us.html')
 
