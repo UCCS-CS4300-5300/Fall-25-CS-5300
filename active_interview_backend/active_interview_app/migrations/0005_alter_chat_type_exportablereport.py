@@ -8,15 +8,10 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('active_interview_app', '0002_alter_chat_type'),
+        ('active_interview_app', '0004_alter_chat_type'),
     ]
 
     operations = [
-        migrations.AlterField(
-            model_name='chat',
-            name='type',
-            field=models.CharField(choices=[('ISK', 'Industry Skills'), ('FSC', 'Final Screening'), ('PER', 'Personality/Preliminary'), ('GEN', 'General')], default='GEN', max_length=3),
-        ),
         migrations.CreateModel(
             name='ExportableReport',
             fields=[
