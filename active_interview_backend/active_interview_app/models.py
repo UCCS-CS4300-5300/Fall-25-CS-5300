@@ -1,9 +1,35 @@
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 
 # Create your models here.
+
+
+class UserProfile(models.Model):
+    """
+    Extended user profile to track authentication provider and additional metadata.
+    """
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    auth_provider = models.CharField(
+        max_length=50,
+        default='local',
+        help_text='Authentication provider (e.g., local, google)'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.auth_provider}"
+
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    """Create UserProfile when a new User is created."""
+    if created:
+        UserProfile.objects.get_or_create(user=instance)
 
 
 class UploadedResume(models.Model):  # Renamed from UploadedFile
@@ -55,12 +81,12 @@ class Chat(models.Model):
     SKILLS = "ISK"
     PERSONALITY = "PER"
     FINAL_SCREENING = "FSC"
-    INTERVIEW_TYPES = {
-        (GENERAL, "General"),
-        (SKILLS, "Industry Skills"),
+    INTERVIEW_TYPES = [
         (PERSONALITY, "Personality/Preliminary"),
+        (SKILLS, "Industry Skills"),
+        (GENERAL, "General"),
         (FINAL_SCREENING, "Final Screening"),
-    }
+    ]
     type = models.CharField(max_length=3, choices=INTERVIEW_TYPES,
                             default=GENERAL)
 

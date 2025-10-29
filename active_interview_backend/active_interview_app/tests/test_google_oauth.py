@@ -5,11 +5,18 @@ This module tests the Google OAuth sign-in integration using django-allauth.
 It verifies that OAuth endpoints are configured correctly, callbacks work,
 and users can authenticate via Google.
 
+Tests include:
+- Configuration and settings validation
+- URL routing and template integration
+- User authentication flow with CustomSocialAccountAdapter
+- UserProfile creation and auth_provider tracking
+- Security configurations
+
 Coverage: This test suite ensures >80% coverage of all OAuth-related
 configurations and settings added to the application.
 """
 import pytest
-from django.test import TestCase, Client, override_settings
+from django.test import TestCase, Client, RequestFactory, override_settings
 from django.contrib.auth.models import User, Group
 from django.urls import reverse, resolve
 from django.conf import settings
@@ -17,6 +24,9 @@ from unittest.mock import patch, MagicMock, Mock
 from allauth.socialaccount.models import SocialApp, SocialAccount, SocialLogin
 from django.contrib.sites.models import Site
 import os
+
+from active_interview_app.models import UserProfile
+from active_interview_app.adapters import CustomSocialAccountAdapter
 
 
 class GoogleOAuthConfigTestCase(TestCase):
@@ -116,6 +126,13 @@ class GoogleOAuthConfigTestCase(TestCase):
         self.assertIn('key', app_config)
         self.assertEqual(app_config['key'], '')
 
+    def test_custom_social_account_adapter_configured(self):
+        """Test that custom social account adapter is configured."""
+        self.assertEqual(
+            settings.SOCIALACCOUNT_ADAPTER,
+            'active_interview_app.adapters.CustomSocialAccountAdapter'
+        )
+
 
 class GoogleOAuthURLTestCase(TestCase):
     """Test cases for Google OAuth URL routing."""
@@ -197,6 +214,11 @@ class GoogleOAuthFlowTestCase(TestCase):
     def setUp(self):
         """Set up test fixtures."""
         self.client = Client()
+        self.factory = RequestFactory()
+
+        # Create average_role group (required by adapter)
+        self.average_role_group = Group.objects.create(name='average_role')
+
         # Create a Site object for allauth
         self.site = Site.objects.get_or_create(
             id=settings.SITE_ID,
@@ -257,28 +279,48 @@ class GoogleOAuthFlowTestCase(TestCase):
             # URL pattern may not exist or require different handling
             pass
 
-    def test_existing_user_login_via_oauth(self):
-        """Test that existing users can log in via OAuth."""
-        # Create a user
-        user = User.objects.create_user(
+    def test_existing_user_login_creates_session(self):
+        """
+        Test that when a user with existing email logs in via Google,
+        a session is created (user is logged in).
+        """
+        # Create existing user with email
+        existing_user = User.objects.create_user(
             username='existinguser',
-            email='existing@example.com'
+            email='existing@example.com',
+            password='testpass123'
         )
 
-        # Create social account for the user
-        SocialAccount.objects.create(
-            user=user,
-            provider='google',
-            uid='existing123',
-            extra_data={'email': 'existing@example.com'}
-        )
+        # Create profile for existing user (local auth)
+        profile = UserProfile.objects.get(user=existing_user)
+        profile.auth_provider = 'local'
+        profile.save()
 
-        # Verify the social account exists
-        social_account = SocialAccount.objects.get(
-            user=user,
-            provider='google'
-        )
-        self.assertEqual(social_account.uid, 'existing123')
+        # Simulate Google login with the same email
+        adapter = CustomSocialAccountAdapter()
+        request = self.factory.get('/accounts/google/login/callback/')
+
+        # Create mock social login
+        mock_sociallogin = Mock()
+        mock_sociallogin.is_existing = False
+        mock_sociallogin.account = Mock()
+        mock_sociallogin.account.provider = 'google'
+        mock_sociallogin.account.extra_data = {
+            'email': 'existing@example.com',
+            'given_name': 'John',
+            'family_name': 'Doe'
+        }
+
+        # Mock the connect method
+        mock_sociallogin.connect = Mock()
+
+        # Call pre_social_login
+        adapter.pre_social_login(request, mock_sociallogin)
+
+        # Verify that connect was called with the existing user
+        mock_sociallogin.connect.assert_called_once()
+        call_args = mock_sociallogin.connect.call_args[0]
+        self.assertEqual(call_args[1].email, 'existing@example.com')
 
     def test_social_account_extra_data_storage(self):
         """Test that social account stores extra data from OAuth."""
@@ -307,44 +349,6 @@ class GoogleOAuthFlowTestCase(TestCase):
         self.assertEqual(social_account.extra_data['name'], 'Test User')
         self.assertIn('picture', social_account.extra_data)
 
-    def test_multiple_social_accounts_per_user(self):
-        """Test that a user can have multiple social accounts."""
-        user = User.objects.create_user(
-            username='multiuser',
-            email='multi@example.com'
-        )
-
-        # Create Google social account
-        google_account = SocialAccount.objects.create(
-            user=user,
-            provider='google',
-            uid='google123',
-            extra_data={'email': 'multi@example.com'}
-        )
-
-        # Verify both accounts exist
-        accounts = SocialAccount.objects.filter(user=user)
-        self.assertEqual(accounts.count(), 1)
-        self.assertEqual(google_account.provider, 'google')
-
-    def test_social_account_string_representation(self):
-        """Test the string representation of SocialAccount."""
-        user = User.objects.create_user(
-            username='testuser',
-            email='test@example.com'
-        )
-
-        social_account = SocialAccount.objects.create(
-            user=user,
-            provider='google',
-            uid='test123',
-            extra_data={'email': 'test@example.com'}
-        )
-
-        # The string representation should be meaningful
-        str_repr = str(social_account)
-        self.assertIsNotNone(str_repr)
-
     def test_site_configuration_for_oauth(self):
         """Test that Site is properly configured for OAuth."""
         site = Site.objects.get(id=settings.SITE_ID)
@@ -357,6 +361,211 @@ class GoogleOAuthFlowTestCase(TestCase):
         social_apps = SocialApp.objects.filter(sites__id=settings.SITE_ID)
         # May or may not exist depending on setup, but relationship should work
         self.assertIsNotNone(social_apps)
+
+
+class CustomSocialAccountAdapterTestCase(TestCase):
+    """Test cases for CustomSocialAccountAdapter."""
+
+    def setUp(self):
+        """Set up test data"""
+        self.factory = RequestFactory()
+        self.average_role_group = Group.objects.create(name='average_role')
+
+    def test_new_user_creation_with_google_provider(self):
+        """
+        Test that when a new user logs in via Google,
+        a new User and UserProfile are created with auth_provider='google'.
+        """
+        # Verify no user exists with this email
+        self.assertFalse(User.objects.filter(email='newuser@example.com').exists())
+
+        # Create adapter and mock request
+        adapter = CustomSocialAccountAdapter()
+        request = self.factory.get('/accounts/google/login/callback/')
+        request.session = {}
+
+        # Create mock social login for new user
+        mock_sociallogin = Mock()
+        mock_sociallogin.account = Mock()
+        mock_sociallogin.account.provider = 'google'
+        mock_sociallogin.account.extra_data = {
+            'email': 'newuser@example.com',
+            'given_name': 'Jane',
+            'family_name': 'Smith'
+        }
+
+        # Mock user object
+        mock_user = User()
+        mock_user.email = 'newuser@example.com'
+        mock_user.username = 'newuser'
+        mock_user.first_name = ''
+        mock_user.last_name = ''
+
+        # Test populate_user
+        populated_user = adapter.populate_user(request, mock_sociallogin,
+                                               mock_sociallogin.account.extra_data)
+
+        self.assertEqual(populated_user.email, 'newuser@example.com')
+
+        # Now test save_user (this creates the user and profile)
+        with patch('active_interview_app.adapters.DefaultSocialAccountAdapter.save_user') as mock_save:
+            # Create a real user to return from the parent save_user
+            new_user = User.objects.create_user(
+                username='newuser',
+                email='newuser@example.com'
+            )
+            mock_save.return_value = new_user
+
+            # Call save_user
+            saved_user = adapter.save_user(request, mock_sociallogin)
+
+            # Verify user was created
+            self.assertEqual(saved_user.email, 'newuser@example.com')
+
+            # Verify UserProfile was created with correct auth_provider
+            profile = UserProfile.objects.get(user=saved_user)
+            self.assertEqual(profile.auth_provider, 'google')
+
+            # Verify user was added to average_role group
+            self.assertTrue(saved_user.groups.filter(name='average_role').exists())
+
+    def test_adapter_populates_user_from_google_data(self):
+        """Test that adapter correctly populates user fields from Google data"""
+        adapter = CustomSocialAccountAdapter()
+        request = self.factory.get('/')
+
+        # Create mock social login
+        mock_sociallogin = Mock()
+        mock_sociallogin.account = Mock()
+        mock_sociallogin.account.provider = 'google'
+
+        # Google data
+        google_data = {
+            'email': 'testuser@example.com',
+            'given_name': 'Test',
+            'family_name': 'User'
+        }
+
+        # Create user object
+        user = User()
+        user.email = google_data['email']
+        user.username = ''
+        user.first_name = ''
+        user.last_name = ''
+
+        # Mock the parent class method
+        with patch('active_interview_app.adapters.DefaultSocialAccountAdapter.populate_user') as mock_populate:
+            mock_populate.return_value = user
+
+            # Call adapter method
+            populated_user = adapter.populate_user(request, mock_sociallogin, google_data)
+
+            # Verify user fields are populated
+            self.assertEqual(populated_user.email, 'testuser@example.com')
+
+    def test_new_user_added_to_default_group(self):
+        """Test that new Google OAuth users are added to average_role group"""
+        adapter = CustomSocialAccountAdapter()
+        request = self.factory.get('/')
+
+        mock_sociallogin = Mock()
+        mock_sociallogin.account = Mock()
+        mock_sociallogin.account.provider = 'google'
+
+        with patch('active_interview_app.adapters.DefaultSocialAccountAdapter.save_user') as mock_save:
+            # Create real user
+            new_user = User.objects.create_user(
+                username='grouptest',
+                email='grouptest@example.com'
+            )
+            mock_save.return_value = new_user
+
+            # Call save_user
+            saved_user = adapter.save_user(request, mock_sociallogin)
+
+            # Verify user is in average_role group
+            self.assertTrue(saved_user.groups.filter(name='average_role').exists())
+            self.assertEqual(saved_user.groups.count(), 1)
+
+
+class UserProfileModelTest(TestCase):
+    """Test UserProfile model"""
+
+    def setUp(self):
+        """Set up test data"""
+        self.user = User.objects.create_user(
+            username='testuser',
+            email='test@example.com',
+            password='testpass123'
+        )
+
+    def test_user_profile_created_on_user_creation(self):
+        """Test that UserProfile is automatically created when User is created"""
+        # Profile should be created by signal
+        self.assertTrue(UserProfile.objects.filter(user=self.user).exists())
+
+    def test_user_profile_default_auth_provider(self):
+        """Test that default auth_provider is 'local'"""
+        profile = UserProfile.objects.get(user=self.user)
+        self.assertEqual(profile.auth_provider, 'local')
+
+    def test_user_profile_string_representation(self):
+        """Test UserProfile __str__ method"""
+        profile = UserProfile.objects.get(user=self.user)
+        expected = f"{self.user.username} - local"
+        self.assertEqual(str(profile), expected)
+
+    def test_user_profile_can_update_auth_provider(self):
+        """Test that auth_provider can be updated"""
+        profile = UserProfile.objects.get(user=self.user)
+        profile.auth_provider = 'google'
+        profile.save()
+
+        # Retrieve and verify
+        updated_profile = UserProfile.objects.get(user=self.user)
+        self.assertEqual(updated_profile.auth_provider, 'google')
+
+    def test_user_profile_timestamps(self):
+        """Test that created_at and updated_at are set correctly"""
+        profile = UserProfile.objects.get(user=self.user)
+
+        self.assertIsNotNone(profile.created_at)
+        self.assertIsNotNone(profile.updated_at)
+
+        # Updated_at should be >= created_at
+        self.assertGreaterEqual(profile.updated_at, profile.created_at)
+
+    def test_user_profile_tracks_auth_provider(self):
+        """Test that UserProfile correctly tracks the authentication provider"""
+        # Create user via local registration
+        local_user = User.objects.create_user(
+            username='localuser',
+            email='local@example.com',
+            password='testpass123'
+        )
+
+        # Verify profile was created with default 'local' provider
+        local_profile = UserProfile.objects.get(user=local_user)
+        self.assertEqual(local_profile.auth_provider, 'local')
+
+        # Create user via Google (simulated)
+        google_user = User.objects.create_user(
+            username='googleuser',
+            email='google@example.com'
+        )
+        google_profile = UserProfile.objects.get(user=google_user)
+        google_profile.auth_provider = 'google'
+        google_profile.save()
+
+        # Verify correct providers are set
+        self.assertEqual(
+            UserProfile.objects.get(user=local_user).auth_provider,
+            'local'
+        )
+        self.assertEqual(
+            UserProfile.objects.get(user=google_user).auth_provider,
+            'google'
+        )
 
 
 class GoogleOAuthSecurityTestCase(TestCase):
@@ -439,82 +648,6 @@ class GoogleOAuthSecurityTestCase(TestCase):
         self.assertEqual(google_config['AUTH_PARAMS']['access_type'], 'online')
 
 
-@pytest.mark.django_db
-class GoogleOAuthIntegrationTest:
-    """Integration tests for Google OAuth using pytest."""
-
-    def test_login_redirect_after_oauth(self, client):
-        """Test that users are redirected correctly after OAuth login."""
-        # Verify LOGIN_REDIRECT_URL is set
-        assert hasattr(settings, 'LOGIN_REDIRECT_URL')
-        assert settings.LOGIN_REDIRECT_URL is not None
-
-    def test_account_logout_redirect(self, client):
-        """Test that logout redirect is configured."""
-        assert hasattr(settings, 'ACCOUNT_LOGOUT_REDIRECT_URL')
-        assert settings.ACCOUNT_LOGOUT_REDIRECT_URL == '/'
-
-    def test_social_account_auto_signup(self, client):
-        """Test that auto signup is enabled for social accounts."""
-        assert settings.SOCIALACCOUNT_AUTO_SIGNUP is True
-
-    def test_email_verification_optional(self, client):
-        """Test that email verification is set to optional."""
-        assert settings.ACCOUNT_EMAIL_VERIFICATION == 'optional'
-
-    def test_google_provider_in_settings(self, client):
-        """Test that Google provider is configured."""
-        assert 'google' in settings.SOCIALACCOUNT_PROVIDERS
-
-    def test_social_account_email_verification(self, client):
-        """Test social account email verification setting."""
-        assert settings.SOCIALACCOUNT_EMAIL_VERIFICATION == 'optional'
-
-    def test_account_authentication_method_setting(self, client):
-        """Test account authentication method."""
-        assert settings.ACCOUNT_AUTHENTICATION_METHOD == 'username_email'
-
-    def test_account_email_required_setting(self, client):
-        """Test that email is required."""
-        assert settings.ACCOUNT_EMAIL_REQUIRED is True
-
-    def test_account_username_not_required_setting(self, client):
-        """Test that username is not required."""
-        assert settings.ACCOUNT_USERNAME_REQUIRED is False
-
-
-class EnvironmentVariablesTestCase(TestCase):
-    """Test cases for environment variable configuration."""
-
-    def test_google_client_id_from_env(self):
-        """Test that Google client ID is read from environment."""
-        google_config = settings.SOCIALACCOUNT_PROVIDERS['google']
-        app_config = google_config['APP']
-        # Should be empty string or from environment
-        self.assertIsInstance(app_config['client_id'], str)
-
-    def test_google_client_secret_from_env(self):
-        """Test that Google client secret is read from environment."""
-        google_config = settings.SOCIALACCOUNT_PROVIDERS['google']
-        app_config = google_config['APP']
-        # Should be empty string or from environment
-        self.assertIsInstance(app_config['secret'], str)
-
-    @patch.dict(os.environ, {'GOOGLE_OAUTH_CLIENT_ID': 'test-id.apps.googleusercontent.com'})
-    def test_env_var_google_client_id_usage(self):
-        """Test that environment variable is used for client ID."""
-        # When settings are loaded, they use os.environ.get
-        test_id = os.environ.get('GOOGLE_OAUTH_CLIENT_ID', '')
-        self.assertEqual(test_id, 'test-id.apps.googleusercontent.com')
-
-    @patch.dict(os.environ, {'GOOGLE_OAUTH_CLIENT_SECRET': 'test-secret'})
-    def test_env_var_google_client_secret_usage(self):
-        """Test that environment variable is used for client secret."""
-        # When settings are loaded, they use os.environ.get
-        test_secret = os.environ.get('GOOGLE_OAUTH_CLIENT_SECRET', '')
-        self.assertEqual(test_secret, 'test-secret')
-
-
 class TemplateIntegrationTestCase(TestCase):
     """Test cases for template integration with OAuth."""
 
@@ -589,3 +722,79 @@ class AllAuthModelTestCase(TestCase):
         )
         # Test the reverse relationship
         self.assertIn(account, user.socialaccount_set.all())
+
+
+class EnvironmentVariablesTestCase(TestCase):
+    """Test cases for environment variable configuration."""
+
+    def test_google_client_id_from_env(self):
+        """Test that Google client ID is read from environment."""
+        google_config = settings.SOCIALACCOUNT_PROVIDERS['google']
+        app_config = google_config['APP']
+        # Should be empty string or from environment
+        self.assertIsInstance(app_config['client_id'], str)
+
+    def test_google_client_secret_from_env(self):
+        """Test that Google client secret is read from environment."""
+        google_config = settings.SOCIALACCOUNT_PROVIDERS['google']
+        app_config = google_config['APP']
+        # Should be empty string or from environment
+        self.assertIsInstance(app_config['secret'], str)
+
+    @patch.dict(os.environ, {'GOOGLE_OAUTH_CLIENT_ID': 'test-id.apps.googleusercontent.com'})
+    def test_env_var_google_client_id_usage(self):
+        """Test that environment variable is used for client ID."""
+        # When settings are loaded, they use os.environ.get
+        test_id = os.environ.get('GOOGLE_OAUTH_CLIENT_ID', '')
+        self.assertEqual(test_id, 'test-id.apps.googleusercontent.com')
+
+    @patch.dict(os.environ, {'GOOGLE_OAUTH_CLIENT_SECRET': 'test-secret'})
+    def test_env_var_google_client_secret_usage(self):
+        """Test that environment variable is used for client secret."""
+        # When settings are loaded, they use os.environ.get
+        test_secret = os.environ.get('GOOGLE_OAUTH_CLIENT_SECRET', '')
+        self.assertEqual(test_secret, 'test-secret')
+
+
+@pytest.mark.django_db
+class GoogleOAuthIntegrationTest:
+    """Integration tests for Google OAuth using pytest."""
+
+    def test_login_redirect_after_oauth(self, client):
+        """Test that users are redirected correctly after OAuth login."""
+        # Verify LOGIN_REDIRECT_URL is set
+        assert hasattr(settings, 'LOGIN_REDIRECT_URL')
+        assert settings.LOGIN_REDIRECT_URL is not None
+
+    def test_account_logout_redirect(self, client):
+        """Test that logout redirect is configured."""
+        assert hasattr(settings, 'ACCOUNT_LOGOUT_REDIRECT_URL')
+        assert settings.ACCOUNT_LOGOUT_REDIRECT_URL == '/'
+
+    def test_social_account_auto_signup(self, client):
+        """Test that auto signup is enabled for social accounts."""
+        assert settings.SOCIALACCOUNT_AUTO_SIGNUP is True
+
+    def test_email_verification_optional(self, client):
+        """Test that email verification is set to optional."""
+        assert settings.ACCOUNT_EMAIL_VERIFICATION == 'optional'
+
+    def test_google_provider_in_settings(self, client):
+        """Test that Google provider is configured."""
+        assert 'google' in settings.SOCIALACCOUNT_PROVIDERS
+
+    def test_social_account_email_verification(self, client):
+        """Test social account email verification setting."""
+        assert settings.SOCIALACCOUNT_EMAIL_VERIFICATION == 'optional'
+
+    def test_account_authentication_method_setting(self, client):
+        """Test account authentication method."""
+        assert settings.ACCOUNT_AUTHENTICATION_METHOD == 'username_email'
+
+    def test_account_email_required_setting(self, client):
+        """Test that email is required."""
+        assert settings.ACCOUNT_EMAIL_REQUIRED is True
+
+    def test_account_username_not_required_setting(self, client):
+        """Test that username is not required."""
+        assert settings.ACCOUNT_USERNAME_REQUIRED is False

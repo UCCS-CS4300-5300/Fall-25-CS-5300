@@ -22,7 +22,7 @@ urlpatterns = [
     # Note: allauth handles accounts/* URLs in project urls.py
     # We keep custom register for backward compatibility
     path('testlogged/', views.loggedin, name='loggedin'),
-    path('accounts/register/', views.register, name='register_page'),
+    path('register/', views.register, name='register_page'),
     path('profile/', views.profile, name='profile'),
     path('results/', views.results, name='results'),
 

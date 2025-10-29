@@ -23,7 +23,7 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
 
-    # Django allauth URLs (must come before app urls to handle OAuth)
+    # Django allauth URLs for OAuth authentication (must come before app urls to properly handle /accounts/ routes)
     path('accounts/', include('allauth.urls')),
 
     # add app urls

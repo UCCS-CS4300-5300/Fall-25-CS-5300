@@ -74,12 +74,14 @@ INSTALLED_APPS = [
     'bootstrap5',
     'rest_framework',
     'filetype',
-    # Django allauth
+    # Django allauth - provides OAuth authentication (Google login)
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
 ]
+
+SITE_ID = 1
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -204,9 +206,6 @@ LOGGING = {
 # WhiteNoise configuration for serving static files
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Site ID required for django-allauth
-SITE_ID = 1
-
 # Authentication backends
 AUTHENTICATION_BACKENDS = [
     # Needed to login by username in Django admin, regardless of `allauth`
@@ -222,6 +221,7 @@ ACCOUNT_EMAIL_VERIFICATION = 'optional'  # Can be 'mandatory', 'optional', or 'n
 ACCOUNT_USERNAME_REQUIRED = False
 SOCIALACCOUNT_AUTO_SIGNUP = True
 SOCIALACCOUNT_EMAIL_VERIFICATION = 'optional'
+SOCIALACCOUNT_ADAPTER = 'active_interview_app.adapters.CustomSocialAccountAdapter'
 
 # Login/Logout redirects
 LOGIN_REDIRECT_URL = '/testlogged/'
