@@ -4,13 +4,25 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'active_interview_backend/**'
+      - 'scripts/**'
+      - 'docker-compose*.yml'
+      - 'railway.toml'
+      - '.github/workflows/CI.yml'
   pull_request:
     branches:
       - main
+    paths:
+      - 'active_interview_backend/**'
+      - 'scripts/**'
+      - 'docker-compose*.yml'
+      - 'railway.toml'
+      - '.github/workflows/CI.yml'
   workflow_dispatch:
 
 env:
-  PYTHON_VERSION: '3.13'
+  PYTHON_VERSION: '3.12'
   CHROME_VERSION: 135.0.7049.52-1
   CHROMEDRIVER_VERSION: 135.0.7049.52
   RETENTION_DAYS: 14
@@ -112,35 +124,126 @@ jobs:
         echo 'DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}' > .env
         echo 'OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}' >> .env
 
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Docker image with GitHub Actions cache
+      uses: docker/build-push-action@v6
+      with:
+        context: active_interview_backend
+        target: ci
+        load: true
+        tags: fall-25-cs-5300-backend:latest
+        cache-from: type=gha,scope=build-cache
+        cache-to: type=gha,mode=max,scope=build-cache
+
     - name: Start Containers
-      run: docker compose -f docker-compose.prod.yml up -d --build
+      run: docker compose -f docker-compose.prod.yml up -d --no-build
 
-    - name: Install Chrome
+    - name: Wait for Container to be Ready
       run: |
-        docker exec django bash -c "
-          wget -O google-chrome.deb https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_${{ env.CHROME_VERSION }}_amd64.deb \
-          && apt-get update \
-          && apt-get install -y ./google-chrome.deb \
-          && rm google-chrome.deb"
+        echo "Waiting for django container to be ready..."
+        echo "Container is starting and running migrations + collectstatic via paracord_runner.sh..."
 
-    - name: Install Chromedriver
-      run: |
-        docker exec django bash -c "
-          wget -O chromedriver.zip https://storage.googleapis.com/chrome-for-testing-public/${{ env.CHROMEDRIVER_VERSION }}/linux64/chromedriver-linux64.zip \
-          && unzip chromedriver.zip \
-          && mv chromedriver-linux64/chromedriver /usr/local/bin/chromedriver \
-          && chmod +x /usr/local/bin/chromedriver \
-          && rm chromedriver.zip"
+        # Retry loop with timeout
+        MAX_RETRIES=30
+        RETRY_INTERVAL=2
+        COUNTER=0
+
+        while [ $COUNTER -lt $MAX_RETRIES ]; do
+          if docker exec django python -c "import django; django.setup()" 2>/dev/null; then
+            echo "✓ Container is ready! (took $((COUNTER * RETRY_INTERVAL)) seconds)"
+            exit 0
+          fi
+
+          COUNTER=$((COUNTER + 1))
+          if [ $COUNTER -lt $MAX_RETRIES ]; then
+            echo "Waiting for container... (attempt $COUNTER/$MAX_RETRIES)"
+            sleep $RETRY_INTERVAL
+          fi
+        done
+
+        echo "❌ Container failed to become ready after $((MAX_RETRIES * RETRY_INTERVAL)) seconds"
+        echo "Container status:"
+        docker ps -a | grep django || echo "Container not found!"
+        echo "Container logs:"
+        docker logs django
+        exit 1
 
     - name: Run Django Tests
       if: always()
-      run: docker exec django coverage run manage.py test -v 2 | tee dj_test_out.txt
+      run: |
+        set +e  # Don't exit on error
+        docker exec django coverage run manage.py test -v 2 > dj_test_out.txt 2>&1
+        TEST_EXIT_CODE=$?
+        set -e  # Re-enable exit on error
+
+        echo "Test exit code: $TEST_EXIT_CODE"
+        echo $TEST_EXIT_CODE > test_exit_code.txt
+
+        # Display the output
+        cat dj_test_out.txt
+
+        exit 0  # Don't fail yet, let other steps run
+
+    - name: Display Test Results Summary
+      if: always()
+      run: |
+        # Verify test output file exists
+        if [ ! -f dj_test_out.txt ]; then
+          echo "⚠️ WARNING: dj_test_out.txt not found!"
+          ls -la
+          exit 1
+        fi
+
+        echo "Test output file size: $(wc -l < dj_test_out.txt) lines"
+
+        # Read the exit code
+        if [ -f test_exit_code.txt ]; then
+          EXIT_CODE=$(cat test_exit_code.txt)
+        else
+          EXIT_CODE="unknown"
+        fi
+
+        echo "========================================="
+        echo "TEST RESULTS SUMMARY"
+        echo "========================================="
+        echo ""
+        echo "Exit Code: $EXIT_CODE"
+        echo ""
+
+        # Extract and display test summary
+        grep -E "Ran [0-9]+ tests? in" dj_test_out.txt || echo "No test summary found"
+        grep -E "^(OK|FAILED)" dj_test_out.txt || echo "Unknown result"
+        echo ""
+
+        # Count errors and failures
+        ERROR_COUNT=$(grep -E "^ERROR:" dj_test_out.txt 2>/dev/null | wc -l)
+        FAIL_COUNT=$(grep -E "^FAIL:" dj_test_out.txt 2>/dev/null | wc -l)
+
+        echo "Errors: $ERROR_COUNT"
+        echo "Failures: $FAIL_COUNT"
+        echo ""
+
+        # Show list of failed tests if any
+        if [ "$EXIT_CODE" -ne 0 ] 2>/dev/null; then
+          echo "❌ TESTS FAILED"
+          echo "========================================="
+          echo "FAILED TESTS:"
+          echo "========================================="
+          grep -E "^(ERROR|FAIL):" dj_test_out.txt 2>/dev/null || echo "No errors or failures found in output (check test output above)"
+        else
+          echo "✅ ALL TESTS PASSED!"
+        fi
+        echo ""
+        echo "========================================="
 
     - name: Generate Coverage Report
       if: always()
       run: docker exec django coverage report -m | tee coverage_report.txt
 
     - name: Check Coverage >= 80%
+      if: always()
       run: |
         set -o pipefail
         chmod +x ./scripts/check-coverage.sh
@@ -177,9 +280,26 @@ jobs:
         docker compose -f docker-compose.prod.yml down -v || true
         docker system prune -f || true
 
+    - name: Fail if Tests Failed
+      if: always()
+      run: |
+        if [ -f test_exit_code.txt ]; then
+          EXIT_CODE=$(cat test_exit_code.txt)
+          if [ "$EXIT_CODE" -ne 0 ]; then
+            echo "❌ Tests failed with exit code $EXIT_CODE"
+            exit 1
+          else
+            echo "✅ All tests passed!"
+          fi
+        else
+          echo "⚠️ No test exit code found, assuming failure"
+          exit 1
+        fi
+
   ai-review:
     name: AI Code Review
     runs-on: ubuntu-latest
+    needs: [test]
 
     steps:
     - name: Checkout Code
@@ -221,21 +341,131 @@ jobs:
         path: review-*.md
         retention-days: ${{ env.RETENTION_DAYS }}
 
+
+    - name: Post AI Report PR Comment
+      if: github.event_name == 'pull_request'
+      uses: mshick/add-pr-comment@v2
+      with:
+        message-id: ai-code-review-report
+        message-path: review-*.md
+
     - name: Add Review to Summary
       if: always()
       run: cat review-*.md >> $GITHUB_STEP_SUMMARY
 
+  loc-metrics:
+    name: Lines of Code Metrics
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Calculate Git Diff
+      run: |
+        # Calculate diff from the previous commit to current for the merge
+        if [[ "${{ github.event.before }}" == "0000000000000000000000000000000000000000" ]]; then
+          # First push to branch - compare against HEAD~1
+          git diff "HEAD~1" "${{ github.sha }}" > "${{ runner.temp }}/changes.diff"
+        else
+          # Normal merge - compare before and after
+          git diff "${{ github.event.before }}" "${{ github.event.after }}" > "${{ runner.temp }}/changes.diff"
+        fi
+
+    - name: Calculate LOC Metrics
+      run: |
+        DIFF_FILE="${{ runner.temp }}/changes.diff"
+
+        # Count lines added (lines starting with + but not +++)
+        LINES_ADDED=$(grep -E '^\+[^+]' "$DIFF_FILE" | wc -l || echo "0")
+
+        # Count lines removed/changed (lines starting with - but not ---)
+        LINES_REMOVED=$(grep -E '^\-[^-]' "$DIFF_FILE" | wc -l || echo "0")
+
+        # Calculate net change
+        NET_CHANGE=$((LINES_ADDED - LINES_REMOVED))
+
+        # Save metrics to file
+        {
+          echo "LINES_ADDED=$LINES_ADDED"
+          echo "LINES_REMOVED=$LINES_REMOVED"
+          echo "NET_CHANGE=$NET_CHANGE"
+        } > "${{ runner.temp }}/loc_metrics.txt"
+
+        # Display metrics
+        cat "${{ runner.temp }}/loc_metrics.txt"
+
+    - name: Create LOC Metrics Summary
+      if: always()
+      run: |
+        source "${{ runner.temp }}/loc_metrics.txt"
+
+        {
+          echo '# Lines of Code Metrics'
+          echo ''
+          echo '## Summary'
+          echo "- **Lines Added:** $LINES_ADDED"
+          echo "- **Lines Changed/Removed:** $LINES_REMOVED"
+          echo "- **Net Change:** $NET_CHANGE"
+          echo ''
+          echo '## Details'
+          if [ $NET_CHANGE -gt 0 ]; then
+            echo "✅ Net addition of $NET_CHANGE lines"
+          elif [ $NET_CHANGE -lt 0 ]; then
+            echo "♻️ Net reduction of $((NET_CHANGE * -1)) lines"
+          else
+            echo "➖ No net change in lines of code"
+          fi
+          echo ''
+          echo '---'
+          echo '*Metrics calculated from changes merged into main*'
+        } >> $GITHUB_STEP_SUMMARY
+
+    - name: Upload LOC Metrics
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: loc-metrics
+        path: ${{ runner.temp }}/loc_metrics.txt
+        retention-days: ${{ env.RETENTION_DAYS }}
+
   cleanup:
     name: Cleanup & Archive
     runs-on: ubuntu-latest
-    needs: [lint, security, test, ai-review]
+    needs: [lint, security, test, ai-review, loc-metrics]
     if: always()
 
     steps:
-    - name: Download All Artifacts
+    - name: Download Coverage Report
       uses: actions/download-artifact@v4
+      continue-on-error: true
       with:
-        path: artifacts/
+        name: coverage-report
+        path: artifacts/coverage-report
+
+    - name: Download Security Reports
+      uses: actions/download-artifact@v4
+      continue-on-error: true
+      with:
+        name: security-reports
+        path: artifacts/security-reports
+
+    - name: Download AI Code Review Report
+      uses: actions/download-artifact@v4
+      continue-on-error: true
+      with:
+        name: ai-code-review-report
+        path: artifacts/ai-code-review-report
+
+    - name: Download LOC Metrics
+      uses: actions/download-artifact@v4
+      continue-on-error: true
+      with:
+        name: loc-metrics
+        path: artifacts/loc-metrics
 
     - name: Create Essential Files Archive
       run: |
@@ -255,6 +485,11 @@ jobs:
         # Copy AI review reports if they exist
         if [ -d "artifacts/ai-code-review-report" ]; then
           cp -r artifacts/ai-code-review-report essential-archive/
+        fi
+
+        # Copy LOC metrics if they exist
+        if [ -d "artifacts/loc-metrics" ]; then
+          cp -r artifacts/loc-metrics essential-archive/
         fi
 
         # Create timestamp file

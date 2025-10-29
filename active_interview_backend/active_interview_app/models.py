@@ -43,9 +43,9 @@ class Chat(models.Model):
     difficulty = models.IntegerField(default=5,
                                      validators=[MinValueValidator(1),
                                                  MaxValueValidator(10)])
-    messages = models.JSONField()  # Json of the messages object
-    key_questions = models.JSONField(default=dict)  # Json of the key questions
-    job_listing = models.ForeignKey(UploadedJobListing, null=True,
+    messages = models.JSONField(blank=True, default=list)  # Json of the messages object
+    key_questions = models.JSONField(blank=True, default=list)  # Json of the key questions
+    job_listing = models.ForeignKey(UploadedJobListing, null=True, blank=True,
                                     on_delete=models.SET_NULL)
     resume = models.ForeignKey(UploadedResume, null=True, blank=True,
                                on_delete=models.SET_NULL)
@@ -72,3 +72,62 @@ class Chat(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class ExportableReport(models.Model):
+    """
+    Data structure to store exportable report information for an interview.
+    This model captures all the necessary data for generating PDF or other
+    format exports of interview results.
+    """
+    chat = models.OneToOneField(Chat, on_delete=models.CASCADE,
+                                related_name='exportable_report')
+
+    # Metadata
+    generated_at = models.DateTimeField(auto_now_add=True)
+    last_updated = models.DateTimeField(auto_now=True)
+
+    # Interview Scores (0-100)
+    professionalism_score = models.IntegerField(
+        null=True, blank=True,
+        validators=[MinValueValidator(0), MaxValueValidator(100)]
+    )
+    subject_knowledge_score = models.IntegerField(
+        null=True, blank=True,
+        validators=[MinValueValidator(0), MaxValueValidator(100)]
+    )
+    clarity_score = models.IntegerField(
+        null=True, blank=True,
+        validators=[MinValueValidator(0), MaxValueValidator(100)]
+    )
+    overall_score = models.IntegerField(
+        null=True, blank=True,
+        validators=[MinValueValidator(0), MaxValueValidator(100)]
+    )
+
+    # AI-generated feedback
+    feedback_text = models.TextField(blank=True)
+
+    # Question-by-question analysis
+    question_responses = models.JSONField(default=list)
+    # Structure: [{"question": str, "answer": str, "score": int, "feedback": str}, ...]
+
+    # Summary statistics
+    total_questions_asked = models.IntegerField(default=0)
+    total_responses_given = models.IntegerField(default=0)
+    interview_duration_minutes = models.IntegerField(null=True, blank=True)
+
+    # Export tracking
+    pdf_generated = models.BooleanField(default=False)
+    pdf_file = models.FileField(upload_to='exports/pdfs/', null=True, blank=True)
+
+    def __str__(self):
+        return f"Report for {self.chat.title} - {self.generated_at.strftime('%Y-%m-%d')}"
+
+    class Meta:
+        ordering = ['-generated_at']
+
+
+# Import token tracking models (must be at end to avoid circular imports)
+from .token_usage_models import TokenUsage  # noqa: E402, F401
+from .merge_stats_models import MergeTokenStats  # noqa: E402, F401
