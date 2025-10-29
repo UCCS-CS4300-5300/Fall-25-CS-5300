@@ -68,6 +68,60 @@
 }
 
 /* ===================================
+   Dark Theme
+   =================================== */
+
+[data-theme="dark"] {
+    /* Primary Colors - Professional Blue (adjusted for dark) */
+    --primary: #4A9AC7;
+    --primary-light: #87CEEB;
+    --primary-lighter: #B0E0F5;
+    --primary-dark: #1F7BA6;
+
+    /* Secondary Colors - Warm Accent */
+    --accent: #FFAB6B;
+    --accent-light: #FFD4A8;
+    --accent-dark: #FF8C42;
+
+    /* Neutral Colors - Dark Theme */
+    --background: #1a1a1a;
+    --surface: #2d2d2d;
+    --surface-hover: #3a3a3a;
+    --border: #444444;
+    --border-light: #333333;
+
+    /* Text Colors */
+    --text-primary: #e0e0e0;
+    --text-secondary: #b0b0b0;
+    --text-light: #808080;
+    --text-white: #FFFFFF;
+
+    /* Status Colors */
+    --success: #2ecc71;
+    --warning: #f39c12;
+    --error: #e74c3c;
+    --info: #3498db;
+
+    /* Chat Bubble Colors */
+    --user-bubble: #1F4E5F;
+    --user-bubble-text: #e0e0e0;
+    --bot-bubble: #3a3a3a;
+    --bot-bubble-text: #e0e0e0;
+
+    /* Sidebar Colors */
+    --sidebar-bg: #252525;
+    --sidebar-text: #e0e0e0;
+    --sidebar-hover: #333333;
+    --sidebar-active: #1F4E5F;
+
+    /* Shadow */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+}
+
+/* ===================================
    Base Styles
    =================================== */
 
@@ -571,4 +625,19 @@ a:hover {
 
 .fade-in {
     animation: fadeIn 0.3s ease-in-out;
+}
+
+/* ===================================
+   Bootstrap Text Color Overrides
+   =================================== */
+
+/* Override Bootstrap's text-white to respect theme */
+.text-white {
+    color: var(--text-primary) !important;
+}
+
+/* Ensure inline styles with white color also use theme colors */
+[style*="color: white"],
+[style*="color:white"] {
+    color: var(--text-primary) !important;
 }
