@@ -538,6 +538,9 @@ class EditChat(LoginRequiredMixin, UserPassesTestMixin, View):
 
                 return redirect("chat-view", chat_id=chat.id)
 
+        # If 'update' not in request.POST or form is invalid, redirect to edit page
+        return redirect("chat-edit", chat_id=chat.id)
+
 
 # Note: this class has no template.  it is technically built into base-sidebar
 class DeleteChat(LoginRequiredMixin, UserPassesTestMixin, View):

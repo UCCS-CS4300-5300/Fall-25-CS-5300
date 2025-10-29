@@ -294,7 +294,7 @@ class ViewsCompleteCoverageTest(TestCase):
             'create': 'true',
             'listing_choice': self.job_listing.id,
             'difficulty': 3,
-            'type': 'TECH'
+            'type': 'ISK'
         })
 
         # Chat should still be created with empty AI messages

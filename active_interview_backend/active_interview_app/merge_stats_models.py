@@ -1,6 +1,7 @@
 """
 Merge token statistics models for tracking cumulative token usage across branches.
 """
+from decimal import Decimal
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -168,12 +169,12 @@ class MergeTokenStats(models.Model):
                 self.cumulative_claude_tokens = previous.cumulative_claude_tokens + self.claude_total_tokens
                 self.cumulative_chatgpt_tokens = previous.cumulative_chatgpt_tokens + self.chatgpt_total_tokens
                 self.cumulative_total_tokens = previous.cumulative_total_tokens + self.total_tokens
-                self.cumulative_cost = previous.cumulative_cost + float(self.branch_cost)
+                self.cumulative_cost = previous.cumulative_cost + Decimal(str(self.branch_cost))
             else:
                 self.cumulative_claude_tokens = self.claude_total_tokens
                 self.cumulative_chatgpt_tokens = self.chatgpt_total_tokens
                 self.cumulative_total_tokens = self.total_tokens
-                self.cumulative_cost = float(self.branch_cost)
+                self.cumulative_cost = Decimal(str(self.branch_cost))
 
         super().save(*args, **kwargs)
 

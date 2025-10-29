@@ -185,7 +185,7 @@ class CreateChatKeyQuestionsTest(TestCase):
             'listing_choice': self.job_listing.id,
             'resume_choice': self.resume.id,
             'difficulty': 7,
-            'type': 'TECH'
+            'type': 'ISK'
         })
 
         self.assertEqual(response.status_code, 302)

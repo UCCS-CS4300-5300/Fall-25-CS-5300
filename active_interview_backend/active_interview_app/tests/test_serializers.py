@@ -40,7 +40,7 @@ class UploadedResumeSerializerTest(TestCase):
     def test_serializer_fields(self):
         """Test that serializer has correct fields"""
         serializer = UploadedResumeSerializer(instance=self.resume)
-        expected_fields = {'id', 'file', 'user', 'uploaded_at'}
+        expected_fields = {'id', 'file', 'user', 'uploaded_at', 'title'}
         self.assertEqual(set(serializer.data.keys()), expected_fields)
 
     def test_deserialize_valid_data(self):
@@ -54,7 +54,8 @@ class UploadedResumeSerializerTest(TestCase):
 
         data = {
             'file': uploaded_file,
-            'user': self.user.id
+            'user': self.user.id,
+            'title': 'Test Resume'
         }
 
         serializer = UploadedResumeSerializer(data=data)
@@ -75,7 +76,7 @@ class UploadedResumeSerializerTest(TestCase):
 
         serializer = UploadedResumeSerializer(data=data)
         self.assertFalse(serializer.is_valid())
-        self.assertIn('user', serializer.errors)
+        self.assertIn('title', serializer.errors)
 
     def test_create_resume_via_serializer(self):
         """Test creating a resume through serializer"""
@@ -88,12 +89,12 @@ class UploadedResumeSerializerTest(TestCase):
 
         data = {
             'file': uploaded_file,
-            'user': self.user.id
+            'title': 'New Resume'
         }
 
         serializer = UploadedResumeSerializer(data=data)
         if serializer.is_valid():
-            resume = serializer.save()
+            resume = serializer.save(user=self.user, content='New resume content')
             self.assertIsNotNone(resume.id)
             self.assertEqual(resume.user, self.user)
 
@@ -166,7 +167,7 @@ class UploadedJobListingSerializerTest(TestCase):
     def test_serializer_fields(self):
         """Test that serializer has correct fields"""
         serializer = UploadedJobListingSerializer(instance=self.job_listing)
-        expected_fields = {'id', 'user', 'filename', 'content', 'created_at'}
+        expected_fields = {'id', 'user', 'filename', 'content', 'created_at', 'title', 'file'}
         self.assertEqual(set(serializer.data.keys()), expected_fields)
 
     def test_deserialize_valid_data(self):
@@ -181,15 +182,15 @@ class UploadedJobListingSerializerTest(TestCase):
         self.assertTrue(serializer.is_valid())
 
     def test_deserialize_missing_user(self):
-        """Test deserializing fails when user is missing"""
+        """Test deserializing succeeds when user is missing (read-only field)"""
         data = {
             'filename': 'new_job.txt',
-            'content': 'Python Developer position'
+            'content': 'Python Developer position',
+            'title': 'Job Title'
         }
 
         serializer = UploadedJobListingSerializer(data=data)
-        self.assertFalse(serializer.is_valid())
-        self.assertIn('user', serializer.errors)
+        self.assertTrue(serializer.is_valid())
 
     def test_deserialize_missing_content(self):
         """Test deserializing fails when content is missing"""
@@ -203,27 +204,26 @@ class UploadedJobListingSerializerTest(TestCase):
         self.assertIn('content', serializer.errors)
 
     def test_deserialize_missing_filename(self):
-        """Test deserializing fails when filename is missing"""
+        """Test deserializing succeeds when filename is missing (optional field)"""
         data = {
-            'user': self.user.id,
-            'content': 'Python Developer position'
+            'content': 'Python Developer position',
+            'title': 'Job Title'
         }
 
         serializer = UploadedJobListingSerializer(data=data)
-        self.assertFalse(serializer.is_valid())
-        self.assertIn('filename', serializer.errors)
+        self.assertTrue(serializer.is_valid())
 
     def test_create_job_listing_via_serializer(self):
         """Test creating a job listing through serializer"""
         data = {
-            'user': self.user.id,
             'filename': 'data_scientist.txt',
-            'content': 'Data Scientist position available'
+            'content': 'Data Scientist position available',
+            'title': 'Data Scientist'
         }
 
         serializer = UploadedJobListingSerializer(data=data)
         if serializer.is_valid():
-            job_listing = serializer.save()
+            job_listing = serializer.save(user=self.user)
             self.assertIsNotNone(job_listing.id)
             self.assertEqual(job_listing.user, self.user)
             self.assertEqual(job_listing.filename, 'data_scientist.txt')
