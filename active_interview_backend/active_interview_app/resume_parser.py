@@ -11,7 +11,7 @@ import json
 import textwrap
 from typing import Dict, List, Any
 
-# Import the OpenAI client lazy loader from openai_utils
+# Import the OpenAI client utilities from openai_utils
 # This ensures consistent error handling and configuration
 from .openai_utils import get_openai_client, _ai_available, MAX_TOKENS
 

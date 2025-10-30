@@ -1,7 +1,7 @@
 """
 OpenAI Utility Functions
 
-Centralized OpenAI client management with lazy loading and graceful degradation.
+Centralized OpenAI client management with graceful degradation.
 This module prevents circular imports between views.py and resume_parser.py.
 """
 
@@ -9,14 +9,14 @@ from openai import OpenAI
 from django.conf import settings
 
 
-# OpenAI client configuration with lazy loading and graceful degradation
+# OpenAI client configuration with graceful degradation
 MAX_TOKENS = 15000
 _openai_client = None
 
 
 def get_openai_client():
     """
-    Lazy initialization of OpenAI client.
+    Initialize and return OpenAI client (singleton pattern).
     This prevents import-time errors when API key is not set.
 
     Returns:
