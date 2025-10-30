@@ -1,7 +1,6 @@
 import os
 import filetype
 import json
-from openai import OpenAI
 import pymupdf4llm
 import tempfile
 import textwrap
@@ -24,6 +23,7 @@ from .serializers import (
     ExportableReportSerializer
 )
 from .pdf_export import generate_pdf_report
+from .resume_parser import parse_resume_with_ai
 
 
 from django.conf import settings
@@ -46,40 +46,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 
-# OpenAI client configuration with lazy loading and graceful degradation
-MAX_TOKENS = 15000
-_openai_client = None
-
-
-def get_openai_client():
-    """
-    Lazy initialization of OpenAI client.
-    This prevents import-time errors when API key is not set.
-    """
-    global _openai_client
-    if _openai_client is None:
-        if not settings.OPENAI_API_KEY:
-            raise ValueError(
-                "OPENAI_API_KEY is not set. Please configure it in your "
-                ".env file or environment variables."
-            )
-        try:
-            _openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
-        except Exception as e:
-            raise ValueError(f"Failed to initialize OpenAI client: {e}")
-    return _openai_client
-
-
-def _ai_available():
-    """
-    Return True if the OpenAI client can be initialized and is usable.
-    This checks without raising exceptions.
-    """
-    try:
-        get_openai_client()
-        return True
-    except (ValueError, Exception):
-        return False
+# Import OpenAI utilities (moved to separate module to prevent circular imports)
+from .openai_utils import get_openai_client, _ai_available, MAX_TOKENS
 
 
 def _ai_unavailable_json():
@@ -960,7 +928,43 @@ def upload_file(request):
                         instance.content = md(full_text)  # Convert to markdown
 
                     instance.save()
-                    messages.success(request, "File uploaded successfully!")
+
+                    # Trigger AI parsing for resumes (Issue #48: "upload triggers parsing")
+                    if instance.__class__.__name__ == 'UploadedResume':
+                        if _ai_available():
+                            try:
+                                # Set status to in_progress
+                                instance.parsing_status = 'in_progress'
+                                instance.save()
+
+                                # Parse the resume
+                                parsed_data = parse_resume_with_ai(instance.content)
+
+                                # Save parsed data
+                                instance.skills = parsed_data.get('skills', [])
+                                instance.experience = parsed_data.get('experience', [])
+                                instance.education = parsed_data.get('education', [])
+                                instance.parsing_status = 'success'
+                                instance.parsed_at = now()
+                                instance.save()
+
+                                messages.success(request, "Resume uploaded and parsed successfully!")
+                            except Exception as e:
+                                # Save error
+                                instance.parsing_status = 'error'
+                                instance.parsing_error = str(e)
+                                instance.save()
+                                messages.warning(request, f"Resume uploaded but parsing failed: {str(e)}")
+                        else:
+                            # AI unavailable
+                            instance.parsing_status = 'error'
+                            instance.parsing_error = "AI service unavailable"
+                            instance.save()
+                            messages.warning(request, "Resume uploaded but AI parsing is currently unavailable.")
+                    else:
+                        # Not a resume (job listing), just show success
+                        messages.success(request, "File uploaded successfully!")
+
                     return redirect('document-list')
 
                 except Exception as e:

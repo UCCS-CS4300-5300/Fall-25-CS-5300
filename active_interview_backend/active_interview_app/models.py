@@ -15,7 +15,30 @@ class UploadedResume(models.Model):  # Renamed from UploadedFile
     filesize = models.IntegerField(null=True, blank=True)
     original_filename = models.CharField(max_length=255, null=True, blank=True)
     title = models.CharField(max_length=255)
-    
+
+    # NEW: Parsed data fields (Issues #48, #49, #50)
+    skills = models.JSONField(default=list, blank=True)
+    # Structure: ["Python", "Django", "React", ...]
+
+    experience = models.JSONField(default=list, blank=True)
+    # Structure: [{"company": "...", "title": "...", "duration": "...", "description": "..."}, ...]
+
+    education = models.JSONField(default=list, blank=True)
+    # Structure: [{"institution": "...", "degree": "...", "field": "...", "year": "..."}, ...]
+
+    # NEW: Parsing metadata
+    parsing_status = models.CharField(
+        max_length=20,
+        choices=[
+            ('pending', 'Pending'),
+            ('in_progress', 'In Progress'),
+            ('success', 'Success'),
+            ('error', 'Error'),
+        ],
+        default='pending'
+    )
+    parsing_error = models.TextField(blank=True, null=True)
+    parsed_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         # return f'{self.file.name} uploaded by {self.user}'
