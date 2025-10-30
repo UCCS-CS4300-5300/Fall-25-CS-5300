@@ -1,149 +1,569 @@
+/* ===================================
+   Active Interview System - Light Theme
+   Modern, User-Friendly Design
+   =================================== */
+
 :root {
-	--depths: #070737;
+    /* Primary Colors - Professional Blue */
+    --primary: #1F7BA6;
+    --primary-light: #4A9AC7;
+    --primary-lighter: #87CEEB;
+    --primary-dark: #0D4A6B;
 
-    --shallows: #4482A6;
-    --cove: hsl(from var(--shallows) h s calc(l + 3));
-    --beach: hsl(from var(--shallows) h s calc(l + 6));
+    /* Secondary Colors - Warm Accent */
+    --accent: #FF8C42;
+    --accent-light: #FFAB6B;
+    --accent-dark: #D86D2F;
 
-    --abyss: #020305;
+    /* Neutral Colors - Light Theme */
+    --background: #F5F7FA;
+    --surface: #FFFFFF;
+    --surface-hover: #F9FAFC;
+    --border: #D0D8E0;
+    --border-light: #E5E9ED;
 
-    --reef: #031414;
+    /* Text Colors */
+    --text-primary: #2C3E50;
+    --text-secondary: #666B77;
+    --text-light: #999999;
+    --text-white: #FFFFFF;
 
-    --alga: #042518;
-    --cyano: hsl(from var(--alga) h s calc(l + 5));
-    --bloom: hsl(from var(--alga) h s calc(l + 6));
-    --phyto: hsl(from var(--bloom) h s calc(l + 2));
-    --chloro: hsl(from var(--bloom) h s calc(l + 4));
+    /* Status Colors */
+    --success: #27AE60;
+    --warning: #F39C12;
+    --error: #E74C3C;
+    --info: #3498DB;
+
+    /* Chat Bubble Colors */
+    --user-bubble: #E8F4F8;
+    --user-bubble-text: #2C3E50;
+    --bot-bubble: #F0F0F0;
+    --bot-bubble-text: #2C3E50;
+
+    /* Sidebar Colors */
+    --sidebar-bg: #F9FAFC;
+    --sidebar-text: #2C3E50;
+    --sidebar-hover: #F0F8FC;
+    --sidebar-active: #E8F4F8;
+
+    /* Shadow */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+
+    /* Border Radius */
+    --radius-sm: 0.375rem;
+    --radius: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+
+    /* Spacing */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing: 1rem;
+    --spacing-md: 1.5rem;
+    --spacing-lg: 2rem;
+    --spacing-xl: 3rem;
 }
+
+/* ===================================
+   Dark Theme
+   =================================== */
+
+[data-theme="dark"] {
+    /* Primary Colors - Professional Blue (adjusted for dark) */
+    --primary: #4A9AC7;
+    --primary-light: #87CEEB;
+    --primary-lighter: #B0E0F5;
+    --primary-dark: #1F7BA6;
+
+    /* Secondary Colors - Warm Accent */
+    --accent: #FFAB6B;
+    --accent-light: #FFD4A8;
+    --accent-dark: #FF8C42;
+
+    /* Neutral Colors - Dark Theme */
+    --background: #1a1a1a;
+    --surface: #2d2d2d;
+    --surface-hover: #3a3a3a;
+    --border: #444444;
+    --border-light: #333333;
+
+    /* Text Colors */
+    --text-primary: #e0e0e0;
+    --text-secondary: #b0b0b0;
+    --text-light: #808080;
+    --text-white: #FFFFFF;
+
+    /* Status Colors */
+    --success: #2ecc71;
+    --warning: #f39c12;
+    --error: #e74c3c;
+    --info: #3498db;
+
+    /* Chat Bubble Colors */
+    --user-bubble: #1F4E5F;
+    --user-bubble-text: #e0e0e0;
+    --bot-bubble: #3a3a3a;
+    --bot-bubble-text: #e0e0e0;
+
+    /* Sidebar Colors */
+    --sidebar-bg: #252525;
+    --sidebar-text: #e0e0e0;
+    --sidebar-hover: #333333;
+    --sidebar-active: #1F4E5F;
+
+    /* Shadow */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+}
+
+/* ===================================
+   Base Styles
+   =================================== */
 
 html, body {
     height: 100%;
-    background-color: var(--depths) !important;
-    /* overflow: hidden;  */
+    background-color: var(--background) !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--text-primary);
+    font-size: 16px;
+    line-height: 1.5;
 }
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+h1 {
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+h2 {
+    font-size: 1.5rem;
+}
+
+h3 {
+    font-size: 1.25rem;
+}
+
+a {
+    color: var(--primary);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+a:hover {
+    color: var(--primary-dark);
+    text-decoration: none;
+}
+
+/* ===================================
+   Layout Utilities
+   =================================== */
+
 .full-block-link {
-  display: block;
-  width: 100%;
-  text-decoration: none;
-  color: inherit;
+    display: block;
+    width: 100%;
+    text-decoration: none;
+    color: inherit;
+    transition: background-color 0.2s ease;
 }
+
 .white-break {
-  height: 0; 
-  border: 0 !important; 
-  border-top: 3px solid white !important; 
-  opacity: 100 !important;
+    height: 0;
+    border: 0 !important;
+    border-top: 2px solid var(--border) !important;
+    opacity: 1 !important;
 }
+
 .overflow-y-auto {
-    padding-right: 1rem; /* adjust as needed */
-} 
+    padding-right: var(--spacing);
+}
+
 .content-container {
-    /* max-width: 700px; */
-    margin: 0 auto; /* Center horizontally */
+    margin: 0 auto;
     width: 100%;
     display: flex;
     flex-direction: column;
-    background-color: var(--depths);
+    background-color: var(--background);
 }
+
 .centered-container {
     max-width: 700px;
-    margin: 0 auto; /* Center horizontally */
+    margin: 0 auto;
     width: 100%;
     display: flex;
     min-height: 0;
     flex-direction: column;
-    background-color: var(--depths);
+    background-color: var(--background);
+    padding: var(--spacing);
 }
-.bubbles-container {
-    overflow: hidden;
-}
+
+/* ===================================
+   Navigation & Navbar
+   =================================== */
+
 .navbar {
-    background-color: var(--abyss);
+    background-color: var(--surface) !important;
+    box-shadow: var(--shadow);
+    border-bottom: 1px solid var(--border-light);
 }
-/* .chatbox {
-    width: 100%;
-    min-height: 40px;
-} */
-.user-text-container {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 1.0rem;
-    margin-bottom: 1.0rem;
-    margin-left: 0.5rem;
-    margin-right: 0.5rem;
-    /* margin-right: 20.0rem; */
+
+.navbar-brand {
+    color: var(--text-primary) !important;
+    font-weight: 600;
 }
-.bot-text-container {
-    display: flex;
-    justify-content: flex-start;
-    margin-top: 1.0rem;
-    margin-bottom: 1.0rem;
-    margin-left: 0.5rem;
-    margin-right: 0.5rem;
+
+.navbar-toggler {
+    border-color: var(--border) !important;
 }
-.user-text-bubble {
-    max-width: min(500px, 80vw);
-    width: auto;
-    color: white;
-    background-color: var(--shallows) !important;
-    border-radius: 1rem 1rem 0rem 1rem !important;
-}
-.bot-text-bubble {
-    max-width: min(500px, 80vw);
-    width: auto;
-    border-radius: 1rem 1rem 1rem 0rem !important;
-}
-.whiteTextOverride {
-    color: white !important;
-}
-.chat-sidebar {
-    background-color: var(--reef);
-    max-height: 100dvh !important;
-}
-.offcanvas {
-    /* background-color: var(--reef); */
-    max-width: 85vw !important;
-    max-height: 100dvh !important;
-}
-.chat-card {
-    color: white;
-    border: 0px !important;
-    background-color: rgba(0.0, 0.0, 0.0, 0.0) !important;
-    /* background-color: var(--alga) !important; */
-    /* opacity: 0.5 !important; */
-}
-/* .chat-card-active {
-    color: white;
-    background-color: hsl(from var(--alga) h s calc(l - 6)) !important;
-} */
-.button-card {
-    color: white;
-    background-color: var(--alga) !important;
-}
-.chats-button {
-    color: #a2a3a5 !important;
-    border-color: white !important;
-}
+
 .navbar-toggler-icon {
-    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 32 32' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='rgba(162,163,165,1.0)' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 8h24M4 16h24M4 24h24'/%3E%3C/svg%3E") !important;
+    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 32 32' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='rgba(44,62,80,1.0)' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 8h24M4 16h24M4 24h24'/%3E%3C/svg%3E") !important;
 }
+
+.nav-link {
+    color: var(--text-secondary) !important;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.nav-link:hover {
+    color: var(--primary) !important;
+}
+
 .logo-img {
     height: 100%;
     max-height: 40px;
-    /* margin: 0.1rem; */
 }
-.dropdown-menu {
-    /* Move dropdown to top */
-    z-index: 9999 !important; 
-}
-/* .chat-card-text {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  width: 100%;
-  min-width: 0;
-} */
 
-/* Dynamic button text */
+.dropdown-menu {
+    background-color: var(--surface) !important;
+    border: 1px solid var(--border) !important;
+    box-shadow: var(--shadow-md);
+    z-index: 9999 !important;
+}
+
+.dropdown-item {
+    color: var(--text-primary) !important;
+    transition: background-color 0.2s ease;
+}
+
+.dropdown-item:hover {
+    background-color: var(--surface-hover) !important;
+}
+
+/* ===================================
+   Sidebar
+   =================================== */
+
+.chat-sidebar {
+    background-color: var(--sidebar-bg);
+    max-height: 100dvh !important;
+    border-right: 1px solid var(--border-light);
+}
+
+.offcanvas {
+    background-color: var(--sidebar-bg) !important;
+    max-width: 85vw !important;
+    max-height: 100dvh !important;
+}
+
+.sidebar-dropdown-menu {
+    background-color: var(--sidebar-bg) !important;
+    border: 1px solid var(--border-light) !important;
+}
+
+.sidebar-dropdown-item {
+    color: var(--sidebar-text) !important;
+    transition: background-color 0.2s ease;
+}
+
+.sidebar-dropdown-item:hover,
+.sidebar-dropdown-item:focus {
+    background-color: var(--sidebar-hover) !important;
+}
+
+.sidebar-dropdown-item.active,
+.sidebar-dropdown-item:active {
+    background-color: var(--sidebar-active) !important;
+    color: var(--primary) !important;
+}
+
+.active-sidebar-dropdown {
+    background-color: var(--sidebar-active) !important;
+    border: 0px !important;
+    color: var(--primary) !important;
+}
+
+.active-sidebar-dropdown:hover,
+.active-sidebar-dropdown:focus {
+    background-color: var(--sidebar-hover) !important;
+}
+
+/* ===================================
+   Chat Interface
+   =================================== */
+
+.bubbles-container {
+    overflow: hidden;
+}
+
+.user-text-container {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: var(--spacing);
+    margin-bottom: var(--spacing);
+    margin-left: var(--spacing-sm);
+    margin-right: var(--spacing-sm);
+}
+
+.bot-text-container {
+    display: flex;
+    justify-content: flex-start;
+    margin-top: var(--spacing);
+    margin-bottom: var(--spacing);
+    margin-left: var(--spacing-sm);
+    margin-right: var(--spacing-sm);
+}
+
+.user-text-bubble {
+    max-width: min(500px, 80vw);
+    width: auto;
+    color: var(--user-bubble-text);
+    background-color: var(--user-bubble) !important;
+    border-radius: var(--radius-lg) var(--radius-lg) 0rem var(--radius-lg) !important;
+    padding: var(--spacing-sm) var(--spacing);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-light);
+}
+
+.bot-text-bubble {
+    max-width: min(500px, 80vw);
+    width: auto;
+    color: var(--bot-bubble-text);
+    background-color: var(--bot-bubble) !important;
+    border-radius: var(--radius-lg) var(--radius-lg) var(--radius-lg) 0rem !important;
+    padding: var(--spacing-sm) var(--spacing);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-light);
+}
+
+/* ===================================
+   Cards
+   =================================== */
+
+.chat-card {
+    color: var(--text-primary);
+    border: 1px solid var(--border-light) !important;
+    background-color: var(--surface) !important;
+    border-radius: var(--radius);
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.chat-card:hover {
+    box-shadow: var(--shadow);
+    border-color: var(--primary-light) !important;
+}
+
+.button-card {
+    color: var(--text-white);
+    background-color: var(--primary) !important;
+    border: 0 !important;
+    border-radius: var(--radius);
+    transition: all 0.2s ease;
+}
+
+.button-card:hover {
+    background-color: var(--primary-light) !important;
+    box-shadow: var(--shadow);
+}
+
+/* ===================================
+   Buttons
+   =================================== */
+
+.btn {
+    border-radius: var(--radius);
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.btn-primary {
+    background-color: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: var(--text-white) !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+    background-color: var(--primary-light) !important;
+    border-color: var(--primary-light) !important;
+    box-shadow: var(--shadow);
+}
+
+.btn-primary.active,
+.btn-primary:active {
+    background-color: var(--primary-dark) !important;
+    border-color: var(--primary-dark) !important;
+}
+
+.btn-secondary {
+    background-color: var(--surface) !important;
+    border-color: var(--border) !important;
+    color: var(--text-primary) !important;
+}
+
+.btn-secondary:hover {
+    background-color: var(--surface-hover) !important;
+    border-color: var(--primary) !important;
+    color: var(--primary) !important;
+}
+
+.chat-card-button {
+    background-color: var(--surface) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-light) !important;
+    border-radius: var(--radius);
+    transition: all 0.2s ease;
+}
+
+.chat-card-button:hover,
+.chat-card-button:focus {
+    background-color: var(--surface-hover) !important;
+    border-color: var(--primary-light) !important;
+    color: var(--primary) !important;
+}
+
+.chat-card-button.active,
+.chat-card-button:active {
+    background-color: var(--sidebar-active) !important;
+    border-color: var(--primary) !important;
+    color: var(--primary) !important;
+}
+
+.chats-button {
+    color: var(--text-secondary) !important;
+    border-color: var(--border) !important;
+}
+
+.chats-button:hover {
+    color: var(--primary) !important;
+    border-color: var(--primary) !important;
+}
+
+/* Chat send button */
+.button-chat-send {
+    background-color: var(--primary) !important;
+    border: 1px solid var(--primary) !important;
+    color: var(--text-white) !important;
+}
+
+.button-chat-send:hover,
+.button-chat-send:focus {
+    background-color: var(--primary-light) !important;
+    border-color: var(--primary-light) !important;
+}
+
+.button-chat-send.active,
+.button-chat-send:active {
+    background-color: var(--primary-dark) !important;
+    border-color: var(--primary-dark) !important;
+}
+
+/* ===================================
+   Forms & Inputs
+   =================================== */
+
+.form-control {
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    border-radius: var(--radius);
+    transition: all 0.2s ease;
+}
+
+.form-control:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 0.2rem rgba(31, 123, 166, 0.15);
+    background-color: var(--surface);
+}
+
+.form-label {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.input-card {
+    border-radius: var(--radius) !important;
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+}
+
+/* ===================================
+   Modal & Delete Dialogs
+   =================================== */
+
+.delete-chat-content {
+    background-color: var(--surface) !important;
+}
+
+.modal-content {
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-lg);
+}
+
+.modal-header {
+    border-bottom: 1px solid var(--border-light);
+}
+
+.modal-footer {
+    border-top: 1px solid var(--border-light);
+}
+
+/* ===================================
+   Utility Classes
+   =================================== */
+
+.whiteTextOverride {
+    color: var(--text-primary) !important;
+}
+
+.create-button-or-spinner {
+    height: 45px;
+}
+
+.table.borderless tbody tr td,
+.table.borderless thead tr th {
+    border: none;
+}
+
+.pt-66 {
+    padding-top: 66px !important;
+}
+
+/* ===================================
+   Carousel
+   =================================== */
+
+.carousel-control-prev,
+.carousel-control-next {
+    align-items: flex-start;
+}
+
+/* ===================================
+   Responsive Text Truncation
+   =================================== */
+
 .full-block-link p {
     max-width: min(310px, calc(85vw - 90px));
     white-space: nowrap;
@@ -151,111 +571,90 @@ html, body {
     text-overflow: ellipsis;
     margin: 0;
 }
-/* bootstrap md */
+
+/* Bootstrap md */
 @media (min-width: 768px) and (max-width: 991.99px) {
     .full-block-link p {
         max-width: calc((100vw / 4) - 80px);
     }
 }
-/* bootstrap lg+ */
+
+/* Bootstrap lg+ */
 @media (min-width: 992px) {
     .full-block-link p {
         max-width: calc((100vw / 6) - 80px);
     }
 }
 
-.dropdown-menu {
-    background-color: var(--abyss) !important;
+/* ===================================
+   Custom Scrollbar (Webkit)
+   =================================== */
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
 }
 
-/* Chat card buttons */
-.chat-card-button {
-    background-color: var(--alga) !important;
-    /* color:white !important; */
-    border: 0px !important;
-}
-.chat-card-button:hover,
-.chat-card-button:focus {
-    background-color: var(--cyano) !important;
-}
-.chat-card-button.active,
-.chat-card-button:active {
-    background-color: var(--bloom) !important;
-}
-.sidebar-dropdown-menu {
-    background-color: var(--reef) !important;
-    /* border: 1px solid var(--bloom) !important; */
-}
-.sidebar-dropdown-item:hover,
-.sidebar-dropdown-item:focus {
-    background-color: var(--cyano) !important;
-}
-.sidebar-dropdown-item.active,
-.sidebar-dropdown-item:active {
-    background-color: var(--bloom) !important;
-}
-.active-sidebar-dropdown {
-    background-color: var(--bloom) !important;
-    border: 0px !important;
-}
-.active-sidebar-dropdown:hover,
-.active-sidebar-dropdown:focus {
-    background-color: var(--phyto) !important;
-}
-.active-sidebar-dropdown.active,
-.active-sidebar-dropdown:active {
-    background-color: var(--chloro) !important;
+::-webkit-scrollbar-track {
+    background: var(--background);
 }
 
-/* Primary buttons */
-.btn-primary {
-    background-color: var(--shallows) !important;
-    border: 0px !important;
-}
-.btn-primary:hover,
-.btn-primary:focus {
-    background-color: var(--cove) !important;
-}
-.btn-primary.active,
-.btn-primary:active {
-    background-color: var(--beach) !important;
+::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
 }
 
-/* Chat send button */
-.button-chat-send {
-    background-color: var(--bs-blue) !important;
-    border: 1px solid var(--bs-blue) !important;
-}
-.button-chat-send:hover,
-.button-chat-send:focus {
-    background-color: #0b5ed7 !important;
-}
-.button-chat-send.active,
-.button-chat-send:active {
-    background-color: var(--bs-primary-text) !important;
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-light);
 }
 
-.input-card {
-    border-radius: 0.5rem !important;
+/* ===================================
+   Animations
+   =================================== */
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-.delete-chat-content {
-    background-color: var(--abyss) !important;
+.fade-in {
+    animation: fadeIn 0.3s ease-in-out;
 }
 
-.create-button-or-spinner {
-    height: 45px;
+/* ===================================
+   Bootstrap Text Color Overrides
+   =================================== */
+
+/* Override Bootstrap's text-white to respect theme */
+.text-white {
+    color: var(--text-primary) !important;
 }
 
-.table.borderless tbody tr td, .table.borderless thead tr th {
-  border: none;
+/* Ensure inline styles with white color also use theme colors */
+[style*="color: white"],
+[style*="color:white"] {
+    color: var(--text-primary) !important;
 }
 
-.pt-66 {
-    padding-top: 66px !important;
-}
+/* ===================================
+   Accessibility Utilities
+   =================================== */
 
-.carousel-control-prev,
-.carousel-control-next{
-    align-items: flex-start; /* Aligns it at the bottom */
+/* Visually hide content but keep it accessible to screen readers */
+.visually-hidden {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
 }
