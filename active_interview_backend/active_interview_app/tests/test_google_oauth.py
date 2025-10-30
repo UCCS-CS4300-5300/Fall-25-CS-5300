@@ -158,11 +158,11 @@ class GoogleOAuthURLTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_login_page_has_google_button(self):
-        """Test that login page contains Google sign-in button."""
+        """Test that login page contains Google continue button."""
         response = self.client.get(reverse('login'))
         self.assertEqual(response.status_code, 200)
-        # Check for Google sign-in link
-        self.assertContains(response, 'Sign in with Google')
+        # Check for Google continue link
+        self.assertContains(response, 'Continue with Google')
 
     def test_login_page_loads_socialaccount_tags(self):
         """Test that login page loads socialaccount template tags."""
