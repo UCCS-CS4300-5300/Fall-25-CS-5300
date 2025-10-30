@@ -333,7 +333,16 @@
               </svg>
               <span>Click to upload PDF or Word document</span>
             </label>
-            <input type="file" name="file" id="file" accept=".pdf,.doc,.docx" required>
+            <input
+              type="file"
+              name="file"
+              id="file"
+              accept=".pdf,.doc,.docx"
+              required
+              aria-label="Upload your resume file"
+              aria-describedby="file-upload-desc"
+            >
+            <span id="file-upload-desc" class="visually-hidden">Upload a PDF or Word document containing your resume. Accepted formats: .pdf, .doc, .docx</span>
           </div>
           <div class="file-name-display" id="file-name-display"></div>
         </div>
@@ -403,7 +412,7 @@
     const fileLabel = document.querySelector('.file-input-label span');
 
     if (fileInput) {
-      fileInput.addEventListener('change', function(e) {
+      fileInput.addEventListener('change', function() {
         if (this.files && this.files[0]) {
           const fileName = this.files[0].name;
           fileNameDisplay.textContent = `Selected: ${fileName}`;

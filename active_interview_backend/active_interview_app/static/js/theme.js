@@ -22,16 +22,26 @@
         localStorage.setItem(THEME_KEY, theme);
     }
 
-    // Update icon visibility based on current theme
+    // Update icon visibility and ARIA attributes based on current theme
     function updateIcons(theme) {
         if (theme === 'dark') {
             // In dark mode, show sun icon (to switch to light)
             lightIcons.forEach(icon => icon.style.display = 'block');
             darkIcons.forEach(icon => icon.style.display = 'none');
+            // Update ARIA attributes for accessibility
+            themeToggleButtons.forEach(button => {
+                button.setAttribute('aria-label', 'Switch to light mode');
+                button.setAttribute('aria-pressed', 'true');
+            });
         } else {
             // In light mode, show moon icon (to switch to dark)
             lightIcons.forEach(icon => icon.style.display = 'none');
             darkIcons.forEach(icon => icon.style.display = 'block');
+            // Update ARIA attributes for accessibility
+            themeToggleButtons.forEach(button => {
+                button.setAttribute('aria-label', 'Switch to dark mode');
+                button.setAttribute('aria-pressed', 'false');
+            });
         }
     }
 
@@ -61,7 +71,17 @@
 
     // Add event listeners to all toggle buttons
     themeToggleButtons.forEach(button => {
+        // Click event for mouse users
         button.addEventListener('click', toggleTheme);
+
+        // Keyboard event for keyboard users
+        button.addEventListener('keydown', function(event) {
+            // Toggle on Enter or Space key
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault(); // Prevent default scroll behavior for Space
+                toggleTheme();
+            }
+        });
     });
 
     // Initialize on page load
