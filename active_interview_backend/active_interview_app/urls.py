@@ -4,6 +4,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 from rest_framework import routers
+from allauth.account import views as allauth_views
 
 from . import views
 
@@ -18,13 +19,17 @@ urlpatterns = [
     path('about-us/', views.aboutus, name='about-us'),
     path('features/', views.features, name='features'),
 
-    # Auth urls
-    # Note: allauth handles accounts/* URLs in project urls.py
-    # We keep custom register for backward compatibility
-    path('testlogged/', views.loggedin, name='loggedin'),
-    path('register/', views.register, name='register_page'),
-    path('profile/', views.profile, name='profile'),
-    path('results/', views.results, name='results'),
+    # Auth urls - kebab-case paths for allauth integration
+    # Custom kebab-case aliases that map to allauth views
+    path('login/', allauth_views.LoginView.as_view(), name='login'),
+    path('logout/', allauth_views.LogoutView.as_view(), name='logout'),
+
+    # Auth views - keeping original paths for compatibility
+    # Note: allauth also handles accounts/* URLs in project urls.py (e.g. /accounts/login/)
+    path('testlogged/', views.loggedin, name='loggedin'),  # Post-login landing page
+    path('register/', views.register, name='register_page'),  # User registration
+    path('profile/', views.profile, name='profile'),  # User profile view
+    path('results/', views.results, name='results'),  # User results view
 
     # Chat url
     path('chat/', views.chat_list, name='chat-list'),

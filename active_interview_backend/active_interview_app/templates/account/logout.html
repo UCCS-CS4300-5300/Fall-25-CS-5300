@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 
 {% block title %}
-  AIS - Logged Out
+  AIS - Sign Out
 {% endblock title %}
 
 {% block content %}
 <body>
   <style>
-    .logout-page {
+    .logout-confirm-page {
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -20,7 +20,7 @@
       margin-bottom: 1.5rem;
       font-size: 2.5rem;
     }
-    .logout-message {
+    .logout-confirmation {
       background-color: rgba(68, 130, 166, 0.2);
       border: 1px solid var(--shallows);
       border-radius: 8px;
@@ -29,7 +29,7 @@
       max-width: 500px;
       text-align: center;
     }
-    .logout-message p {
+    .logout-confirmation p {
       font-size: 18px;
       margin: 0;
       color: white;
@@ -41,20 +41,32 @@
       max-width: 400px;
       width: 100%;
     }
-    .action-buttons .btn {
+    .action-buttons form {
       width: 100%;
-      padding: 12px 24px;
-      text-decoration: none;
     }
     .btn-secondary {
       background-color: var(--reef) !important;
       border: 1px solid rgba(255, 255, 255, 0.2) !important;
       color: white !important;
+      text-decoration: none;
+      display: block;
+      text-align: center;
+      padding: 12px 24px;
+      width: 100%;
     }
     .btn-secondary:hover {
       background-color: var(--alga) !important;
       color: white !important;
       text-decoration: none;
+    }
+    .btn-danger {
+      background-color: #dc3545 !important;
+      border: none !important;
+      padding: 12px 24px;
+      width: 100%;
+    }
+    .btn-danger:hover {
+      background-color: #c82333 !important;
     }
 
     /* Responsive: side by side on larger screens */
@@ -62,6 +74,7 @@
       .action-buttons {
         flex-direction: row;
       }
+      .action-buttons form,
       .action-buttons .btn {
         flex: 1;
       }
@@ -69,19 +82,27 @@
   </style>
 
   <div class="container">
-    <div class="logout-page">
-      <h2>You've Been Logged Out</h2>
+    <div class="logout-confirm-page">
+      <h2>Sign Out</h2>
 
-      <div class="logout-message">
-        <p>You have successfully logged out of your account.</p>
-        <p style="margin-top: 1rem; font-size: 16px; color: rgba(255, 255, 255, 0.8);">
-          Thank you for using Active Interview Service!
-        </p>
+      <div class="logout-confirmation">
+        <p>Are you sure you want to sign out?</p>
+        {% if user.is_authenticated %}
+          <p style="margin-top: 1rem; font-size: 16px; color: rgba(255, 255, 255, 0.8);">
+            Currently logged in as <strong>{{ user.username }}</strong>
+          </p>
+        {% endif %}
       </div>
 
       <div class="action-buttons">
-        <a href="{% url 'login' %}" class="btn btn-primary">Login Again</a>
-        <a href="{% url 'index' %}" class="btn btn-secondary">Return to Home</a>
+        <form method="post">
+          {% csrf_token %}
+          {% if redirect_field_value %}
+            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
+          {% endif %}
+          <button type="submit" class="btn btn-danger w-100">Yes, Sign Out</button>
+        </form>
+        <a href="{% url 'index' %}" class="btn btn-secondary">Cancel</a>
       </div>
     </div>
   </div>
