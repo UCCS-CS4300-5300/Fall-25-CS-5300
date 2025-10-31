@@ -15,6 +15,10 @@ from typing import Dict, List, Any
 # This ensures consistent error handling and configuration
 from .openai_utils import get_openai_client, _ai_available, MAX_TOKENS
 
+# Maximum characters for resume content before truncation
+# Keep first 10,000 characters (roughly 2,500 tokens) to prevent token limit issues
+RESUME_CONTENT_LIMIT = 10000
+
 
 def parse_resume_with_ai(resume_content: str) -> Dict[str, Any]:
     """
@@ -52,9 +56,8 @@ def parse_resume_with_ai(resume_content: str) -> Dict[str, Any]:
         )
 
     # Truncate extremely long resumes to prevent token limit issues
-    # Keep first 10,000 characters (roughly 2,500 tokens)
-    if len(resume_content) > 10000:
-        resume_content = resume_content[:10000] + "\n... (truncated)"
+    if len(resume_content) > RESUME_CONTENT_LIMIT:
+        resume_content = resume_content[:RESUME_CONTENT_LIMIT] + "\n... (truncated)"
 
     # System prompt for structured extraction
     system_prompt = textwrap.dedent("""
@@ -190,8 +193,12 @@ def parse_resume_with_ai(resume_content: str) -> Dict[str, Any]:
         return result
 
     except Exception as e:
-        # Re-raise with more context
-        raise ValueError(f"Resume parsing failed: {str(e)}")
+        # Re-raise with sanitized error message (no API keys)
+        error_msg = str(e)
+        # Sanitize potential API key exposure in error messages
+        if "api" in error_msg.lower() and "key" in error_msg.lower():
+            error_msg = "OpenAI API authentication error"
+        raise ValueError(f"Resume parsing failed: {error_msg}")
 
 
 def validate_parsed_data(data: Dict[str, Any]) -> bool:

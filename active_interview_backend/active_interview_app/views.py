@@ -950,11 +950,15 @@ def upload_file(request):
 
                                 messages.success(request, "Resume uploaded and parsed successfully!")
                             except Exception as e:
-                                # Save error
+                                # Save error (sanitize to prevent API key exposure)
+                                error_msg = str(e)
+                                # Sanitize any potential API key references
+                                if "api" in error_msg.lower() and "key" in error_msg.lower():
+                                    error_msg = "OpenAI authentication error"
                                 instance.parsing_status = 'error'
-                                instance.parsing_error = str(e)
+                                instance.parsing_error = error_msg
                                 instance.save()
-                                messages.warning(request, f"Resume uploaded but parsing failed: {str(e)}")
+                                messages.warning(request, f"Resume uploaded but parsing failed: {error_msg}")
                         else:
                             # AI unavailable
                             instance.parsing_status = 'error'
