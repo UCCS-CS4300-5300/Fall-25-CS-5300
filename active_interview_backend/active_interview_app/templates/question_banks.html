@@ -1,0 +1,692 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Question Banks{% endblock %}
+
+{% block content %}
+<style>
+  .question-bank-container {
+    background-color: var(--background);
+    color: var(--text-primary);
+    min-height: calc(100vh - 66px);
+  }
+
+  .question-bank-header {
+    color: var(--text-primary);
+  }
+
+  .question-bank-subtitle {
+    color: var(--text-secondary);
+  }
+
+  .question-bank-card {
+    background-color: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.3s ease;
+    color: var(--text-primary);
+  }
+
+  .question-bank-card:hover {
+    box-shadow: var(--shadow-md);
+  }
+
+  .question-bank-card .card-title {
+    color: var(--text-primary);
+  }
+
+  .question-bank-card .card-text {
+    color: var(--text-secondary);
+  }
+
+  .question-bank-card .text-muted {
+    color: var(--text-light) !important;
+  }
+
+  .question-bank-card .card-footer {
+    background-color: var(--surface-hover);
+    border-top: 1px solid var(--border-light);
+  }
+
+  .modal-content {
+    background-color: var(--surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+  }
+
+  .modal-header {
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .modal-title {
+    color: var(--text-primary);
+  }
+
+  .modal-footer {
+    border-top: 1px solid var(--border-light);
+  }
+
+  .form-control {
+    background-color: var(--surface-hover);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+  }
+
+  .form-control:focus {
+    background-color: var(--surface);
+    border-color: var(--primary);
+    color: var(--text-primary);
+  }
+
+  .form-label {
+    color: var(--text-primary);
+  }
+
+  .btn-close {
+    background-color: transparent;
+    opacity: 0.5;
+  }
+
+  [data-theme="dark"] .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+  }
+
+  .list-group-item {
+    background-color: var(--surface);
+    border: 1px solid var(--border-light);
+    color: var(--text-primary);
+  }
+
+  .badge {
+    background-color: var(--primary);
+    color: var(--text-white);
+  }
+
+  .text-muted {
+    color: var(--text-light) !important;
+  }
+
+  small.text-muted {
+    color: var(--text-secondary) !important;
+  }
+
+  .spinner-border {
+    color: var(--primary);
+  }
+
+  .alert {
+    background-color: var(--surface-hover);
+    border-color: var(--border);
+    color: var(--text-primary);
+  }
+
+  .alert-danger {
+    background-color: rgba(231, 76, 60, 0.1);
+    border-color: var(--error);
+    color: var(--error);
+  }
+
+  .btn-primary {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: var(--text-white);
+  }
+
+  .btn-primary:hover {
+    background-color: var(--primary-dark);
+    border-color: var(--primary-dark);
+  }
+
+  .btn-danger {
+    background-color: var(--error);
+    border-color: var(--error);
+    color: var(--text-white);
+  }
+
+  .btn-secondary {
+    background-color: var(--text-secondary);
+    border-color: var(--text-secondary);
+    color: var(--text-white);
+  }
+
+  .modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+
+  .input-group .btn-outline-secondary {
+    background-color: var(--surface-hover);
+    border-color: var(--border);
+    color: var(--text-primary);
+  }
+
+  .input-group .btn-outline-secondary:hover {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: var(--text-white);
+  }
+
+  #availableTags .badge {
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  #availableTags .badge:hover {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+
+  #selectedTags .badge {
+    background-color: var(--primary) !important;
+  }
+
+  .badge.bg-secondary {
+    background-color: var(--text-secondary) !important;
+    color: var(--text-white) !important;
+  }
+
+  .badge.bg-primary {
+    background-color: var(--primary) !important;
+    color: var(--text-white) !important;
+  }
+
+  select.form-control {
+    background-color: var(--surface-hover);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%232C3E50' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+    padding-right: 2.5rem;
+  }
+
+  [data-theme="dark"] select.form-control {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23e0e0e0' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+  }
+
+  .form-control::placeholder {
+    color: var(--text-light);
+    opacity: 0.7;
+  }
+
+  textarea.form-control {
+    background-color: var(--surface-hover);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+  }
+
+  textarea.form-control:focus {
+    background-color: var(--surface);
+    border-color: var(--primary);
+    color: var(--text-primary);
+  }
+</style>
+
+<div class="question-bank-container container-fluid p-4">
+  <div class="row mb-4">
+    <div class="col-md-8">
+      <h2 class="question-bank-header">Question Banks</h2>
+      <p class="question-bank-subtitle">Manage your interview question banks and tags</p>
+    </div>
+    <div class="col-md-4 text-end">
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createBankModal">
+        <i class="bi bi-plus-circle"></i> Create Question Bank
+      </button>
+    </div>
+  </div>
+
+  <!-- Question Banks List -->
+  <div class="row">
+    <div class="col-12">
+      <div id="questionBanksList" class="row">
+        <!-- Question banks will be loaded here dynamically -->
+        <div class="text-center p-5">
+          <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create Question Bank Modal -->
+<div class="modal fade" id="createBankModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Create Question Bank</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="createBankForm">
+          <div class="mb-3">
+            <label for="bankName" class="form-label">Name</label>
+            <input type="text" class="form-control" id="bankName" required>
+          </div>
+          <div class="mb-3">
+            <label for="bankDescription" class="form-label">Description</label>
+            <textarea class="form-control" id="bankDescription" rows="3"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="createQuestionBank()">Create</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- View Question Bank Modal -->
+<div class="modal fade" id="viewBankModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="viewBankTitle">Question Bank</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="viewBankContent">
+          <!-- Questions will be loaded here -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" onclick="showAddQuestionModal()">Add Question</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Question Modal -->
+<div class="modal fade" id="addQuestionModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Add Question</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="addQuestionForm">
+          <div class="mb-3">
+            <label for="questionText" class="form-label">Question</label>
+            <textarea class="form-control" id="questionText" rows="3" required></textarea>
+          </div>
+          <div class="mb-3">
+            <label for="questionDifficulty" class="form-label">Difficulty</label>
+            <select class="form-control" id="questionDifficulty">
+              <option value="easy">Easy</option>
+              <option value="medium" selected>Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="questionTags" class="form-label">Tags (optional)</label>
+            <div id="availableTags" class="mb-2">
+              <!-- Available tags will be loaded here -->
+            </div>
+            <div class="input-group">
+              <input type="text" class="form-control" id="newTagName" placeholder="Create new tag (e.g., python, sql)">
+              <button type="button" class="btn btn-outline-secondary" onclick="createNewTag()">Add Tag</button>
+            </div>
+            <small class="text-muted">Select existing tags or create new ones</small>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Selected Tags:</label>
+            <div id="selectedTags">
+              <span class="text-muted">No tags selected</span>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="saveQuestion()">Save Question</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script>
+  let currentBankId = null;
+
+  // Load question banks on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    loadQuestionBanks();
+  });
+
+  // Load all question banks
+  function loadQuestionBanks() {
+    fetch('/api/question-banks/')
+      .then(response => response.json())
+      .then(data => {
+        displayQuestionBanks(data);
+      })
+      .catch(error => {
+        console.error('Error loading question banks:', error);
+        document.getElementById('questionBanksList').innerHTML =
+          '<div class="alert alert-danger">Error loading question banks</div>';
+      });
+  }
+
+  // Display question banks
+  function displayQuestionBanks(banks) {
+    const container = document.getElementById('questionBanksList');
+
+    if (banks.length === 0) {
+      container.innerHTML = '<div class="col-12 text-center p-5"><p class="question-bank-subtitle">No question banks yet. Create one to get started!</p></div>';
+      return;
+    }
+
+    container.innerHTML = banks.map(bank => `
+      <div class="col-md-6 col-lg-4 mb-3">
+        <div class="question-bank-card card h-100">
+          <div class="card-body">
+            <h5 class="card-title">${bank.name}</h5>
+            <p class="card-text">${bank.description || 'No description'}</p>
+            <p class="card-text">
+              <small class="text-muted">
+                <strong>${bank.question_count}</strong> questions
+              </small>
+            </p>
+          </div>
+          <div class="card-footer">
+            <button class="btn btn-sm btn-primary" onclick="viewQuestionBank(${bank.id})">
+              View Questions
+            </button>
+            <button class="btn btn-sm btn-danger" onclick="deleteQuestionBank(${bank.id})">
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // Create new question bank
+  function createQuestionBank() {
+    const name = document.getElementById('bankName').value;
+    const description = document.getElementById('bankDescription').value;
+
+    fetch('/api/question-banks/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify({ name, description })
+    })
+    .then(response => response.json())
+    .then(data => {
+      bootstrap.Modal.getInstance(document.getElementById('createBankModal')).hide();
+      document.getElementById('createBankForm').reset();
+      loadQuestionBanks();
+    })
+    .catch(error => {
+      console.error('Error creating question bank:', error);
+      alert('Error creating question bank');
+    });
+  }
+
+  // View question bank details
+  function viewQuestionBank(bankId) {
+    currentBankId = bankId;
+
+    fetch(`/api/question-banks/${bankId}/`)
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById('viewBankTitle').textContent = data.name;
+        displayQuestions(data.questions);
+        new bootstrap.Modal(document.getElementById('viewBankModal')).show();
+      })
+      .catch(error => {
+        console.error('Error loading question bank:', error);
+      });
+  }
+
+  // Display questions in a bank
+  function displayQuestions(questions) {
+    const container = document.getElementById('viewBankContent');
+
+    if (questions.length === 0) {
+      container.innerHTML = '<p class="question-bank-subtitle">No questions in this bank yet.</p>';
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="list-group">
+        ${questions.map(q => `
+          <div class="list-group-item">
+            <div class="d-flex justify-content-between align-items-start">
+              <div class="flex-grow-1">
+                <p class="mb-1">${q.text}</p>
+                <small class="text-muted">Difficulty: ${q.difficulty}</small>
+                <div class="mt-2">
+                  ${q.tags.map(tag => `<span class="badge me-1">${tag.name}</span>`).join('')}
+                </div>
+              </div>
+              <button class="btn btn-sm btn-danger" onclick="deleteQuestion(${q.id})">Delete</button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  // Delete question bank
+  function deleteQuestionBank(bankId) {
+    if (!confirm('Are you sure you want to delete this question bank?')) return;
+
+    fetch(`/api/question-banks/${bankId}/`, {
+      method: 'DELETE',
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken')
+      }
+    })
+    .then(() => {
+      loadQuestionBanks();
+    })
+    .catch(error => {
+      console.error('Error deleting question bank:', error);
+      alert('Error deleting question bank');
+    });
+  }
+
+  // Get CSRF token
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  // Track selected tags
+  let selectedTagIds = [];
+  let allTags = [];
+
+  // Show add question modal
+  function showAddQuestionModal() {
+    // Load available tags
+    loadAvailableTags();
+
+    // Reset form
+    document.getElementById('addQuestionForm').reset();
+    selectedTagIds = [];
+    updateSelectedTagsDisplay();
+
+    // Show modal
+    new bootstrap.Modal(document.getElementById('addQuestionModal')).show();
+  }
+
+  // Load available tags
+  function loadAvailableTags() {
+    fetch('/api/tags/')
+      .then(response => response.json())
+      .then(data => {
+        allTags = data;
+        displayAvailableTags(data);
+      })
+      .catch(error => {
+        console.error('Error loading tags:', error);
+      });
+  }
+
+  // Display available tags as clickable badges
+  function displayAvailableTags(tags) {
+    const container = document.getElementById('availableTags');
+
+    if (tags.length === 0) {
+      container.innerHTML = '<small class="text-muted">No tags available. Create one below.</small>';
+      return;
+    }
+
+    container.innerHTML = tags.map(tag => {
+      const isSelected = selectedTagIds.includes(tag.id);
+      const badgeClass = isSelected ? 'badge bg-primary' : 'badge bg-secondary';
+      return `<span class="${badgeClass} me-1 mb-1" style="cursor: pointer;" onclick="toggleTag(${tag.id})">${tag.name}</span>`;
+    }).join('');
+  }
+
+  // Toggle tag selection
+  function toggleTag(tagId) {
+    const index = selectedTagIds.indexOf(tagId);
+    if (index > -1) {
+      selectedTagIds.splice(index, 1);
+    } else {
+      selectedTagIds.push(tagId);
+    }
+    displayAvailableTags(allTags);
+    updateSelectedTagsDisplay();
+  }
+
+  // Update selected tags display
+  function updateSelectedTagsDisplay() {
+    const container = document.getElementById('selectedTags');
+
+    if (selectedTagIds.length === 0) {
+      container.innerHTML = '<span class="text-muted">No tags selected</span>';
+      return;
+    }
+
+    const selectedTags = allTags.filter(tag => selectedTagIds.includes(tag.id));
+    container.innerHTML = selectedTags.map(tag =>
+      `<span class="badge bg-primary me-1">${tag.name} <span style="cursor: pointer;" onclick="toggleTag(${tag.id})">×</span></span>`
+    ).join('');
+  }
+
+  // Create new tag
+  function createNewTag() {
+    const tagName = document.getElementById('newTagName').value.trim();
+
+    if (!tagName) {
+      alert('Please enter a tag name');
+      return;
+    }
+
+    fetch('/api/tags/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify({ name: tagName })
+    })
+    .then(response => response.json())
+    .then(data => {
+      document.getElementById('newTagName').value = '';
+      loadAvailableTags();
+      // Auto-select the newly created tag
+      selectedTagIds.push(data.id);
+      setTimeout(() => {
+        displayAvailableTags(allTags);
+        updateSelectedTagsDisplay();
+      }, 100);
+    })
+    .catch(error => {
+      console.error('Error creating tag:', error);
+      alert('Error creating tag. It may already exist.');
+    });
+  }
+
+  // Save question
+  function saveQuestion() {
+    const text = document.getElementById('questionText').value.trim();
+    const difficulty = document.getElementById('questionDifficulty').value;
+
+    if (!text) {
+      alert('Please enter a question');
+      return;
+    }
+
+    if (!currentBankId) {
+      alert('No question bank selected');
+      return;
+    }
+
+    const questionData = {
+      question_bank: currentBankId,
+      text: text,
+      difficulty: difficulty,
+      tag_ids: selectedTagIds
+    };
+
+    fetch('/api/questions/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify(questionData)
+    })
+    .then(response => response.json())
+    .then(data => {
+      // Close add question modal
+      bootstrap.Modal.getInstance(document.getElementById('addQuestionModal')).hide();
+
+      // Reload the question bank to show the new question
+      viewQuestionBank(currentBankId);
+    })
+    .catch(error => {
+      console.error('Error saving question:', error);
+      alert('Error saving question');
+    });
+  }
+
+  // Delete question
+  function deleteQuestion(questionId) {
+    if (!confirm('Are you sure you want to delete this question?')) return;
+
+    fetch(`/api/questions/${questionId}/`, {
+      method: 'DELETE',
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken')
+      }
+    })
+    .then(() => {
+      // Reload the question bank
+      viewQuestionBank(currentBankId);
+    })
+    .catch(error => {
+      console.error('Error deleting question:', error);
+      alert('Error deleting question');
+    });
+  }
+</script>
+{% endblock %}

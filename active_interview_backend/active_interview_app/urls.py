@@ -6,10 +6,21 @@ from django.conf.urls.static import static
 from rest_framework import routers
 
 from . import views
+from . import question_bank_views
 
 
 # Create router and register views
 router = routers.DefaultRouter()
+
+# Register Question Bank viewsets (Issue #24)
+router.register(r'question-banks', question_bank_views.QuestionBankViewSet,
+               basename='question-bank')
+router.register(r'questions', question_bank_views.QuestionViewSet,
+               basename='question')
+router.register(r'tags', question_bank_views.TagViewSet,
+               basename='tag')
+router.register(r'interview-templates', question_bank_views.InterviewTemplateViewSet,
+               basename='interview-template')
 
 
 urlpatterns = [
@@ -91,6 +102,13 @@ urlpatterns = [
          views.ExportReportView.as_view(), name='export_report'),
     path('chat/<int:chat_id>/download-pdf/',
          views.DownloadPDFReportView.as_view(), name='download_pdf_report'),
+
+    # Question Bank Tagging urls (Issue #24)
+    path('question-banks/', question_bank_views.question_banks_view,
+         name='question_banks'),
+    path('api/auto-assemble-interview/',
+         question_bank_views.AutoAssembleInterviewView.as_view(),
+         name='auto_assemble_interview'),
 
 
 

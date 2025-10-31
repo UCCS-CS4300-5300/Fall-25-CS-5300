@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Chat, UploadedJobListing, UploadedResume, ExportableReport
+from .models import (Chat, UploadedJobListing, UploadedResume, ExportableReport,
+                    Tag, QuestionBank, Question, InterviewTemplate)
 from .token_usage_models import TokenUsage
 from .merge_stats_models import MergeTokenStats
 
@@ -8,6 +9,74 @@ admin.site.register(Chat)
 admin.site.register(UploadedJobListing)
 admin.site.register(UploadedResume)
 admin.site.register(ExportableReport)
+
+
+# Question Bank Tagging Admin
+@admin.register(Tag)
+class TagAdmin(admin.ModelAdmin):
+    list_display = ('name', 'created_at', 'question_count')
+    search_fields = ('name',)
+    readonly_fields = ('created_at',)
+
+    def question_count(self, obj):
+        return obj.questions.count()
+    question_count.short_description = 'Questions'
+
+
+class QuestionInline(admin.TabularInline):
+    model = Question
+    extra = 0
+    fields = ('text', 'difficulty', 'created_at')
+    readonly_fields = ('created_at',)
+
+
+@admin.register(QuestionBank)
+class QuestionBankAdmin(admin.ModelAdmin):
+    list_display = ('name', 'owner', 'question_count', 'created_at', 'updated_at')
+    list_filter = ('created_at', 'updated_at')
+    search_fields = ('name', 'description', 'owner__username')
+    readonly_fields = ('created_at', 'updated_at')
+    inlines = [QuestionInline]
+
+    def question_count(self, obj):
+        return obj.questions.count()
+    question_count.short_description = 'Questions'
+
+
+@admin.register(Question)
+class QuestionAdmin(admin.ModelAdmin):
+    list_display = ('text_preview', 'question_bank', 'difficulty', 'tag_list',
+                   'owner', 'created_at')
+    list_filter = ('difficulty', 'created_at', 'tags')
+    search_fields = ('text', 'question_bank__name', 'owner__username')
+    readonly_fields = ('created_at', 'updated_at')
+    filter_horizontal = ('tags',)
+
+    def text_preview(self, obj):
+        return obj.text[:100] + '...' if len(obj.text) > 100 else obj.text
+    text_preview.short_description = 'Question'
+
+    def tag_list(self, obj):
+        return ', '.join([tag.name for tag in obj.tags.all()])
+    tag_list.short_description = 'Tags'
+
+
+@admin.register(InterviewTemplate)
+class InterviewTemplateAdmin(admin.ModelAdmin):
+    list_display = ('name', 'owner', 'question_count', 'tag_list',
+                   'difficulty_distribution', 'created_at')
+    list_filter = ('created_at', 'updated_at')
+    search_fields = ('name', 'owner__username')
+    readonly_fields = ('created_at', 'updated_at')
+    filter_horizontal = ('tags',)
+
+    def tag_list(self, obj):
+        return ', '.join([tag.name for tag in obj.tags.all()])
+    tag_list.short_description = 'Tags'
+
+    def difficulty_distribution(self, obj):
+        return f"E:{obj.easy_percentage}% M:{obj.medium_percentage}% H:{obj.hard_percentage}%"
+    difficulty_distribution.short_description = 'Difficulty'
 
 
 # Token Tracking Admin

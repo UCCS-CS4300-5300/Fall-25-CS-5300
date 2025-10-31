@@ -128,6 +128,107 @@ class ExportableReport(models.Model):
         ordering = ['-generated_at']
 
 
+class Tag(models.Model):
+    """
+    Tags for categorizing questions (e.g., #python, #sql, #behavioral).
+    Tag names are automatically normalized to lowercase with # prefix.
+    """
+    name = models.CharField(max_length=100, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        # Normalize tag: lowercase and ensure # prefix
+        if self.name and not self.name.startswith('#'):
+            self.name = f"#{self.name.lower()}"
+        else:
+            self.name = self.name.lower()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ['name']
+
+
+class QuestionBank(models.Model):
+    """
+    A collection of questions that can be tagged and used for interview assembly.
+    """
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='question_banks')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ['-updated_at']
+
+
+class Question(models.Model):
+    """
+    Individual question within a question bank.
+    Questions can be tagged for categorization and filtering.
+    """
+    DIFFICULTY_CHOICES = [
+        ('easy', 'Easy'),
+        ('medium', 'Medium'),
+        ('hard', 'Hard'),
+    ]
+
+    question_bank = models.ForeignKey(QuestionBank, on_delete=models.CASCADE,
+                                     related_name='questions')
+    text = models.TextField()
+    difficulty = models.CharField(max_length=10, choices=DIFFICULTY_CHOICES,
+                                 default='medium')
+    tags = models.ManyToManyField(Tag, blank=True, related_name='questions')
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='questions')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.text[:100]
+
+    class Meta:
+        ordering = ['-created_at']
+
+
+class InterviewTemplate(models.Model):
+    """
+    Saved configuration for auto-assembling interviews.
+    Stores tag preferences, question counts, and difficulty distribution.
+    """
+    name = models.CharField(max_length=255)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE,
+                            related_name='interview_templates')
+    tags = models.ManyToManyField(Tag, related_name='templates')
+    question_count = models.IntegerField(default=5,
+                                        validators=[MinValueValidator(1)])
+
+    # Difficulty distribution (percentages should sum to 100)
+    easy_percentage = models.IntegerField(default=30,
+                                         validators=[MinValueValidator(0),
+                                                   MaxValueValidator(100)])
+    medium_percentage = models.IntegerField(default=50,
+                                           validators=[MinValueValidator(0),
+                                                     MaxValueValidator(100)])
+    hard_percentage = models.IntegerField(default=20,
+                                         validators=[MinValueValidator(0),
+                                                   MaxValueValidator(100)])
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ['-updated_at']
+
+
 # Import token tracking models (must be at end to avoid circular imports)
 from .token_usage_models import TokenUsage  # noqa: E402, F401
 from .merge_stats_models import MergeTokenStats  # noqa: E402, F401
