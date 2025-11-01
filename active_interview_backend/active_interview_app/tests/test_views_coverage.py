@@ -45,12 +45,13 @@ class RegisterViewCoverageTest(TestCase):
     def setUp(self):
         self.client = Client()
         # Create the required group
-        Group.objects.create(name='average_role')
+        Group.objects.get_or_create(name='average_role')
 
     def test_register_success(self):
         """Test successful user registration"""
         response = self.client.post(reverse('register_page'), {
             'username': 'newuser',
+            'email': 'newuser@example.com',
             'password1': 'ComplexPass123!',
             'password2': 'ComplexPass123!',
         })

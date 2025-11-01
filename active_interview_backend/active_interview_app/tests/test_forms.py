@@ -303,15 +303,16 @@ class CreateChatFormTest(TestCase):
         self.assertNotIn(other_resume, queryset)
 
     def test_missing_title(self):
-        """Test form fails when title is missing"""
+        """Test form uses default title when title is missing"""
         form_data = {
             'type': Chat.GENERAL,
             'difficulty': 5,
             'listing_choice': self.job_listing.id
         }
         form = CreateChatForm(data=form_data, user=self.user)
-        self.assertFalse(form.is_valid())
-        self.assertIn('title', form.errors)
+        self.assertTrue(form.is_valid())
+        # Check that default title is used
+        self.assertEqual(form.cleaned_data.get('title'), 'Interview Chat')
 
     def test_missing_listing_choice(self):
         """Test form fails when listing_choice is missing"""
@@ -365,13 +366,12 @@ class EditChatFormTest(TestCase):
         self.assertTrue(form.is_valid())
 
     def test_missing_title(self):
-        """Test form fails when title is missing"""
+        """Test form is valid when title is missing (optional field)"""
         form_data = {
             'difficulty': 7
         }
         form = EditChatForm(data=form_data, instance=self.chat)
-        self.assertFalse(form.is_valid())
-        self.assertIn('title', form.errors)
+        self.assertTrue(form.is_valid())
 
     def test_difficulty_validation_min(self):
         """Test form accepts minimum difficulty (1)"""

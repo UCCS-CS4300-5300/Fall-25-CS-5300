@@ -24,9 +24,12 @@ from active_interview_app.views import (
 class OpenAIClientTest(TestCase):
     """Test OpenAI client initialization and helper functions"""
 
-    @patch('active_interview_app.views.settings')
+    @patch('active_interview_app.openai_utils.settings')
     def test_get_openai_client_no_api_key(self, mock_settings):
         """Test get_openai_client when API key is not set"""
+        import active_interview_app.openai_utils as openai_utils
+        openai_utils._openai_client = None
+
         mock_settings.OPENAI_API_KEY = None
 
         with self.assertRaises(ValueError) as context:
@@ -34,16 +37,15 @@ class OpenAIClientTest(TestCase):
 
         self.assertIn("OPENAI_API_KEY is not set", str(context.exception))
 
-    @patch('active_interview_app.views.OpenAI')
-    @patch('active_interview_app.views.settings')
+    @patch('active_interview_app.openai_utils.OpenAI')
+    @patch('active_interview_app.openai_utils.settings')
     def test_get_openai_client_initialization_error(self, mock_settings, mock_openai):
         """Test get_openai_client when OpenAI initialization fails"""
+        import active_interview_app.openai_utils as openai_utils
+        openai_utils._openai_client = None
+
         mock_settings.OPENAI_API_KEY = 'test-key'
         mock_openai.side_effect = Exception("OpenAI init failed")
-
-        # Reset the global client
-        import active_interview_app.views as views_module
-        views_module._openai_client = None
 
         with self.assertRaises(ValueError) as context:
             get_openai_client()
@@ -57,7 +59,7 @@ class OpenAIClientTest(TestCase):
 
         self.assertTrue(_ai_available())
 
-    @patch('active_interview_app.views.get_openai_client')
+    @patch('active_interview_app.openai_utils.get_openai_client')
     def test_ai_available_returns_false_on_error(self, mock_get_client):
         """Test _ai_available when client cannot be initialized"""
         mock_get_client.side_effect = ValueError("No API key")

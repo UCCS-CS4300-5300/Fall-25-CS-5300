@@ -6,32 +6,293 @@
 
 {% block content %}
   <style>
-    body {
-      color: white;
+    .document-page {
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
     }
-    label, textarea, input, button, h2 {
-      color: white;
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 2rem;
     }
-    input, textarea {
-      background-color: #333;
-      border: 1px solid #777;
+
+    .page-header h1 {
+      color: var(--primary);
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
     }
-    button {
-      background-color: #555;
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      margin-top: 8px;
+
+    .page-header p {
+      color: var(--text-secondary);
+      font-size: 1rem;
+    }
+
+    .upload-section {
+      background: var(--surface);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow 0.3s ease;
+    }
+
+    .upload-section:hover {
+      box-shadow: var(--shadow);
+    }
+
+    .upload-section h2 {
+      color: var(--text-primary);
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .upload-section h2::before {
+      content: "";
+      display: inline-block;
+      width: 4px;
+      height: 1.5rem;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+      display: block;
+      color: var(--text-primary);
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    .form-group input[type="text"],
+    .form-group input[type="file"],
+    .form-group textarea {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background-color: var(--surface);
+      color: var(--text-primary);
+      font-size: 1rem;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .form-group input[type="text"]:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(31, 123, 166, 0.1);
+    }
+
+    .form-group input[type="file"] {
+      padding: 0.5rem;
       cursor: pointer;
     }
-    button:hover {
-      background-color: #777;
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 150px;
+      line-height: 1.6;
     }
-    .messages li.success { color: lightgreen; }
-    .messages li.error { color: red; }
+
+    .form-group input::placeholder,
+    .form-group textarea::placeholder {
+      color: var(--text-light);
+    }
+
+    .btn-upload {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.75rem 2rem;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-upload:hover {
+      background-color: var(--primary-light);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow);
+    }
+
+    .btn-upload:active {
+      transform: translateY(0);
+      background-color: var(--primary-dark);
+    }
+
+    .section-divider {
+      height: 2px;
+      background: linear-gradient(to right, transparent, var(--border), transparent);
+      margin: 2rem 0;
+      border: none;
+    }
+
+    .messages {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 2rem 0;
+    }
+
+    .messages li {
+      padding: 1rem 1.5rem;
+      border-radius: var(--radius);
+      margin-bottom: 0.75rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .messages li.success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .messages li.success::before {
+      content: "✓";
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.5rem;
+      height: 1.5rem;
+      background-color: var(--success);
+      color: white;
+      border-radius: 50%;
+      font-weight: 700;
+    }
+
+    .messages li.error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .messages li.error::before {
+      content: "✕";
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.5rem;
+      height: 1.5rem;
+      background-color: var(--error);
+      color: white;
+      border-radius: 50%;
+      font-weight: 700;
+    }
+
+    .messages li.info {
+      background-color: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+
+    .markdown-preview {
+      background: var(--surface);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 2rem;
+      margin-top: 2rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .markdown-preview h2 {
+      color: var(--text-primary);
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--border-light);
+    }
+
+    .markdown-preview div {
+      color: var(--text-primary);
+      line-height: 1.7;
+      font-size: 0.95rem;
+    }
+
+    .file-input-wrapper {
+      position: relative;
+      overflow: hidden;
+      display: inline-block;
+      width: 100%;
+    }
+
+    .file-input-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 1rem;
+      background-color: var(--surface-hover);
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .file-input-label:hover {
+      border-color: var(--primary);
+      background-color: rgba(31, 123, 166, 0.05);
+      color: var(--primary);
+    }
+
+    .file-input-wrapper input[type="file"] {
+      position: absolute;
+      left: -9999px;
+    }
+
+    .file-name-display {
+      margin-top: 0.5rem;
+      padding: 0.5rem 1rem;
+      background-color: var(--surface-hover);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    .file-name-display.active {
+      display: block;
+    }
+
+    @media (max-width: 768px) {
+      .document-page {
+        padding: 0 1rem;
+      }
+
+      .upload-section {
+        padding: 1.5rem;
+      }
+
+      .btn-upload {
+        width: 100%;
+        justify-content: center;
+      }
+    }
   </style>
 
-  <div class="centered-container flex-grow-1 d-flex flex-column p-2">
+  <div class="document-page">
+    <!-- Messages -->
     {% if messages %}
       <ul class="messages">
         {% for message in messages %}
@@ -39,39 +300,127 @@
         {% endfor %}
       </ul>
     {% endif %}
-    
-    <h2>Upload Your Resume</h2>
-    <form action="{% url 'upload_file' %}" method="post" enctype="multipart/form-data">
-      {% csrf_token %}
-      
-      <label for="title">Resume Title:</label>
-      <input type="text" name="title" id="resume-title" placeholder="Enter a title for your resume" required><br><br>
-    
-      <label for="file">Upload your resume (PDF or Word):</label>
-      <input type="file" name="file" id="file" required>
-      
-      <button name="submit">Upload</button>
-    </form>
 
-    <hr class="white-break">
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1>Document Management</h1>
+      <p>Upload your resume and add job listings to create personalized interview experiences</p>
+    </div>
 
-    <h2>Or Paste Your Job Listing Text</h2>
-    <form method="post" action="{% url 'save_pasted_text' %}">
-      {% csrf_token %}
+    <!-- Resume Upload Section -->
+    <div class="upload-section">
+      <h2>Upload Your Resume</h2>
+      <form action="{% url 'upload_file' %}" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
 
-      <label for="title">Job Listing Title:</label>
-      <input type="text" name="title" id="title" placeholder="Enter the title for your job listing" required><br><br>
+        <div class="form-group">
+          <label for="resume-title">Resume Title</label>
+          <input
+            type="text"
+            name="title"
+            id="resume-title"
+            placeholder="e.g., Software Engineer Resume 2025"
+            required
+          >
+        </div>
 
-      <textarea name="paste-text" rows="10" cols="50" placeholder="Paste your text here..." style="max-width: 95vw;"></textarea><br>
-      
-      <button type="submit" name="submit">Upload</button>
-    </form>
+        <div class="form-group">
+          <label for="file">Choose File</label>
+          <div class="file-input-wrapper">
+            <label for="file" class="file-input-label">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M16.88 9.1A4 4 0 0 1 16 17H5a5 5 0 0 1-1-9.9V7a3 3 0 0 1 4.52-2.59A4.98 4.98 0 0 1 17 8c0 .38-.04.74-.12 1.1zM11 11h3l-4-4-4 4h3v3h2v-3z" />
+              </svg>
+              <span>Click to upload PDF or Word document</span>
+            </label>
+            <input
+              type="file"
+              name="file"
+              id="file"
+              accept=".pdf,.doc,.docx"
+              required
+              aria-label="Upload your resume file"
+              aria-describedby="file-upload-desc"
+            >
+            <span id="file-upload-desc" class="visually-hidden">Upload a PDF or Word document containing your resume. Accepted formats: .pdf, .doc, .docx</span>
+          </div>
+          <div class="file-name-display" id="file-name-display"></div>
+        </div>
 
+        <button type="submit" class="btn-upload" name="submit">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 13A6 6 0 1 1 8 2a6 6 0 0 1 0 12z"/>
+            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+          </svg>
+          Upload Resume
+        </button>
+      </form>
+    </div>
+
+    <hr class="section-divider">
+
+    <!-- Job Listing Section -->
+    <div class="upload-section">
+      <h2>Add Job Listing</h2>
+      <form method="post" action="{% url 'save_pasted_text' %}">
+        {% csrf_token %}
+
+        <div class="form-group">
+          <label for="title">Job Listing Title</label>
+          <input
+            type="text"
+            name="title"
+            id="title"
+            placeholder="e.g., Senior Software Engineer at Company XYZ"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="paste-text">Job Description</label>
+          <textarea
+            name="paste-text"
+            id="paste-text"
+            placeholder="Paste the job listing details here...&#10;&#10;Include:&#10;• Job requirements&#10;• Responsibilities&#10;• Qualifications&#10;• Company information"
+            required
+          ></textarea>
+        </div>
+
+        <button type="submit" class="btn-upload" name="submit">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 13A6 6 0 1 1 8 2a6 6 0 0 1 0 12z"/>
+            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+          </svg>
+          Save Job Listing
+        </button>
+      </form>
+    </div>
+
+    <!-- Markdown Preview (if available) -->
     {% if markdown_text %}
-      <hr class="white-break">
-      <h2>Converted Markdown</h2>
-      <div>{{ markdown_text|safe|linebreaksbr }}</div>
+      <div class="markdown-preview">
+        <h2>Converted Markdown</h2>
+        <div>{{ markdown_text|safe|linebreaksbr }}</div>
+      </div>
     {% endif %}
   </div>
+
+  <script>
+    // File input handling
+    const fileInput = document.getElementById('file');
+    const fileNameDisplay = document.getElementById('file-name-display');
+    const fileLabel = document.querySelector('.file-input-label span');
+
+    if (fileInput) {
+      fileInput.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+          const fileName = this.files[0].name;
+          fileNameDisplay.textContent = `Selected: ${fileName}`;
+          fileNameDisplay.classList.add('active');
+          fileLabel.textContent = 'Change file';
+        }
+      });
+    }
+  </script>
 
 {% endblock content %}

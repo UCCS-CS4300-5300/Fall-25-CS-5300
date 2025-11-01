@@ -8,16 +8,21 @@
   <style>
     .register-page {
       display: flex;
-      flex-direction: column; 
+      flex-direction: column;
       justify-content: center;
       align-items: center;
-      color: white;
-    }  
-    p {
-      font-size: 20px;
+      color: var(--text-primary);
     }
-    td {
+    .register-page p {
       font-size: 20px;
+      color: var(--text-primary);
+    }
+    .register-page td {
+      font-size: 20px;
+      color: var(--text-primary);
+    }
+    .register-page h2, .register-page h5 {
+      color: var(--text-primary);
     }
   </style>
 
@@ -33,19 +38,19 @@
         <table class="table borderless">
           <tbody>
             <tr>
-              <td class="text-start align-middle"><h5 class="text-white">Username*:</h5></td>
+              <td class="text-start align-middle"><h5>Username*:</h5></td>
               <td class="text-end align-middle">{{ form.username }}</td>
             </tr>
             <tr>
-              <td class="text-start align-middle"><h5 class="text-white">Email Address:</h5></td>
+              <td class="text-start align-middle"><h5>Email Address:</h5></td>
               <td class="text-end align-middle">{{ form.email }}</td>
             </tr>
             <tr>
-              <td class="text-start align-middle"><h5 class="text-white">Password*:</h5></td>
+              <td class="text-start align-middle"><h5>Password*:</h5></td>
               <td class="text-end align-middle">{{ form.password1 }}</td>
             </tr>
             <tr>
-              <td class="text-start align-middle"><h5 class="text-white">Confirm Password*:</h5></td>
+              <td class="text-start align-middle"><h5>Confirm Password*:</h5></td>
               <td class="text-end align-middle">{{ form.password2 }}</td>
             </tr>
           </tbody>
