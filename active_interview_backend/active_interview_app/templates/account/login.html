@@ -13,61 +13,92 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      color: white;
+      min-height: 60vh;
+      padding: 2rem;
    }
-   p {
-     font-size: 30px;
+
+   .login-page p {
+     font-size: 1.2rem;
+     color: var(--text-primary);
+     font-weight: 500;
    }
-   td {
-     font-size: 20px;
+
+   .login-page td {
+     font-size: 1rem;
+     color: var(--text-primary);
+     font-weight: 600;
    }
+
+   .login-page input[type="text"],
+   .login-page input[type="email"],
+   .login-page input[type="password"] {
+     background-color: var(--surface);
+     color: var(--text-primary);
+     border: 2px solid var(--border);
+     padding: 0.5rem;
+     border-radius: 4px;
+     margin-left: 0.5rem;
+   }
+
+   .login-page input[type="text"]:focus,
+   .login-page input[type="email"]:focus,
+   .login-page input[type="password"]:focus {
+     outline: none;
+     border-color: var(--primary);
+     background-color: var(--surface);
+     color: var(--text-primary);
+   }
+
    .divider {
      display: flex;
      align-items: center;
      text-align: center;
      margin: 20px 0;
+     color: var(--text-secondary);
+     font-weight: 700;
+     font-size: 0.9rem;
    }
+
    .divider::before,
    .divider::after {
      content: '';
      flex: 1;
-     border-bottom: 1px solid #ccc;
+     border-bottom: 2px solid var(--border);
    }
+
    .divider::before {
      margin-right: 10px;
    }
+
    .divider::after {
      margin-left: 10px;
    }
 
    /* OAuth Button Styles */
-   .oauth-section {
-      margin-top: 1rem;
-   }
-
    .google-btn {
       display: flex;
       align-items: center;
       justify-content: center;
       width: 100%;
-      background-color: white;
-      color: #3c4043;
-      border: 1px solid rgba(0, 0, 0, 0.1);
+      background-color: var(--surface);
+      color: var(--text-primary);
+      border: 2px solid var(--border);
       padding: 12px 24px;
       font-size: 16px;
       font-weight: 500;
       border-radius: 8px;
       text-decoration: none;
       transition: all 0.2s ease;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
+      box-shadow: var(--shadow);
    }
 
    .google-btn:hover {
-      background-color: #f8f9fa;
-      color: #3c4043;
+      background-color: var(--surface-hover);
+      color: var(--text-primary);
       text-decoration: none;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1);
-      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+      border-color: var(--primary);
    }
 
    .google-btn:active {
@@ -86,6 +117,34 @@
          padding: 10px 20px;
          font-size: 15px;
       }
+      .login-page {
+         padding: 1rem;
+      }
+   }
+
+   .login-page a {
+     color: var(--primary);
+     font-weight: 600;
+     text-decoration: underline;
+   }
+
+   .login-page a:hover {
+     color: var(--primary-light);
+     text-decoration: underline;
+   }
+
+   .btn-primary {
+     background-color: var(--primary);
+     border-color: var(--primary);
+     color: var(--text-white);
+     font-weight: 600;
+     padding: 0.5rem 2rem;
+   }
+
+   .btn-primary:hover {
+     background-color: var(--primary-dark);
+     border-color: var(--primary-dark);
+     color: var(--text-white);
    }
   </style>
 

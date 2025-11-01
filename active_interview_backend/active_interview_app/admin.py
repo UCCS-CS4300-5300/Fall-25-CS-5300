@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Chat, UploadedJobListing, UploadedResume, ExportableReport
+from .models import Chat, UploadedJobListing, UploadedResume, ExportableReport, UserProfile
 from .token_usage_models import TokenUsage
 from .merge_stats_models import MergeTokenStats
 
