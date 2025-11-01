@@ -11,6 +11,7 @@ Test scenarios cover:
 import json
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
+from django.http import JsonResponse
 from active_interview_app.models import UserProfile
 from active_interview_app.decorators import check_user_permission
 
@@ -272,6 +273,323 @@ class RBACDecoratorTest(TestCase):
             allow_self=True
         )
         self.assertFalse(result)
+
+    def test_check_user_permission_no_profile(self):
+        """Test permission denied when user has no profile"""
+        from django.test import RequestFactory
+        from unittest.mock import PropertyMock, patch
+        factory = RequestFactory()
+        request = factory.get('/')
+
+        # Create user and mock profile to raise AttributeError
+        user_no_profile = User.objects.create_user(
+            username='noprofile', password='pass'
+        )
+
+        # Mock the profile property to raise AttributeError
+        with patch.object(type(user_no_profile), 'profile',
+                         new_callable=PropertyMock) as mock_profile:
+            mock_profile.side_effect = AttributeError("User has no profile")
+            request.user = user_no_profile
+
+            result = check_user_permission(
+                request, 123,
+                allow_admin=True,
+                allow_interviewer=True,
+                allow_self=True
+            )
+            self.assertFalse(result)
+
+    def test_role_required_decorator_unauthenticated_api(self):
+        """Test role_required returns 401 JSON for unauthenticated API request"""
+        from django.test import RequestFactory
+        from active_interview_app.decorators import role_required
+
+        @role_required('admin')
+        def test_view(request):
+            return JsonResponse({'success': True})
+
+        factory = RequestFactory()
+        request = factory.get('/api/test/')
+        from django.contrib.auth.models import AnonymousUser
+        request.user = AnonymousUser()
+
+        response = test_view(request)
+        self.assertEqual(response.status_code, 401)
+        data = json.loads(response.content)
+        self.assertEqual(data['error'], 'Unauthorized')
+
+    def test_role_required_decorator_unauthenticated_redirect(self):
+        """Test role_required redirects unauthenticated non-API request to login"""
+        from django.test import RequestFactory
+        from active_interview_app.decorators import role_required
+
+        @role_required('admin')
+        def test_view(request):
+            return JsonResponse({'success': True})
+
+        factory = RequestFactory()
+        request = factory.get('/some-page/')
+        from django.contrib.auth.models import AnonymousUser
+        request.user = AnonymousUser()
+
+        response = test_view(request)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/accounts/login/', response.url)
+        self.assertIn('next=/some-page/', response.url)
+
+    def test_role_required_decorator_no_profile(self):
+        """Test role_required returns 403 when user has no profile"""
+        from django.test import RequestFactory
+        from active_interview_app.decorators import role_required
+        from unittest.mock import PropertyMock, patch
+
+        @role_required('admin')
+        def test_view(request):
+            return JsonResponse({'success': True})
+
+        factory = RequestFactory()
+        request = factory.get('/api/test/')
+
+        # Create user and mock profile to raise AttributeError
+        user_no_profile = User.objects.create_user(
+            username='noprofile2', password='pass'
+        )
+
+        # Mock the profile property to raise AttributeError
+        with patch.object(type(user_no_profile), 'profile',
+                         new_callable=PropertyMock) as mock_profile:
+            mock_profile.side_effect = AttributeError("User has no profile")
+            request.user = user_no_profile
+
+            response = test_view(request)
+            self.assertEqual(response.status_code, 403)
+            data = json.loads(response.content)
+            self.assertEqual(data['error'], 'Forbidden: User profile not found')
+
+    def test_role_required_decorator_allowed_role(self):
+        """Test role_required allows access with correct role"""
+        from django.test import RequestFactory
+        from active_interview_app.decorators import role_required
+        from django.http import HttpResponse
+
+        @role_required('admin', 'interviewer')
+        def test_view(request):
+            return HttpResponse('success')
+
+        factory = RequestFactory()
+        request = factory.get('/test/')
+        request.user = self.admin
+
+        response = test_view(request)
+        self.assertEqual(response.status_code, 200)
+
+    def test_role_required_decorator_denied_role(self):
+        """Test role_required denies access with incorrect role"""
+        from django.test import RequestFactory
+        from active_interview_app.decorators import role_required
+
+        @role_required('admin')
+        def test_view(request):
+            return JsonResponse({'success': True})
+
+        factory = RequestFactory()
+        request = factory.get('/api/test/')
+        request.user = self.candidate
+
+        response = test_view(request)
+        self.assertEqual(response.status_code, 403)
+        data = json.loads(response.content)
+        self.assertEqual(data['error'], 'Forbidden: Insufficient permissions')
+
+    def test_admin_required_decorator(self):
+        """Test admin_required decorator allows admin access"""
+        from django.test import RequestFactory
+        from active_interview_app.decorators import admin_required
+        from django.http import HttpResponse
+
+        @admin_required
+        def test_view(request):
+            return HttpResponse('success')
+
+        factory = RequestFactory()
+        request = factory.get('/test/')
+        request.user = self.admin
+
+        response = test_view(request)
+        self.assertEqual(response.status_code, 200)
+
+        # Test that non-admin is denied
+        request.user = self.candidate
+        response = test_view(request)
+        self.assertEqual(response.status_code, 403)
+
+    def test_admin_or_interviewer_required_decorator(self):
+        """Test admin_or_interviewer_required allows both roles"""
+        from django.test import RequestFactory
+        from active_interview_app.decorators import admin_or_interviewer_required
+        from django.http import HttpResponse
+
+        @admin_or_interviewer_required
+        def test_view(request):
+            return HttpResponse('success')
+
+        factory = RequestFactory()
+
+        # Test admin access
+        request = factory.get('/test/')
+        request.user = self.admin
+        response = test_view(request)
+        self.assertEqual(response.status_code, 200)
+
+        # Test interviewer access
+        request.user = self.interviewer
+        response = test_view(request)
+        self.assertEqual(response.status_code, 200)
+
+        # Test candidate denied
+        request.user = self.candidate
+        response = test_view(request)
+        self.assertEqual(response.status_code, 403)
+
+    def test_owner_or_privileged_required_unauthenticated(self):
+        """Test owner_or_privileged_required returns 401 for unauthenticated"""
+        from django.test import RequestFactory
+        from active_interview_app.decorators import owner_or_privileged_required
+
+        @owner_or_privileged_required(lambda request, user_id: User.objects.get(id=user_id))
+        def test_view(request, user_id):
+            return JsonResponse({'success': True})
+
+        factory = RequestFactory()
+        request = factory.get('/test/')
+        from django.contrib.auth.models import AnonymousUser
+        request.user = AnonymousUser()
+
+        response = test_view(request, self.candidate.id)
+        self.assertEqual(response.status_code, 401)
+
+    def test_owner_or_privileged_required_no_profile(self):
+        """Test owner_or_privileged_required returns 403 when user has no profile"""
+        from django.test import RequestFactory
+        from active_interview_app.decorators import owner_or_privileged_required
+        from unittest.mock import PropertyMock, patch
+
+        @owner_or_privileged_required(lambda request, user_id: User.objects.get(id=user_id))
+        def test_view(request, user_id):
+            return JsonResponse({'success': True})
+
+        factory = RequestFactory()
+        request = factory.get('/test/')
+
+        # Create user and mock profile to raise AttributeError
+        user_no_profile = User.objects.create_user(
+            username='noprofile3', password='pass'
+        )
+
+        # Mock the profile property to raise AttributeError
+        with patch.object(type(user_no_profile), 'profile',
+                         new_callable=PropertyMock) as mock_profile:
+            mock_profile.side_effect = AttributeError("User has no profile")
+            request.user = user_no_profile
+
+            response = test_view(request, self.candidate.id)
+            self.assertEqual(response.status_code, 403)
+            data = json.loads(response.content)
+            self.assertEqual(data['error'], 'Forbidden: User profile not found')
+
+    def test_owner_or_privileged_required_admin_access(self):
+        """Test owner_or_privileged_required allows admin access"""
+        from django.test import RequestFactory
+        from active_interview_app.decorators import owner_or_privileged_required
+        from django.http import HttpResponse
+
+        @owner_or_privileged_required(lambda request, user_id: User.objects.get(id=user_id))
+        def test_view(request, user_id):
+            return HttpResponse('success')
+
+        factory = RequestFactory()
+        request = factory.get('/test/')
+        request.user = self.admin
+
+        response = test_view(request, self.candidate.id)
+        self.assertEqual(response.status_code, 200)
+
+    def test_owner_or_privileged_required_interviewer_access(self):
+        """Test owner_or_privileged_required allows interviewer access"""
+        from django.test import RequestFactory
+        from active_interview_app.decorators import owner_or_privileged_required
+        from django.http import HttpResponse
+
+        @owner_or_privileged_required(lambda request, user_id: User.objects.get(id=user_id))
+        def test_view(request, user_id):
+            return HttpResponse('success')
+
+        factory = RequestFactory()
+        request = factory.get('/test/')
+        request.user = self.interviewer
+
+        response = test_view(request, self.candidate.id)
+        self.assertEqual(response.status_code, 200)
+
+    def test_owner_or_privileged_required_owner_access(self):
+        """Test owner_or_privileged_required allows owner access"""
+        from django.test import RequestFactory
+        from active_interview_app.decorators import owner_or_privileged_required
+        from django.http import HttpResponse
+
+        @owner_or_privileged_required(lambda request, user_id: User.objects.get(id=user_id))
+        def test_view(request, user_id):
+            return HttpResponse('success')
+
+        factory = RequestFactory()
+        request = factory.get('/test/')
+        request.user = self.candidate
+
+        # Candidate accessing their own resource
+        response = test_view(request, self.candidate.id)
+        self.assertEqual(response.status_code, 200)
+
+    def test_owner_or_privileged_required_non_owner_denied(self):
+        """Test owner_or_privileged_required denies non-owner candidate"""
+        from django.test import RequestFactory
+        from active_interview_app.decorators import owner_or_privileged_required
+
+        @owner_or_privileged_required(lambda request, user_id: User.objects.get(id=user_id))
+        def test_view(request, user_id):
+            return JsonResponse({'success': True})
+
+        factory = RequestFactory()
+        request = factory.get('/test/')
+        request.user = self.candidate
+
+        # Candidate trying to access another user's resource
+        response = test_view(request, self.admin.id)
+        self.assertEqual(response.status_code, 403)
+        data = json.loads(response.content)
+        self.assertEqual(data['error'], 'Forbidden')
+
+    def test_owner_or_privileged_required_exception_handling(self):
+        """Test owner_or_privileged_required handles exceptions in get_owner_func"""
+        from django.test import RequestFactory
+        from active_interview_app.decorators import owner_or_privileged_required
+
+        # get_owner_func that raises exception
+        def failing_owner_func(request, user_id):
+            raise ValueError("Simulated error")
+
+        @owner_or_privileged_required(failing_owner_func)
+        def test_view(request, user_id):
+            return JsonResponse({'success': True})
+
+        factory = RequestFactory()
+        request = factory.get('/test/')
+        request.user = self.candidate
+
+        response = test_view(request, 999)
+        self.assertEqual(response.status_code, 403)
+        data = json.loads(response.content)
+        self.assertEqual(data['error'], 'Forbidden')
 
 
 

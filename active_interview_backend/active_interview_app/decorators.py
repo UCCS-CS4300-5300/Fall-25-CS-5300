@@ -47,13 +47,13 @@ def role_required(*allowed_roles):
                 return HttpResponseRedirect(f"{login_url}?next={request.path}")
 
             # Check if user has profile
-            if not hasattr(request.user, 'profile'):
+            try:
+                user_role = request.user.profile.role
+            except AttributeError:
                 return JsonResponse(
                     {'error': 'Forbidden: User profile not found'},
                     status=403
                 )
-
-            user_role = request.user.profile.role
 
             if user_role not in allowed_roles:
                 # Return JSON response for API endpoints
@@ -118,13 +118,13 @@ def owner_or_privileged_required(get_owner_func):
                 return JsonResponse({'error': 'Unauthorized'}, status=401)
 
             # Check if user has profile
-            if not hasattr(request.user, 'profile'):
+            try:
+                user_role = request.user.profile.role
+            except AttributeError:
                 return JsonResponse(
                     {'error': 'Forbidden: User profile not found'},
                     status=403
                 )
-
-            user_role = request.user.profile.role
 
             # Admins and interviewers always have access
             if user_role in ['admin', 'interviewer']:
@@ -162,10 +162,10 @@ def check_user_permission(request, target_user_id, allow_self=True,
     Returns:
         True if permission granted, False otherwise
     """
-    if not hasattr(request.user, 'profile'):
+    try:
+        user_role = request.user.profile.role
+    except AttributeError:
         return False
-
-    user_role = request.user.profile.role
 
     # Check role-based permissions
     if allow_admin and user_role == 'admin':
