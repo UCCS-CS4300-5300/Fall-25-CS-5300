@@ -4,8 +4,9 @@
 - Senior Full stack web Developer
 
 # Tech Stack
-- Framework: Python Django
 - Language: Python
+- Framework: Python Django
+- Testing: pytest
 - Styling: Bootstrap
 
 # Project Structure
