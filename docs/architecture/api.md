@@ -333,6 +333,174 @@ Deletes a job listing.
 
 ---
 
+## RBAC Endpoints
+
+**Issue**: [#69](https://github.com/UCCS-CS4300-5300/Fall-25-CS-5300/issues/69)
+
+Role-Based Access Control endpoints for managing user roles and profiles.
+
+**For complete RBAC documentation**: [RBAC Feature Guide](../features/rbac.md)
+
+### Admin Endpoints
+
+#### List All Users
+
+**GET** `/api/admin/users/`
+
+Returns list of all users with their roles.
+
+**Authentication:** Required
+
+**Authorization:** Admin only
+
+**Response:**
+```json
+{
+  "users": [
+    {
+      "id": 1,
+      "username": "johndoe",
+      "email": "john@example.com",
+      "first_name": "John",
+      "last_name": "Doe",
+      "role": "candidate",
+      "auth_provider": "local",
+      "date_joined": "2025-01-01T12:00:00Z",
+      "is_active": true
+    }
+  ]
+}
+```
+
+**Status Codes:**
+- `200 OK` - Success
+- `401 Unauthorized` - Not authenticated
+- `403 Forbidden` - Not admin
+
+---
+
+#### Update User Role
+
+**PATCH** `/api/admin/users/<user_id>/role/`
+
+Updates a user's role.
+
+**Authentication:** Required
+
+**Authorization:** Admin only
+
+**Request Body:**
+```json
+{
+  "role": "interviewer"
+}
+```
+
+**Valid Roles:** `admin`, `interviewer`, `candidate`
+
+**Response:**
+```json
+{
+  "success": true,
+  "user_id": 123,
+  "username": "johndoe",
+  "role": "interviewer"
+}
+```
+
+**Status Codes:**
+- `200 OK` - Success
+- `400 Bad Request` - Invalid role value
+- `401 Unauthorized` - Not authenticated
+- `403 Forbidden` - Not admin
+- `404 Not Found` - User not found
+- `405 Method Not Allowed` - Wrong HTTP method
+
+---
+
+### Candidate Profile Endpoints
+
+#### View Candidate Profile
+
+**GET** `/api/candidates/<user_id>/`
+
+Retrieves candidate profile information.
+
+**Authentication:** Required
+
+**Authorization:**
+- Owner (self)
+- Admin
+- Interviewer
+
+**Response:**
+```json
+{
+  "id": 123,
+  "username": "johndoe",
+  "email": "john@example.com",
+  "first_name": "John",
+  "last_name": "Doe",
+  "role": "candidate",
+  "auth_provider": "local",
+  "date_joined": "2025-01-01T12:00:00Z"
+}
+```
+
+**Status Codes:**
+- `200 OK` - Success
+- `401 Unauthorized` - Not authenticated
+- `403 Forbidden` - Not authorized to view this profile
+- `404 Not Found` - User not found
+
+---
+
+#### Update Candidate Profile
+
+**PATCH** `/api/candidates/<user_id>/update/`
+
+Updates candidate profile information.
+
+**Authentication:** Required
+
+**Authorization:** Owner (self) only
+
+**Request Body:**
+```json
+{
+  "first_name": "John",
+  "last_name": "Smith",
+  "email": "newemail@example.com"
+}
+```
+
+**Allowed Fields:**
+- `first_name`
+- `last_name`
+- `email`
+
+**Response:**
+```json
+{
+  "success": true,
+  "user_id": 123,
+  "updated_fields": ["first_name", "last_name", "email"],
+  "first_name": "John",
+  "last_name": "Smith",
+  "email": "newemail@example.com"
+}
+```
+
+**Status Codes:**
+- `200 OK` - Success
+- `400 Bad Request` - Invalid JSON
+- `401 Unauthorized` - Not authenticated
+- `403 Forbidden` - Not authorized (not owner)
+- `404 Not Found` - User not found
+- `405 Method Not Allowed` - Wrong HTTP method
+
+---
+
 ## Web Endpoints (Non-REST)
 
 These endpoints use traditional Django views (HTML responses).

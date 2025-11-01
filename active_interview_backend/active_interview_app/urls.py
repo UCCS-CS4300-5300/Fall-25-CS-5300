@@ -92,10 +92,14 @@ urlpatterns = [
     path('chat/<int:chat_id>/download-pdf/',
          views.DownloadPDFReportView.as_view(), name='download_pdf_report'),
 
-
-
-
-
+    # RBAC urls (Issue #69)
+    path('api/admin/users/', views.admin_users_list, name='admin_users_list'),
+    path('api/admin/users/<int:user_id>/role/', views.update_user_role,
+         name='update_user_role'),
+    path('api/candidates/<int:user_id>/', views.candidate_profile_view,
+         name='candidate_profile_view'),
+    path('api/candidates/<int:user_id>/update/', views.update_candidate_profile,
+         name='update_candidate_profile'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

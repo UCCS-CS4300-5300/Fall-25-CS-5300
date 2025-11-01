@@ -8,7 +8,7 @@ import re
 from markdownify import markdownify as md
 from docx import Document
 
-from .models import UploadedResume, UploadedJobListing, Chat, ExportableReport
+from .models import UploadedResume, UploadedJobListing, Chat, ExportableReport, UserProfile
 from .forms import (
     CreateUserForm,
     CreateChatForm,
@@ -31,7 +31,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.mixins import UserPassesTestMixin
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, User
 from django.forms.models import model_to_dict
 from django.http import JsonResponse, HttpResponse, FileResponse
 from django.shortcuts import render, redirect, get_object_or_404
@@ -48,6 +48,13 @@ from rest_framework.views import APIView
 
 # Import OpenAI utilities (moved to separate module to prevent circular imports)
 from .openai_utils import get_openai_client, _ai_available, MAX_TOKENS
+
+# Import RBAC decorators (Issue #69)
+from .decorators import (
+    admin_required,
+    admin_or_interviewer_required,
+    check_user_permission
+)
 
 
 def _ai_unavailable_json():
@@ -1341,3 +1348,189 @@ class DownloadPDFReportView(LoginRequiredMixin, UserPassesTestMixin, View):
         report.save()
 
         return response
+
+
+# =============================================================================
+# RBAC (Role-Based Access Control) Views - Issue #69
+# =============================================================================
+
+@admin_required
+def admin_users_list(request):
+    """
+    Admin-only endpoint to list all users with their roles.
+    GET /admin/users/
+
+    Returns JSON list of users with their profile information.
+    """
+    users = User.objects.all().select_related('profile')
+    users_data = []
+
+    for user in users:
+        user_data = {
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'role': user.profile.role if hasattr(user, 'profile') else 'candidate',
+            'auth_provider': user.profile.auth_provider if hasattr(user, 'profile') else 'local',
+            'date_joined': user.date_joined.isoformat(),
+            'is_active': user.is_active,
+        }
+        users_data.append(user_data)
+
+    return JsonResponse({'users': users_data})
+
+
+@admin_required
+def update_user_role(request, user_id):
+    """
+    Admin-only endpoint to update a user's role.
+    PATCH /admin/users/<user_id>/role/
+
+    Request body: {'role': 'admin'|'interviewer'|'candidate'}
+    """
+    if request.method != 'PATCH':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return JsonResponse({'error': 'User not found'}, status=404)
+
+    # Parse request body
+    try:
+        data = json.loads(request.body)
+        new_role = data.get('role')
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    # Validate role
+    valid_roles = [UserProfile.ADMIN, UserProfile.INTERVIEWER, UserProfile.CANDIDATE]
+    if new_role not in valid_roles:
+        return JsonResponse({
+            'error': f'Invalid role. Must be one of: {", ".join(valid_roles)}'
+        }, status=400)
+
+    # Update role
+    if not hasattr(user, 'profile'):
+        UserProfile.objects.create(user=user, role=new_role)
+    else:
+        user.profile.role = new_role
+        user.profile.save()
+
+    return JsonResponse({
+        'success': True,
+        'user_id': user.id,
+        'username': user.username,
+        'role': new_role
+    })
+
+
+def candidate_profile_view(request, user_id):
+    """
+    View candidate profile.
+    GET /candidates/<user_id>/
+
+    Access:
+    - Owner can view their own profile
+    - Admin can view any profile
+    - Interviewer can view any profile
+    - Other candidates cannot view
+    """
+    # Check authentication
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+
+    # Check permissions
+    has_permission = check_user_permission(
+        request, user_id,
+        allow_self=True,
+        allow_admin=True,
+        allow_interviewer=True
+    )
+
+    if not has_permission:
+        return JsonResponse({'error': 'Forbidden'}, status=403)
+
+    # Get user and profile
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return JsonResponse({'error': 'User not found'}, status=404)
+
+    profile_data = {
+        'id': user.id,
+        'username': user.username,
+        'email': user.email,
+        'first_name': user.first_name,
+        'last_name': user.last_name,
+        'role': user.profile.role if hasattr(user, 'profile') else 'candidate',
+        'auth_provider': user.profile.auth_provider if hasattr(user, 'profile') else 'local',
+        'date_joined': user.date_joined.isoformat(),
+    }
+
+    return JsonResponse(profile_data)
+
+
+def update_candidate_profile(request, user_id):
+    """
+    Update candidate profile.
+    PATCH /candidates/<user_id>/
+
+    Access:
+    - Only the owner can update their own profile
+    - Admin and interviewer cannot update candidate profiles
+
+    Request body: {'first_name': '...', 'last_name': '...', 'email': '...'}
+    """
+    if request.method != 'PATCH':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    # Check authentication
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+
+    # Only allow self to update (not even admin/interviewer)
+    has_permission = check_user_permission(
+        request, user_id,
+        allow_self=True,
+        allow_admin=False,  # Admins should not update candidate profiles
+        allow_interviewer=False
+    )
+
+    if not has_permission:
+        return JsonResponse({'error': 'Forbidden'}, status=403)
+
+    # Get user
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return JsonResponse({'error': 'User not found'}, status=404)
+
+    # Parse request body
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    # Update allowed fields
+    allowed_fields = ['first_name', 'last_name', 'email']
+    updated_fields = []
+
+    for field in allowed_fields:
+        if field in data:
+            setattr(user, field, data[field])
+            updated_fields.append(field)
+
+    if updated_fields:
+        user.save()
+
+    return JsonResponse({
+        'success': True,
+        'user_id': user.id,
+        'updated_fields': updated_fields,
+        'first_name': user.first_name,
+        'last_name': user.last_name,
+        'email': user.email,
+    })
