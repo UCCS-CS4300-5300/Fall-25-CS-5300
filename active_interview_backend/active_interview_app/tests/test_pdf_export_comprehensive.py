@@ -146,9 +146,10 @@ class PDFSectionCreationTest(TestCase):
     def test_create_metadata_section_with_job_listing(self):
         """Test metadata section with job listing"""
         job_listing = UploadedJobListing.objects.create(
-            owner=self.user,
+            user=self.user,
             title='Software Engineer',
-            file_name='job.pdf'
+            filename='job.pdf',
+            content='Job description'
         )
         self.chat.job_listing = job_listing
         self.chat.save()
@@ -162,9 +163,10 @@ class PDFSectionCreationTest(TestCase):
     def test_create_metadata_section_with_resume(self):
         """Test metadata section with resume"""
         resume = UploadedResume.objects.create(
-            owner=self.user,
+            user=self.user,
             title='My Resume',
-            file_name='resume.pdf'
+            content='Resume content',
+            original_filename='resume.pdf'
         )
         self.chat.resume = resume
         self.chat.save()
@@ -505,14 +507,16 @@ class GeneratePDFReportTest(TestCase):
     def test_generate_pdf_with_job_and_resume(self):
         """Test PDF with both job listing and resume"""
         job = UploadedJobListing.objects.create(
-            owner=self.user,
+            user=self.user,
             title='Senior Developer',
-            file_name='job.pdf'
+            filename='job.pdf',
+            content='Job description'
         )
         resume = UploadedResume.objects.create(
-            owner=self.user,
+            user=self.user,
             title='John Doe Resume',
-            file_name='resume.pdf'
+            content='Resume content',
+            original_filename='resume.pdf'
         )
         chat = Chat.objects.create(
             owner=self.user,
