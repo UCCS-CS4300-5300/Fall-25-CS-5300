@@ -92,14 +92,21 @@ urlpatterns = [
     path('chat/<int:chat_id>/download-pdf/',
          views.DownloadPDFReportView.as_view(), name='download_pdf_report'),
 
-    # RBAC urls (Issue #69)
-    path('api/admin/users/', views.admin_users_list, name='admin_users_list'),
-    path('api/admin/users/<int:user_id>/role/', views.update_user_role,
-         name='update_user_role'),
-    path('api/candidates/<int:user_id>/', views.candidate_profile_view,
-         name='candidate_profile_view'),
-    path('api/candidates/<int:user_id>/update/', views.update_candidate_profile,
-         name='update_candidate_profile'),
+    # User Profile View (Issue #69)
+    path('user/<int:user_id>/profile/', views.view_user_profile,
+         name='view_user_profile'),
+
+    # Role Request urls (Issue #69)
+    path('profile/request-role-change/', views.request_role_change,
+         name='request_role_change'),
+    path('role-requests/', views.role_requests_list,
+         name='role_requests_list'),
+    path('role-requests/<int:request_id>/review/',
+         views.review_role_request, name='review_role_request'),
+
+    # Candidate Search urls (Issue #69)
+    path('candidates/search/', views.candidate_search,
+         name='candidate_search'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

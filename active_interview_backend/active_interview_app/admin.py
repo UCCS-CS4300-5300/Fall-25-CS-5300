@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (
     Chat, UploadedJobListing, UploadedResume,
-    ExportableReport, UserProfile
+    ExportableReport, UserProfile, RoleChangeRequest
 )
 from .token_usage_models import TokenUsage
 from .merge_stats_models import MergeTokenStats
@@ -56,6 +56,50 @@ class UserProfileAdmin(admin.ModelAdmin):
         """Optimize query with select_related"""
         qs = super().get_queryset(request)
         return qs.select_related('user')
+
+
+# Role Change Requests Admin - Issue #69
+@admin.register(RoleChangeRequest)
+class RoleChangeRequestAdmin(admin.ModelAdmin):
+    list_display = (
+        'user',
+        'current_role',
+        'requested_role',
+        'status',
+        'created_at',
+        'reviewed_by'
+    )
+    list_filter = ('status', 'requested_role', 'created_at')
+    search_fields = (
+        'user__username',
+        'user__email',
+        'reason',
+        'admin_notes'
+    )
+    readonly_fields = ('created_at', 'updated_at')
+
+    fieldsets = (
+        ('Request Information', {
+            'fields': (
+                'user',
+                'current_role',
+                'requested_role',
+                'reason'
+            )
+        }),
+        ('Review', {
+            'fields': ('status', 'reviewed_by', 'reviewed_at', 'admin_notes')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        })
+    )
+
+    def get_queryset(self, request):
+        """Optimize query with select_related"""
+        qs = super().get_queryset(request)
+        return qs.select_related('user', 'reviewed_by')
 
 
 # Token Tracking Admin

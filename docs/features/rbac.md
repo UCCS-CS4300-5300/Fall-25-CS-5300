@@ -102,110 +102,37 @@ def my_view(request, user_id):
         pass
 ```
 
-## API Endpoints
+## Web Endpoints
 
-### Admin Endpoints
+### View User Profile
 
-#### List All Users
 ```
-GET /api/admin/users/
-```
-**Access**: Admin only
-
-**Response**:
-```json
-{
-  "users": [
-    {
-      "id": 1,
-      "username": "johndoe",
-      "email": "john@example.com",
-      "first_name": "John",
-      "last_name": "Doe",
-      "role": "candidate",
-      "auth_provider": "local",
-      "date_joined": "2025-01-01T12:00:00Z",
-      "is_active": true
-    }
-  ]
-}
+GET /user/<user_id>/profile/
 ```
 
-#### Update User Role
-```
-PATCH /api/admin/users/<user_id>/role/
-```
-**Access**: Admin only
+Displays a user's profile information.
 
-**Request Body**:
-```json
-{
-  "role": "interviewer"
-}
-```
-
-**Valid Roles**: `admin`, `interviewer`, `candidate`
-
-**Response**:
-```json
-{
-  "success": true,
-  "user_id": 123,
-  "username": "johndoe",
-  "role": "interviewer"
-}
-```
-
-### Candidate Profile Endpoints
-
-#### View Candidate Profile
-```
-GET /api/candidates/<user_id>/
-```
 **Access**:
-- Owner (self)
-- Admin
-- Interviewer
+- Self (view own profile)
+- Admin (view any profile)
+- Interviewer (view any profile)
 
-**Response**:
-```json
-{
-  "id": 123,
-  "username": "johndoe",
-  "email": "john@example.com",
-  "first_name": "John",
-  "last_name": "Doe",
-  "role": "candidate",
-  "auth_provider": "local",
-  "date_joined": "2025-01-01T12:00:00Z"
-}
-```
+**Response**: HTML page displaying:
+- Username
+- Email
+- Full name (if provided)
+- Role
+- Account creation date
+- Authentication provider
 
-#### Update Candidate Profile
-```
-PATCH /api/candidates/<user_id>/update/
-```
-**Access**: Owner (self) only
+**Use Cases**:
+- Users viewing their own profile
+- Interviewers viewing candidate profiles
+- Admins viewing any user profile
 
-**Request Body**:
-```json
-{
-  "first_name": "John",
-  "last_name": "Smith",
-  "email": "newemaiL@example.com"
-}
+**Example**:
 ```
-
-**Response**:
-```json
-{
-  "success": true,
-  "user_id": 123,
-  "updated_fields": ["first_name", "last_name", "email"],
-  "first_name": "John",
-  "last_name": "Smith",
-  "email": "newemail@example.com"
-}
+GET /user/123/profile/
 ```
 
 ## Permission Matrix
@@ -213,49 +140,12 @@ PATCH /api/candidates/<user_id>/update/
 | Action | Candidate | Interviewer | Admin |
 |--------|-----------|-------------|-------|
 | View own profile | ✅ | ✅ | ✅ |
-| Update own profile | ✅ | ✅ | ✅ |
-| View other profiles | ❌ | ✅ | ✅ |
-| Update other profiles | ❌ | ❌ | ❌ |
-| List all users | ❌ | ❌ | ✅ |
-| Update user roles | ❌ | ❌ | ✅ |
-
-## Error Responses
-
-### 401 Unauthorized
-User is not authenticated.
-
-```json
-{
-  "error": "Unauthorized"
-}
-```
-
-### 403 Forbidden
-User lacks required permissions.
-
-```json
-{
-  "error": "Forbidden: Insufficient permissions"
-}
-```
-
-### 404 Not Found
-Resource not found.
-
-```json
-{
-  "error": "User not found"
-}
-```
-
-### 400 Bad Request
-Invalid input data.
-
-```json
-{
-  "error": "Invalid role. Must be one of: admin, interviewer, candidate"
-}
-```
+| View other user profiles | ❌ | ✅ | ✅ |
+| Request role change | ✅ | ✅ | ✅ |
+| View role requests | ❌ | ❌ | ✅ |
+| Approve/reject role requests | ❌ | ❌ | ✅ |
+| Search for candidates | ❌ | ✅ | ✅ |
+| Update user roles (via admin panel) | ❌ | ❌ | Superuser only |
 
 ## Testing
 
@@ -378,3 +268,218 @@ python manage.py migrate
 1. Ensure requesting user is admin
 2. Verify role value is valid ('admin', 'interviewer', or 'candidate')
 3. Check request format (PATCH with JSON body)
+
+## Role Change Request System
+
+### Overview
+
+Candidates can request to become interviewers through a self-service workflow.
+Admins review and approve/reject these requests through a dedicated interface.
+
+### User Flow
+
+#### For Candidates
+
+1. Navigate to Profile page
+2. Click "Request Interviewer Role" button
+3. Fill out request form with reason (optional)
+4. Submit request
+5. Profile page shows "pending request" status
+6. Receive notification when admin reviews
+
+**Note**: Users cannot submit multiple pending requests. They must wait for
+admin review before submitting another.
+
+#### For Admins
+
+1. Navigate to "Role Requests" from navbar
+2. View pending requests with user details and reason
+3. For each request:
+   - **Approve**: User's role is immediately updated to interviewer
+   - **Reject**: User remains candidate, can add admin notes explaining why
+
+### Endpoints
+
+#### Submit Role Request
+```
+POST /profile/request-role-change/
+```
+**Access**: Authenticated users (typically candidates)
+
+**Form Data**:
+- `requested_role`: Role being requested (e.g., "interviewer")
+- `reason`: (Optional) Explanation for request
+
+**Response**: Redirects to profile page with success message
+
+#### View Role Requests (Admin)
+```
+GET /role-requests/
+```
+**Access**: Admin only
+
+**Returns**: HTML page with:
+- List of pending requests
+- List of recently reviewed requests
+
+#### Review Role Request (Admin)
+```
+POST /role-requests/<request_id>/review/
+```
+**Access**: Admin only
+
+**Form Data** (Approve):
+```
+{
+  "action": "approve"
+}
+```
+
+**Form Data** (Reject):
+```
+{
+  "action": "reject",
+  "admin_notes": "Optional feedback for user"
+}
+```
+
+**Response**: Redirects to role requests list with success message
+
+**Effects**:
+- **Approve**: Updates user's role in UserProfile
+- **Reject**: Request marked as rejected, no role change
+
+### Database Model: RoleChangeRequest
+
+Location: `active_interview_app/models.py:216-286`
+
+**Fields**:
+- `user`: ForeignKey to User making request
+- `requested_role`: Role being requested
+- `current_role`: Role at time of request
+- `status`: pending/approved/rejected
+- `reason`: User's explanation (optional)
+- `reviewed_by`: Admin who reviewed (null until reviewed)
+- `reviewed_at`: Timestamp of review
+- `admin_notes`: Admin feedback (optional)
+
+**Example Usage**:
+```python
+# Check if user has pending request
+has_pending = RoleChangeRequest.objects.filter(
+    user=request.user,
+    status=RoleChangeRequest.PENDING
+).exists()
+
+# Get all pending requests
+pending = RoleChangeRequest.objects.filter(
+    status=RoleChangeRequest.PENDING
+).select_related('user')
+```
+
+## Candidate Search
+
+### Overview
+
+Admins and interviewers can search for candidates by username to view their
+profiles, resumes, and interview history.
+
+### User Flow
+
+1. Navigate to "Search Candidates" from navbar (visible to admins/interviewers)
+2. Enter username in search box
+3. View list of matching candidates
+4. Click "View Profile" to see full candidate details
+
+### Endpoint
+
+#### Search Candidates
+```
+GET /candidates/search/?q=<query>
+```
+**Access**: Admin or Interviewer only
+
+**Query Parameters**:
+- `q`: Username search query (case-insensitive, partial match)
+
+**Response**: HTML page with:
+- Search form
+- List of matching candidates (max 20 results)
+- For each candidate:
+  - Username
+  - Email
+  - Full name (if provided)
+  - Join date
+  - Link to view full profile
+
+**Example**:
+```
+GET /candidates/search/?q=john
+# Returns all candidates with "john" in username
+# e.g., "john_doe", "bob_johnson"
+```
+
+### Search Behavior
+
+- **Case-insensitive**: "JOHN" matches "john_doe"
+- **Partial match**: "john" matches "john_doe" and "bob_johnson"
+- **Candidates only**: Only returns users with `role=candidate`
+- **Limit**: Returns maximum 20 results
+- **Empty query**: Shows empty state with instructions
+
+### Integration with Navigation
+
+The navbar conditionally shows links based on user role:
+
+```django
+{% if user.profile.role == 'admin' or user.profile.role == 'interviewer' %}
+  <li class="nav-item">
+    <a class="nav-link" href="{% url 'candidate_search' %}">Search Candidates</a>
+  </li>
+{% endif %}
+
+{% if user.profile.role == 'admin' %}
+  <li class="nav-item">
+    <a class="nav-link" href="{% url 'role_requests_list' %}">Role Requests</a>
+  </li>
+{% endif %}
+```
+
+## Testing
+
+### Role Request Tests
+
+Location: `active_interview_app/tests/test_rbac.py:529-756`
+
+**Test Coverage**:
+- Candidate can submit role request
+- Candidate cannot submit duplicate pending requests
+- Unauthenticated users cannot submit requests
+- Admin can view role requests list
+- Non-admin cannot view role requests list
+- Admin can approve requests (updates user role)
+- Admin can reject requests (does not update role)
+- Non-admin cannot review requests
+- Profile page shows pending request status
+
+### Search Tests
+
+Location: `active_interview_app/tests/test_rbac.py:759-908`
+
+**Test Coverage**:
+- Admin can access search
+- Interviewer can access search
+- Candidate cannot access search
+- Unauthenticated users cannot access search
+- Search by username returns matches
+- Exact username match works
+- Search is case-insensitive
+- Empty query shows appropriate message
+- No results handled gracefully
+- Search only returns candidates (not admins/interviewers)
+
+**Run Tests**:
+```bash
+python manage.py test active_interview_app.tests.test_rbac.RoleChangeRequestTest
+python manage.py test active_interview_app.tests.test_rbac.CandidateSearchTest
+```

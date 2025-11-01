@@ -8,7 +8,10 @@ import re
 from markdownify import markdownify as md
 from docx import Document
 
-from .models import UploadedResume, UploadedJobListing, Chat, ExportableReport, UserProfile
+from .models import (
+    UploadedResume, UploadedJobListing, Chat,
+    ExportableReport, UserProfile, RoleChangeRequest
+)
 from .forms import (
     CreateUserForm,
     CreateChatForm,
@@ -37,6 +40,7 @@ from django.http import JsonResponse, HttpResponse, FileResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.text import slugify
 from django.utils.timezone import now
+from django.utils import timezone
 from django.views import View
 
 
@@ -858,8 +862,58 @@ def profile(request):
     resumes = UploadedResume.objects.filter(user=request.user)
     job_listings = UploadedJobListing.objects.filter(user=request.user)
 
-    return render(request, 'profile.html', {'resumes': resumes,
-                                            'job_listings': job_listings})
+    # Check for pending role change requests
+    has_pending_request = RoleChangeRequest.objects.filter(
+        user=request.user,
+        status=RoleChangeRequest.PENDING
+    ).exists()
+
+    return render(request, 'profile.html', {
+        'resumes': resumes,
+        'job_listings': job_listings,
+        'has_pending_request': has_pending_request
+    })
+
+
+@login_required
+def view_user_profile(request, user_id):
+    """
+    View another user's profile (read-only).
+    Accessible by admins and interviewers.
+    """
+    # Check permissions
+    from .decorators import check_user_permission
+    from django.http import HttpResponseForbidden, Http404
+
+    has_permission = check_user_permission(
+        request, user_id,
+        allow_self=True,
+        allow_admin=True,
+        allow_interviewer=True
+    )
+
+    if not has_permission:
+        return HttpResponseForbidden("You don't have permission to view this profile.")
+
+    # Get user
+    try:
+        profile_user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        raise Http404("User not found")
+
+    # Get user's resumes and job listings
+    resumes = UploadedResume.objects.filter(user=profile_user)
+    job_listings = UploadedJobListing.objects.filter(user=profile_user)
+
+    # Check if viewing own profile
+    is_own_profile = request.user.id == user_id
+
+    return render(request, 'user_profile.html', {
+        'profile_user': profile_user,
+        'resumes': resumes,
+        'job_listings': job_listings,
+        'is_own_profile': is_own_profile
+    })
 
 
 # === Joel's file upload views ===
@@ -1350,187 +1404,143 @@ class DownloadPDFReportView(LoginRequiredMixin, UserPassesTestMixin, View):
         return response
 
 
+
+
 # =============================================================================
-# RBAC (Role-Based Access Control) Views - Issue #69
+# Role Change Request Views - Issue #69
 # =============================================================================
+
+@login_required
+def request_role_change(request):
+    """
+    Allow users to request a role change.
+    POST /profile/request-role-change/
+    """
+    if request.method == 'POST':
+        requested_role = request.POST.get('requested_role')
+        reason = request.POST.get('reason', '')
+
+        # Validate
+        if requested_role not in ['interviewer', 'admin']:
+            messages.error(request, 'Invalid role requested')
+            return redirect('profile')
+
+        # Check for existing pending request
+        existing = RoleChangeRequest.objects.filter(
+            user=request.user,
+            status=RoleChangeRequest.PENDING
+        ).exists()
+
+        if existing:
+            messages.warning(request, 'You already have a pending request')
+            return redirect('profile')
+
+        # Create request
+        RoleChangeRequest.objects.create(
+            user=request.user,
+            requested_role=requested_role,
+            current_role=request.user.profile.role,
+            reason=reason
+        )
+
+        messages.success(
+            request,
+            'Role request submitted for admin review'
+        )
+        return redirect('profile')
+
+    return render(request, 'role_request_form.html')
+
 
 @admin_required
-def admin_users_list(request):
+def role_requests_list(request):
     """
-    Admin-only endpoint to list all users with their roles.
-    GET /admin/users/
-
-    Returns JSON list of users with their profile information.
+    Show all role requests to admins.
+    GET /admin/role-requests/
     """
-    users = User.objects.all().select_related('profile')
-    users_data = []
+    pending = RoleChangeRequest.objects.filter(
+        status=RoleChangeRequest.PENDING
+    ).select_related('user', 'user__profile')
 
-    for user in users:
-        user_data = {
-            'id': user.id,
-            'username': user.username,
-            'email': user.email,
-            'first_name': user.first_name,
-            'last_name': user.last_name,
-            'role': user.profile.role if hasattr(user, 'profile') else 'candidate',
-            'auth_provider': user.profile.auth_provider if hasattr(user, 'profile') else 'local',
-            'date_joined': user.date_joined.isoformat(),
-            'is_active': user.is_active,
-        }
-        users_data.append(user_data)
+    reviewed = RoleChangeRequest.objects.exclude(
+        status=RoleChangeRequest.PENDING
+    ).select_related('user', 'user__profile', 'reviewed_by')[:20]
 
-    return JsonResponse({'users': users_data})
-
-
-@admin_required
-def update_user_role(request, user_id):
-    """
-    Admin-only endpoint to update a user's role.
-    PATCH /admin/users/<user_id>/role/
-
-    Request body: {'role': 'admin'|'interviewer'|'candidate'}
-    """
-    if request.method != 'PATCH':
-        return JsonResponse({'error': 'Method not allowed'}, status=405)
-
-    try:
-        user = User.objects.get(id=user_id)
-    except User.DoesNotExist:
-        return JsonResponse({'error': 'User not found'}, status=404)
-
-    # Parse request body
-    try:
-        data = json.loads(request.body)
-        new_role = data.get('role')
-    except json.JSONDecodeError:
-        return JsonResponse({'error': 'Invalid JSON'}, status=400)
-
-    # Validate role
-    valid_roles = [UserProfile.ADMIN, UserProfile.INTERVIEWER, UserProfile.CANDIDATE]
-    if new_role not in valid_roles:
-        return JsonResponse({
-            'error': f'Invalid role. Must be one of: {", ".join(valid_roles)}'
-        }, status=400)
-
-    # Update role
-    if not hasattr(user, 'profile'):
-        UserProfile.objects.create(user=user, role=new_role)
-    else:
-        user.profile.role = new_role
-        user.profile.save()
-
-    return JsonResponse({
-        'success': True,
-        'user_id': user.id,
-        'username': user.username,
-        'role': new_role
-    })
-
-
-def candidate_profile_view(request, user_id):
-    """
-    View candidate profile.
-    GET /candidates/<user_id>/
-
-    Access:
-    - Owner can view their own profile
-    - Admin can view any profile
-    - Interviewer can view any profile
-    - Other candidates cannot view
-    """
-    # Check authentication
-    if not request.user.is_authenticated:
-        return JsonResponse({'error': 'Unauthorized'}, status=401)
-
-    # Check permissions
-    has_permission = check_user_permission(
-        request, user_id,
-        allow_self=True,
-        allow_admin=True,
-        allow_interviewer=True
-    )
-
-    if not has_permission:
-        return JsonResponse({'error': 'Forbidden'}, status=403)
-
-    # Get user and profile
-    try:
-        user = User.objects.get(id=user_id)
-    except User.DoesNotExist:
-        return JsonResponse({'error': 'User not found'}, status=404)
-
-    profile_data = {
-        'id': user.id,
-        'username': user.username,
-        'email': user.email,
-        'first_name': user.first_name,
-        'last_name': user.last_name,
-        'role': user.profile.role if hasattr(user, 'profile') else 'candidate',
-        'auth_provider': user.profile.auth_provider if hasattr(user, 'profile') else 'local',
-        'date_joined': user.date_joined.isoformat(),
+    context = {
+        'pending_requests': pending,
+        'reviewed_requests': reviewed,
     }
+    return render(request, 'admin/role_requests.html', context)
 
-    return JsonResponse(profile_data)
 
-
-def update_candidate_profile(request, user_id):
+@admin_required
+def review_role_request(request, request_id):
     """
-    Update candidate profile.
-    PATCH /candidates/<user_id>/
-
-    Access:
-    - Only the owner can update their own profile
-    - Admin and interviewer cannot update candidate profiles
-
-    Request body: {'first_name': '...', 'last_name': '...', 'email': '...'}
+    Approve or reject a role change request.
+    POST /admin/role-requests/<id>/review/
     """
-    if request.method != 'PATCH':
+    if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
 
-    # Check authentication
-    if not request.user.is_authenticated:
-        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    role_request = get_object_or_404(RoleChangeRequest, id=request_id)
 
-    # Only allow self to update (not even admin/interviewer)
-    has_permission = check_user_permission(
-        request, user_id,
-        allow_self=True,
-        allow_admin=False,  # Admins should not update candidate profiles
-        allow_interviewer=False
-    )
+    action = request.POST.get('action')  # 'approve' or 'reject'
+    admin_notes = request.POST.get('admin_notes', '')
 
-    if not has_permission:
-        return JsonResponse({'error': 'Forbidden'}, status=403)
+    if action == 'approve':
+        # Update user's role
+        role_request.user.profile.role = role_request.requested_role
+        role_request.user.profile.save()
 
-    # Get user
-    try:
-        user = User.objects.get(id=user_id)
-    except User.DoesNotExist:
-        return JsonResponse({'error': 'User not found'}, status=404)
+        role_request.status = RoleChangeRequest.APPROVED
+        messages.success(
+            request,
+            f'Approved: {role_request.user.username} is now '
+            f'{role_request.requested_role}'
+        )
 
-    # Parse request body
-    try:
-        data = json.loads(request.body)
-    except json.JSONDecodeError:
-        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    elif action == 'reject':
+        role_request.status = RoleChangeRequest.REJECTED
+        messages.info(
+            request,
+            f'Rejected role request from {role_request.user.username}'
+        )
 
-    # Update allowed fields
-    allowed_fields = ['first_name', 'last_name', 'email']
-    updated_fields = []
+    else:
+        return JsonResponse({'error': 'Invalid action'}, status=400)
 
-    for field in allowed_fields:
-        if field in data:
-            setattr(user, field, data[field])
-            updated_fields.append(field)
+    role_request.reviewed_by = request.user
+    role_request.reviewed_at = timezone.now()
+    role_request.admin_notes = admin_notes
+    role_request.save()
 
-    if updated_fields:
-        user.save()
+    return redirect('role_requests_list')
 
-    return JsonResponse({
-        'success': True,
-        'user_id': user.id,
-        'updated_fields': updated_fields,
-        'first_name': user.first_name,
-        'last_name': user.last_name,
-        'email': user.email,
-    })
+
+# =============================================================================
+# Candidate Search Views - Issue #69
+# =============================================================================
+
+@admin_or_interviewer_required
+def candidate_search(request):
+    """
+    Simple username search for candidates.
+    GET /candidates/search/
+    """
+    query = request.GET.get('q', '').strip()
+    candidates = []
+
+    if query:
+        # Search by username (case-insensitive)
+        users = User.objects.filter(
+            username__icontains=query,
+            profile__role=UserProfile.CANDIDATE
+        ).select_related('profile')[:20]  # Limit to 20 results
+
+        candidates = users
+
+    context = {
+        'query': query,
+        'candidates': candidates,
+    }
+    return render(request, 'candidates/search.html', context)

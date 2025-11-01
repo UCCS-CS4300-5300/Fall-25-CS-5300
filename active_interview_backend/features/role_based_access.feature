@@ -119,3 +119,78 @@ Feature: Role-based access control
     When I send a GET request to "/candidates/123"
     Then the response status should be 200
     And I should see the candidate's profile information
+
+  @issue-69
+  Scenario: Candidate can submit a role change request
+    Given I am logged in as a candidate
+    When I navigate to my profile page
+    And I click "Request Interviewer Role"
+    And I fill in the reason as "I have 5 years of experience conducting technical interviews"
+    And I submit the role change request
+    Then I should see "Your request has been submitted"
+    And I should have a pending role change request
+    And I should not see the "Request Interviewer Role" button
+
+  @issue-69
+  Scenario: Candidate cannot submit duplicate pending requests
+    Given I am logged in as a candidate
+    And I have a pending role change request
+    When I navigate to my profile page
+    Then I should not see the "Request Interviewer Role" button
+    And I should see "You have a pending role change request"
+
+  @issue-69
+  Scenario: Admin can view pending role requests
+    Given I am logged in as an admin
+    And a candidate "john_doe" has a pending role change request to "interviewer"
+    And a candidate "jane_smith" has a pending role change request to "interviewer"
+    When I navigate to "/role-requests/"
+    Then the response status should be 200
+    And I should see 2 pending requests
+    And I should see user "john_doe" in the pending requests
+    And I should see user "jane_smith" in the pending requests
+
+  @issue-69
+  Scenario: Admin can approve a role change request
+    Given I am logged in as an admin
+    And a candidate "john_doe" has a pending role change request to "interviewer"
+    When I navigate to "/role-requests/"
+    And I click "Approve" for user "john_doe"
+    Then the request should be marked as "approved"
+    And the user "john_doe" should have role "interviewer"
+    And the request should show "reviewed_by" as the current admin
+    And the "reviewed_at" timestamp should be set
+
+  @issue-69
+  Scenario: Admin can reject a role change request
+    Given I am logged in as an admin
+    And a candidate "john_doe" has a pending role change request to "interviewer"
+    When I navigate to "/role-requests/"
+    And I click "Reject" for user "john_doe"
+    And I fill in admin notes as "Need more interview experience"
+    And I confirm the rejection
+    Then the request should be marked as "rejected"
+    And the user "john_doe" should have role "candidate"
+    And the request should include admin notes "Need more interview experience"
+
+  @issue-69
+  Scenario: Non-admin cannot access role request management
+    Given I am logged in as a candidate
+    When I request "/role-requests/"
+    Then the response status should be 403
+
+  @issue-69
+  Scenario: Interviewer cannot approve role requests
+    Given I am logged in as an interviewer
+    When I request "/role-requests/"
+    Then the response status should be 403
+
+  @issue-69
+  Scenario: Unauthenticated user cannot submit role request
+    Given I am not logged in
+    When I send a POST request to "/profile/request-role-change/" with data:
+      | field          | value        |
+      | requested_role | interviewer  |
+      | reason         | I want this  |
+    Then the response status should be 302 or 401
+    And I should be redirected to login page

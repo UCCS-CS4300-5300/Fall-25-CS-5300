@@ -213,6 +213,79 @@ class ExportableReport(models.Model):
         ordering = ['-generated_at']
 
 
+class RoleChangeRequest(models.Model):
+    """
+    Track requests from users to change their role.
+    Primarily used for candidates requesting interviewer role.
+
+    Related to Issue #69 (RBAC).
+    """
+    PENDING = 'pending'
+    APPROVED = 'approved'
+    REJECTED = 'rejected'
+
+    STATUS_CHOICES = [
+        (PENDING, 'Pending'),
+        (APPROVED, 'Approved'),
+        (REJECTED, 'Rejected'),
+    ]
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='role_requests'
+    )
+    requested_role = models.CharField(
+        max_length=20,
+        help_text='Role being requested (typically "interviewer")'
+    )
+    current_role = models.CharField(
+        max_length=20,
+        help_text='Role at time of request'
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=PENDING
+    )
+
+    reason = models.TextField(
+        blank=True,
+        help_text='User explanation for role request'
+    )
+
+    # Admin review tracking
+    reviewed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reviewed_role_requests'
+    )
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    admin_notes = models.TextField(
+        blank=True,
+        help_text='Admin notes on approval/rejection'
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['status', '-created_at']),
+            models.Index(fields=['user', '-created_at']),
+        ]
+
+    def __str__(self):
+        return (
+            f"{self.user.username}: {self.current_role} → "
+            f"{self.requested_role} ({self.status})"
+        )
+
+
 # Import token tracking models (must be at end to avoid circular imports)
 from .token_usage_models import TokenUsage  # noqa: E402, F401
 from .merge_stats_models import MergeTokenStats  # noqa: E402, F401
