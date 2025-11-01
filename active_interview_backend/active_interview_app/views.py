@@ -1,7 +1,6 @@
 import os
 import filetype
 import json
-from openai import OpenAI
 import pymupdf4llm
 import tempfile
 import textwrap
@@ -9,7 +8,7 @@ import re
 from markdownify import markdownify as md
 from docx import Document
 
-from .models import UploadedResume, UploadedJobListing, Chat
+from .models import UploadedResume, UploadedJobListing, Chat, ExportableReport
 from .forms import (
     CreateUserForm,
     CreateChatForm,
@@ -20,8 +19,11 @@ from .forms import (
 )
 from .serializers import (
     UploadedResumeSerializer,
-    UploadedJobListingSerializer
+    UploadedJobListingSerializer,
+    ExportableReportSerializer
 )
+from .pdf_export import generate_pdf_report
+from .resume_parser import parse_resume_with_ai
 
 
 from django.conf import settings
@@ -31,8 +33,9 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.auth.models import Group
 from django.forms.models import model_to_dict
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse, FileResponse
 from django.shortcuts import render, redirect, get_object_or_404
+from django.utils.text import slugify
 from django.utils.timezone import now
 from django.views import View
 
@@ -43,40 +46,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 
-# OpenAI client configuration with lazy loading and graceful degradation
-MAX_TOKENS = 15000
-_openai_client = None
-
-
-def get_openai_client():
-    """
-    Lazy initialization of OpenAI client.
-    This prevents import-time errors when API key is not set.
-    """
-    global _openai_client
-    if _openai_client is None:
-        if not settings.OPENAI_API_KEY:
-            raise ValueError(
-                "OPENAI_API_KEY is not set. Please configure it in your "
-                ".env file or environment variables."
-            )
-        try:
-            _openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
-        except Exception as e:
-            raise ValueError(f"Failed to initialize OpenAI client: {e}")
-    return _openai_client
-
-
-def _ai_available():
-    """
-    Return True if the OpenAI client can be initialized and is usable.
-    This checks without raising exceptions.
-    """
-    try:
-        get_openai_client()
-        return True
-    except (ValueError, Exception):
-        return False
+# Import OpenAI utilities (moved to separate module to prevent circular imports)
+from .openai_utils import get_openai_client, _ai_available, MAX_TOKENS
 
 
 def _ai_unavailable_json():
@@ -437,8 +408,16 @@ class CreateChat(LoginRequiredMixin, View):
                 chat.save()
 
                 return redirect("chat-view", chat_id=chat.id)
-            # else:
-            #     print("chat form invalid")
+            else:
+                # Form is invalid, render the form again with errors
+                owner_chats = Chat.objects.filter(owner=request.user).order_by('-modified_date')
+                return render(request, os.path.join('chat', 'chat-create.html'), {
+                    'form': form,
+                    'owner_chats': owner_chats
+                })
+        else:
+            # 'create' not in POST, redirect to chat list
+            return redirect('chat-list')
 
 
 class ChatView(LoginRequiredMixin, UserPassesTestMixin, View):
@@ -526,6 +505,9 @@ class EditChat(LoginRequiredMixin, UserPassesTestMixin, View):
                 chat.save()
 
                 return redirect("chat-view", chat_id=chat.id)
+
+        # If 'update' not in request.POST or form is invalid, redirect to edit page
+        return redirect("chat-edit", chat_id=chat.id)
 
 
 # Note: this class has no template.  it is technically built into base-sidebar
@@ -946,7 +928,47 @@ def upload_file(request):
                         instance.content = md(full_text)  # Convert to markdown
 
                     instance.save()
-                    messages.success(request, "File uploaded successfully!")
+
+                    # Trigger AI parsing for resumes (Issue #48: "upload triggers parsing")
+                    if instance.__class__.__name__ == 'UploadedResume':
+                        if _ai_available():
+                            try:
+                                # Set status to in_progress
+                                instance.parsing_status = 'in_progress'
+                                instance.save()
+
+                                # Parse the resume
+                                parsed_data = parse_resume_with_ai(instance.content)
+
+                                # Save parsed data
+                                instance.skills = parsed_data.get('skills', [])
+                                instance.experience = parsed_data.get('experience', [])
+                                instance.education = parsed_data.get('education', [])
+                                instance.parsing_status = 'success'
+                                instance.parsed_at = now()
+                                instance.save()
+
+                                messages.success(request, "Resume uploaded and parsed successfully!")
+                            except Exception as e:
+                                # Save error (sanitize to prevent API key exposure)
+                                error_msg = str(e)
+                                # Sanitize any potential API key references
+                                if "api" in error_msg.lower() and "key" in error_msg.lower():
+                                    error_msg = "OpenAI authentication error"
+                                instance.parsing_status = 'error'
+                                instance.parsing_error = error_msg
+                                instance.save()
+                                messages.warning(request, f"Resume uploaded but parsing failed: {error_msg}")
+                        else:
+                            # AI unavailable
+                            instance.parsing_status = 'error'
+                            instance.parsing_error = "AI service unavailable"
+                            instance.save()
+                            messages.warning(request, "Resume uploaded but AI parsing is currently unavailable.")
+                    else:
+                        # Not a resume (job listing), just show success
+                        messages.success(request, "File uploaded successfully!")
+
                     return redirect('document-list')
 
                 except Exception as e:
@@ -1114,3 +1136,208 @@ class JobListingList(APIView):
 class DocumentList(View):
     def get(self, request):
         return render(request, 'documents/document-list.html')
+
+
+# Exportable Report Views
+
+class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """
+    View to generate an ExportableReport from a Chat instance.
+    This view analyzes the chat data and creates a structured report.
+    """
+
+    def test_func(self):
+        """Verify that the user owns the chat"""
+        chat = get_object_or_404(Chat, id=self.kwargs['chat_id'])
+        return self.request.user == chat.owner
+
+    def post(self, request, chat_id):
+        """Generate or update the exportable report for a chat"""
+        chat = get_object_or_404(Chat, id=chat_id)
+
+        # Check if report already exists, update it if so
+        report, created = ExportableReport.objects.get_or_create(chat=chat)
+
+        # Extract scores from messages if they exist
+        # Look for the results in the chat messages
+        scores = self._extract_scores_from_chat(chat)
+
+        # Update report fields
+        if scores:
+            report.professionalism_score = scores.get('Professionalism', 0)
+            report.subject_knowledge_score = scores.get('Subject Knowledge', 0)
+            report.clarity_score = scores.get('Clarity', 0)
+            report.overall_score = scores.get('Overall', 0)
+
+        # Extract feedback text
+        report.feedback_text = self._extract_feedback_from_chat(chat)
+
+        # Build question responses
+        report.question_responses = self._extract_question_responses(chat)
+
+        # Calculate statistics
+        chat_messages = chat.messages
+        user_messages = [msg for msg in chat_messages if msg.get('role') == 'user']
+        assistant_messages = [msg for msg in chat_messages
+                             if msg.get('role') == 'assistant']
+
+        report.total_questions_asked = len(assistant_messages)
+        report.total_responses_given = len(user_messages)
+
+        report.save()
+
+        messages.success(request, 'Report generated successfully!')
+        return redirect('export_report', chat_id=chat_id)
+
+    def _extract_scores_from_chat(self, chat):
+        """
+        Extract performance scores from chat messages.
+        This looks for AI-generated scoring data in the messages.
+        """
+        # Look through messages for score data
+        # In the actual implementation, scores would be extracted from
+        # the AI response that contains the scoring information
+        chat_messages = chat.messages
+
+        # Find the most recent message containing scores
+        for msg in reversed(chat_messages):
+            if msg.get('role') == 'assistant':
+                content = msg.get('content', '')
+                # Try to parse scores from the content
+                scores = {}
+
+                # Look for score patterns in the message
+                patterns = [
+                    r'Professionalism[:\s]+(\d+)',
+                    r'Subject Knowledge[:\s]+(\d+)',
+                    r'Clarity[:\s]+(\d+)',
+                    r'Overall[:\s]+(\d+)',
+                ]
+                keys = ['Professionalism', 'Subject Knowledge',
+                       'Clarity', 'Overall']
+
+                for pattern, key in zip(patterns, keys):
+                    match = re.search(pattern, content, re.IGNORECASE)
+                    if match:
+                        scores[key] = int(match.group(1))
+
+                if scores:
+                    return scores
+
+        return {}
+
+    def _extract_feedback_from_chat(self, chat):
+        """Extract AI feedback text from chat messages"""
+        chat_messages = chat.messages
+
+        # Find messages that look like feedback
+        feedback_parts = []
+        for msg in reversed(chat_messages):
+            if msg.get('role') == 'assistant':
+                content = msg.get('content', '')
+                # If the message contains feedback keywords, include it
+                if any(keyword in content.lower() for keyword in
+                      ['feedback', 'assessment', 'evaluation', 'overall']):
+                    feedback_parts.append(content)
+                    break  # Take the most recent feedback
+
+        return '\n\n'.join(feedback_parts)
+
+    def _extract_question_responses(self, chat):
+        """
+        Extract question-answer pairs from the chat messages.
+        Returns a list of dicts with question, answer, score, feedback.
+        """
+        chat_messages = chat.messages
+        qa_pairs = []
+
+        # Iterate through messages to find Q&A patterns
+        for i, msg in enumerate(chat_messages):
+            if msg.get('role') == 'assistant' and i + 1 < len(chat_messages):
+                question = msg.get('content', '')
+                # Check if next message is a user response
+                if chat_messages[i + 1].get('role') == 'user':
+                    answer = chat_messages[i + 1].get('content', '')
+
+                    qa_pair = {
+                        'question': question[:500],  # Truncate long questions
+                        'answer': answer[:500],  # Truncate long answers
+                    }
+
+                    # Try to find feedback for this Q&A if it exists
+                    if i + 2 < len(chat_messages) and \
+                       chat_messages[i + 2].get('role') == 'assistant':
+                        feedback_msg = chat_messages[i + 2].get('content', '')
+                        # Look for score in feedback
+                        score_match = re.search(r'(\d+)/10', feedback_msg)
+                        if score_match:
+                            qa_pair['score'] = int(score_match.group(1))
+                            qa_pair['feedback'] = feedback_msg[:300]
+
+                    qa_pairs.append(qa_pair)
+
+        return qa_pairs
+
+
+class ExportReportView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """
+    View to display and allow exporting of a generated report.
+    Shows report details and provides download options.
+    """
+
+    def test_func(self):
+        """Verify that the user owns the chat"""
+        chat = get_object_or_404(Chat, id=self.kwargs['chat_id'])
+        return self.request.user == chat.owner
+
+    def get(self, request, chat_id):
+        """Display the exportable report"""
+        chat = get_object_or_404(Chat, id=chat_id)
+
+        try:
+            report = ExportableReport.objects.get(chat=chat)
+        except ExportableReport.DoesNotExist:
+            messages.warning(request,
+                           'No report exists yet. Generating one now...')
+            return redirect('generate_report', chat_id=chat_id)
+
+        context = {
+            'chat': chat,
+            'report': report,
+        }
+        return render(request, 'reports/export-report.html', context)
+
+
+class DownloadPDFReportView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """
+    View to download a PDF version of the exportable report.
+    """
+
+    def test_func(self):
+        """Verify that the user owns the chat"""
+        chat = get_object_or_404(Chat, id=self.kwargs['chat_id'])
+        return self.request.user == chat.owner
+
+    def get(self, request, chat_id):
+        """Generate and download PDF report"""
+        chat = get_object_or_404(Chat, id=chat_id)
+
+        try:
+            report = ExportableReport.objects.get(chat=chat)
+        except ExportableReport.DoesNotExist:
+            messages.error(request, 'No report exists. Please generate one first.')
+            return redirect('chat_results', chat_id=chat_id)
+
+        # Generate PDF
+        pdf_content = generate_pdf_report(report)
+
+        # Create response
+        response = HttpResponse(pdf_content, content_type='application/pdf')
+        filename = f"interview_report_{slugify(chat.title)}_{report.generated_at.strftime('%Y%m%d')}.pdf"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+        # Mark PDF as generated
+        report.pdf_generated = True
+        report.save()
+
+        return response

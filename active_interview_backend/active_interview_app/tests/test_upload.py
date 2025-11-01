@@ -168,7 +168,8 @@ class ResumeUploadTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         messages = list(get_messages(response.wsgi_request))
-        self.assertTrue(any("File uploaded successfully!" in str(m)
+        # Message changed for resume uploads with AI parsing
+        self.assertTrue(any("uploaded" in str(m).lower()
                         for m in messages))
 
     def test_upload_invalid_filetype(self):

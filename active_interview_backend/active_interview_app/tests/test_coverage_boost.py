@@ -154,37 +154,37 @@ class ViewsCriticalPathsTest(TransactionTestCase):
 
     def test_get_openai_client_functions(self):
         """Test get_openai_client and related functions"""
-        with patch('active_interview_app.views.settings') as mock_settings:
+        with patch('active_interview_app.openai_utils.settings') as mock_settings:
             # Test missing API key
             mock_settings.OPENAI_API_KEY = None
-            views._openai_client = None
+            import active_interview_app.openai_utils as openai_utils; openai_utils._openai_client = None
             with self.assertRaises(ValueError):
                 views.get_openai_client()
 
             # Test successful initialization
             mock_settings.OPENAI_API_KEY = 'test-key'
-            with patch('active_interview_app.views.OpenAI') as mock_openai:
+            with patch('active_interview_app.openai_utils.OpenAI') as mock_openai:
                 mock_openai.return_value = MagicMock()
-                views._openai_client = None
+                import active_interview_app.openai_utils as openai_utils; openai_utils._openai_client = None
                 client = views.get_openai_client()
                 self.assertIsNotNone(client)
 
             # Test initialization error
             mock_settings.OPENAI_API_KEY = 'test-key'
-            with patch('active_interview_app.views.OpenAI') as mock_openai:
+            with patch('active_interview_app.openai_utils.OpenAI') as mock_openai:
                 mock_openai.side_effect = Exception('Init failed')
-                views._openai_client = None
+                import active_interview_app.openai_utils as openai_utils; openai_utils._openai_client = None
                 with self.assertRaises(ValueError):
                     views.get_openai_client()
 
     def test_ai_available_and_unavailable(self):
         """Test _ai_available and _ai_unavailable_json"""
         # Test _ai_available returns True
-        with patch('active_interview_app.views.get_openai_client', return_value=MagicMock()):
+        with patch('active_interview_app.openai_utils.get_openai_client', return_value=MagicMock()):
             self.assertTrue(views._ai_available())
 
         # Test _ai_available returns False
-        with patch('active_interview_app.views.get_openai_client', side_effect=ValueError()):
+        with patch('active_interview_app.openai_utils.get_openai_client', side_effect=ValueError()):
             self.assertFalse(views._ai_available())
 
         # Test _ai_unavailable_json

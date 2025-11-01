@@ -12,28 +12,42 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      color: white;
-      padding: 3rem 0;
+      min-height: 60vh;
+      padding: 3rem 1rem;
     }
-    h2 {
-      color: white;
+
+    .logout-page h2 {
+      color: var(--text-primary);
       margin-bottom: 1.5rem;
       font-size: 2.5rem;
+      font-weight: 700;
     }
+
     .logout-message {
-      background-color: rgba(68, 130, 166, 0.2);
-      border: 1px solid var(--shallows);
+      background-color: var(--surface);
+      border: 2px solid var(--border);
       border-radius: 8px;
       padding: 2rem;
       margin-bottom: 2rem;
       max-width: 500px;
       text-align: center;
+      box-shadow: var(--shadow);
     }
+
     .logout-message p {
-      font-size: 18px;
+      font-size: 1.1rem;
       margin: 0;
-      color: white;
+      color: var(--text-primary);
+      font-weight: 500;
     }
+
+    .logout-message p:nth-of-type(2) {
+      margin-top: 1rem;
+      font-size: 1rem;
+      color: var(--text-secondary);
+      font-weight: 400;
+    }
+
     .action-buttons {
       display: flex;
       flex-direction: column;
@@ -41,20 +55,36 @@
       max-width: 400px;
       width: 100%;
     }
+
     .action-buttons .btn {
       width: 100%;
       padding: 12px 24px;
       text-decoration: none;
+      font-weight: 600;
     }
-    .btn-secondary {
-      background-color: var(--reef) !important;
-      border: 1px solid rgba(255, 255, 255, 0.2) !important;
-      color: white !important;
+
+    .action-buttons .btn-primary {
+      background-color: var(--primary);
+      border-color: var(--primary);
+      color: var(--text-white);
     }
-    .btn-secondary:hover {
-      background-color: var(--alga) !important;
-      color: white !important;
-      text-decoration: none;
+
+    .action-buttons .btn-primary:hover {
+      background-color: var(--primary-dark);
+      border-color: var(--primary-dark);
+      color: var(--text-white);
+    }
+
+    .action-buttons .btn-secondary {
+      background-color: var(--surface);
+      border: 2px solid var(--border);
+      color: var(--text-primary);
+    }
+
+    .action-buttons .btn-secondary:hover {
+      background-color: var(--surface-hover);
+      border-color: var(--primary);
+      color: var(--text-primary);
     }
 
     /* Responsive: side by side on larger screens */
@@ -74,9 +104,7 @@
 
       <div class="logout-message">
         <p>You have successfully logged out of your account.</p>
-        <p style="margin-top: 1rem; font-size: 16px; color: rgba(255, 255, 255, 0.8);">
-          Thank you for using Active Interview Service!
-        </p>
+        <p>Thank you for using Active Interview Service!</p>
       </div>
 
       <div class="action-buttons">

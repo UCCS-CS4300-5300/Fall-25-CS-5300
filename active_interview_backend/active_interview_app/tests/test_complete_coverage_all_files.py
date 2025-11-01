@@ -4,7 +4,7 @@ and views.py all above 80% coverage.
 
 This file tests all remaining uncovered code paths.
 """
-from django.test import TestCase, Client
+from django.test import TestCase, Client, override_settings
 from django.urls import reverse
 from django.contrib.auth.models import User, Group
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -112,51 +112,60 @@ class ViewsCompleteCoverageTest(TestCase):
 
     def test_get_openai_client_success(self):
         """Test successful OpenAI client initialization"""
-        with patch('active_interview_app.views.settings') as mock_settings:
+        from active_interview_app.openai_utils import get_openai_client
+        import active_interview_app.openai_utils as openai_utils
+
+        with patch('active_interview_app.openai_utils.settings') as mock_settings:
             mock_settings.OPENAI_API_KEY = 'test-key-123'
-            with patch('active_interview_app.views.OpenAI') as mock_openai:
+            with patch('active_interview_app.openai_utils.OpenAI') as mock_openai:
                 mock_client = MagicMock()
                 mock_openai.return_value = mock_client
 
                 # Reset the global client
-                views._openai_client = None
+                openai_utils._openai_client = None
 
-                client = views.get_openai_client()
+                client = get_openai_client()
                 self.assertIsNotNone(client)
 
     def test_get_openai_client_no_api_key(self):
         """Test OpenAI client when API key is missing"""
-        with patch('active_interview_app.views.settings') as mock_settings:
+        from active_interview_app.openai_utils import get_openai_client
+        import active_interview_app.openai_utils as openai_utils
+
+        with patch('active_interview_app.openai_utils.settings') as mock_settings:
             mock_settings.OPENAI_API_KEY = None
-            views._openai_client = None
+            openai_utils._openai_client = None
 
             with self.assertRaises(ValueError) as context:
-                views.get_openai_client()
+                get_openai_client()
 
             self.assertIn('OPENAI_API_KEY is not set', str(context.exception))
 
     def test_get_openai_client_initialization_failure(self):
         """Test OpenAI client initialization failure"""
-        with patch('active_interview_app.views.settings') as mock_settings:
+        from active_interview_app.openai_utils import get_openai_client
+        import active_interview_app.openai_utils as openai_utils
+
+        with patch('active_interview_app.openai_utils.settings') as mock_settings:
             mock_settings.OPENAI_API_KEY = 'test-key'
-            with patch('active_interview_app.views.OpenAI') as mock_openai:
+            with patch('active_interview_app.openai_utils.OpenAI') as mock_openai:
                 mock_openai.side_effect = Exception('API Error')
-                views._openai_client = None
+                openai_utils._openai_client = None
 
                 with self.assertRaises(ValueError) as context:
-                    views.get_openai_client()
+                    get_openai_client()
 
                 self.assertIn('Failed to initialize OpenAI client', str(context.exception))
 
     def test_ai_available_returns_true(self):
         """Test _ai_available when client is available"""
-        with patch('active_interview_app.views.get_openai_client') as mock_get:
+        with patch('active_interview_app.openai_utils.get_openai_client') as mock_get:
             mock_get.return_value = MagicMock()
             self.assertTrue(views._ai_available())
 
     def test_ai_available_returns_false_on_error(self):
         """Test _ai_available when client fails"""
-        with patch('active_interview_app.views.get_openai_client') as mock_get:
+        with patch('active_interview_app.openai_utils.get_openai_client') as mock_get:
             mock_get.side_effect = ValueError('No API key')
             self.assertFalse(views._ai_available())
 
@@ -234,6 +243,7 @@ class ViewsCompleteCoverageTest(TestCase):
         self.assertIn('form', response.context)
         self.assertIn('owner_chats', response.context)
 
+    @override_settings(OPENAI_API_KEY='test-key')
     @patch('active_interview_app.views._ai_available')
     @patch('active_interview_app.views.get_openai_client')
     def test_create_chat_with_resume_ai_available(self, mock_client, mock_ai):
@@ -285,6 +295,7 @@ class ViewsCompleteCoverageTest(TestCase):
         self.assertIsNotNone(chat.resume)
         self.assertEqual(len(chat.key_questions), 1)
 
+    @override_settings(OPENAI_API_KEY='test-key')
     @patch('active_interview_app.views._ai_available')
     def test_create_chat_without_resume_ai_unavailable(self, mock_ai):
         """Test CreateChat POST without resume when AI unavailable"""
@@ -294,7 +305,7 @@ class ViewsCompleteCoverageTest(TestCase):
             'create': 'true',
             'listing_choice': self.job_listing.id,
             'difficulty': 3,
-            'type': 'TECH'
+            'type': 'ISK'
         })
 
         # Chat should still be created with empty AI messages
@@ -303,6 +314,7 @@ class ViewsCompleteCoverageTest(TestCase):
         self.assertIsNone(chat.resume)
         self.assertEqual(chat.key_questions, [])
 
+    @override_settings(OPENAI_API_KEY='test-key')
     @patch('active_interview_app.views._ai_available')
     @patch('active_interview_app.views.get_openai_client')
     def test_create_chat_key_questions_regex_fails(self, mock_client, mock_ai):
@@ -348,6 +360,7 @@ class ViewsCompleteCoverageTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn('chat', response.context)
 
+    @override_settings(OPENAI_API_KEY='test-key')
     @patch('active_interview_app.views._ai_available')
     @patch('active_interview_app.views.get_openai_client')
     def test_chat_view_post_success(self, mock_client, mock_ai):
@@ -376,6 +389,7 @@ class ViewsCompleteCoverageTest(TestCase):
         data = json.loads(response.content)
         self.assertEqual(data['message'], 'AI response')
 
+    @override_settings(OPENAI_API_KEY='test-key')
     @patch('active_interview_app.views._ai_available')
     def test_chat_view_post_ai_unavailable(self, mock_ai):
         """Test ChatView POST when AI is unavailable"""
@@ -479,6 +493,7 @@ class ViewsCompleteCoverageTest(TestCase):
         chat.refresh_from_db()
         self.assertEqual(len(chat.messages), 2)
 
+    @override_settings(OPENAI_API_KEY='test-key')
     @patch('active_interview_app.views._ai_available')
     @patch('active_interview_app.views.get_openai_client')
     def test_key_questions_view_get(self, mock_client, mock_ai):
@@ -502,6 +517,7 @@ class ViewsCompleteCoverageTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn('question', response.context)
 
+    @override_settings(OPENAI_API_KEY='test-key')
     @patch('active_interview_app.views._ai_available')
     @patch('active_interview_app.views.get_openai_client')
     def test_key_questions_view_post_with_resume(self, mock_client, mock_ai):
@@ -544,6 +560,7 @@ class ViewsCompleteCoverageTest(TestCase):
         data = json.loads(response.content)
         self.assertIn('8/10', data['message'])
 
+    @override_settings(OPENAI_API_KEY='test-key')
     @patch('active_interview_app.views._ai_available')
     @patch('active_interview_app.views.get_openai_client')
     def test_key_questions_view_post_without_resume(self, mock_client, mock_ai):
@@ -573,6 +590,7 @@ class ViewsCompleteCoverageTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
+    @override_settings(OPENAI_API_KEY='test-key')
     @patch('active_interview_app.views._ai_available')
     def test_key_questions_view_post_ai_unavailable(self, mock_ai):
         """Test KeyQuestionsView POST when AI unavailable"""
@@ -597,6 +615,7 @@ class ViewsCompleteCoverageTest(TestCase):
 
         self.assertEqual(response.status_code, 503)
 
+    @override_settings(OPENAI_API_KEY='test-key')
     @patch('active_interview_app.views._ai_available')
     @patch('active_interview_app.views.get_openai_client')
     def test_results_chat_get_ai_available(self, mock_client, mock_ai):
@@ -621,6 +640,7 @@ class ViewsCompleteCoverageTest(TestCase):
         self.assertIn('feedback', response.context)
         self.assertEqual(response.context['feedback'], 'Great job!')
 
+    @override_settings(OPENAI_API_KEY='test-key')
     @patch('active_interview_app.views._ai_available')
     def test_results_chat_get_ai_unavailable(self, mock_ai):
         """Test ResultsChat GET when AI is unavailable"""
@@ -639,6 +659,7 @@ class ViewsCompleteCoverageTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn('AI features are currently unavailable', response.context['feedback'])
 
+    @override_settings(OPENAI_API_KEY='test-key')
     @patch('active_interview_app.views._ai_available')
     @patch('active_interview_app.views.get_openai_client')
     def test_result_charts_get_ai_available(self, mock_client, mock_ai):
@@ -671,6 +692,7 @@ class ViewsCompleteCoverageTest(TestCase):
         self.assertEqual(response.context['scores']['Professionalism'], 80)
         self.assertEqual(response.context['scores']['Overall'], 75)
 
+    @override_settings(OPENAI_API_KEY='test-key')
     @patch('active_interview_app.views._ai_available')
     def test_result_charts_get_ai_unavailable(self, mock_ai):
         """Test ResultCharts GET when AI is unavailable"""

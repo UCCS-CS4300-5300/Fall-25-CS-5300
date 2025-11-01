@@ -28,7 +28,7 @@ class AboutUsViewTest(TestCase):
 
     def test_aboutus_view_get(self):
         """Test GET request to about us view"""
-        response = self.client.get(reverse('aboutus'))
+        response = self.client.get(reverse('about-us'))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'about-us.html')
 
@@ -487,31 +487,31 @@ class OpenAIClientTest(TestCase):
         )
         self.client = Client()
 
-    @patch('active_interview_app.views.settings')
+    @patch('active_interview_app.openai_utils.settings')
     def test_ai_available_without_api_key(self, mock_settings):
         """Test _ai_available returns False when API key is not set"""
-        from active_interview_app.views import _ai_available, _openai_client
-        import active_interview_app.views as views
+        from active_interview_app.openai_utils import _ai_available
+        import active_interview_app.openai_utils as openai_utils
 
         # Reset the global client
-        views._openai_client = None
+        openai_utils._openai_client = None
 
         mock_settings.OPENAI_API_KEY = None
 
         result = _ai_available()
         self.assertFalse(result)
 
-    @patch('active_interview_app.views.settings')
-    @patch('active_interview_app.views.OpenAI')
+    @patch('active_interview_app.openai_utils.settings')
+    @patch('active_interview_app.openai_utils.OpenAI')
     def test_get_openai_client_raises_error_without_key(self,
                                                          mock_openai,
                                                          mock_settings):
         """Test get_openai_client raises error when API key is not set"""
-        from active_interview_app.views import get_openai_client
-        import active_interview_app.views as views
+        from active_interview_app.openai_utils import get_openai_client
+        import active_interview_app.openai_utils as openai_utils
 
         # Reset the global client
-        views._openai_client = None
+        openai_utils._openai_client = None
 
         mock_settings.OPENAI_API_KEY = None
 

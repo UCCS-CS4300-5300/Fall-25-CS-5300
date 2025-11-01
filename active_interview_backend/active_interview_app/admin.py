@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import *
+from .models import Chat, UploadedJobListing, UploadedResume, ExportableReport, UserProfile
 from .token_usage_models import TokenUsage
 from .merge_stats_models import MergeTokenStats
 
@@ -7,6 +7,7 @@ from .merge_stats_models import MergeTokenStats
 admin.site.register(Chat)
 admin.site.register(UploadedJobListing)
 admin.site.register(UploadedResume)
+admin.site.register(ExportableReport)
 
 
 @admin.register(UserProfile)

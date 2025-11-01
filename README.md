@@ -1,53 +1,18 @@
-# Group-7-Spring-2025
-## Setup, Startup and Accessing
-### Local Manual 
-#### Setup
-1. Navigate to the root of the project.
-2. Make a venv: `python3 -m venv myenv`
-3. Load the venv
-   - Windows(Powershell): `.\myenv\bin\activate`
-   - Linux/Mac: `source myenv/bin/activate`
-5. Navigate to the active_interview_backend/ folder
-6. Install the requirements: `pip install -r requirements.txt`
-7. Generate a secret django key: `python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"`
-8. Run a django migration: `python3 manage.py migrate`
-9. Export these environment variables to your local machine
-   - Windows(Powershell)
-      - `$env:PROD = "false"`
-      - `$env:DJANGO_SECRET_KEY = "<your secret key>"`
-      - `$env:OPENAI_API_KEY = "<your api key>"`
-   - Linux/Mac
-      - `export PROD=false`
-      - `export DANGO_SECRET_KEY='<your secret key>'` (make sure to surround the key itself in apostraphes)
-      - `export OPENAI_API_KEY=<your api key>`
+# Active Interview Service
 
-#### Startup
-1. Navigate to the root of the project.
-2. <ins>(if you recently ran the clean-startup script)</ins> Repeat the manual setup steps 2-5 to set up the venv after it was erased
-3. Load the venv
-   - Windows(Powershell): `.\myenv\bin\activate`
-   - Linux/Mac: `source myenv/bin/activate`
-4. Navigate to the active_interview_backend/ folder
-5. <ins>(if you changed a static file like **CSS** or **images**)</ins> Delete the folder active_interview_backend/staticfiles/: `rm -Rf staticfiles`
-6. Run the server manually: `python3 manage.py runserver`
+AI-powered interview practice platform to help job seekers prepare for technical interviews with personalized feedback and scoring.
 
+## Overview
 
-#### Registering Accounts
-In order to allow people to register accounts from the page, permission levels must be set.
-1. Activate your virtual environement
-2. use the command 'python manage.py createsuperuser' to create an admin
-3. launch the django project
-4. Access through the means of the wep page or any other access point into the admin site 'http://127.0.0.1:8000/admin'
-5. Go to groups
-6. Add group called average_role and select permission levels
-7. save the group
-Now you should be able to register accounts on the page.
+Active Interview Service is a Django web application that allows users to practice job interviews with an OpenAI-powered AI interviewer. Upload your resume and a job listing, select an interview type and difficulty, then receive timed questions and real-time feedback to improve your interview skills.
 
-#### Google OAuth Setup
+**Production:** https://active-interview-service-production.up.railway.app
+
+## Google OAuth Setup
 
 The application supports Google OAuth authentication, allowing users to sign in with their Google accounts.
 
-##### For Local Development
+### For Local Development
 
 **Prerequisites:**
 - Google Cloud Console account
@@ -108,7 +73,7 @@ python manage.py shell
 >>> Site.objects.get(id=1)
 ```
 
-##### For Production/CD Deployment
+### For Production/CD Deployment
 
 **Prerequisites:**
 - Railway/production environment with deployed application
@@ -224,144 +189,252 @@ else:
 EOF
 ```
 
+---
 
+## Quick Start
 
-#### Accessing
-`http://127.0.0.1:8000`
+Choose your preferred development method:
 
-### Local Docker-Compose
-#### Setup
-1. Navigate to the root of the project.
-2. Make a venv: `python3 -m venv myenv`
-3. Load the venv: `source myenv/bin/activate`
-4. Install the requirements: `pip install -r active_interview_backend/requirements.txt`
-5. Generate a secret django key: `python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"`
-6. Make an OpenAI API key.
-6. Edit open a `.env` file in the root of your project and fill it out like so:
+### Option 1: Manual Setup (Recommended for Beginners)
+
+```bash
+# 1. Clone and setup
+git clone https://github.com/UCCS-CS4300-5300/Fall-25-CS-5300.git
+cd Fall-25-CS-5300
+python3 -m venv myenv
+source myenv/bin/activate  # Windows: .\myenv\Scripts\activate
+
+# 2. Install dependencies
+cd active_interview_backend
+pip install -r requirements.txt
+
+# 3. Configure environment
+export PROD=false
+export DJANGO_SECRET_KEY=$(python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())")
+export OPENAI_API_KEY=your_openai_api_key_here
+
+# 4. Setup database and run
+python manage.py migrate
+python manage.py createsuperuser  # Create admin account
+python manage.py runserver
 ```
-DJANGO_SECRET_KEY=<your secret key>
-OPENAI_API_KEY=<your api key>
+
+**Access:** `http://127.0.0.1:8000`
+
+**Next:** Create `average_role` group in Django admin to enable user registration. See [Setup Guide](docs/setup/local-development.md#5-create-superuser-and-configure-permissions).
+
+### Option 2: Docker (Recommended for Teams)
+
+```bash
+# 1. Clone repository
+git clone https://github.com/UCCS-CS4300-5300/Fall-25-CS-5300.git
+cd Fall-25-CS-5300
+
+# 2. Create .env file
+echo "DJANGO_SECRET_KEY=your_secret_key" > .env
+echo "OPENAI_API_KEY=your_openai_key" >> .env
+
+# 3. Start containers
+docker-compose up -d --build
 ```
 
-#### Startup - Development Mode (default)
-For local development with live code editing and full testing capabilities:
-1. Navigate to the root of the project.
-2. Run `docker-compose up -d --build`
-   - Uses `docker-compose.yml`
-   - Mounts local code directory for live editing
-   - Runs `start.sh` script
-   - Includes Chrome/Chromedriver for running E2E tests locally
-   - Code changes reflect immediately without rebuilding
+**Access:** `http://127.0.0.1`
 
-#### Startup - CI/Production Testing Mode
-To test the exact CI environment locally (without volume mounts):
-1. Navigate to the root of the project.
-2. Run `docker-compose -f docker-compose.prod.yml up -d --build`
-   - Uses `docker-compose.prod.yml`
-   - No volume mounts (production-like environment)
-   - Runs `paracord_runner.sh` script
-   - Includes Chrome/Chromedriver for E2E tests
-   - Requires full rebuild to see code changes
-   - Useful for verifying behavior matches CI exactly
+---
 
-#### Key Differences
+## Features
 
-| Feature | Development (`docker-compose.yml`) | CI/Production Testing (`docker-compose.prod.yml`) |
-|---------|-------------------------------------|---------------------------------------------------|
-| Volume Mount | ✅ Local code mounted | ❌ Code copied during build |
-| Live Editing | ✅ Changes reflect immediately | ❌ Requires rebuild |
-| Startup Script | `start.sh` | `paracord_runner.sh` |
-| Chrome/Testing | ✅ Pre-installed | ✅ Pre-installed |
-| Use Case | Day-to-day development + testing | Verify CI environment locally |
+### For Job Seekers
 
-#### Accessing
-`http://127.0.0.1`
+- 📝 **Upload Resumes & Job Listings** - PDF/DOCX support with text extraction
+- 🤖 **AI Interview Practice** - Powered by OpenAI GPT-4o
+- 🎯 **Multiple Interview Types** - General, Technical Skills, Personality, Final Screening
+- 📊 **Performance Feedback** - AI-generated scores and detailed feedback
+- 📈 **Progress Tracking** - Save and review past interview sessions
+- 📄 **PDF Reports** - Export professional interview reports
 
-## Debugging
-### Network Issues
-#### Arch Linux(And Derivatives)
-Please follow [the last post on this forum thread](https://bbs.archlinux.org/viewtopic.php?pid=2025168#p2025168) to fix your local docker's networking issues.
+### For Developers
 
-## Cleaning
-Every once in a while, your local environment may break because of a refactor, but the code works just fine in production.  Here is a way to clean your local environment on linux/mac:
-1. Navigate to the root of the project.
-2. `docker-compose down --volumes --remove-orphans`
-3. `docker system prune --all --volumes`
-4. `sudo systemctl restart docker`
-5. `git clean -fdx -e .env -e active_interview_backend/db`
+- 🔒 **User Authentication** - Django built-in auth with groups
+- 🔌 **REST API** - Django REST Framework for resume/job management
+- 🧪 **Comprehensive Testing** - 492+ tests with 80%+ coverage
+- 🚀 **CI/CD Pipeline** - Automated testing, linting, security scans
+- 🐳 **Docker Support** - Consistent development and production environments
+- ☁️ **Railway Deployment** - One-click production deployment
 
-## Restarting Cleanly
-I have created an linux/mac script that should make cleanly restarting local deployments in a way that avoids bugs much easier.  If you run windows, look at scripts/clean-restart.sh and do the equivalent commands for windows.
-> [!CAUTION]
-> Make sure to commit your code before using this.  The script can and will wipe all non-committed code, so you will lose work if you forget.
-1. Navigate to the root of the project.
-2. `sudo ./scripts/clean-restart.sh`
+---
+
+## Documentation
+
+📚 **[Complete Documentation →](docs/)**
+
+### Setup Guides
+
+- **[Local Development](docs/setup/local-development.md)** - Detailed setup instructions
+- **[Testing Guide](docs/setup/testing.md)** - Run tests and check coverage
+- **[BDD Feature Files](docs/setup/bdd-feature-files.md)** - Creating feature files from GitHub issues
+- **[Troubleshooting](docs/setup/troubleshooting.md)** - Common issues and solutions
+
+### Deployment
+
+- **[CI/CD Pipeline](docs/deployment/ci-cd.md)** - GitHub Actions workflows
+- **[Railway Deployment](docs/deployment/railway.md)** - Production deployment guide
+
+### Architecture
+
+- **[System Overview](docs/architecture/overview.md)** - High-level architecture
+- **[Database Models](docs/architecture/models.md)** - Model reference
+- **[API Reference](docs/architecture/api.md)** - REST API documentation
+
+### Features
+
+- **[Exportable Reports](docs/features/exportable-reports.md)** - PDF report generation
+
+---
+
+## Technology Stack
+
+**Backend:**
+- Django 4.2.19
+- Django REST Framework 3.15.2
+- OpenAI GPT-4o
+- Gunicorn (production)
+
+**Database:**
+- SQLite (development)
+- PostgreSQL (production)
+
+**Frontend:**
+- Bootstrap 5
+- jQuery
+- Ajax
+
+**File Processing:**
+- PyMuPDF (PDF parsing)
+- python-docx (DOCX parsing)
+- ReportLab (PDF generation)
+
+**Deployment:**
+- Docker & Docker Compose
+- Nginx (reverse proxy)
+- Railway (hosting)
+- GitHub Actions (CI/CD)
+
+**Testing:**
+- Django TestCase
+- Selenium (E2E)
+- Coverage.py
+- Behave (BDD)
+
+---
+
+## Project Structure
+
+```
+Fall-25-CS-5300/
+├── active_interview_backend/   # Django application
+│   ├── active_interview_app/   # Main app
+│   │   ├── models.py          # Database models
+│   │   ├── views.py           # View logic
+│   │   ├── templates/         # HTML templates
+│   │   └── tests/             # Test suite
+│   ├── features/              # BDD feature files
+│   └── manage.py              # Django CLI
+├── docs/                       # Documentation
+│   ├── setup/                 # Setup guides
+│   ├── deployment/            # Deployment docs
+│   ├── architecture/          # Architecture docs
+│   └── features/              # Feature specs
+├── .github/workflows/         # CI/CD pipelines
+├── docker-compose.yml         # Development containers
+├── docker-compose.prod.yml    # Production containers
+└── README.md                  # This file
+```
+
+---
+
+## Testing
+
+Run the full test suite:
+
+```bash
+cd active_interview_backend
+python manage.py test
+```
+
+With coverage:
+
+```bash
+coverage run manage.py test
+coverage report -m
+coverage html  # Generate HTML report
+```
+
+**CI Requirement:** Minimum 80% code coverage
+
+**[Full Testing Guide →](docs/setup/testing.md)**
+
+---
+
+## Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+**Quick workflow:**
+1. Fork the repository
+2. Create a feature branch
+3. Write tests for your changes
+4. Ensure tests pass and coverage ≥ 80%
+5. Submit a pull request
+
+---
 
 ## CI/CD Pipeline
 
-The project uses separate Continuous Integration (CI) and Continuous Deployment (CD) workflows to ensure code quality and automated deployments.
+**Continuous Integration (`.github/workflows/CI.yml`):**
+- ✅ Linting (flake8, djlint)
+- ✅ Security scans (safety, bandit)
+- ✅ Test suite with coverage validation
+- ✅ AI-powered code review
 
-### Workflow: `CI.yml` (Continuous Integration)
+**Continuous Deployment (`.github/workflows/CD.yml`):**
+- 🚀 Automatic deployment to Railway on push to `main`
 
-Runs on push to `main` branch, pull requests to `main`, or manual dispatch (`workflow_dispatch`).
+**[CI/CD Documentation →](docs/deployment/ci-cd.md)**
 
-**Jobs:**
+---
 
-1. **Lint** - Code quality checks
-   - Python linting with `flake8`
-   - Django template linting with `djlint`
-   - Outputs results to GitHub Step Summary
+## Team & AI Attribution
 
-2. **Security** - Security scanning (depends on Lint)
-   - Dependency vulnerability scanning with `safety`
-   - Static code analysis with `bandit`
-   - Generates JSON reports and uploads as artifacts
-   - Retention: 14 days
+**Team:** Group 7, Spring 2025
 
-3. **Test** - Runs Django tests with coverage validation (depends on Security)
-   - Spins up Docker containers with `docker-compose.prod.yml`
-   - Installs Chrome (v135.0.7049.52-1) and Chromedriver for Selenium tests
-   - Runs Django test suite with coverage tracking
-   - Enforces minimum 80% code coverage requirement
-   - Uploads coverage reports as artifacts
-   - Cleans up Docker resources after completion
+**AI Tools Used:**
+1. ChatGPT - Git diff script, coverage checker, E2E auth script, Chrome/Chromedriver install, jQuery/Ajax, system prompt rewrites
+2. Claude Code - CI/CD consolidation and fixes, test infrastructure improvements
 
-4. **AI Review** - Automated code review using OpenAI (runs in parallel)
-   - Analyzes git diffs for pushes and pull requests
-   - Generates AI-powered code review feedback
-   - Uploads review reports as artifacts
-   - Adds review summary to GitHub Step Summary
+See full attribution in [AI Use section of README](https://github.com/UCCS-CS4300-5300/Fall-25-CS-5300#ai-use) (legacy).
 
-5. **Cleanup** - Archive and cleanup (runs after all jobs complete)
-   - Downloads all artifacts from previous jobs
-   - Creates compressed archive of essential files (coverage, security, AI review)
-   - Uploads consolidated archive with 30-day retention
-   - Generates cleanup summary
+---
 
-**Environment Variables:**
-- `PYTHON_VERSION`: 3.13
-- `CHROME_VERSION`: 135.0.7049.52-1
-- `CHROMEDRIVER_VERSION`: 135.0.7049.52
-- `RETENTION_DAYS`: 14
+## License
 
-### Workflow: `CD.yml` (Continuous Deployment)
+[Specify license here]
 
-Runs on push to `prod` or `main` branches, or manual dispatch (`workflow_dispatch`).
+---
 
-**Jobs:**
+## Support
 
-1. **Deploy** - Deploys to Railway
-   - Checks out code
-   - Installs Railway CLI via npm
-   - Deploys using Railway service
-   - Generates deployment summary with status, branch, commit, and timestamp
+- 📖 **Documentation:** [docs/](docs/)
+- 🐛 **Issues:** [GitHub Issues](https://github.com/UCCS-CS4300-5300/Fall-25-CS-5300/issues)
+- 💬 **Discussions:** [GitHub Discussions](https://github.com/UCCS-CS4300-5300/Fall-25-CS-5300/discussions)
 
-**Deployment Details:**
-- Target: Railway platform
-- Triggers: Push to `prod` or `main` branches, or manual trigger
-- Method: Railway CLI (`railway up`)
+---
 
-### Required Secrets
+## Acknowledgments
+
+Built with Django, powered by OpenAI, deployed on Railway.
+
+### Environment Variables & Secrets
 
 **For CI Pipeline:**
 - `DJANGO_SECRET_KEY` - Django secret key for testing environment
@@ -388,6 +461,8 @@ Runs on push to `prod` or `main` branches, or manual dispatch (`workflow_dispatc
 2. Select your project
 3. Navigate to Variables tab
 4. Add each environment variable
+
+---
 
 ## Troubleshooting
 
@@ -487,7 +562,10 @@ docker-compose logs web
 docker-compose ps
 ```
 
+---
+
 ## AI Use
+
 1. The git diff script in CI.yml was iteratively designed with the help of chatgpt.
 2. The check_coverage.sh script was generated by chatgpt, although minor modifications have been made: https://chatgpt.com/share/67cf5f81-5500-8006-894a-7f8403fcc0f
 3. The chatbox image on the homepage was generated by chatgpt.
@@ -499,7 +577,10 @@ docker-compose ps
 9. Claude Code was used to consolidate and fix the CI/CD workflow configuration.
 10. Claude Code was used to create OAuth templates, fix authentication navigation, and write comprehensive tests.
 
+---
+
 ## Technologies
+
 1. Django
 2. Nginx
 3. Gunicorn
