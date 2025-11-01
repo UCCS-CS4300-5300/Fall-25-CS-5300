@@ -453,3 +453,39 @@ class CustomSocialAccountAdapterComprehensiveTest(TestCase):
 
             # Verify parent was called
             mock_parent.assert_called_once_with(request, mock_sociallogin, google_data)
+
+    def test_pre_social_login_with_email_none_from_get(self):
+        """Test pre_social_login when extra_data.get() explicitly returns None"""
+        request = self.factory.get('/accounts/google/login/callback/')
+
+        mock_sociallogin = Mock()
+        mock_sociallogin.is_existing = False
+        mock_sociallogin.account = Mock()
+        # Explicitly return None for email
+        mock_sociallogin.account.extra_data = {'other_field': 'value'}
+        mock_sociallogin.connect = Mock()
+
+        # Call pre_social_login
+        self.adapter.pre_social_login(request, mock_sociallogin)
+
+        # Connect should not be called
+        mock_sociallogin.connect.assert_not_called()
+
+    def test_pre_social_login_exception_during_user_lookup(self):
+        """Test pre_social_login handles exception during User.objects.filter"""
+        request = self.factory.get('/accounts/google/login/callback/')
+
+        mock_sociallogin = Mock()
+        mock_sociallogin.is_existing = False
+        mock_sociallogin.account = Mock()
+        mock_sociallogin.account.extra_data = {'email': 'test@example.com'}
+
+        # Mock User.objects.filter to raise an exception
+        with patch('django.contrib.auth.models.User.objects') as mock_user_objects:
+            mock_user_objects.filter.side_effect = Exception("Database error")
+
+            # Should not raise exception
+            try:
+                self.adapter.pre_social_login(request, mock_sociallogin)
+            except Exception as e:
+                self.fail(f"pre_social_login should handle exception: {e}")
