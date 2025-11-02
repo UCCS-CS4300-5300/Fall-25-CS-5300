@@ -8,6 +8,187 @@ Active Interview Service is a Django web application that allows users to practi
 
 **Production:** https://active-interview-service-production.up.railway.app
 
+## Google OAuth Setup
+
+The application supports Google OAuth authentication, allowing users to sign in with their Google accounts.
+
+### For Local Development
+
+**Prerequisites:**
+- Google Cloud Console account
+- Active Django admin account (see "Registering Accounts" above)
+
+**Steps:**
+
+1. **Create Google OAuth Credentials**
+   - Go to [Google Cloud Console](https://console.cloud.google.com/)
+   - Create a new project or select existing project
+   - Navigate to "APIs & Services" > "Credentials"
+   - Click "Create Credentials" > "OAuth 2.0 Client ID"
+   - Configure OAuth consent screen if prompted
+   - Application type: **Web application**
+   - Name: `Active Interview Service - Local`
+   - Authorized redirect URIs:
+     ```
+     http://localhost:8000/accounts/google/login/callback/
+     http://127.0.0.1:8000/accounts/google/login/callback/
+     ```
+   - Click "Create" and save your **Client ID** and **Client Secret**
+
+2. **Configure Django Site**
+   - Start your Django server: `python manage.py runserver`
+   - Access Django admin: `http://127.0.0.1:8000/admin`
+   - Navigate to **Sites** (under "SITES" section)
+   - Edit the site with ID=1:
+     - Domain name: `localhost:8000`
+     - Display name: `Active Interview Service`
+   - Save changes
+
+3. **Add Google OAuth App in Django Admin**
+   - In Django admin, navigate to **Social applications** (under "SOCIAL ACCOUNTS")
+   - Click "Add social application"
+   - Fill in the form:
+     - **Provider**: Google
+     - **Name**: Google OAuth
+     - **Client ID**: (paste your Google Client ID)
+     - **Secret key**: (paste your Google Client Secret)
+     - **Sites**: Select "localhost:8000"
+   - Click "Save"
+
+4. **Test OAuth Login**
+   - Navigate to `http://localhost:8000/login/`
+   - Click "Continue with Google"
+   - You should be redirected to Google login
+   - After authentication, you'll be redirected back to the application
+
+**Troubleshooting Local OAuth:**
+```bash
+# Run diagnostic script
+cd active_interview_backend
+python manage.py shell < ../temp/fix_oauth_setup.py
+
+# Manually verify Site configuration
+python manage.py shell
+>>> from django.contrib.sites.models import Site
+>>> Site.objects.get(id=1)
+```
+
+### For Production/CD Deployment
+
+**Prerequisites:**
+- Railway/production environment with deployed application
+- Production domain name
+
+**Steps:**
+
+1. **Create Production OAuth Credentials**
+   - Go to [Google Cloud Console](https://console.cloud.google.com/)
+   - Create a new OAuth 2.0 Client ID or edit existing
+   - Application type: **Web application**
+   - Name: `Active Interview Service - Production`
+   - Authorized redirect URIs:
+     ```
+     https://app.activeinterviewservice.me/accounts/google/login/callback/
+     https://your-railway-domain.up.railway.app/accounts/google/login/callback/
+     ```
+   - Click "Create" and save credentials
+
+2. **Set Environment Variables**
+
+   Add these environment variables to your Railway/production environment:
+   ```bash
+   GOOGLE_OAUTH_CLIENT_ID=<your production client ID>
+   GOOGLE_OAUTH_CLIENT_SECRET=<your production client secret>
+   SITE_DOMAIN=app.activeinterviewservice.me
+   SITE_NAME=Active Interview Service
+   ```
+
+3. **Configure Production Site via Django Shell**
+
+   SSH into your production environment or use Railway's shell:
+   ```bash
+   python manage.py shell
+   ```
+
+   Then run:
+   ```python
+   from django.contrib.sites.models import Site
+   from allauth.socialaccount.models import SocialApp
+
+   # Update Site
+   site = Site.objects.get(id=1)
+   site.domain = 'app.activeinterviewservice.me'
+   site.name = 'Active Interview Service'
+   site.save()
+
+   # Create or update Google OAuth app
+   app, created = SocialApp.objects.get_or_create(
+       provider='google',
+       defaults={'name': 'Google OAuth'}
+   )
+   app.client_id = 'YOUR_PRODUCTION_CLIENT_ID'
+   app.secret = 'YOUR_PRODUCTION_CLIENT_SECRET'
+   app.save()
+
+   # Link app to site
+   if not app.sites.filter(id=1).exists():
+       app.sites.add(site)
+
+   print(f"OAuth configured for {site.domain}")
+   ```
+
+4. **Run Migrations**
+   ```bash
+   python manage.py migrate
+   ```
+
+5. **Test Production OAuth**
+   - Navigate to `https://app.activeinterviewservice.me/login/`
+   - Click "Continue with Google"
+   - Verify successful authentication
+
+**Automated Production Setup (Recommended for CD):**
+
+Create a management command to automate OAuth setup:
+
+```bash
+# In your deployment script or Railway startup
+python manage.py shell << 'EOF'
+import os
+from django.contrib.sites.models import Site
+from allauth.socialaccount.models import SocialApp
+
+# Get from environment variables
+client_id = os.getenv('GOOGLE_OAUTH_CLIENT_ID')
+client_secret = os.getenv('GOOGLE_OAUTH_CLIENT_SECRET')
+site_domain = os.getenv('SITE_DOMAIN', 'app.activeinterviewservice.me')
+site_name = os.getenv('SITE_NAME', 'Active Interview Service')
+
+if client_id and client_secret:
+    # Update site
+    site, _ = Site.objects.update_or_create(
+        id=1,
+        defaults={'domain': site_domain, 'name': site_name}
+    )
+
+    # Update OAuth app
+    app, _ = SocialApp.objects.update_or_create(
+        provider='google',
+        defaults={
+            'name': 'Google OAuth',
+            'client_id': client_id,
+            'secret': client_secret
+        }
+    )
+
+    # Link to site
+    app.sites.add(site)
+    print(f"✓ OAuth configured for {site_domain}")
+else:
+    print("⚠ OAuth credentials not found in environment variables")
+EOF
+```
+
 ---
 
 ## Quick Start
@@ -252,3 +433,162 @@ See full attribution in [AI Use section of README](https://github.com/UCCS-CS430
 ## Acknowledgments
 
 Built with Django, powered by OpenAI, deployed on Railway.
+
+### Environment Variables & Secrets
+
+**For CI Pipeline:**
+- `DJANGO_SECRET_KEY` - Django secret key for testing environment
+- `OPENAI_API_KEY` - OpenAI API key for AI code reviews
+
+**For CD Pipeline:**
+- `RAILWAY_TOKEN` - Railway authentication token
+- `RAILWAY_SERVICE_ID` - Railway service identifier for deployment
+
+**For OAuth (Production):**
+- `GOOGLE_OAUTH_CLIENT_ID` - Google OAuth Client ID for production
+- `GOOGLE_OAUTH_CLIENT_SECRET` - Google OAuth Client Secret for production
+- `SITE_DOMAIN` - Production domain (e.g., `app.activeinterviewservice.me`)
+- `SITE_NAME` - Application name (e.g., `Active Interview Service`)
+
+**Setting Secrets in GitHub:**
+1. Navigate to your repository on GitHub
+2. Go to Settings > Secrets and variables > Actions
+3. Click "New repository secret"
+4. Add each secret with its corresponding value
+
+**Setting Environment Variables in Railway:**
+1. Log into Railway dashboard
+2. Select your project
+3. Navigate to Variables tab
+4. Add each environment variable
+
+---
+
+## Troubleshooting
+
+### OAuth Issues
+
+#### Error: "Redirect URI mismatch"
+**Problem:** Google OAuth redirect URI doesn't match configured URIs.
+
+**Solution:**
+1. Check your Google Cloud Console OAuth credentials
+2. Ensure redirect URIs include:
+   - Local: `http://localhost:8000/accounts/google/login/callback/` and `http://127.0.0.1:8000/accounts/google/login/callback/`
+   - Production: `https://your-domain.com/accounts/google/login/callback/`
+3. Make sure there are no trailing slashes missing or extra
+
+#### Error: "Site matching query does not exist"
+**Problem:** Django Site object not configured correctly.
+
+**Solution:**
+```bash
+python manage.py shell
+>>> from django.contrib.sites.models import Site
+>>> Site.objects.update_or_create(id=1, defaults={'domain': 'localhost:8000', 'name': 'Active Interview Service'})
+```
+
+#### Error: "SocialApp matching query does not exist"
+**Problem:** Google OAuth app not configured in Django admin.
+
+**Solution:**
+1. Go to Django admin: `/admin/`
+2. Navigate to Social applications
+3. Add a new social application with Google provider
+4. Link it to your site
+
+#### OAuth Button Goes to Dead End
+**Problem:** OAuth credentials not set up or Site configuration incorrect.
+
+**Solution:**
+Run the diagnostic script:
+```bash
+cd active_interview_backend
+python manage.py shell < ../temp/fix_oauth_setup.py
+```
+
+This will identify the specific issue and provide fix commands.
+
+#### Users Can't Login After OAuth
+**Problem:** User profile or group permissions not set up.
+
+**Solution:**
+1. Ensure `average_role` group exists (see "Registering Accounts")
+2. Check `active_interview_app/adapters.py` is configured correctly
+3. Verify `SOCIALACCOUNT_ADAPTER` setting points to custom adapter
+
+### Database Issues
+
+#### Migrations Out of Sync
+```bash
+# Reset migrations (WARNING: This deletes data)
+python manage.py migrate --fake-initial
+python manage.py migrate
+```
+
+#### Database Locked (SQLite)
+```bash
+# Stop all Django processes
+pkill -f runserver
+
+# Restart server
+python manage.py runserver
+```
+
+### Static Files Not Loading
+
+```bash
+# Clear and recollect static files
+rm -rf staticfiles/
+python manage.py collectstatic --noinput
+```
+
+### Docker Issues
+
+#### Container Won't Start
+```bash
+# Full cleanup and restart
+docker-compose down --volumes --remove-orphans
+docker system prune -f
+docker-compose up -d --build
+```
+
+#### Can't Connect to Container
+```bash
+# Check container logs
+docker-compose logs web
+
+# Check container status
+docker-compose ps
+```
+
+---
+
+## AI Use
+
+1. The git diff script in CI.yml was iteratively designed with the help of chatgpt.
+2. The check_coverage.sh script was generated by chatgpt, although minor modifications have been made: https://chatgpt.com/share/67cf5f81-5500-8006-894a-7f8403fcc0f
+3. The chatbox image on the homepage was generated by chatgpt.
+4. The E2E authentication script is adapted from a ChatGPT response
+5. The chrome and chromedriver install scripts in CI.yml are adapted from ChatGPT responses
+6. The jQuery/Ajax script in chat-view.html is adapted from a ChatGPT response
+7. ChatGPT was used to rewrite system prompts for greater clarity
+8. The chat creation button hiding script was adapted from a ChatGPT response.
+9. Claude Code was used to consolidate and fix the CI/CD workflow configuration.
+10. Claude Code was used to create OAuth templates, fix authentication navigation, and write comprehensive tests.
+
+---
+
+## Technologies
+
+1. Django
+2. Nginx
+3. Gunicorn
+4. ChatGPT
+5. Bootstrap 5
+6. Docker-Compose
+7. Digital Ocean
+8. Ajax
+9. jQuery
+10. DOMPurify
+11. pymupdf

@@ -202,7 +202,7 @@ class ViewsCriticalPathsTest(TransactionTestCase):
     def test_register_user(self):
         """Test user registration"""
         self.client.logout()
-        response = self.client.post(reverse('register'), {
+        response = self.client.post(reverse('register_page'), {
             'username': 'newuser123',
             'email': 'new@test.com',
             'password1': 'SuperSecure123!',

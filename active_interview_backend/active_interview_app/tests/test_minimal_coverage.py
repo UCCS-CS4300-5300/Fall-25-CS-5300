@@ -186,7 +186,7 @@ class ViewsRegisterTest(TestCase):
         """Test registration creates user and adds to group"""
         client = Client()
 
-        response = client.post(reverse('register'), {
+        response = client.post(reverse('register_page'), {
             'username': 'newuser456',
             'email': 'new@example.com',
             'password1': 'TestPassword123!',
@@ -197,7 +197,7 @@ class ViewsRegisterTest(TestCase):
         user = User.objects.get(username='newuser456')
         self.assertIsNotNone(user)
 
-        # User should be in average_role group (line 856-857 in views.py)
+        # User should be in average_role group (line 839-841 in views.py)
         self.assertTrue(user.groups.filter(name='average_role').exists())
 
 

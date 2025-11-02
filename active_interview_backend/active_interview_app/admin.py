@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Chat, UploadedJobListing, UploadedResume, ExportableReport
+from .models import Chat, UploadedJobListing, UploadedResume, ExportableReport, UserProfile
 from .token_usage_models import TokenUsage
 from .merge_stats_models import MergeTokenStats
 
@@ -8,6 +8,14 @@ admin.site.register(Chat)
 admin.site.register(UploadedJobListing)
 admin.site.register(UploadedResume)
 admin.site.register(ExportableReport)
+
+
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ('user', 'auth_provider', 'created_at', 'updated_at')
+    list_filter = ('auth_provider', 'created_at')
+    search_fields = ('user__username', 'user__email')
+    readonly_fields = ('created_at', 'updated_at')
 
 
 # Token Tracking Admin

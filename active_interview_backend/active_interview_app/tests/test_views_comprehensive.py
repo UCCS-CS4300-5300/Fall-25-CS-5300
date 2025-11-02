@@ -496,6 +496,11 @@ class UploadFileViewComprehensiveTest(TestCase):
 class DocumentListViewTest(TestCase):
     """Test DocumentList view"""
 
+    def setUp(self):
+        """Set up test user"""
+        self.user = User.objects.create_user(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password='testpass123')
+
     def test_document_list_get(self):
         """Test GET request to document list"""
         response = self.client.get(reverse('document-list'))

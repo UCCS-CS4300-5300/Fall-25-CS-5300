@@ -4,6 +4,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 from rest_framework import routers
+from allauth.account import views as allauth_views
 
 from . import views
 
@@ -19,19 +20,14 @@ urlpatterns = [
     path('aboutus/', views.aboutus, name='aboutus'),  # Alias for tests
     path('features/', views.features, name='features'),
 
-    # Auth urls
-    # path('', views.index, name='login'),
-    # path('', views.index, name='login'),
+    # Auth urls - using custom paths that work with allauth
+    path('register/', views.register, name='register_page'),
     path('testlogged/', views.loggedin, name='loggedin'),
-    path('accounts/', include('django.contrib.auth.urls')),
-    path('accounts/register/', views.register, name='register_page'),
-    path('register/', views.register, name='register'),  # Alias for tests
-    path('accounts/logout/',
-         auth_views.LogoutView.as_view(
-             template_name='registration/logged_out.html'),
-         name='logout'),
     path('profile/', views.profile, name='profile'),
     path('results/', views.results, name='results'),
+
+    # Include django.contrib.auth.urls for password reset, etc.
+    path('accounts/', include('django.contrib.auth.urls')),
 
     # Chat url
     path('chat/', views.chat_list, name='chat-list'),

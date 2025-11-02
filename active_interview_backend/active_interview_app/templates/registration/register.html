@@ -11,18 +11,80 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      color: var(--text-primary);
+      min-height: 60vh;
+      padding: 2rem;
     }
+
     .register-page p {
-      font-size: 20px;
+      font-size: 1.1rem;
       color: var(--text-primary);
+      font-weight: 500;
     }
+
     .register-page td {
-      font-size: 20px;
+      font-size: 1rem;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .register-page h2 {
+      color: var(--text-primary);
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+    }
+
+    .register-page h5 {
+      color: var(--text-primary);
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .register-page input[type="text"],
+    .register-page input[type="email"],
+    .register-page input[type="password"] {
+      background-color: var(--surface);
+      color: var(--text-primary);
+      border: 2px solid var(--border);
+      padding: 0.5rem;
+      border-radius: 4px;
+      width: 100%;
+    }
+
+    .register-page input[type="text"]:focus,
+    .register-page input[type="email"]:focus,
+    .register-page input[type="password"]:focus {
+      outline: none;
+      border-color: var(--primary);
+      background-color: var(--surface);
       color: var(--text-primary);
     }
-    .register-page h2, .register-page h5 {
-      color: var(--text-primary);
+
+    .register-page .btn-primary {
+      background-color: var(--primary);
+      border-color: var(--primary);
+      color: var(--text-white);
+      font-weight: 600;
+      padding: 0.5rem 2rem;
+      width: 100%;
+    }
+
+    .register-page .btn-primary:hover {
+      background-color: var(--primary-dark);
+      border-color: var(--primary-dark);
+      color: var(--text-white);
+    }
+
+    .register-page .invalid-feedback {
+      display: block;
+      color: #dc3545;
+      font-weight: 500;
+      margin-top: 0.5rem;
+    }
+
+    .register-page .invalid-feedback p {
+      color: #dc3545;
+      font-size: 0.9rem;
+      margin: 0.25rem 0;
     }
   </style>
 

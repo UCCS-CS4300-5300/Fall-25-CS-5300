@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python manage.py test:*)",
+      "Bash(python manage.py pytest*)",
+      "Bash(python manage.py test --settings=*.local*)",
+      "Bash(python manage.py test --settings=*.dev*)",
+      "Bash(python manage.py makeMigrations*)",
+      "Bash(python manage.py migrate*)",
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

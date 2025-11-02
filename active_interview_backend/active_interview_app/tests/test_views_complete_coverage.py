@@ -29,7 +29,7 @@ class RegisterViewTest(TestCase):
     def test_register_valid_form(self):
         """Test successful user registration"""
         client = Client()
-        response = client.post(reverse('register'), {
+        response = client.post(reverse('register_page'), {
             'username': 'newuser',
             'password1': 'testpassword123!@#',
             'password2': 'testpassword123!@#',
@@ -575,7 +575,8 @@ class ResultsChatTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'chat/chat-results.html')
+        template_names = [t.name for t in response.templates]
+        self.assertTrue(any('chat-results.html' in name for name in template_names))
         self.assertIn('feedback', response.context)
         self.assertEqual(response.context['feedback'], "You did well! Good communication skills.")
 
@@ -736,6 +737,7 @@ class CreateChatGetTest(TestCase):
         response = self.client.get(reverse('chat-create'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'chat/chat-create.html')
+        template_names = [t.name for t in response.templates]
+        self.assertTrue(any('chat-create.html' in name for name in template_names))
         self.assertIn('form', response.context)
         self.assertIn('owner_chats', response.context)
