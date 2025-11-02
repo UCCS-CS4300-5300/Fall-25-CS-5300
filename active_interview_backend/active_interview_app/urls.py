@@ -20,30 +20,14 @@ urlpatterns = [
     path('aboutus/', views.aboutus, name='aboutus'),  # Alias for tests
     path('features/', views.features, name='features'),
 
-    # Auth urls - kebab-case paths for allauth integration
-    # Custom kebab-case aliases that map to allauth views
-    path('login/', allauth_views.LoginView.as_view(), name='login'),
-    path('logout/', allauth_views.LogoutView.as_view(), name='logout'),
-
-    # Auth views - keeping original paths for compatibility
-    # Note: allauth also handles accounts/* URLs in project urls.py (e.g. /accounts/login/)
-    path('testlogged/', views.loggedin, name='loggedin'),  # Post-login landing page
-    path('register/', views.register, name='register_page'),  # User registration
-    path('profile/', views.profile, name='profile'),  # User profile view
-    path('results/', views.results, name='results'),  # User results view
-    # Auth urls
-    # path('', views.index, name='login'),
-    # path('', views.index, name='login'),
+    # Auth urls - using custom paths that work with allauth
+    path('register/', views.register, name='register_page'),
     path('testlogged/', views.loggedin, name='loggedin'),
-    path('accounts/', include('django.contrib.auth.urls')),
-    path('accounts/register/', views.register, name='register_page'),
-    path('register/', views.register, name='register'),  # Alias for tests
-    path('accounts/logout/',
-         auth_views.LogoutView.as_view(
-             template_name='registration/logged_out.html'),
-         name='logout'),
     path('profile/', views.profile, name='profile'),
     path('results/', views.results, name='results'),
+
+    # Include django.contrib.auth.urls for password reset, etc.
+    path('accounts/', include('django.contrib.auth.urls')),
 
     # Chat url
     path('chat/', views.chat_list, name='chat-list'),
