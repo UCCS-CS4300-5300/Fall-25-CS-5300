@@ -672,3 +672,361 @@ a:hover {
     white-space: nowrap !important;
     border: 0 !important;
 }
+
+/* ===================================
+   Authentication Components
+   =================================== */
+
+/* Shared layout for authentication pages (login, register, logout) */
+.auth-page-layout,
+.login-page,
+.register-page,
+.logout-page {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 60vh;
+    padding: 2rem;
+}
+
+.logout-page {
+    padding: 3rem 1rem;
+}
+
+/* Authentication page headings */
+.auth-page-layout h2,
+.login-page h2,
+.register-page h2,
+.logout-page h2 {
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+/* Authentication page paragraphs */
+.auth-page-layout p,
+.login-page p,
+.register-page p,
+.logout-page p {
+    font-size: 1.2rem;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+/* Form field labels in authentication pages */
+.login-field {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.field-label {
+    color: var(--text-primary) !important;
+    font-weight: 600 !important;
+    font-size: 1rem !important;
+    white-space: nowrap;
+}
+
+/* Authentication form inputs */
+.auth-page-layout input[type="text"],
+.auth-page-layout input[type="email"],
+.auth-page-layout input[type="password"],
+.login-page input[type="text"],
+.login-page input[type="email"],
+.login-page input[type="password"],
+.register-page input[type="text"],
+.register-page input[type="email"],
+.register-page input[type="password"] {
+    background-color: var(--surface) !important;
+    color: var(--text-primary) !important;
+    border: 2px solid var(--border);
+    padding: 0.5rem;
+    border-radius: 4px;
+    margin-left: 0.5rem;
+}
+
+.auth-page-layout input[type="text"]:focus,
+.auth-page-layout input[type="email"]:focus,
+.auth-page-layout input[type="password"]:focus,
+.login-page input[type="text"]:focus,
+.login-page input[type="email"]:focus,
+.login-page input[type="password"]:focus,
+.register-page input[type="text"]:focus,
+.register-page input[type="email"]:focus,
+.register-page input[type="password"]:focus {
+    outline: none;
+    border-color: var(--primary);
+    background-color: var(--surface) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Authentication page links */
+.auth-page-layout a,
+.login-page a,
+.register-page a {
+    color: var(--primary);
+    font-weight: 600;
+    text-decoration: underline;
+}
+
+.auth-page-layout a:hover,
+.login-page a:hover,
+.register-page a:hover {
+    color: var(--primary-light);
+    text-decoration: underline;
+}
+
+/* Google OAuth Button */
+.google-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    background-color: var(--surface);
+    color: var(--text-primary);
+    border: 2px solid var(--border);
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 500;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow);
+}
+
+.google-btn:hover {
+    background-color: var(--surface-hover);
+    color: var(--text-primary);
+    text-decoration: none;
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+    border-color: var(--primary);
+}
+
+.google-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.google-btn svg {
+    margin-right: 12px;
+    flex-shrink: 0;
+}
+
+/* OAuth Divider ("OR" separator) */
+.divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 20px 0;
+    color: var(--text-secondary);
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 2px solid var(--border);
+}
+
+.divider::before {
+    margin-right: 10px;
+}
+
+.divider::after {
+    margin-left: 10px;
+}
+
+/* Info/Message Boxes (logout confirmation, OAuth info, etc.) */
+.info-box,
+.logout-message,
+.logout-confirmation {
+    background-color: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    max-width: 500px;
+    text-align: center;
+    box-shadow: var(--shadow);
+}
+
+.info-box p,
+.logout-message p,
+.logout-confirmation p {
+    font-size: 1.1rem;
+    margin: 0;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.info-box p:nth-of-type(2),
+.logout-message p:nth-of-type(2) {
+    margin-top: 1rem;
+    font-size: 1rem;
+    color: var(--text-secondary);
+    font-weight: 400;
+}
+
+/* Action Button Containers */
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 400px;
+    width: 100%;
+}
+
+.action-buttons .btn {
+    width: 100%;
+    padding: 12px 24px;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.action-buttons .btn-primary {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: var(--text-white);
+}
+
+.action-buttons .btn-primary:hover {
+    background-color: var(--primary-dark);
+    border-color: var(--primary-dark);
+    color: var(--text-white);
+}
+
+.action-buttons .btn-secondary {
+    background-color: var(--surface);
+    border: 2px solid var(--border);
+    color: var(--text-primary);
+}
+
+.action-buttons .btn-secondary:hover {
+    background-color: var(--surface-hover);
+    border-color: var(--primary);
+    color: var(--text-primary);
+}
+
+/* Responsive: side by side on larger screens */
+@media (min-width: 576px) {
+    .action-buttons {
+        flex-direction: row;
+    }
+    .action-buttons .btn {
+        flex: 1;
+    }
+
+    .google-btn {
+        padding: 10px 20px;
+        font-size: 15px;
+    }
+}
+
+/* ===================================
+   Profile & User Pages
+   =================================== */
+
+/* Page Header */
+.page-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding: 2rem 1rem;
+}
+
+.page-header h1 {
+    color: var(--primary);
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.page-header .username,
+.page-header p {
+    color: var(--text-secondary);
+    font-size: 1.25rem;
+    font-weight: 500;
+}
+
+/* Profile Section Cards */
+.profile-section {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.profile-section h2 {
+    color: var(--primary);
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.profile-section h2::before {
+    content: "";
+    display: inline-block;
+    width: 4px;
+    height: 1.5rem;
+    background: var(--primary);
+    border-radius: 2px;
+}
+
+/* Profile Info Items */
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-item strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.info-item span {
+    color: var(--text-secondary);
+}
+
+/* Role Badge */
+.role-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.role-badge.candidate {
+    background-color: rgba(52, 152, 219, 0.1);
+    color: var(--info);
+    border: 1px solid var(--info);
+}
+
+.role-badge.interviewer {
+    background-color: rgba(46, 204, 113, 0.1);
+    color: var(--success);
+    border: 1px solid var(--success);
+}
+
+.role-badge.admin {
+    background-color: rgba(231, 76, 60, 0.1);
+    color: var(--error);
+    border: 1px solid var(--error);
+}
