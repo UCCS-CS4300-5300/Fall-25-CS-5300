@@ -5,22 +5,7 @@
 {% endblock title %}
 
 {% block content %}
-<style>
-  /* Chat input styling */
-  .chat-input {
-    background-color: var(--surface) !important;
-    color: var(--text-primary) !important;
-    border: 1px solid var(--border) !important;
-    border-radius: var(--radius);
-    font-size: 1rem;
-    outline: none;
-  }
-
-  .chat-input:focus {
-    border-color: var(--primary) !important;
-    box-shadow: 0 0 0 0.2rem rgba(31, 123, 166, 0.15);
-  }
-</style>
+  <!-- All styles moved to main.css Chat Input Components section -->
   {% load static %}
   <div class="centered-container flex-grow-1 d-flex flex-column">
     <h3 class="whiteTextOverride px-3 pt-3">{{ chat.title }}</h3>
@@ -58,7 +43,7 @@
     <div class="input-card card mb-3 mt-3">
       <div class="card-body">
         <div class="d-flex">
-          <textarea id="user-input" class="chat-input flex-grow-1 border-0 p-2" placeholder="Enter text here..." style="resize: none;"></textarea>
+          <textarea id="user-input" class="chat-input flex-grow-1 border-0 p-2" placeholder="Enter text here..."></textarea>
           <button class="button-chat-send btn btn-primary ms-2" id="speech-text" onclick="speechToText()">Speak</button>
           <button class="button-chat-send btn btn-primary ms-2" type="button" onclick="sendMessage()">Send</button>
         </div>
@@ -193,7 +178,7 @@
           `<div id="loading-bubble" class="col bot-text-container">
             <div class="card bot-text-bubble">
               <div class="card-body">
-                <img src={% static 'images/loading.gif' %} alt="Loading..." style="width: 24px; height: 24px;">
+                <img src={% static 'images/loading.gif' %} alt="Loading..." class="loading-gif">
               </div>
             </div>
           </div>`);

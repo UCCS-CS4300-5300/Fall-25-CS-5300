@@ -190,14 +190,14 @@
 
   <div class="resume-page">
     <div class="page-header">
-      <h1>{{ resume.title }}</h1>
+      <h1>{% if is_owner %}Viewing Your Documents{% else %}Viewing {{ resume.user.username }}'s Documents{% endif %}</h1>
     </div>
 
     <div class="resume-layout">
       <!-- Left Column: Resume Content -->
       <div class="left-column">
         <div class="resume-section">
-          <h2>Resume Content</h2>
+          <h2>{{ resume.title }}</h2>
           <div class="resume-content">{{ resume.content|linebreaksbr }}</div>
         </div>
       </div>
@@ -225,35 +225,39 @@
                   </span>
                   <div class="document-actions">
                     <a href="{% url 'resume_detail' resume_id=document.id %}">View</a>
-                    <a href="{% url 'edit_resume' document.id %}">Edit</a>
-                    <button type="button" class="delete-btn" data-bs-toggle="modal" data-bs-target="#deleteResumeModal{{ document.id }}">Delete</button>
+                    {% if is_owner %}
+                      <a href="{% url 'edit_resume' document.id %}">Edit</a>
+                      <button type="button" class="delete-btn" data-bs-toggle="modal" data-bs-target="#deleteResumeModal{{ document.id }}">Delete</button>
+                    {% endif %}
                   </div>
                 </li>
                 {% endif %}
               {% endfor %}
             </ul>
-            {% for document in resumes %}
-              <div class="modal fade" id="deleteResumeModal{{ document.id }}" tabindex="-1" aria-labelledby="deleteResumeLabel{{ document.id }}" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                  <div class="modal-content">
-                    <div class="modal-header">
-                      <h5 class="modal-title" id="deleteResumeLabel{{ document.id }}">Confirm Delete</h5>
-                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                      Are you sure you want to delete <strong>{{ document.title|default:document.original_filename }}</strong>?
-                    </div>
-                    <div class="modal-footer">
-                      <form method="post" action="{% url 'delete_resume' resume_id=document.id %}">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-danger">Yes, Delete</button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                      </form>
+            {% if is_owner %}
+              {% for document in resumes %}
+                <div class="modal fade" id="deleteResumeModal{{ document.id }}" tabindex="-1" aria-labelledby="deleteResumeLabel{{ document.id }}" aria-hidden="true">
+                  <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="deleteResumeLabel{{ document.id }}">Confirm Delete</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+                      <div class="modal-body">
+                        Are you sure you want to delete <strong>{{ document.title|default:document.original_filename }}</strong>?
+                      </div>
+                      <div class="modal-footer">
+                        <form method="post" action="{% url 'delete_resume' resume_id=document.id %}">
+                          {% csrf_token %}
+                          <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        </form>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            {% endfor %}
+              {% endfor %}
+            {% endif %}
           {% endif %}
         </div>
 
@@ -271,30 +275,34 @@
                   <span class="document-name">{{ job.title }}</span>
                   <div class="document-actions">
                     <a href="{% url 'job_posting_detail' job_id=job.id %}">View</a>
-                    <a href="{% url 'edit_job_posting' job.id %}">Edit</a>
-                    <button type="button" class="delete-btn" data-bs-toggle="modal" data-bs-target="#deleteJobModal{{ job.id }}">Delete</button>
+                    {% if is_owner %}
+                      <a href="{% url 'edit_job_posting' job.id %}">Edit</a>
+                      <button type="button" class="delete-btn" data-bs-toggle="modal" data-bs-target="#deleteJobModal{{ job.id }}">Delete</button>
+                    {% endif %}
                   </div>
                 </li>
-                <div class="modal fade" id="deleteJobModal{{ job.id }}" tabindex="-1" aria-labelledby="deleteJobLabel{{ job.id }}" aria-hidden="true">
-                  <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                      <div class="modal-header">
-                        <h5 class="modal-title" id="deleteJobLabel{{ job.id }}">Confirm Delete</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                      </div>
-                      <div class="modal-body">
-                        Are you sure you want to delete <strong>{{ job.title }}</strong>?
-                      </div>
-                      <div class="modal-footer">
-                        <form method="post" action="{% url 'delete_job' job_id=job.id %}">
-                          {% csrf_token %}
-                          <button type="submit" class="btn btn-danger">Yes, Delete</button>
-                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        </form>
+                {% if is_owner %}
+                  <div class="modal fade" id="deleteJobModal{{ job.id }}" tabindex="-1" aria-labelledby="deleteJobLabel{{ job.id }}" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title" id="deleteJobLabel{{ job.id }}">Confirm Delete</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                          Are you sure you want to delete <strong>{{ job.title }}</strong>?
+                        </div>
+                        <div class="modal-footer">
+                          <form method="post" action="{% url 'delete_job' job_id=job.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                          </form>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                {% endif %}
               {% endfor %}
             </ul>
           {% endif %}
