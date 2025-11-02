@@ -26,6 +26,25 @@
      color: var(--primary);
    }
 
+   /* Form control styling for theme support */
+   input[type="text"],
+   input[type="password"] {
+     background-color: var(--surface) !important;
+     color: var(--text-primary) !important;
+     border: 1px solid var(--border) !important;
+     border-radius: var(--radius);
+     padding: 0.5rem;
+     font-size: 1rem;
+   }
+
+   input[type="text"]:focus,
+   input[type="password"]:focus {
+     background-color: var(--surface) !important;
+     color: var(--text-primary) !important;
+     border-color: var(--primary) !important;
+     outline: none;
+     box-shadow: 0 0 0 0.2rem rgba(31, 123, 166, 0.15);
+   }
   </style>
 
   <div class="container">
