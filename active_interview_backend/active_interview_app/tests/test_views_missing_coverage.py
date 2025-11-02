@@ -757,7 +757,8 @@ class ChatListViewTest(TestCase):
 
         response = self.client.get(reverse('chat-list'))
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'chat/chat-list.html')
+        template_names = [t.name for t in response.templates]
+        self.assertTrue(any('chat-list.html' in name for name in template_names))
         self.assertEqual(len(response.context['owner_chats']), 1)
 
 

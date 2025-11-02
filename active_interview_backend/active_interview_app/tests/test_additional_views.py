@@ -472,6 +472,8 @@ class DocumentListViewTest(TestCase):
 
     def test_document_list_view_get(self):
         """Test GET request to document list view"""
+        # Document list requires login
+        self.client.login(username='testuser', password='testpass123')
         response = self.client.get(reverse('document-list'))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'documents/document-list.html')

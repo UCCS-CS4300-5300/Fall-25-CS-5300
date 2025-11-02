@@ -344,6 +344,9 @@ class GoogleOAuthFlowTestCase(TestCase):
             extra_data=extra_data
         )
 
+        # Refresh from database to ensure data is persisted correctly
+        social_account.refresh_from_db()
+
         # Verify extra data is stored correctly
         self.assertEqual(social_account.extra_data['email'], 'test@example.com')
         self.assertEqual(social_account.extra_data['name'], 'Test User')
@@ -357,10 +360,12 @@ class GoogleOAuthFlowTestCase(TestCase):
 
     def test_social_app_sites_relationship(self):
         """Test that SocialApp can be associated with multiple sites."""
-        # The social app should be associated with the current site
+        # The social app created in setUp should be associated with the current site
         social_apps = SocialApp.objects.filter(sites__id=settings.SITE_ID)
-        # May or may not exist depending on setup, but relationship should work
-        self.assertIsNotNone(social_apps)
+        # Verify that our social app is in the filtered results
+        self.assertIn(self.social_app, social_apps)
+        # Verify the relationship works both ways
+        self.assertIn(self.site, self.social_app.sites.all())
 
 
 class CustomSocialAccountAdapterTestCase(TestCase):

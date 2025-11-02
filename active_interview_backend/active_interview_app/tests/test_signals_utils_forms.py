@@ -387,7 +387,7 @@ class UploadedResumeSerializerTest(TestCase):
         serializer = UploadedResumeSerializer(instance=self.resume)
 
         data = serializer.data
-        self.assertEqual(set(data.keys()), {'id', 'file', 'user', 'uploaded_at'})
+        self.assertEqual(set(data.keys()), {'id', 'file', 'user', 'uploaded_at', 'title'})
 
     def test_serializer_data(self):
         """Test serializer data content"""
@@ -427,7 +427,7 @@ class UploadedJobListingSerializerTest(TestCase):
         data = serializer.data
         self.assertEqual(
             set(data.keys()),
-            {'id', 'user', 'filename', 'content', 'created_at'}
+            {'id', 'user', 'filename', 'content', 'created_at', 'title', 'file'}
         )
 
     def test_serializer_data(self):

@@ -831,18 +831,20 @@ def loggedin(request):
 
 
 def register(request):
-    form = CreateUserForm(request.POST)
-    if form.is_valid():
-        user = form.save()
-        username = form.cleaned_data.get('username')
-        group, created = Group.objects.get_or_create(name='average_role')
-        user.groups.add(group)
-        # user = User.objects.create(user=user)
-        user.save()
-        messages.success(request, 'Account was created for ' + username)
-        return redirect('/accounts/login/?next=/')
-    context = {'form': form}
+    if request.method == 'POST':
+        form = CreateUserForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            username = form.cleaned_data.get('username')
+            group, created = Group.objects.get_or_create(name='average_role')
+            user.groups.add(group)
+            user.save()
+            messages.success(request, 'Account was created for ' + username)
+            return redirect('/accounts/login/?next=/')
+    else:
+        form = CreateUserForm()
 
+    context = {'form': form}
     return render(request, 'registration/register.html', context)
 
 
@@ -1133,7 +1135,7 @@ class JobListingList(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class DocumentList(View):
+class DocumentList(LoginRequiredMixin, View):
     def get(self, request):
         return render(request, 'documents/document-list.html')
 
