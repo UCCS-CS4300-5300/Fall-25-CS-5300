@@ -255,6 +255,7 @@ SOCIALACCOUNT_PROVIDERS = {
         }
     }
 }
+import sys
 # Use regular storage during tests to avoid manifest issues
 if 'test' in sys.argv:
     STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
