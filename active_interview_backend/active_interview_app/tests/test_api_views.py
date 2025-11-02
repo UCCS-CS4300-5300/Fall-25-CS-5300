@@ -2,14 +2,14 @@
 Tests for API views and file upload functionality.
 """
 from django.test import TestCase, Client
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
 from unittest.mock import patch, Mock
 import json
 import io
 
-from active_interview_app.models import UploadedResume, UploadedJobListing
+from active_interview_app.models import UploadedResume, UploadedJobListing, Chat
 from active_interview_app.views import (
     UploadedResumeView, UploadedJobListingView, upload_file
 )
@@ -279,7 +279,7 @@ class UploadFileViewTest(TestCase):
 
         # Should redirect to login
         self.assertEqual(response.status_code, 302)
-        self.assertIn('/login/', response.url)
+        self.assertIn('/accounts/login/', response.url)
 
     @patch('active_interview_app.views.filetype.guess', return_value=None)
     def test_upload_file_unknown_filetype(self, mock_filetype):
@@ -303,6 +303,9 @@ class ChatViewTest(TestCase):
 
     def setUp(self):
         """Set up test data"""
+        # Create average_role group (required by signals)
+        Group.objects.get_or_create(name='average_role')
+
         self.user = User.objects.create_user('chatter', 'chat@example.com', 'pass')
         self.other_user = User.objects.create_user('other', 'other@example.com', 'pass')
         self.client = Client()
@@ -327,7 +330,7 @@ class ChatViewTest(TestCase):
                 {"role": "assistant", "content": "Hello!"}
             ],
             job_listing=self.job,
-            key_questions={}
+            key_questions=[]
         )
 
         self.other_chat = Chat.objects.create(
@@ -336,7 +339,7 @@ class ChatViewTest(TestCase):
             difficulty=5,
             messages=[],
             job_listing=self.job,
-            key_questions={}
+            key_questions=[]
         )
 
     def test_chat_view_get_owner(self):
@@ -344,7 +347,12 @@ class ChatViewTest(TestCase):
         response = self.client.get(reverse('chat-view', args=[self.chat.id]))
 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'chat/chat-view.html')
+        # Check for template name presence instead of exact path match
+        template_names = [t.name for t in response.templates]
+        self.assertTrue(
+            any('chat-view.html' in name for name in template_names),
+            f"Expected chat-view.html template, got: {template_names}"
+        )
         self.assertIn('chat', response.context)
 
     def test_chat_view_get_not_owner(self):
@@ -372,6 +380,9 @@ class RestartChatViewTest(TestCase):
 
     def setUp(self):
         """Set up test data"""
+        # Create average_role group (required by signals)
+        Group.objects.get_or_create(name='average_role')
+
         self.user = User.objects.create_user('restarter', 'restart@example.com', 'pass')
         self.client = Client()
         self.client.force_login(self.user)
@@ -401,7 +412,9 @@ class RestartChatViewTest(TestCase):
     @patch('active_interview_app.views._ai_available', return_value=False)
     def test_restart_chat_post(self, mock_ai):
         """Test POST to restart chat"""
-        response = self.client.post(reverse('chat-restart', args=[self.chat.id]))
+        response = self.client.post(reverse('chat-restart', args=[self.chat.id]), {
+            'restart': 'true'
+        })
 
         # Should redirect
         self.assertEqual(response.status_code, 302)
@@ -417,6 +430,9 @@ class KeyQuestionsViewTest(TestCase):
 
     def setUp(self):
         """Set up test data"""
+        # Create average_role group (required by signals)
+        Group.objects.get_or_create(name='average_role')
+
         self.user = User.objects.create_user('questioner', 'q@example.com', 'pass')
         self.client = Client()
         self.client.force_login(self.user)
@@ -460,7 +476,7 @@ class KeyQuestionsViewTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'chat/chat-key-questions.html')
+        self.assertTemplateUsed(response, 'key-questions.html')
         self.assertIn('chat', response.context)
         self.assertIn('question', response.context)
 

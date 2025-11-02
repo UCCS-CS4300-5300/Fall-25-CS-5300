@@ -224,7 +224,7 @@ SOCIALACCOUNT_EMAIL_VERIFICATION = 'optional'
 SOCIALACCOUNT_ADAPTER = 'active_interview_app.adapters.CustomSocialAccountAdapter'
 
 # Login/Logout redirects
-LOGIN_URL = '/login/'  # Kebab-case login URL
+LOGIN_URL = '/accounts/login/'  # allauth login URL
 LOGIN_REDIRECT_URL = '/testlogged/'  # Where to redirect after successful login
 ACCOUNT_LOGOUT_REDIRECT_URL = '/'  # Where to redirect after logout
 

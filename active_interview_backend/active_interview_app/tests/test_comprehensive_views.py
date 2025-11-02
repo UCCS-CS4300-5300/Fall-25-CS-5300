@@ -28,14 +28,15 @@ class ViewsHelperFunctionsTest(TestCase):
         result = openai_utils._ai_available()
         self.assertFalse(result)
 
-    @patch('active_interview_app.views.settings.OPENAI_API_KEY', 'test-key')
-    @patch('active_interview_app.views.OpenAI')
+    @patch('active_interview_app.openai_utils.settings.OPENAI_API_KEY', 'test-key')
+    @patch('active_interview_app.openai_utils.OpenAI')
     def test_ai_available_with_api_key(self, mock_openai):
         """Test _ai_available returns True with valid API key"""
+        from active_interview_app import openai_utils
         # Reset the global client
-        views._openai_client = None
+        openai_utils._openai_client = None
 
-        result = views._ai_available()
+        result = openai_utils._ai_available()
         self.assertTrue(result)
 
     def test_ai_unavailable_json(self):
@@ -47,14 +48,15 @@ class ViewsHelperFunctionsTest(TestCase):
         self.assertIn('error', data)
         self.assertIn('AI features are disabled', data['error'])
 
-    @patch('active_interview_app.views.settings.OPENAI_API_KEY', 'test-key')
-    @patch('active_interview_app.views.OpenAI')
+    @patch('active_interview_app.openai_utils.settings.OPENAI_API_KEY', 'test-key')
+    @patch('active_interview_app.openai_utils.OpenAI')
     def test_get_openai_client_success(self, mock_openai):
         """Test get_openai_client successful initialization"""
+        from active_interview_app import openai_utils
         # Reset global client
-        views._openai_client = None
+        openai_utils._openai_client = None
 
-        client = views.get_openai_client()
+        client = openai_utils.get_openai_client()
         self.assertIsNotNone(client)
         mock_openai.assert_called_once_with(api_key='test-key')
 
@@ -125,7 +127,7 @@ class AuthenticationViewsTest(TestCase):
 
         # Should redirect to login
         self.assertEqual(response.status_code, 302)
-        self.assertIn('/login/', response.url)
+        self.assertIn('/accounts/login/', response.url)
 
         # User should be created
         user = User.objects.get(username='newuser')
@@ -155,7 +157,7 @@ class AuthenticationViewsTest(TestCase):
         response = self.client.get(reverse('loggedin'))
         # Should redirect to login
         self.assertEqual(response.status_code, 302)
-        self.assertIn('/login/', response.url)
+        self.assertIn('/accounts/login/', response.url)
 
     def test_loggedin_view_authenticated(self):
         """Test loggedin view with authenticated user"""
@@ -217,7 +219,7 @@ class ProfileViewTest(TestCase):
 
         # Should redirect to login
         self.assertEqual(response.status_code, 302)
-        self.assertIn('/login/', response.url)
+        self.assertIn('/accounts/login/', response.url)
 
 
 class ChatListViewTest(TestCase):
@@ -280,7 +282,7 @@ class ChatListViewTest(TestCase):
         response = self.client.get(reverse('chat-list'))
 
         self.assertEqual(response.status_code, 302)
-        self.assertIn('/login/', response.url)
+        self.assertIn('/accounts/login/', response.url)
 
 
 class CreateChatViewTest(TestCase):
@@ -346,7 +348,7 @@ class CreateChatViewTest(TestCase):
         response = self.client.get(reverse('chat-create'))
 
         self.assertEqual(response.status_code, 302)
-        self.assertIn('/login/', response.url)
+        self.assertIn('/accounts/login/', response.url)
 
 
 class EditChatViewTest(TestCase):
@@ -354,6 +356,9 @@ class EditChatViewTest(TestCase):
 
     def setUp(self):
         """Set up test data"""
+        # Create average_role group (required by signals)
+        Group.objects.get_or_create(name='average_role')
+
         self.user = User.objects.create_user('editor', 'edit@example.com', 'pass')
         self.other_user = User.objects.create_user('other', 'other@example.com', 'pass')
         self.client = Client()
@@ -373,7 +378,7 @@ class EditChatViewTest(TestCase):
             owner=self.user,
             title='Original Title',
             difficulty=5,
-            messages=[],
+            messages=[{"role": "system", "content": "System prompt with difficulty <<5>>"}],
             job_listing=self.job
         )
 
@@ -381,7 +386,7 @@ class EditChatViewTest(TestCase):
             owner=self.other_user,
             title='Other Chat',
             difficulty=5,
-            messages=[],
+            messages=[{"role": "system", "content": "System prompt with difficulty <<5>>"}],
             job_listing=self.job
         )
 
@@ -426,6 +431,9 @@ class DeleteChatViewTest(TestCase):
 
     def setUp(self):
         """Set up test data"""
+        # Create average_role group (required by signals)
+        Group.objects.get_or_create(name='average_role')
+
         self.user = User.objects.create_user('deleter', 'delete@example.com', 'pass')
         self.other_user = User.objects.create_user('other', 'other@example.com', 'pass')
         self.client = Client()
@@ -460,7 +468,9 @@ class DeleteChatViewTest(TestCase):
     def test_delete_chat_post_owner(self):
         """Test DeleteChat POST as owner"""
         chat_id = self.chat.id
-        response = self.client.post(reverse('chat-delete', args=[chat_id]))
+        response = self.client.post(reverse('chat-delete', args=[chat_id]), {
+            'delete': 'true'
+        })
 
         # Should redirect to chat list
         self.assertEqual(response.status_code, 302)
@@ -625,4 +635,4 @@ class DocumentListViewTest(TestCase):
         response = self.client.get(reverse('document-list'))
 
         self.assertEqual(response.status_code, 302)
-        self.assertIn('/login/', response.url)
+        self.assertIn('/accounts/login/', response.url)

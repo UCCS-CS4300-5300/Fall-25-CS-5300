@@ -26,24 +26,24 @@ class LoginPageNavigationTests(TestCase):
 
     def test_login_page_loads(self):
         """Test that login page loads successfully."""
-        response = self.client.get('/login/')
+        response = self.client.get('/accounts/login/')
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'AIS - Login')
 
     def test_login_page_has_register_link(self):
         """Test that login page contains a link to register."""
-        response = self.client.get('/login/')
+        response = self.client.get('/accounts/login/')
         self.assertContains(response, reverse('register_page'))
 
     def test_login_page_has_google_oauth_button(self):
         """Test that login page has Google OAuth button."""
-        response = self.client.get('/login/')
+        response = self.client.get('/accounts/login/')
         self.assertContains(response, 'Continue with Google')
         self.assertContains(response, 'accounts/google/login')
 
     def test_successful_login_redirects_to_testlogged(self):
         """Test that successful login redirects to /testlogged/."""
-        response = self.client.post('/login/', {
+        response = self.client.post('/accounts/login/', {
             'login': 'testuser',
             'password': 'testpass123'
         }, follow=True)
@@ -53,7 +53,7 @@ class LoginPageNavigationTests(TestCase):
 
     def test_login_with_next_parameter_redirects(self):
         """Test that login with ?next parameter redirects to that page."""
-        response = self.client.post('/login/?next=/profile/', {
+        response = self.client.post('/accounts/login/?next=/profile/', {
             'login': 'testuser',
             'password': 'testpass123'
         }, follow=True)
@@ -62,7 +62,7 @@ class LoginPageNavigationTests(TestCase):
 
     def test_failed_login_shows_error(self):
         """Test that failed login shows error message."""
-        response = self.client.post('/login/', {
+        response = self.client.post('/accounts/login/', {
             'login': 'testuser',
             'password': 'wrongpassword'
         })
@@ -86,25 +86,25 @@ class LogoutNavigationTests(TestCase):
 
     def test_logout_confirmation_page_loads(self):
         """Test that logout confirmation page loads."""
-        response = self.client.get('/logout/')
+        response = self.client.get('/accounts/logout/')
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Sign Out')
         self.assertContains(response, 'Are you sure')
 
     def test_logout_confirmation_shows_username(self):
         """Test that logout confirmation shows current username."""
-        response = self.client.get('/logout/')
+        response = self.client.get('/accounts/logout/')
         self.assertContains(response, 'testuser')
 
     def test_logout_confirmation_has_cancel_button(self):
         """Test that logout confirmation has cancel button."""
-        response = self.client.get('/logout/')
+        response = self.client.get('/accounts/logout/')
         self.assertContains(response, 'Cancel')
         self.assertContains(response, reverse('index'))
 
     def test_logout_redirects_to_logged_out_page(self):
         """Test that logout redirects to account logout redirect URL."""
-        response = self.client.post('/logout/', follow=True)
+        response = self.client.post('/accounts/logout/', follow=True)
 
         # Should redirect to ACCOUNT_LOGOUT_REDIRECT_URL
         final_url = response.redirect_chain[-1][0]
@@ -113,7 +113,7 @@ class LogoutNavigationTests(TestCase):
     def test_logged_out_page_has_login_link(self):
         """Test that logged out page has link back to login."""
         # First logout
-        self.client.post('/logout/')
+        self.client.post('/accounts/logout/')
 
         # The logout redirect should go to '/' based on settings
         # Check if we can access account/logout page manually
@@ -125,7 +125,7 @@ class LogoutNavigationTests(TestCase):
     def test_logged_out_page_has_home_link(self):
         """Test that logged out page has link to home."""
         # Logout and follow redirects
-        response = self.client.post('/logout/', follow=True)
+        response = self.client.post('/accounts/logout/', follow=True)
 
         # Should be on homepage or have link to it
         self.assertIn(response.status_code, [200, 302])
@@ -173,7 +173,7 @@ class ProtectedPageRedirectTests(TestCase):
 
         # Should redirect to login
         self.assertEqual(response.status_code, 302)
-        self.assertIn('/login/', response.url)
+        self.assertIn('/accounts/login/', response.url)
 
     def test_profile_redirects_to_login_when_not_authenticated(self):
         """Test that /profile/ redirects to login."""
@@ -181,7 +181,7 @@ class ProtectedPageRedirectTests(TestCase):
 
         # Should redirect to login
         self.assertEqual(response.status_code, 302)
-        self.assertIn('/login/', response.url)
+        self.assertIn('/accounts/login/', response.url)
 
     def test_document_list_redirects_to_login(self):
         """Test that /document/ redirects to login."""
@@ -189,7 +189,7 @@ class ProtectedPageRedirectTests(TestCase):
 
         # Should redirect to login
         self.assertEqual(response.status_code, 302)
-        self.assertIn('/login/', response.url)
+        self.assertIn('/accounts/login/', response.url)
 
 
 class NavbarLinkTests(TestCase):
@@ -221,7 +221,7 @@ class NavbarLinkTests(TestCase):
         self.client.login(username='testuser', password='testpass123')
 
         # Access logout URL
-        response = self.client.get('/logout/')
+        response = self.client.get('/accounts/logout/')
 
         # Should show logout confirmation
         self.assertEqual(response.status_code, 200)
@@ -245,7 +245,7 @@ class OAuthNavigationTests(TestCase):
 
     def test_login_page_oauth_button_has_correct_url(self):
         """Test that OAuth button on login page has correct URL."""
-        response = self.client.get('/login/')
+        response = self.client.get('/accounts/login/')
 
         # Should contain the OAuth login URL
         self.assertContains(response, '/accounts/google/login/')
@@ -293,7 +293,7 @@ class SettingsConfigurationTests:
 
     def test_login_url_setting(self):
         """Test that LOGIN_URL is set correctly."""
-        assert settings.LOGIN_URL == '/login/'
+        assert settings.LOGIN_URL == '/accounts/login/'
 
     def test_login_redirect_url_setting(self):
         """Test that LOGIN_REDIRECT_URL is set correctly."""

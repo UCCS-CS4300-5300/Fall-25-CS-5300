@@ -285,7 +285,7 @@ class ResumeDetailViewTests(TestCase):
         response = self.client.get(
             reverse('resume_detail', args=[self.resume.id]))
         self.assertEqual(response.status_code, 302)
-        self.assertIn('/login/', response.url)
+        self.assertIn('/accounts/login/', response.url)
 
     def test_resume_detail_view_nonexistent_resume(self):
         self.client.login(username='testuser', password='password')

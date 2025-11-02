@@ -217,7 +217,7 @@ class GoogleOAuthFlowTestCase(TestCase):
         self.factory = RequestFactory()
 
         # Create average_role group (required by adapter)
-        self.average_role_group = Group.objects.create(name='average_role')
+        self.average_role_group, _ = Group.objects.get_or_create(name='average_role')
 
         # Create a Site object for allauth
         self.site = Site.objects.get_or_create(
@@ -249,6 +249,10 @@ class GoogleOAuthFlowTestCase(TestCase):
 
     def test_user_creation_after_oauth_success(self):
         """Test that a user is created after successful OAuth."""
+        # Create average_role group if not exists (may be needed by signal)
+        from django.contrib.auth.models import Group
+        Group.objects.get_or_create(name='average_role')
+
         # Create a user as would happen after OAuth callback
         user = User.objects.create_user(
             username='googleuser',
@@ -266,6 +270,10 @@ class GoogleOAuthFlowTestCase(TestCase):
         # Verify the social account was created
         self.assertEqual(social_account.provider, 'google')
         self.assertEqual(social_account.user.email, 'googleuser@example.com')
+
+        # Verify UserProfile was created by signal
+        from active_interview_app.models import UserProfile
+        self.assertTrue(UserProfile.objects.filter(user=user).exists())
 
     def test_oauth_callback_requires_valid_state(self):
         """Test that OAuth callback validates state parameter."""
@@ -374,7 +382,7 @@ class CustomSocialAccountAdapterTestCase(TestCase):
     def setUp(self):
         """Set up test data"""
         self.factory = RequestFactory()
-        self.average_role_group = Group.objects.create(name='average_role')
+        self.average_role_group, _ = Group.objects.get_or_create(name='average_role')
 
     def test_new_user_creation_with_google_provider(self):
         """
