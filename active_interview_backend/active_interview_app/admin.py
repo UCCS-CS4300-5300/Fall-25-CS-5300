@@ -1,5 +1,8 @@
 from django.contrib import admin
-from .models import Chat, UploadedJobListing, UploadedResume, ExportableReport
+from .models import (
+    Chat, UploadedJobListing, UploadedResume,
+    ExportableReport, UserProfile, RoleChangeRequest
+)
 from .token_usage_models import TokenUsage
 from .merge_stats_models import MergeTokenStats
 
@@ -8,6 +11,95 @@ admin.site.register(Chat)
 admin.site.register(UploadedJobListing)
 admin.site.register(UploadedResume)
 admin.site.register(ExportableReport)
+
+
+# RBAC Admin - Issue #69
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = (
+        'user',
+        'role',
+        'auth_provider',
+        'created_at',
+        'updated_at'
+    )
+    list_filter = ('role', 'auth_provider', 'created_at')
+    search_fields = (
+        'user__username',
+        'user__email',
+        'user__first_name',
+        'user__last_name'
+    )
+    readonly_fields = ('created_at', 'updated_at')
+
+    fieldsets = (
+        ('User Information', {
+            'fields': ('user',)
+        }),
+        ('Access Control', {
+            'fields': ('role', 'auth_provider'),
+            'description': (
+                'Role determines application-level permissions. '
+                'This is separate from Django admin permissions.'
+            )
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        })
+    )
+
+    # Make role prominently editable
+    list_editable = ('role',)
+
+    def get_queryset(self, request):
+        """Optimize query with select_related"""
+        qs = super().get_queryset(request)
+        return qs.select_related('user')
+
+
+# Role Change Requests Admin - Issue #69
+@admin.register(RoleChangeRequest)
+class RoleChangeRequestAdmin(admin.ModelAdmin):
+    list_display = (
+        'user',
+        'current_role',
+        'requested_role',
+        'status',
+        'created_at',
+        'reviewed_by'
+    )
+    list_filter = ('status', 'requested_role', 'created_at')
+    search_fields = (
+        'user__username',
+        'user__email',
+        'reason',
+        'admin_notes'
+    )
+    readonly_fields = ('created_at', 'updated_at')
+
+    fieldsets = (
+        ('Request Information', {
+            'fields': (
+                'user',
+                'current_role',
+                'requested_role',
+                'reason'
+            )
+        }),
+        ('Review', {
+            'fields': ('status', 'reviewed_by', 'reviewed_at', 'admin_notes')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        })
+    )
+
+    def get_queryset(self, request):
+        """Optimize query with select_related"""
+        qs = super().get_queryset(request)
+        return qs.select_related('user', 'reviewed_by')
 
 
 # Token Tracking Admin
