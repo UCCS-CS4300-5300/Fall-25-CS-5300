@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}
+  AIS - Profile
+{% endblock title %}
+
+{% block content %}
+  <style>
+    .profile-page {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      color: white;
+    }
+
+    p {
+      font-size: 20px;
+      text-align: center;
+    }
+    td {
+      font-size: 20px;
+    }
+    h1{
+      font-size: 40px;
+      text-align: center;
+    }
+    h2{
+      text-align: center;
+    }
+    ul {
+      list-style-position: inside;
+    }
+    .card {
+      background-color: var(--shallows) !important;
+      border-radius: 2rem;
+    }
+    li{
+      font-size: 23px;
+    }
+  </style>
+
+  <div class="centered-container">
+    <div class="card p-3 my-5">
+      <div class="profile-page">
+        <div class="row mb-3">
+          <h1>Profile</h1>
+        </div>
+
+        <!-- User Information -->
+        <div class="row">
+          <h2>{{ profile_user }}</h2>
+        </div>
+
+        <!-- Role Information -->
+        <div class="row mb-3">
+          <div class="text-center">
+            <p class="mb-2">
+              <strong>Role:</strong>
+              <span class="badge bg-{% if profile_user.profile.role == 'admin' %}danger{% elif profile_user.profile.role == 'interviewer' %}primary{% else %}secondary{% endif %}" style="font-size: 18px;">
+                {{ profile_user.profile.role|title }}
+              </span>
+            </p>
+
+            {% if is_own_profile %}
+              <a href="{% url 'profile' %}" class="btn btn-outline-light btn-lg mt-2">
+                Go to My Profile
+              </a>
+              <p class="text-muted mt-2" style="font-size: 16px;">
+                To edit your profile, manage resumes, or request role changes.
+              </p>
+            {% endif %}
+          </div>
+        </div>
+
+        <hr class="white-break">
+
+        <div class="row mb-3">
+          <h3>Uploaded Resumes</h3>
+          {% if resumes|length == 0 %}
+            <center><h5>No Resumes Uploaded</h5></center>
+          {% else %}
+            <ul>
+              {% for document in resumes %}
+                {% if document.title and document.title != "1" %}
+                <li>
+                  {% if document.title and document.title != "1" %}
+                    {{ document.title }} -
+                    <a class="link-light" href="{% url 'resume_detail' resume_id=document.id %}">View</a>
+                  {% elif document.file %}
+                    {{ document.original_filename }} -
+                    <a class="link-light" href="{% url 'resume_detail' resume_id=document.id %}">View</a>
+                  {% endif %}
+                </li>
+                {% endif %}
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        <hr class="white-break">
+
+        <div class="row mb-3">
+          <h3>Uploaded Job Listings</h3>
+          {% if job_listings|length == 0 %}
+            <center><h5>No Job Listings Uploaded</h5></center>
+          {% else %}
+            <ul>
+              {% for job in job_listings %}
+                <li>
+                  {% if job.title %}
+                    {{ job.title }} -
+                    <a class="link-light" href="{% url 'job_posting_detail' job_id=job.id %}">View</a>
+                  {% endif %}
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %}

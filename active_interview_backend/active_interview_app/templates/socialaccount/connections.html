@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% load socialaccount %}
+
+{% block title %}
+  AIS - Connected Accounts
+{% endblock title %}
+
+{% block content %}
+<body>
+  <style>
+   .connections-page {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      padding: 2rem 0;
+   }
+   h2 {
+     color: white;
+     margin-bottom: 1.5rem;
+   }
+   p {
+     font-size: 18px;
+     margin-bottom: 1rem;
+   }
+   .connections-container {
+     max-width: 600px;
+     width: 100%;
+   }
+   .account-card {
+     background-color: rgba(4, 37, 24, 0.6);
+     border: 1px solid var(--alga);
+     border-radius: 8px;
+     padding: 1.5rem;
+     margin-bottom: 1rem;
+     display: flex;
+     align-items: center;
+     justify-content: space-between;
+   }
+   .account-info {
+     display: flex;
+     align-items: center;
+     gap: 1rem;
+   }
+   .provider-icon {
+     flex-shrink: 0;
+   }
+   .account-details h5 {
+     margin: 0 0 0.25rem 0;
+     color: white;
+   }
+   .account-details p {
+     margin: 0;
+     font-size: 14px;
+     color: rgba(255, 255, 255, 0.7);
+   }
+   .btn-danger {
+     background-color: #dc3545 !important;
+     border: none !important;
+   }
+   .btn-danger:hover {
+     background-color: #c82333 !important;
+   }
+   .no-accounts {
+     text-align: center;
+     padding: 2rem;
+     background-color: rgba(68, 130, 166, 0.1);
+     border: 1px dashed var(--shallows);
+     border-radius: 8px;
+     margin-bottom: 1.5rem;
+   }
+   .add-account-section {
+     margin-top: 2rem;
+     padding-top: 2rem;
+     border-top: 1px solid rgba(255, 255, 255, 0.2);
+   }
+   .google-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      background-color: white;
+      color: #3c4043;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: 500;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
+   }
+   .google-btn:hover {
+      background-color: #f8f9fa;
+      color: #3c4043;
+      text-decoration: none;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1);
+      transform: translateY(-1px);
+   }
+   .google-btn svg {
+      margin-right: 12px;
+      flex-shrink: 0;
+   }
+  </style>
+
+  <div class="container">
+    <div class="connections-page">
+      <h2>Connected Accounts</h2>
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="row mb-3">
+            <div class="alert alert-{{ message.tags }}">
+              {{ message }}
+            </div>
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <div class="connections-container">
+        {% if form.accounts %}
+          <p>You can manage your connected social accounts below:</p>
+
+          <form method="post">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+              <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+              </div>
+            {% endif %}
+
+            {% for base_account in form.accounts %}
+              <div class="account-card">
+                <div class="account-info">
+                  <div class="provider-icon">
+                    <svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+                      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                      <path fill="none" d="M0 0h48v48H0z"/>
+                    </svg>
+                  </div>
+                  <div class="account-details">
+                    <h5>{{ base_account.get_provider.name }}</h5>
+                    <p>{{ base_account.get_brand.name }}</p>
+                  </div>
+                </div>
+                <div>
+                  {% if base_account.account.can_disconnect %}
+                    <button type="submit" name="account" value="{{ base_account.id }}" class="btn btn-danger btn-sm">Remove</button>
+                  {% else %}
+                    <button type="button" class="btn btn-secondary btn-sm" disabled>Required</button>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </form>
+
+        {% else %}
+          <div class="no-accounts">
+            <p>You haven't connected any social accounts yet.</p>
+          </div>
+        {% endif %}
+
+        <div class="add-account-section">
+          <h4 class="mb-3">Add a New Account</h4>
+          <a href="{% provider_login_url 'google' process='connect' %}" class="google-btn">
+            <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+              <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+              <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+              <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+              <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+              <path fill="none" d="M0 0h48v48H0z"/>
+            </svg>
+            Connect Google Account
+          </a>
+        </div>
+
+        <div class="row mb-3 mt-4 text-center">
+          <p><a href="{% url 'profile' %}" style="color: var(--shallows);">Back to Profile</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+{% endblock content %}

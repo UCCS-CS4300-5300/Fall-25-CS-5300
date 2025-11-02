@@ -1,7 +1,6 @@
 import os
 import filetype
 import json
-from openai import OpenAI
 import pymupdf4llm
 import tempfile
 import textwrap
@@ -9,7 +8,10 @@ import re
 from markdownify import markdownify as md
 from docx import Document
 
-from .models import UploadedResume, UploadedJobListing, Chat, ExportableReport
+from .models import (
+    UploadedResume, UploadedJobListing, Chat,
+    ExportableReport, UserProfile, RoleChangeRequest
+)
 from .forms import (
     CreateUserForm,
     CreateChatForm,
@@ -24,6 +26,7 @@ from .serializers import (
     ExportableReportSerializer
 )
 from .pdf_export import generate_pdf_report
+from .resume_parser import parse_resume_with_ai
 
 
 from django.conf import settings
@@ -31,12 +34,13 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.mixins import UserPassesTestMixin
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, User
 from django.forms.models import model_to_dict
 from django.http import JsonResponse, HttpResponse, FileResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.text import slugify
 from django.utils.timezone import now
+from django.utils import timezone
 from django.views import View
 
 
@@ -46,40 +50,15 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 
-# OpenAI client configuration with lazy loading and graceful degradation
-MAX_TOKENS = 15000
-_openai_client = None
+# Import OpenAI utilities (moved to separate module to prevent circular imports)
+from .openai_utils import get_openai_client, _ai_available, MAX_TOKENS
 
-
-def get_openai_client():
-    """
-    Lazy initialization of OpenAI client.
-    This prevents import-time errors when API key is not set.
-    """
-    global _openai_client
-    if _openai_client is None:
-        if not settings.OPENAI_API_KEY:
-            raise ValueError(
-                "OPENAI_API_KEY is not set. Please configure it in your "
-                ".env file or environment variables."
-            )
-        try:
-            _openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
-        except Exception as e:
-            raise ValueError(f"Failed to initialize OpenAI client: {e}")
-    return _openai_client
-
-
-def _ai_available():
-    """
-    Return True if the OpenAI client can be initialized and is usable.
-    This checks without raising exceptions.
-    """
-    try:
-        get_openai_client()
-        return True
-    except (ValueError, Exception):
-        return False
+# Import RBAC decorators (Issue #69)
+from .decorators import (
+    admin_required,
+    admin_or_interviewer_required,
+    check_user_permission
+)
 
 
 def _ai_unavailable_json():
@@ -863,18 +842,20 @@ def loggedin(request):
 
 
 def register(request):
-    form = CreateUserForm(request.POST)
-    if form.is_valid():
-        user = form.save()
-        username = form.cleaned_data.get('username')
-        group, created = Group.objects.get_or_create(name='average_role')
-        user.groups.add(group)
-        # user = User.objects.create(user=user)
-        user.save()
-        messages.success(request, 'Account was created for ' + username)
-        return redirect('/accounts/login/?next=/')
-    context = {'form': form}
+    if request.method == 'POST':
+        form = CreateUserForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            username = form.cleaned_data.get('username')
+            group, created = Group.objects.get_or_create(name='average_role')
+            user.groups.add(group)
+            user.save()
+            messages.success(request, 'Account was created for ' + username)
+            return redirect('/accounts/login/?next=/')
+    else:
+        form = CreateUserForm()
 
+    context = {'form': form}
     return render(request, 'registration/register.html', context)
 
 
@@ -883,8 +864,58 @@ def profile(request):
     resumes = UploadedResume.objects.filter(user=request.user)
     job_listings = UploadedJobListing.objects.filter(user=request.user)
 
-    return render(request, 'profile.html', {'resumes': resumes,
-                                            'job_listings': job_listings})
+    # Check for pending role change requests
+    has_pending_request = RoleChangeRequest.objects.filter(
+        user=request.user,
+        status=RoleChangeRequest.PENDING
+    ).exists()
+
+    return render(request, 'profile.html', {
+        'resumes': resumes,
+        'job_listings': job_listings,
+        'has_pending_request': has_pending_request
+    })
+
+
+@login_required
+def view_user_profile(request, user_id):
+    """
+    View another user's profile (read-only).
+    Accessible by admins and interviewers.
+    """
+    # Check permissions
+    from .decorators import check_user_permission
+    from django.http import HttpResponseForbidden, Http404
+
+    has_permission = check_user_permission(
+        request, user_id,
+        allow_self=True,
+        allow_admin=True,
+        allow_interviewer=True
+    )
+
+    if not has_permission:
+        return HttpResponseForbidden("You don't have permission to view this profile.")
+
+    # Get user
+    try:
+        profile_user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        raise Http404("User not found")
+
+    # Get user's resumes and job listings
+    resumes = UploadedResume.objects.filter(user=profile_user)
+    job_listings = UploadedJobListing.objects.filter(user=profile_user)
+
+    # Check if viewing own profile
+    is_own_profile = request.user.id == user_id
+
+    return render(request, 'user_profile.html', {
+        'profile_user': profile_user,
+        'resumes': resumes,
+        'job_listings': job_listings,
+        'is_own_profile': is_own_profile
+    })
 
 
 # === Joel's file upload views ===
@@ -960,7 +991,47 @@ def upload_file(request):
                         instance.content = md(full_text)  # Convert to markdown
 
                     instance.save()
-                    messages.success(request, "File uploaded successfully!")
+
+                    # Trigger AI parsing for resumes (Issue #48: "upload triggers parsing")
+                    if instance.__class__.__name__ == 'UploadedResume':
+                        if _ai_available():
+                            try:
+                                # Set status to in_progress
+                                instance.parsing_status = 'in_progress'
+                                instance.save()
+
+                                # Parse the resume
+                                parsed_data = parse_resume_with_ai(instance.content)
+
+                                # Save parsed data
+                                instance.skills = parsed_data.get('skills', [])
+                                instance.experience = parsed_data.get('experience', [])
+                                instance.education = parsed_data.get('education', [])
+                                instance.parsing_status = 'success'
+                                instance.parsed_at = now()
+                                instance.save()
+
+                                messages.success(request, "Resume uploaded and parsed successfully!")
+                            except Exception as e:
+                                # Save error (sanitize to prevent API key exposure)
+                                error_msg = str(e)
+                                # Sanitize any potential API key references
+                                if "api" in error_msg.lower() and "key" in error_msg.lower():
+                                    error_msg = "OpenAI authentication error"
+                                instance.parsing_status = 'error'
+                                instance.parsing_error = error_msg
+                                instance.save()
+                                messages.warning(request, f"Resume uploaded but parsing failed: {error_msg}")
+                        else:
+                            # AI unavailable
+                            instance.parsing_status = 'error'
+                            instance.parsing_error = "AI service unavailable"
+                            instance.save()
+                            messages.warning(request, "Resume uploaded but AI parsing is currently unavailable.")
+                    else:
+                        # Not a resume (job listing), just show success
+                        messages.success(request, "File uploaded successfully!")
+
                     return redirect('document-list')
 
                 except Exception as e:
@@ -1125,7 +1196,7 @@ class JobListingList(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class DocumentList(View):
+class DocumentList(LoginRequiredMixin, View):
     def get(self, request):
         return render(request, 'documents/document-list.html')
 
@@ -1333,3 +1404,145 @@ class DownloadPDFReportView(LoginRequiredMixin, UserPassesTestMixin, View):
         report.save()
 
         return response
+
+
+
+
+# =============================================================================
+# Role Change Request Views - Issue #69
+# =============================================================================
+
+@login_required
+def request_role_change(request):
+    """
+    Allow users to request a role change.
+    POST /profile/request-role-change/
+    """
+    if request.method == 'POST':
+        requested_role = request.POST.get('requested_role')
+        reason = request.POST.get('reason', '')
+
+        # Validate
+        if requested_role not in ['interviewer', 'admin']:
+            messages.error(request, 'Invalid role requested')
+            return redirect('profile')
+
+        # Check for existing pending request
+        existing = RoleChangeRequest.objects.filter(
+            user=request.user,
+            status=RoleChangeRequest.PENDING
+        ).exists()
+
+        if existing:
+            messages.warning(request, 'You already have a pending request')
+            return redirect('profile')
+
+        # Create request
+        RoleChangeRequest.objects.create(
+            user=request.user,
+            requested_role=requested_role,
+            current_role=request.user.profile.role,
+            reason=reason
+        )
+
+        messages.success(
+            request,
+            'Role request submitted for admin review'
+        )
+        return redirect('profile')
+
+    return render(request, 'role_request_form.html')
+
+
+@admin_required
+def role_requests_list(request):
+    """
+    Show all role requests to admins.
+    GET /admin/role-requests/
+    """
+    pending = RoleChangeRequest.objects.filter(
+        status=RoleChangeRequest.PENDING
+    ).select_related('user', 'user__profile')
+
+    reviewed = RoleChangeRequest.objects.exclude(
+        status=RoleChangeRequest.PENDING
+    ).select_related('user', 'user__profile', 'reviewed_by')[:20]
+
+    context = {
+        'pending_requests': pending,
+        'reviewed_requests': reviewed,
+    }
+    return render(request, 'admin/role_requests.html', context)
+
+
+@admin_required
+def review_role_request(request, request_id):
+    """
+    Approve or reject a role change request.
+    POST /admin/role-requests/<id>/review/
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    role_request = get_object_or_404(RoleChangeRequest, id=request_id)
+
+    action = request.POST.get('action')  # 'approve' or 'reject'
+    admin_notes = request.POST.get('admin_notes', '')
+
+    if action == 'approve':
+        # Update user's role
+        role_request.user.profile.role = role_request.requested_role
+        role_request.user.profile.save()
+
+        role_request.status = RoleChangeRequest.APPROVED
+        messages.success(
+            request,
+            f'Approved: {role_request.user.username} is now '
+            f'{role_request.requested_role}'
+        )
+
+    elif action == 'reject':
+        role_request.status = RoleChangeRequest.REJECTED
+        messages.info(
+            request,
+            f'Rejected role request from {role_request.user.username}'
+        )
+
+    else:
+        return JsonResponse({'error': 'Invalid action'}, status=400)
+
+    role_request.reviewed_by = request.user
+    role_request.reviewed_at = timezone.now()
+    role_request.admin_notes = admin_notes
+    role_request.save()
+
+    return redirect('role_requests_list')
+
+
+# =============================================================================
+# Candidate Search Views - Issue #69
+# =============================================================================
+
+@admin_or_interviewer_required
+def candidate_search(request):
+    """
+    Simple username search for candidates.
+    GET /candidates/search/
+    """
+    query = request.GET.get('q', '').strip()
+    candidates = []
+
+    if query:
+        # Search by username (case-insensitive)
+        users = User.objects.filter(
+            username__icontains=query,
+            profile__role=UserProfile.CANDIDATE
+        ).select_related('profile')[:20]  # Limit to 20 results
+
+        candidates = users
+
+    context = {
+        'query': query,
+        'candidates': candidates,
+    }
+    return render(request, 'candidates/search.html', context)

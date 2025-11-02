@@ -388,6 +388,22 @@ These endpoints use traditional Django views (HTML responses).
 
 ---
 
+### RBAC Endpoints
+
+**Issue**: [#69](https://github.com/UCCS-CS4300-5300/Fall-25-CS-5300/issues/69)
+
+**For complete RBAC documentation**: [RBAC Feature Guide](../features/rbac.md)
+
+| Method | Endpoint | Description | Access |
+|--------|----------|-------------|--------|
+| GET | `/user/<user_id>/profile/` | View user profile | Self, Admin, Interviewer |
+| GET/POST | `/profile/request-role-change/` | Request role change | Authenticated users |
+| GET | `/role-requests/` | List role change requests | Admin only |
+| POST | `/role-requests/<id>/review/` | Approve/reject role request | Admin only |
+| GET | `/candidates/search/` | Search for candidates | Admin, Interviewer |
+
+---
+
 ### Other Endpoints
 
 | Method | Endpoint | Description |

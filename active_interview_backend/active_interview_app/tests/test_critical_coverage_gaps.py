@@ -422,6 +422,9 @@ class ChatListOrderingTest(TestCase):
             messages=[{"role": "system", "content": "test"}]
         )
 
+        # Import at the top of the function to avoid issues
+        from django.utils.timezone import now, timedelta
+
         chat2 = Chat.objects.create(
             owner=self.user,
             title='Second Chat',
@@ -430,6 +433,13 @@ class ChatListOrderingTest(TestCase):
             type='GEN',
             messages=[{"role": "system", "content": "test"}]
         )
+
+        # Update chat2's modified_date using update() to bypass auto_now
+        Chat.objects.filter(id=chat2.id).update(
+            modified_date=now() + timedelta(seconds=5)
+        )
+        # Refresh chat2 from database
+        chat2.refresh_from_db()
 
         response = self.client.get(reverse('chat-list'))
 

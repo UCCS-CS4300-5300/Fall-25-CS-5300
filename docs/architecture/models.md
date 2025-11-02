@@ -22,9 +22,57 @@ Extended with group-based permissions.
 - `average_role` - Standard user permissions (created manually)
 
 **Related models:**
+- `UserProfile` (one-to-one) - **NEW: Issue #69**
 - `UploadedResume` (one-to-many)
 - `UploadedJobListing` (one-to-many)
 - `Chat` (one-to-many)
+
+---
+
+### UserProfile
+
+**Location:** `active_interview_app/models.py:11-66`
+
+**Issue**: [#69](https://github.com/UCCS-CS4300-5300/Fall-25-CS-5300/issues/69)
+
+Extended user profile for role-based access control and OAuth support.
+
+**Fields:**
+
+| Field | Type | Description | Constraints |
+|-------|------|-------------|-------------|
+| `user` | OneToOneField(User) | Associated user | CASCADE, related_name='profile' |
+| `role` | CharField(20) | User role | Choices: admin/interviewer/candidate, default='candidate' |
+| `auth_provider` | CharField(50) | Auth method | default='local' |
+| `created_at` | DateTimeField | Profile creation | auto_now_add=True |
+| `updated_at` | DateTimeField | Last update | auto_now=True |
+
+**Role Choices:**
+- `ADMIN` (`'admin'`) - Full system access, can manage roles
+- `INTERVIEWER` (`'interviewer'`) - Can view all candidate profiles
+- `CANDIDATE` (`'candidate'`) - Default role, own data only
+
+**Methods:**
+- `__str__()` - Returns formatted string with username, role, and auth provider
+
+**Signals:**
+- `create_user_profile` - Auto-creates profile when User is created
+- `save_user_profile` - Auto-saves profile when User is saved
+
+**Usage:**
+```python
+# Access user's role
+role = request.user.profile.role
+
+# Check if admin
+if request.user.profile.role == 'admin':
+    # Admin logic
+    pass
+```
+
+**Related Documentation:**
+- [RBAC Feature Guide](../features/rbac.md)
+- [API Reference - RBAC Endpoints](api.md#rbac-endpoints)
 
 ---
 
