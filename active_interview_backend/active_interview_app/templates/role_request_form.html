@@ -1,6 +1,40 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<style>
+    /* Override Bootstrap classes for theme support */
+    h2 {
+        color: var(--text-primary) !important;
+    }
+    .text-muted {
+        color: var(--text-secondary) !important;
+    }
+    .alert-info {
+        background-color: var(--info) !important;
+        color: var(--text-white) !important;
+        border-color: var(--info) !important;
+    }
+    .form-label {
+        color: var(--text-primary) !important;
+    }
+    .form-control, .form-select {
+        background-color: var(--surface) !important;
+        border-color: var(--border) !important;
+        color: var(--text-primary) !important;
+    }
+    .form-control:focus, .form-select:focus {
+        background-color: var(--surface) !important;
+        border-color: var(--primary) !important;
+        color: var(--text-primary) !important;
+        box-shadow: 0 0 0 0.2rem rgba(31, 123, 166, 0.25) !important;
+    }
+    .form-control::placeholder,
+    .form-select::placeholder,
+    textarea::placeholder {
+        color: var(--text-light) !important;
+        opacity: 1 !important;
+    }
+</style>
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-8">

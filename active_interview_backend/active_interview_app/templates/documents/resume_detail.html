@@ -6,61 +6,112 @@
 
 {% block content %}
   <style>
-    .resume-detail-wrapper {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 80vh;
-      color: white;
-      padding: 2rem;
+    .resume-page {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+    }
+
+    .page-header {
       text-align: center;
+      margin-bottom: 2rem;
     }
 
-    .resume-detail {
-      max-width: 900px;
-      width: 100%;
-      margin-bottom: 3rem;
+    .page-header h1 {
+      color: var(--primary);
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
     }
 
-    .resume-title {
-      background-color: rgba(255, 255, 255, 0.2);
-      padding: 0.5rem 1.5rem;
-      border: 2px solid white;
-      border-radius: 10px;
+    .resume-layout {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    .resume-section {
+      background: var(--surface);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 2rem;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 1.5rem;
+    }
+
+    .resume-section h2 {
+      color: var(--text-primary);
       font-size: 1.5rem;
-      font-weight: bold;
-      margin-top: 20px;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
 
-    .parsing-status-box {
-      background-color: rgba(255, 255, 255, 0.1);
-      padding: 1rem 1.5rem;
-      border: 2px solid white;
-      border-radius: 10px;
-      margin-top: 1.5rem;
-      text-align: left;
+    .resume-section h2::before {
+      content: "";
+      display: inline-block;
+      width: 4px;
+      height: 1.5rem;
+      background: var(--primary);
+      border-radius: 2px;
     }
 
-    .parsed-data-section {
-      background-color: rgba(255, 255, 255, 0.1);
-      padding: 1.5rem;
-      border: 2px solid white;
-      border-radius: 10px;
-      margin-top: 1.5rem;
-      text-align: left;
-    }
-
-    .parsed-data-section h3 {
-      color: white;
-      border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+    .resume-section h3 {
+      color: var(--text-primary);
+      border-bottom: 2px solid var(--border);
       padding-bottom: 0.5rem;
       margin-bottom: 1rem;
       font-size: 1.4rem;
     }
 
+    .resume-content {
+      color: var(--text-primary);
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    .left-column {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .right-column {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Parsing Status Styling */
+    .parsing-status-box {
+      background: var(--surface-hover);
+      padding: 1rem 1.5rem;
+      border: 2px solid var(--border);
+      border-radius: var(--radius-md);
+      margin-bottom: 1.5rem;
+    }
+
+    .parsing-status-box .badge {
+      font-size: 0.9rem;
+    }
+
+    .parsing-status-box .text-muted {
+      color: var(--text-secondary) !important;
+    }
+
+    /* Parsed Data Sections */
+    .parsed-data-section {
+      background: var(--surface-hover);
+      padding: 1.5rem;
+      border: 2px solid var(--border);
+      border-radius: var(--radius-md);
+      margin-bottom: 1.5rem;
+    }
+
     .skill-badge {
-      background-color: rgba(26, 115, 232, 0.8);
-      color: white;
+      background-color: var(--primary);
+      color: var(--text-white);
       padding: 0.4rem 0.8rem;
       border-radius: 20px;
       font-size: 0.9rem;
@@ -69,15 +120,15 @@
     }
 
     .experience-card, .education-card {
-      background-color: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
       padding: 1rem;
       margin-bottom: 1rem;
     }
 
     .experience-card h4, .education-card h4 {
-      color: #1a73e8;
+      color: var(--primary);
       margin-bottom: 0.5rem;
       font-size: 1.2rem;
     }
@@ -85,183 +136,354 @@
     .experience-card .company, .education-card .institution {
       font-weight: bold;
       font-size: 1.1rem;
-      color: white;
+      color: var(--text-primary);
     }
 
     .experience-card .duration, .education-card .degree-info {
-      color: rgba(255, 255, 255, 0.7);
+      color: var(--text-secondary);
       font-size: 0.95rem;
       margin-bottom: 0.5rem;
     }
 
     .experience-card .description {
-      color: rgba(255, 255, 255, 0.9);
+      color: var(--text-primary);
       margin-top: 0.5rem;
       line-height: 1.5;
     }
 
-    .resume-content-box {
-      background-color: rgba(255, 255, 255, 0.1);
-      padding: 2rem 1.5rem;
-      border: 2px solid white;
-      border-radius: 10px;
-      font-size: 1.2rem;
-      margin-top: 2rem;
-      margin-bottom: 2rem;
-      text-align: left;
-      width: 100%;
-      min-height: 300px;
-    }
-
-    .document-list-box {
-      background-color: rgba(255, 255, 255, 0.1);
-      padding: 1rem 1.5rem;
-      border: 2px solid white;
-      border-radius: 10px;
-      font-size: 1.2rem;
-      margin-top: 2rem;
-      text-align: left;
-      width: 100%;
-    }
-
-    .document-list {
-      margin-top: 0;
-    }
-
     .no-data-message {
-      color: rgba(255, 255, 255, 0.6);
+      color: var(--text-secondary);
       font-style: italic;
       padding: 1rem;
       text-align: center;
     }
 
-    .section-collapsed {
+    /* Form control styling for theme support */
+    .form-group label {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .form-control {
+      background-color: var(--surface) !important;
+      color: var(--text-primary) !important;
+      border-color: var(--border) !important;
+    }
+
+    .form-control:focus {
+      background-color: var(--surface) !important;
+      color: var(--text-primary) !important;
+      border-color: var(--primary) !important;
+    }
+
+    /* Document list styling (matching profile) */
+    .document-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .document-item {
+      padding: 1rem;
+      background: var(--surface-hover);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      margin-bottom: 0.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s ease;
+    }
+
+    .document-item:hover {
+      box-shadow: var(--shadow-sm);
+      border-color: var(--primary);
+    }
+
+    .document-name {
+      color: var(--text-primary);
+      font-weight: 500;
+      font-size: 1rem;
+    }
+
+    .document-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .document-actions a,
+    .document-actions button {
+      color: var(--primary);
+      text-decoration: none;
+      font-size: 0.9rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: var(--radius-sm);
+      transition: all 0.2s ease;
+      background: transparent;
+      border: none;
       cursor: pointer;
     }
 
-    .section-collapsed:hover {
-      background-color: rgba(255, 255, 255, 0.15);
+    .document-actions a:hover,
+    .document-actions button:hover {
+      background: var(--primary);
+      color: var(--text-white);
+    }
+
+    .document-actions .delete-btn {
+      color: var(--error);
+    }
+
+    .document-actions .delete-btn:hover {
+      background: var(--error);
+      color: var(--text-white);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-secondary);
+    }
+
+    /* Modal fixes */
+    .modal-content {
+      background-color: var(--surface) !important;
+      color: var(--text-primary) !important;
+      border: 1px solid var(--border);
+    }
+
+    .modal-header {
+      border-color: var(--border);
+    }
+
+    .modal-footer {
+      border-color: var(--border);
+    }
+
+    .modal-body {
+      color: var(--text-primary);
+    }
+
+    /* Responsive: Stack on mobile */
+    @media (max-width: 992px) {
+      .resume-layout {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 
-  <div class="resume-detail-wrapper">
-    <div class="resume-detail">
-      <div class="resume-title">
-        <h1>{{ resume.title }}</h1>
-      </div>
+  <div class="resume-page">
+    <div class="page-header">
+      <h1>{{ resume.title }}</h1>
+    </div>
 
-      <!-- Parsing Status Section -->
-      <div class="parsing-status-box">
-        <div class="d-flex align-items-center justify-content-between flex-wrap">
-          <div>
-            <strong>Parsing Status:</strong>
-            {% if resume.parsing_status == 'success' %}
-              <span class="badge bg-success ms-2">Success</span>
-            {% elif resume.parsing_status == 'error' %}
-              <span class="badge bg-danger ms-2">Error</span>
-            {% elif resume.parsing_status == 'in_progress' %}
-              <span class="badge bg-warning text-dark ms-2">In Progress</span>
-            {% elif resume.parsing_status == 'pending' %}
-              <span class="badge bg-secondary ms-2">Pending</span>
-            {% else %}
-              <span class="badge bg-secondary ms-2">Unknown</span>
+    <div class="resume-layout">
+      <!-- Left Column: Resume Content & Parsed Data -->
+      <div class="left-column">
+        <!-- Parsing Status Section -->
+        <div class="parsing-status-box">
+          <div class="d-flex align-items-center justify-content-between flex-wrap">
+            <div>
+              <strong>Parsing Status:</strong>
+              {% if resume.parsing_status == 'success' %}
+                <span class="badge bg-success ms-2">Success</span>
+              {% elif resume.parsing_status == 'error' %}
+                <span class="badge bg-danger ms-2">Error</span>
+              {% elif resume.parsing_status == 'in_progress' %}
+                <span class="badge bg-warning text-dark ms-2">In Progress</span>
+              {% elif resume.parsing_status == 'pending' %}
+                <span class="badge bg-secondary ms-2">Pending</span>
+              {% else %}
+                <span class="badge bg-secondary ms-2">Unknown</span>
+              {% endif %}
+            </div>
+            {% if resume.parsed_at %}
+              <div class="text-muted" style="font-size: 0.9rem;">
+                Parsed: {{ resume.parsed_at|date:"M d, Y g:i A" }}
+              </div>
             {% endif %}
           </div>
-          {% if resume.parsed_at %}
-            <div class="text-muted" style="font-size: 0.9rem;">
-              Parsed: {{ resume.parsed_at|date:"M d, Y g:i A" }}
+
+          {% if resume.parsing_status == 'error' and resume.parsing_error %}
+            <div class="alert alert-danger mt-2 mb-0" style="font-size: 0.9rem;">
+              <strong>Error:</strong> {{ resume.parsing_error }}
+            </div>
+          {% endif %}
+
+          {% if resume.parsing_status == 'pending' %}
+            <div class="alert alert-info mt-2 mb-0" style="font-size: 0.9rem;">
+              This resume has not been parsed yet. Parsing will occur automatically on the next upload or system update.
             </div>
           {% endif %}
         </div>
 
-        {% if resume.parsing_status == 'error' and resume.parsing_error %}
-          <div class="alert alert-danger mt-2 mb-0" style="font-size: 0.9rem;">
-            <strong>Error:</strong> {{ resume.parsing_error }}
+        <!-- Parsed Data: Skills -->
+        {% if resume.parsing_status == 'success' %}
+          <div class="parsed-data-section">
+            <h3><i class="bi bi-code-square"></i> Skills</h3>
+            {% if resume.skills and resume.skills|length > 0 %}
+              <div class="d-flex flex-wrap">
+                {% for skill in resume.skills %}
+                  <span class="skill-badge">{{ skill }}</span>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="no-data-message">
+                No skills extracted from resume.
+              </div>
+            {% endif %}
+          </div>
+
+          <!-- Parsed Data: Work Experience -->
+          <div class="parsed-data-section">
+            <h3><i class="bi bi-briefcase"></i> Work Experience</h3>
+            {% if resume.experience and resume.experience|length > 0 %}
+              {% for exp in resume.experience %}
+                <div class="experience-card">
+                  <h4>{{ exp.title|default:"Position" }}</h4>
+                  <div class="company">{{ exp.company|default:"Company Name" }}</div>
+                  <div class="duration">{{ exp.duration|default:"Duration Unknown" }}</div>
+                  {% if exp.description %}
+                    <div class="description">{{ exp.description }}</div>
+                  {% endif %}
+                </div>
+              {% endfor %}
+            {% else %}
+              <div class="no-data-message">
+                No work experience extracted from resume.
+              </div>
+            {% endif %}
+          </div>
+
+          <!-- Parsed Data: Education -->
+          <div class="parsed-data-section">
+            <h3><i class="bi bi-mortarboard"></i> Education</h3>
+            {% if resume.education and resume.education|length > 0 %}
+              {% for edu in resume.education %}
+                <div class="education-card">
+                  <h4>{{ edu.degree|default:"Degree" }}{% if edu.field %} in {{ edu.field }}{% endif %}</h4>
+                  <div class="institution">{{ edu.institution|default:"Institution" }}</div>
+                  <div class="degree-info">
+                    {% if edu.year %}
+                      Graduated: {{ edu.year }}
+                    {% else %}
+                      Graduation year unknown
+                    {% endif %}
+                  </div>
+                </div>
+              {% endfor %}
+            {% else %}
+              <div class="no-data-message">
+                No education information extracted from resume.
+              </div>
+            {% endif %}
           </div>
         {% endif %}
 
-        {% if resume.parsing_status == 'pending' %}
-          <div class="alert alert-info mt-2 mb-0" style="font-size: 0.9rem;">
-            This resume has not been parsed yet. Parsing will occur automatically on the next upload or system update.
-          </div>
-        {% endif %}
+        <!-- Raw Resume Content -->
+        <div class="resume-section">
+          <h2><i class="bi bi-file-text"></i> Raw Resume Content</h2>
+          <div class="resume-content">{{ resume.content|linebreaksbr }}</div>
+        </div>
       </div>
 
-      <!-- Parsed Data: Skills -->
-      {% if resume.parsing_status == 'success' %}
-        <div class="parsed-data-section">
-          <h3><i class="bi bi-code-square"></i> Skills</h3>
-          {% if resume.skills and resume.skills|length > 0 %}
-            <div class="d-flex flex-wrap">
-              {% for skill in resume.skills %}
-                <span class="skill-badge">{{ skill }}</span>
-              {% endfor %}
+      <!-- Right Column: Documents -->
+      <div class="right-column">
+        <!-- Resumes Section -->
+        <div class="resume-section">
+          <h2>Uploaded Resumes</h2>
+          {% if resumes|length == 0 %}
+            <div class="empty-state">
+              <p>No resumes uploaded yet</p>
             </div>
           {% else %}
-            <div class="no-data-message">
-              No skills extracted from resume.
-            </div>
-          {% endif %}
-        </div>
-
-        <!-- Parsed Data: Work Experience -->
-        <div class="parsed-data-section">
-          <h3><i class="bi bi-briefcase"></i> Work Experience</h3>
-          {% if resume.experience and resume.experience|length > 0 %}
-            {% for exp in resume.experience %}
-              <div class="experience-card">
-                <h4>{{ exp.title|default:"Position" }}</h4>
-                <div class="company">{{ exp.company|default:"Company Name" }}</div>
-                <div class="duration">{{ exp.duration|default:"Duration Unknown" }}</div>
-                {% if exp.description %}
-                  <div class="description">{{ exp.description }}</div>
+            <ul class="document-list">
+              {% for document in resumes %}
+                {% if document.title and document.title != "1" %}
+                <li class="document-item">
+                  <span class="document-name">
+                    {% if document.title and document.title != "1" %}
+                      {{ document.title }}
+                    {% elif document.file %}
+                      {{ document.original_filename }}
+                    {% endif %}
+                  </span>
+                  <div class="document-actions">
+                    <a href="{% url 'resume_detail' resume_id=document.id %}">View</a>
+                    <a href="{% url 'edit_resume' document.id %}">Edit</a>
+                    <button type="button" class="delete-btn" data-bs-toggle="modal" data-bs-target="#deleteResumeModal{{ document.id }}">Delete</button>
+                  </div>
+                </li>
                 {% endif %}
-              </div>
-            {% endfor %}
-          {% else %}
-            <div class="no-data-message">
-              No work experience extracted from resume.
-            </div>
-          {% endif %}
-        </div>
-
-        <!-- Parsed Data: Education -->
-        <div class="parsed-data-section">
-          <h3><i class="bi bi-mortarboard"></i> Education</h3>
-          {% if resume.education and resume.education|length > 0 %}
-            {% for edu in resume.education %}
-              <div class="education-card">
-                <h4>{{ edu.degree|default:"Degree" }}{% if edu.field %} in {{ edu.field }}{% endif %}</h4>
-                <div class="institution">{{ edu.institution|default:"Institution" }}</div>
-                <div class="degree-info">
-                  {% if edu.year %}
-                    Graduated: {{ edu.year }}
-                  {% else %}
-                    Graduation year unknown
-                  {% endif %}
+              {% endfor %}
+            </ul>
+            {% for document in resumes %}
+              <div class="modal fade" id="deleteResumeModal{{ document.id }}" tabindex="-1" aria-labelledby="deleteResumeLabel{{ document.id }}" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title" id="deleteResumeLabel{{ document.id }}">Confirm Delete</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                      Are you sure you want to delete <strong>{{ document.title|default:document.original_filename }}</strong>?
+                    </div>
+                    <div class="modal-footer">
+                      <form method="post" action="{% url 'delete_resume' resume_id=document.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                      </form>
+                    </div>
+                  </div>
                 </div>
               </div>
             {% endfor %}
-          {% else %}
-            <div class="no-data-message">
-              No education information extracted from resume.
-            </div>
           {% endif %}
         </div>
-      {% endif %}
 
-      <!-- Raw Resume Content -->
-      <div class="resume-content-box">
-        <h3 style="border-bottom: 2px solid rgba(255, 255, 255, 0.3); padding-bottom: 0.5rem; margin-bottom: 1rem;">
-          <i class="bi bi-file-text"></i> Raw Resume Content
-        </h3>
-        <div>{{ resume.content|linebreaksbr }}</div>
-      </div>
-    </div>
-
-    <div class="document-list-box">
-      <div class="document-list">
-        {% include "documents/_document_list.html" %}
+        <!-- Job Listings Section -->
+        <div class="resume-section">
+          <h2>Uploaded Job Listings</h2>
+          {% if job_listings|length == 0 %}
+            <div class="empty-state">
+              <p>No job listings uploaded yet</p>
+            </div>
+          {% else %}
+            <ul class="document-list">
+              {% for job in job_listings %}
+                <li class="document-item">
+                  <span class="document-name">{{ job.title }}</span>
+                  <div class="document-actions">
+                    <a href="{% url 'job_posting_detail' job_id=job.id %}">View</a>
+                    <a href="{% url 'edit_job_posting' job.id %}">Edit</a>
+                    <button type="button" class="delete-btn" data-bs-toggle="modal" data-bs-target="#deleteJobModal{{ job.id }}">Delete</button>
+                  </div>
+                </li>
+                <div class="modal fade" id="deleteJobModal{{ job.id }}" tabindex="-1" aria-labelledby="deleteJobLabel{{ job.id }}" aria-hidden="true">
+                  <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="deleteJobLabel{{ job.id }}">Confirm Delete</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+                      <div class="modal-body">
+                        Are you sure you want to delete <strong>{{ job.title }}</strong>?
+                      </div>
+                      <div class="modal-footer">
+                        <form method="post" action="{% url 'delete_job' job_id=job.id %}">
+                          {% csrf_token %}
+                          <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
       </div>
     </div>
   </div>

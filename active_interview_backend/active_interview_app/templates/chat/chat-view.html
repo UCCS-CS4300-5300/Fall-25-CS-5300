@@ -5,6 +5,22 @@
 {% endblock title %}
 
 {% block content %}
+<style>
+  /* Chat input styling */
+  .chat-input {
+    background-color: var(--surface) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius);
+    font-size: 1rem;
+    outline: none;
+  }
+
+  .chat-input:focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 0.2rem rgba(31, 123, 166, 0.15);
+  }
+</style>
   {% load static %}
   <div class="centered-container flex-grow-1 d-flex flex-column">
     <h3 class="whiteTextOverride px-3 pt-3">{{ chat.title }}</h3>

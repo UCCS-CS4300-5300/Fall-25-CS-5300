@@ -104,7 +104,7 @@
       }
       .export-btn-pdf {
         background: #e74c3c;
-        color: white;
+        color: var(--text-white);
       }
       .export-btn-pdf:hover {
         background: #c0392b;
@@ -113,7 +113,7 @@
       }
       .export-btn-back {
         background: #95a5a6;
-        color: white;
+        color: var(--text-white);
       }
       .export-btn-back:hover {
         background: #7f8c8d;
@@ -154,7 +154,7 @@
       }
       .qa-answer {
         margin-left: 1rem;
-        color: #333;
+        color: var(--text-primary);
         line-height: 1.5;
       }
   </style>
@@ -282,7 +282,7 @@
         </div>
         {% endfor %}
         {% if report.question_responses|length > 5 %}
-        <p style="text-align: center; color: #777; margin-top: 1rem;">
+        <p style="text-align: center; color: var(--text-light); margin-top: 1rem;">
           And {{ report.question_responses|length|add:"-5" }} more questions... Download PDF for full report.
         </p>
         {% endif %}
