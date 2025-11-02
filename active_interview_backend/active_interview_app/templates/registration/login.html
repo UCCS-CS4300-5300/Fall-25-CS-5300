@@ -24,16 +24,35 @@
      font-weight: 500;
    }
 
-   .login-page td {
-     font-size: 1rem;
-     color: var(--text-primary);
-     font-weight: 600;
+   /* Ensure form labels are visible in all themes */
+   .login-page label,
+   .login-page .form-label,
+   .login-page form label {
+     font-size: 1rem !important;
+     color: var(--text-primary) !important;
+     font-weight: 600 !important;
+     display: block;
+     margin-bottom: 0.5rem;
+   }
+
+   /* Target the specific label text span */
+   .login-page .label-text,
+   .login-page label .label-text,
+   .login-page .form-label .label-text {
+     color: var(--text-primary) !important;
+     font-weight: 600 !important;
+   }
+
+   /* Override Bootstrap's default label color */
+   .login-page label::before,
+   .login-page label::after {
+     color: var(--text-primary) !important;
    }
 
    .login-page input[type="text"],
    .login-page input[type="password"] {
-     background-color: var(--surface);
-     color: var(--text-primary);
+     background-color: var(--surface) !important;
+     color: var(--text-primary) !important;
      border: 2px solid var(--border);
      padding: 0.5rem;
      border-radius: 4px;
@@ -44,8 +63,8 @@
    .login-page input[type="password"]:focus {
      outline: none;
      border-color: var(--primary);
-     background-color: var(--surface);
-     color: var(--text-primary);
+     background-color: var(--surface) !important;
+     color: var(--text-primary) !important;
    }
 
    .divider {
@@ -173,15 +192,13 @@
       {% endif %}
   
       <form method="post" action="{% url 'login' %}">
-        
+
           {% csrf_token %}
           <div class="row mb-3">
-              
-              <td>Username: {{ form.username }}</td>
+              <label class="form-label"><span class="label-text">Username:</span> {{ form.username }}</label>
           </div>
           <div class="row mb-3">
-              
-              <td>Password: {{ form.password }}</td>
+              <label class="form-label"><span class="label-text">Password:</span> {{ form.password }}</label>
           </div>
           
         
@@ -192,7 +209,7 @@
       </form>
 
       <div class="row mb-3">
-        <td><a href="{% url 'register_page' %}">Register</a></td>
+        <a href="{% url 'register_page' %}">Register</a>
       </div>
 
       <div class="divider">OR</div>
