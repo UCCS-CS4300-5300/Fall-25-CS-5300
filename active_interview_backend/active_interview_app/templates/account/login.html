@@ -7,167 +7,22 @@
 
 {% block content %}
 <body>
-  <style>
-   .login-page {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      min-height: 60vh;
-      padding: 2rem;
-   }
-
-   .login-page p {
-     font-size: 1.2rem;
-     color: var(--text-primary);
-     font-weight: 500;
-   }
-
-   .login-page td {
-     font-size: 1rem;
-     color: var(--text-primary);
-     font-weight: 600;
-   }
-
-   .login-page input[type="text"],
-   .login-page input[type="email"],
-   .login-page input[type="password"] {
-     background-color: var(--surface);
-     color: var(--text-primary);
-     border: 2px solid var(--border);
-     padding: 0.5rem;
-     border-radius: 4px;
-     margin-left: 0.5rem;
-   }
-
-   .login-page input[type="text"]:focus,
-   .login-page input[type="email"]:focus,
-   .login-page input[type="password"]:focus {
-     outline: none;
-     border-color: var(--primary);
-     background-color: var(--surface);
-     color: var(--text-primary);
-   }
-
-   .divider {
-     display: flex;
-     align-items: center;
-     text-align: center;
-     margin: 20px 0;
-     color: var(--text-secondary);
-     font-weight: 700;
-     font-size: 0.9rem;
-   }
-
-   .divider::before,
-   .divider::after {
-     content: '';
-     flex: 1;
-     border-bottom: 2px solid var(--border);
-   }
-
-   .divider::before {
-     margin-right: 10px;
-   }
-
-   .divider::after {
-     margin-left: 10px;
-   }
-
-   /* OAuth Button Styles */
-   .google-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      background-color: var(--surface);
-      color: var(--text-primary);
-      border: 2px solid var(--border);
-      padding: 12px 24px;
-      font-size: 16px;
-      font-weight: 500;
-      border-radius: 8px;
-      text-decoration: none;
-      transition: all 0.2s ease;
-      box-shadow: var(--shadow);
-   }
-
-   .google-btn:hover {
-      background-color: var(--surface-hover);
-      color: var(--text-primary);
-      text-decoration: none;
-      box-shadow: var(--shadow-md);
-      transform: translateY(-2px);
-      border-color: var(--primary);
-   }
-
-   .google-btn:active {
-      transform: translateY(0);
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
-   }
-
-   .google-btn svg {
-      margin-right: 12px;
-      flex-shrink: 0;
-   }
-
-   /* Responsive adjustments */
-   @media (max-width: 576px) {
-      .google-btn {
-         padding: 10px 20px;
-         font-size: 15px;
-      }
-      .login-page {
-         padding: 1rem;
-      }
-   }
-
-   .login-page a {
-     color: var(--primary);
-     font-weight: 600;
-     text-decoration: underline;
-   }
-
-   .login-page a:hover {
-     color: var(--primary-light);
-     text-decoration: underline;
-   }
-
-   .btn-primary {
-     background-color: var(--primary);
-     border-color: var(--primary);
-     color: var(--text-white);
-     font-weight: 600;
-     padding: 0.5rem 2rem;
-   }
-
-   .btn-primary:hover {
-     background-color: var(--primary-dark);
-     border-color: var(--primary-dark);
-     color: var(--text-white);
-   }
-  </style>
+  <!-- All styles moved to main.css Authentication Components section -->
 
   <div class="container">
     <div class="login-page">
-      {% for message in messages %}
-        <div class="row mb-3">
-          <p>{{ message }}</p>
-        </div>
-      {% endfor %}
-
       {% if form.errors %}
         <div class="row mb-3">
           <p>Your username and password didn't match. Please try again.</p>
         </div>
       {% endif %}
 
-      {% if redirect_field_value %}
+      {% if redirect_field_value and redirect_field_value != "/" and redirect_field_value != "/accounts/login/" %}
         <div class="row mb-3">
           {% if user.is_authenticated %}
             <p>Your account doesn't have access to this page. To proceed, please login with an account that has access.</p>
           {% else %}
-            <p>Please login to see this page.</p>
+            <p>Please login to access the requested page.</p>
           {% endif %}
         </div>
       {% endif %}
@@ -176,12 +31,16 @@
 
           {% csrf_token %}
           <div class="row mb-3">
-
-              <td>Username: {{ form.login }}</td>
+              <div class="login-field">
+                  <span class="field-label">Username:</span>
+                  {{ form.login }}
+              </div>
           </div>
           <div class="row mb-3">
-
-              <td>Password: {{ form.password }}</td>
+              <div class="login-field">
+                  <span class="field-label">Password:</span>
+                  {{ form.password }}
+              </div>
           </div>
 
           {% if redirect_field_value %}
@@ -194,7 +53,7 @@
       </form>
 
       <div class="row mb-3">
-        <td><a href="{% url 'register_page' %}">Register</a></td>
+        <a href="{% url 'register_page' %}">Register</a>
       </div>
 
       <div class="divider">OR</div>

@@ -194,6 +194,105 @@ active_interview_backend/
 
 ---
 
+## Frontend Styling Guidelines
+
+### Theme System
+
+This project uses a **CSS variable-based theme system** that adapts to light/dark modes.
+
+**Critical Rule:** NEVER hardcode colors (hex, RGB, color names). Always use CSS variables.
+
+### Styling Documentation
+
+**Primary Reference:** [Style Guide](docs/STYLE_GUIDE.md)
+- CSS variable system and theme definitions
+- Component styling patterns
+- Bootstrap override patterns
+- Page layout templates
+
+**Theme Files:**
+- `active_interview_app/static/css/main.css` - CSS variable definitions
+- `active_interview_app/static/js/theme.js` - Theme switching logic
+
+### CSS Variables Reference
+
+**Always use these instead of hardcoded colors:**
+
+```css
+/* Text Colors */
+var(--text-primary)
+var(--text-secondary)
+var(--text-light)
+var(--text-white)
+
+/* Surfaces */
+var(--background)
+var(--surface)
+var(--surface-hover)
+
+/* Brand Colors */
+var(--primary)
+var(--primary-light)
+var(--primary-dark)
+var(--accent)
+
+/* Status Colors */
+var(--success)
+var(--warning)
+var(--error)
+var(--info)
+
+/* Layout */
+var(--border)
+var(--border-light)
+var(--shadow)
+var(--shadow-sm)
+var(--shadow-md)
+var(--radius)
+var(--radius-sm)
+var(--radius-md)
+```
+
+### When Working on Frontend Files
+
+**HTML Templates:**
+1. Check [Style Guide](docs/STYLE_GUIDE.md) for component patterns
+2. Use CSS variables for all colors, shadows, and borders
+3. Follow existing layout patterns from compliant files (e.g., `profile.html`, `candidates/search.html`)
+4. Override Bootstrap hardcoded colors with CSS variables + `!important`
+
+**JavaScript Files:**
+1. Read CSS variables from `getComputedStyle(document.documentElement)`
+2. Use CSS variable values instead of hardcoded colors
+3. See `static/js/charts.js` for example of reading CSS variables
+
+**CSS Files:**
+1. Define new variables in `main.css` if needed
+2. Ensure variables work in both light and dark themes
+3. Never use hardcoded color values
+
+### Bad vs. Good Examples
+
+**❌ Bad (hardcoded colors):**
+```css
+background-color: #4482a6;
+color: lightslategray;
+border: 2px solid white;
+box-shadow: 5px 5px 5px black;
+```
+
+**✅ Good (CSS variables):**
+```css
+background-color: var(--primary);
+color: var(--text-secondary);
+border: 2px solid var(--border-light);
+box-shadow: var(--shadow);
+```
+
+**See:** [Style Guide](docs/STYLE_GUIDE.md) for comprehensive styling patterns and examples.
+
+---
+
 ## Common Task Patterns
 
 ### Adding New Features
