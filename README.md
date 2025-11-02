@@ -195,6 +195,31 @@ coverage html  # Generate HTML report
 
 ---
 
+## Security Considerations
+
+### User Profile Privacy
+
+The `user_profile` view (`active_interview_app/templates/user_profile.html`) displays user information to interviewers and admins when viewing candidate profiles. This view currently shows:
+
+- ✅ Username
+- ✅ Email
+- ✅ First Name
+- ✅ Last Name
+- ✅ Role
+- ✅ Uploaded resumes (view-only)
+- ✅ Uploaded job listings (view-only)
+
+**⚠️ IMPORTANT:** When adding new fields to the `UserProfile` model or user information display:
+
+1. **Always review what information is shown in `user_profile.html`**
+2. **Exclude sensitive personal information** (e.g., birthday, SSN, phone number, address)
+3. **Owner-only features** (edit/delete buttons, role change requests) must remain excluded from this view
+4. **Test with different user roles** (admin, interviewer, candidate) to ensure proper information visibility
+
+The current fields displayed are appropriate for professional interview contexts, but future additions must be carefully evaluated to prevent exposing sensitive candidate information.
+
+---
+
 ## Contributing
 
 We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
