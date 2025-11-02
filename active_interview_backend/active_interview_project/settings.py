@@ -229,6 +229,23 @@ LOGIN_REDIRECT_URL = '/testlogged/'  # Where to redirect after successful login
 ACCOUNT_LOGOUT_REDIRECT_URL = '/'  # Where to redirect after logout
 
 # Google OAuth settings
+GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_OAUTH_CLIENT_ID', '')
+GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_OAUTH_CLIENT_SECRET', '')
+
+# Debug logging for environment variables (remove after debugging)
+import sys
+if not any(test in arg for arg in sys.argv for test in ['test', 'pytest']):
+    print("=" * 60)
+    print("ENVIRONMENT VARIABLE DEBUG")
+    print("=" * 60)
+    print(f"PROD: {os.environ.get('PROD', 'NOT SET')}")
+    print(f"RAILWAY_ENVIRONMENT: {os.environ.get('RAILWAY_ENVIRONMENT', 'NOT SET')}")
+    print(f"DATABASE_URL: {'SET (length: ' + str(len(os.environ.get('DATABASE_URL', ''))) + ')' if os.environ.get('DATABASE_URL') else 'NOT SET'}")
+    print(f"GOOGLE_OAUTH_CLIENT_ID: {'SET (first 10 chars: ' + GOOGLE_CLIENT_ID[:10] + '...)' if GOOGLE_CLIENT_ID else 'NOT SET OR EMPTY'}")
+    print(f"GOOGLE_OAUTH_CLIENT_SECRET: {'SET (length: ' + str(len(GOOGLE_CLIENT_SECRET)) + ')' if GOOGLE_CLIENT_SECRET else 'NOT SET OR EMPTY'}")
+    print(f"OPENAI_API_KEY: {'SET' if os.environ.get('OPENAI_API_KEY') else 'NOT SET'}")
+    print("=" * 60)
+
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'SCOPE': [
@@ -239,14 +256,13 @@ SOCIALACCOUNT_PROVIDERS = {
             'access_type': 'online',
         },
         'APP': {
-            'client_id': os.environ.get('GOOGLE_OAUTH_CLIENT_ID', ''),
-            'secret': os.environ.get('GOOGLE_OAUTH_CLIENT_SECRET', ''),
+            'client_id': GOOGLE_CLIENT_ID,
+            'secret': GOOGLE_CLIENT_SECRET,
             'key': ''
         }
     }
 }
 # Use regular storage during tests to avoid manifest issues
-import sys
 if 'test' in sys.argv:
     STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
 else:
