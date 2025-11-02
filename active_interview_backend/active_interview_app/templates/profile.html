@@ -48,7 +48,34 @@
 
         <!-- Manually render each form field -->
         <div class="row">
-          <h2>{{ user }}</h2> 
+          <h2>{{ user }}</h2>
+        </div>
+
+        <!-- Role Information -->
+        <div class="row mb-3">
+          <div class="text-center">
+            <p class="mb-2">
+              <strong>Role:</strong>
+              <span class="badge bg-{% if user.profile.role == 'admin' %}danger{% elif user.profile.role == 'interviewer' %}primary{% else %}secondary{% endif %}" style="font-size: 18px;">
+                {{ user.profile.role|title }}
+              </span>
+            </p>
+
+            {% if user.profile.role == 'candidate' %}
+              {% if has_pending_request %}
+                <div class="alert alert-info d-inline-block">
+                  You have a pending role change request. An admin will review it soon.
+                </div>
+              {% else %}
+                <a href="{% url 'request_role_change' %}" class="btn btn-outline-light btn-lg">
+                  Request Interviewer Role
+                </a>
+                <p class="text-muted mt-2" style="font-size: 16px;">
+                  Want to conduct interviews? Request to become an interviewer.
+                </p>
+              {% endif %}
+            {% endif %}
+          </div>
         </div>
 
         <hr class="white-break">

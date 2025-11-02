@@ -525,7 +525,7 @@ class UserProfileModelTest(TestCase):
     def test_user_profile_string_representation(self):
         """Test UserProfile __str__ method"""
         profile = UserProfile.objects.get(user=self.user)
-        expected = f"{self.user.username} - local"
+        expected = f"{self.user.username} - candidate (local)"
         self.assertEqual(str(profile), expected)
 
     def test_user_profile_can_update_auth_provider(self):

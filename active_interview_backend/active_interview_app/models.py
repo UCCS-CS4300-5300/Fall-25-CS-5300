@@ -10,19 +10,48 @@ from django.dispatch import receiver
 
 class UserProfile(models.Model):
     """
-    Extended user profile to track authentication provider and additional metadata.
+    Extended user profile to track authentication provider and user role.
+    Created automatically when a User is created via signal.
+
+    Related to Issue #69 (RBAC) and OAuth implementation.
     """
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name='profile'
+    )
+
+    # Authentication provider (for OAuth compatibility)
     auth_provider = models.CharField(
         max_length=50,
         default='local',
         help_text='Authentication provider (e.g., local, google)'
     )
+
+    # Role-based access control (Issue #69)
+    ADMIN = 'admin'
+    INTERVIEWER = 'interviewer'
+    CANDIDATE = 'candidate'
+    ROLE_CHOICES = [
+        (ADMIN, 'Admin'),
+        (INTERVIEWER, 'Interviewer'),
+        (CANDIDATE, 'Candidate'),
+    ]
+
+    role = models.CharField(
+        max_length=20,
+        choices=ROLE_CHOICES,
+        default=CANDIDATE,
+        help_text='User role for access control'
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.user.username} - {self.auth_provider}"
+        return f"{self.user.username} - {self.role} ({self.auth_provider})"
+
+    class Meta:
+        verbose_name = 'User Profile'
+        verbose_name_plural = 'User Profiles'
 
 
 @receiver(post_save, sender=User)
@@ -30,6 +59,14 @@ def create_user_profile(sender, instance, created, **kwargs):
     """Create UserProfile when a new User is created."""
     if created:
         UserProfile.objects.get_or_create(user=instance)
+
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    """Save UserProfile when User is saved."""
+    if hasattr(instance, 'profile'):
+        instance.profile.save()
+
 
 
 class UploadedResume(models.Model):  # Renamed from UploadedFile
@@ -105,9 +142,9 @@ class Chat(models.Model):
     PERSONALITY = "PER"
     FINAL_SCREENING = "FSC"
     INTERVIEW_TYPES = [
-        (PERSONALITY, "Personality/Preliminary"),
-        (SKILLS, "Industry Skills"),
         (GENERAL, "General"),
+        (SKILLS, "Industry Skills"),
+        (PERSONALITY, "Personality/Preliminary"),
         (FINAL_SCREENING, "Final Screening"),
     ]
     type = models.CharField(max_length=3, choices=INTERVIEW_TYPES,
@@ -175,6 +212,79 @@ class ExportableReport(models.Model):
 
     class Meta:
         ordering = ['-generated_at']
+
+
+class RoleChangeRequest(models.Model):
+    """
+    Track requests from users to change their role.
+    Primarily used for candidates requesting interviewer role.
+
+    Related to Issue #69 (RBAC).
+    """
+    PENDING = 'pending'
+    APPROVED = 'approved'
+    REJECTED = 'rejected'
+
+    STATUS_CHOICES = [
+        (PENDING, 'Pending'),
+        (APPROVED, 'Approved'),
+        (REJECTED, 'Rejected'),
+    ]
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='role_requests'
+    )
+    requested_role = models.CharField(
+        max_length=20,
+        help_text='Role being requested (typically "interviewer")'
+    )
+    current_role = models.CharField(
+        max_length=20,
+        help_text='Role at time of request'
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=PENDING
+    )
+
+    reason = models.TextField(
+        blank=True,
+        help_text='User explanation for role request'
+    )
+
+    # Admin review tracking
+    reviewed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reviewed_role_requests'
+    )
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    admin_notes = models.TextField(
+        blank=True,
+        help_text='Admin notes on approval/rejection'
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['status', '-created_at']),
+            models.Index(fields=['user', '-created_at']),
+        ]
+
+    def __str__(self):
+        return (
+            f"{self.user.username}: {self.current_role} → "
+            f"{self.requested_role} ({self.status})"
+        )
 
 
 # Import token tracking models (must be at end to avoid circular imports)

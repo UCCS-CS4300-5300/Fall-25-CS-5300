@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h2>Request Role Change</h2>
+
+            <div class="alert alert-info">
+                <strong>Current role:</strong> {{ request.user.profile.role|title }}
+            </div>
+
+            <form method="post" action="{% url 'request_role_change' %}">
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <label class="form-label">Requested Role *</label>
+                    <select name="requested_role" class="form-select" required>
+                        <option value="">-- Select Role --</option>
+                        <option value="interviewer">Interviewer</option>
+                    </select>
+                    <small class="text-muted">
+                        Interviewers can conduct practice interviews and view all candidate profiles.
+                    </small>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Why do you want this role? (Optional)</label>
+                    <textarea name="reason" class="form-control" rows="4"
+                              placeholder="Tell us about your experience and why you'd like to become an interviewer..."></textarea>
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex">
+                    <button type="submit" class="btn btn-primary">Submit Request</button>
+                    <a href="{% url 'profile' %}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

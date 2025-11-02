@@ -22,6 +22,16 @@
         <li class="nav-item">
           <a class="nav-link" href="{% url "document-list" %}">Documents</a>
         </li>
+        {% if user.profile.role == 'admin' or user.profile.role == 'interviewer' %}
+          <li class="nav-item">
+            <a class="nav-link" href="{% url "candidate_search" %}">Search Candidates</a>
+          </li>
+        {% endif %}
+        {% if user.profile.role == 'admin' %}
+          <li class="nav-item">
+            <a class="nav-link" href="{% url "role_requests_list" %}">Role Requests</a>
+          </li>
+        {% endif %}
       {% endif %}
       <li class="nav-item">
         <a class="nav-link" href="{% url "features" %}">Features</a>

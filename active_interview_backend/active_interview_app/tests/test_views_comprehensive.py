@@ -30,6 +30,10 @@ class RestartChatViewTest(TestCase):
     """Test restart chat functionality"""
 
     def setUp(self):
+        # Create average_role group (required by signals)
+        from django.contrib.auth.models import Group
+        Group.objects.get_or_create(name='average_role')
+
         self.user = User.objects.create_user(
             username='testuser',
             password='testpass123'
@@ -87,6 +91,10 @@ class KeyQuestionsViewTest(TestCase):
     """Test key questions functionality"""
 
     def setUp(self):
+        # Create average_role group (required by signals)
+        from django.contrib.auth.models import Group
+        Group.objects.get_or_create(name='average_role')
+
         self.user = User.objects.create_user(
             username='testuser',
             password='testpass123'
@@ -224,6 +232,10 @@ class EditChatViewTest(TestCase):
     """Test edit chat functionality"""
 
     def setUp(self):
+        # Create average_role group (required by signals)
+        from django.contrib.auth.models import Group
+        Group.objects.get_or_create(name='average_role')
+
         self.user = User.objects.create_user(
             username='testuser',
             password='testpass123'
@@ -274,6 +286,10 @@ class ChatViewPostTest(TestCase):
     """Test ChatView POST functionality"""
 
     def setUp(self):
+        # Create average_role group (required by signals)
+        from django.contrib.auth.models import Group
+        Group.objects.get_or_create(name='average_role')
+
         self.user = User.objects.create_user(
             username='testuser',
             password='testpass123'
@@ -333,6 +349,10 @@ class CreateChatViewComprehensiveTest(TestCase):
     """Comprehensive tests for CreateChat view covering all branches"""
 
     def setUp(self):
+        # Create average_role group (required by signals)
+        from django.contrib.auth.models import Group
+        Group.objects.get_or_create(name='average_role')
+
         self.user = User.objects.create_user(
             username='testuser',
             password='testpass123'
@@ -441,6 +461,10 @@ class UploadFileViewComprehensiveTest(TestCase):
     """Comprehensive file upload tests"""
 
     def setUp(self):
+        # Create average_role group (required by signals)
+        from django.contrib.auth.models import Group
+        Group.objects.get_or_create(name='average_role')
+
         self.user = User.objects.create_user(
             username='testuser',
             password='testpass123'
@@ -498,6 +522,10 @@ class DocumentListViewTest(TestCase):
 
     def setUp(self):
         """Set up test user"""
+        # Create average_role group (required by signals)
+        from django.contrib.auth.models import Group
+        Group.objects.get_or_create(name='average_role')
+
         self.user = User.objects.create_user(username='testuser', password='testpass123')
         self.client.login(username='testuser', password='testpass123')
 
@@ -512,6 +540,10 @@ class ResultsChatViewComprehensiveTest(TestCase):
     """Comprehensive tests for ResultsChat view (not ResultCharts)"""
 
     def setUp(self):
+        # Create average_role group (required by signals)
+        from django.contrib.auth.models import Group
+        Group.objects.get_or_create(name='average_role')
+
         self.user = User.objects.create_user(
             username='testuser',
             password='testpass123'
@@ -529,6 +561,10 @@ class AllInterviewTypesTest(TestCase):
     """Test get_type_display for all interview types"""
 
     def setUp(self):
+        # Create average_role group (required by signals)
+        from django.contrib.auth.models import Group
+        Group.objects.get_or_create(name='average_role')
+
         self.user = User.objects.create_user(
             username='testuser',
             password='testpass123'

@@ -362,6 +362,10 @@ class KeyQuestionsViewTest(TestCase):
     """Test KeyQuestionsView functionality"""
 
     def setUp(self):
+        # Create average_role group (required by signals)
+        from django.contrib.auth.models import Group
+        Group.objects.get_or_create(name='average_role')
+
         self.client = Client()
         self.user = User.objects.create_user(
             username='testuser',
