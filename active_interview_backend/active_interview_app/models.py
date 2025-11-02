@@ -68,6 +68,7 @@ def save_user_profile(sender, instance, **kwargs):
         instance.profile.save()
 
 
+
 class UploadedResume(models.Model):  # Renamed from UploadedFile
     # Will be saved under media/uploads/
     file = models.FileField(upload_to='uploads/')

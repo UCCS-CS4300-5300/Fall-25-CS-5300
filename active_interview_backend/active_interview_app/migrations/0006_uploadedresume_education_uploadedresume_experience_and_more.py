@@ -7,7 +7,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('active_interview_app', '0005_alter_chat_type_exportablereport'),
+        ('active_interview_app', '0005_alter_chat_type'),
     ]
 
     operations = [

@@ -53,9 +53,9 @@
                         <h1>Logged in secure</h1>
                         {% if user.is_authenticated %}
             <!---
-                <a class="nav-link" href="{% url 'logout' %}?next={{ request.path }}">Logout {{ user }}</a>
+                <a class="nav-link" href="{% url 'account_logout' %}?next={{ request.path }}">Logout {{ user }}</a>
             -->
-            <form method="post" action="{% url 'logout' %}">
+            <form method="post" action="{% url 'account_logout' %}">
               {% csrf_token %}
               <button type="submit", id = nav_logout>logout {{ user }} </button>
           </form>

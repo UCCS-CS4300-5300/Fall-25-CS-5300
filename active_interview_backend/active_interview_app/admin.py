@@ -101,7 +101,6 @@ class RoleChangeRequestAdmin(admin.ModelAdmin):
         qs = super().get_queryset(request)
         return qs.select_related('user', 'reviewed_by')
 
-
 # Token Tracking Admin
 @admin.register(TokenUsage)
 class TokenUsageAdmin(admin.ModelAdmin):

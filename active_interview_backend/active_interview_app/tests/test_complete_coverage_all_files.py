@@ -216,7 +216,7 @@ class ViewsCompleteCoverageTest(TestCase):
 
     def test_register_valid_form(self):
         """Test user registration with valid form"""
-        response = self.client.post(reverse('register'), {
+        response = self.client.post(reverse('register_page'), {
             'username': 'newuser',
             'email': 'new@test.com',
             'password1': 'TestPass123!@#',

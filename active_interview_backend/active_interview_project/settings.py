@@ -70,10 +70,18 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',  # Required for allauth
     'bootstrap5',
     'rest_framework',
     'filetype',
+    # Django allauth - provides OAuth authentication (Google login)
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
 ]
+
+SITE_ID = 1
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -84,6 +92,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',  # Required for allauth
 ]
 
 ROOT_URLCONF = 'active_interview_project.urls'
@@ -195,6 +204,47 @@ LOGGING = {
 }
 
 # WhiteNoise configuration for serving static files
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Authentication backends
+AUTHENTICATION_BACKENDS = [
+    # Needed to login by username in Django admin, regardless of `allauth`
+    'django.contrib.auth.backends.ModelBackend',
+    # `allauth` specific authentication methods, such as login by e-mail
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+# Django-allauth configuration
+ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_EMAIL_VERIFICATION = 'optional'  # Can be 'mandatory', 'optional', or 'none'
+ACCOUNT_USERNAME_REQUIRED = False
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_EMAIL_VERIFICATION = 'optional'
+SOCIALACCOUNT_ADAPTER = 'active_interview_app.adapters.CustomSocialAccountAdapter'
+
+# Login/Logout redirects
+LOGIN_URL = '/accounts/login/'  # allauth login URL
+LOGIN_REDIRECT_URL = '/testlogged/'  # Where to redirect after successful login
+ACCOUNT_LOGOUT_REDIRECT_URL = '/'  # Where to redirect after logout
+
+# Google OAuth settings
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        },
+        'APP': {
+            'client_id': os.environ.get('GOOGLE_OAUTH_CLIENT_ID', ''),
+            'secret': os.environ.get('GOOGLE_OAUTH_CLIENT_SECRET', ''),
+            'key': ''
+        }
+    }
+}
 # Use regular storage during tests to avoid manifest issues
 import sys
 if 'test' in sys.argv:
