@@ -25,15 +25,37 @@
 
    .login-page td {
      font-size: 1rem;
-     color: var(--text-primary);
+     color: var(--text-primary) !important;
      font-weight: 600;
+   }
+
+   /* Ensure form labels are visible in all themes */
+   .login-page label,
+   .login-page .form-label,
+   .login-page form label,
+   .login-page form td {
+     color: var(--text-primary) !important;
+   }
+
+   /* Style for login field labels */
+   .login-field {
+     display: flex;
+     align-items: center;
+     gap: 0.5rem;
+   }
+
+   .field-label {
+     color: var(--text-primary) !important;
+     font-weight: 600 !important;
+     font-size: 1rem !important;
+     white-space: nowrap;
    }
 
    .login-page input[type="text"],
    .login-page input[type="email"],
    .login-page input[type="password"] {
-     background-color: var(--surface);
-     color: var(--text-primary);
+     background-color: var(--surface) !important;
+     color: var(--text-primary) !important;
      border: 2px solid var(--border);
      padding: 0.5rem;
      border-radius: 4px;
@@ -45,8 +67,8 @@
    .login-page input[type="password"]:focus {
      outline: none;
      border-color: var(--primary);
-     background-color: var(--surface);
-     color: var(--text-primary);
+     background-color: var(--surface) !important;
+     color: var(--text-primary) !important;
    }
 
    .divider {
@@ -150,24 +172,18 @@
 
   <div class="container">
     <div class="login-page">
-      {% for message in messages %}
-        <div class="row mb-3">
-          <p>{{ message }}</p>
-        </div>
-      {% endfor %}
-
       {% if form.errors %}
         <div class="row mb-3">
           <p>Your username and password didn't match. Please try again.</p>
         </div>
       {% endif %}
 
-      {% if redirect_field_value %}
+      {% if redirect_field_value and redirect_field_value != "/" and redirect_field_value != "/accounts/login/" %}
         <div class="row mb-3">
           {% if user.is_authenticated %}
             <p>Your account doesn't have access to this page. To proceed, please login with an account that has access.</p>
           {% else %}
-            <p>Please login to see this page.</p>
+            <p>Please login to access the requested page.</p>
           {% endif %}
         </div>
       {% endif %}
@@ -176,12 +192,16 @@
 
           {% csrf_token %}
           <div class="row mb-3">
-
-              <td>Username: {{ form.login }}</td>
+              <div class="login-field">
+                  <span class="field-label">Username:</span>
+                  {{ form.login }}
+              </div>
           </div>
           <div class="row mb-3">
-
-              <td>Password: {{ form.password }}</td>
+              <div class="login-field">
+                  <span class="field-label">Password:</span>
+                  {{ form.password }}
+              </div>
           </div>
 
           {% if redirect_field_value %}
@@ -194,7 +214,7 @@
       </form>
 
       <div class="row mb-3">
-        <td><a href="{% url 'register_page' %}">Register</a></td>
+        <a href="{% url 'register_page' %}">Register</a>
       </div>
 
       <div class="divider">OR</div>
