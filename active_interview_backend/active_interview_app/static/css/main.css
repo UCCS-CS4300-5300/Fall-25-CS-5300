@@ -931,6 +931,13 @@ a:hover {
    Profile & User Pages
    =================================== */
 
+/* Profile Page Container */
+.profile-page {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+}
+
 /* Page Header */
 .page-header {
     text-align: center;
@@ -952,6 +959,20 @@ a:hover {
     font-weight: 500;
 }
 
+/* Profile Layout */
+.profile-layout {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+.left-column,
+.right-column {
+    display: flex;
+    flex-direction: column;
+}
+
 /* Profile Section Cards */
 .profile-section {
     background: var(--surface);
@@ -963,13 +984,13 @@ a:hover {
 }
 
 .profile-section h2 {
-    color: var(--primary);
+    color: var(--text-primary);
     font-size: 1.5rem;
-    font-weight: 700;
+    font-weight: 600;
     margin-bottom: 1.5rem;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.5rem;
 }
 
 .profile-section h2::before {
@@ -981,54 +1002,241 @@ a:hover {
     border-radius: 2px;
 }
 
-/* Profile Info Items */
+/* User Info Grid */
+.user-info-grid {
+    display: grid;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
 .info-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 0;
-    border-bottom: 1px solid var(--border-light);
+    padding: 0.75rem;
+    background: var(--surface-hover);
+    border-radius: var(--radius);
+    border-left: 3px solid var(--primary);
 }
 
-.info-item:last-child {
-    border-bottom: none;
-}
-
-.info-item strong {
-    color: var(--text-primary);
-    font-weight: 600;
-}
-
-.info-item span {
+.info-label {
+    font-size: 0.85rem;
     color: var(--text-secondary);
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-value {
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+/* Role Information */
+.role-info {
+    text-align: center;
+    padding: 1.5rem;
+    background: var(--surface-hover);
+    border-radius: var(--radius);
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid var(--border);
+    color: var(--text-primary);
+}
+
+.role-info strong {
+    color: var(--text-primary);
 }
 
 /* Role Badge */
 .role-badge {
     display: inline-block;
-    padding: 0.25rem 0.75rem;
+    padding: 0.5rem 1rem;
     border-radius: var(--radius);
-    font-size: 0.875rem;
     font-weight: 600;
-    text-transform: capitalize;
-}
-
-.role-badge.candidate {
-    background-color: rgba(52, 152, 219, 0.1);
-    color: var(--info);
-    border: 1px solid var(--info);
-}
-
-.role-badge.interviewer {
-    background-color: rgba(46, 204, 113, 0.1);
-    color: var(--success);
-    border: 1px solid var(--success);
+    font-size: 1rem;
+    margin-top: 0.5rem;
 }
 
 .role-badge.admin {
-    background-color: rgba(231, 76, 60, 0.1);
+    background: var(--error);
+    color: var(--text-white);
+}
+
+.role-badge.interviewer {
+    background: var(--primary);
+    color: var(--text-white);
+}
+
+.role-badge.candidate {
+    background: var(--text-secondary);
+    color: var(--text-white);
+}
+
+/* Alert Info */
+.alert-info {
+    background-color: rgba(52, 152, 219, 0.1);
+    color: var(--text-primary);
+    border: 1px solid var(--info);
+    border-radius: var(--radius);
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+/* Profile Action Buttons */
+.btn-request-role,
+.btn-go-to-profile {
+    background-color: var(--primary);
+    color: var(--text-white);
+    border: none;
+    padding: 0.75rem 2rem;
+    border-radius: var(--radius);
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-block;
+    margin-top: 1rem;
+}
+
+.btn-request-role:hover,
+.btn-go-to-profile:hover {
+    background-color: var(--primary-light);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow);
+    color: var(--text-white);
+}
+
+.help-text {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+/* Document List in Profile */
+.document-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.document-item {
+    padding: 1rem;
+    background: var(--surface-hover);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius);
+    margin-bottom: 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.document-item:hover {
+    box-shadow: var(--shadow-sm);
+    border-color: var(--primary);
+}
+
+.document-name {
+    color: var(--text-primary);
+    font-weight: 500;
+    font-size: 1rem;
+}
+
+/* Document Actions */
+.document-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.document-actions a,
+.document-actions button {
+    color: var(--primary);
+    text-decoration: none;
+    font-size: 0.9rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s ease;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.document-actions a:hover,
+.document-actions button:hover {
+    background: var(--primary);
+    color: var(--text-white);
+}
+
+.document-actions .delete-btn {
     color: var(--error);
-    border: 1px solid var(--error);
+}
+
+.document-actions .delete-btn:hover {
+    background: var(--error);
+    color: var(--text-white);
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary);
+}
+
+/* Section Divider */
+.section-divider {
+    height: 2px;
+    background: linear-gradient(to right, transparent, var(--border), transparent);
+    margin: 2rem 0;
+    border: none;
+}
+
+/* Modal Theme Fixes for Profile */
+.modal-content {
+    background-color: var(--surface) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border);
+}
+
+.modal-header {
+    border-color: var(--border);
+}
+
+.modal-footer {
+    border-color: var(--border);
+}
+
+.modal-body {
+    color: var(--text-primary);
+}
+
+/* Responsive Design for Profile Pages */
+@media (max-width: 992px) {
+    .profile-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .profile-page {
+        padding: 0 1rem;
+    }
+
+    .profile-section {
+        padding: 1.5rem;
+    }
+
+    .document-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .document-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
 }
 
 /* ===================================
