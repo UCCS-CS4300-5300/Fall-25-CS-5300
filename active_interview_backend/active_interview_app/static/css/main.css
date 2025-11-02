@@ -502,6 +502,20 @@ a:hover {
     font-weight: 500;
 }
 
+/* Placeholder text styling for all inputs */
+::placeholder {
+    color: var(--text-light) !important;
+    opacity: 1;
+}
+
+:-ms-input-placeholder {
+    color: var(--text-light) !important;
+}
+
+::-ms-input-placeholder {
+    color: var(--text-light) !important;
+}
+
 .input-card {
     border-radius: var(--radius) !important;
     background-color: var(--surface);

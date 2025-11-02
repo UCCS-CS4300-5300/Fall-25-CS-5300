@@ -1,6 +1,54 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<style>
+    /* Override Bootstrap classes for theme support */
+    .text-muted {
+        color: var(--text-secondary) !important;
+    }
+    .card {
+        background-color: var(--surface) !important;
+        border-color: var(--border) !important;
+        color: var(--text-primary) !important;
+    }
+    .card-header {
+        background-color: var(--surface-hover) !important;
+        border-color: var(--border) !important;
+        color: var(--text-primary) !important;
+    }
+    .card-body {
+        background-color: var(--surface) !important;
+        color: var(--text-primary) !important;
+    }
+    .form-control {
+        background-color: var(--surface) !important;
+        border-color: var(--border) !important;
+        color: var(--text-primary) !important;
+    }
+    .form-control:focus {
+        background-color: var(--surface) !important;
+        border-color: var(--primary) !important;
+        color: var(--text-primary) !important;
+        box-shadow: 0 0 0 0.2rem rgba(31, 123, 166, 0.25) !important;
+    }
+    .form-control::placeholder {
+        color: var(--text-light) !important;
+        opacity: 1 !important;
+    }
+    .list-group-item {
+        background-color: var(--surface) !important;
+        border-color: var(--border-light) !important;
+        color: var(--text-primary) !important;
+    }
+    .alert-info {
+        background-color: var(--info) !important;
+        color: var(--text-white) !important;
+        border-color: var(--info) !important;
+    }
+    h2, h4, h5 {
+        color: var(--text-primary) !important;
+    }
+</style>
 <div class="container mt-5">
     <div class="row">
         <div class="col-md-10 offset-md-1">
