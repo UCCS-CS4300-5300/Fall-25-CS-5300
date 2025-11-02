@@ -60,6 +60,13 @@ CSRF_TRUSTED_ORIGINS = [
     'https://app.activeinterviewservice.me',
 ]
 
+# Proxy/HTTPS configuration for Railway
+if PROD:
+    # Tell Django to trust the X-Forwarded-Proto header from Railway's proxy
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    # Force allauth to use HTTPS for OAuth callbacks
+    ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'
+
 # Application definition
 
 INSTALLED_APPS = [
