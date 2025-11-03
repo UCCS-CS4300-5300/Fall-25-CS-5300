@@ -14,16 +14,32 @@
 ```css
 color: #333;
 background-color: white;
-border: 1px solid #ddd;
+border: 1px solid #ddd;              /* Wrong: hardcoded AND thin border */
 box-shadow: 5px 5px 5px black;
 ```
 
 ✅ **CORRECT:**
 ```css
 color: var(--text-primary);
-background-color: var(--surface);
-border: 1px solid var(--border-light);
+background-color: var(--surface-hover);  /* Outer containers - lighter */
+border: 2px solid var(--border);         /* Always use 2px borders */
 box-shadow: var(--shadow-md);
+```
+
+### Visual Hierarchy
+Use proper nesting hierarchy for visual clarity:
+```css
+/* Outer containers (sections, cards) */
+.outer-section {
+  background: var(--surface-hover);  /* Lighter background */
+  border: 2px solid var(--border);
+}
+
+/* Inner/nested elements (list items, info cards) */
+.inner-item {
+  background: var(--surface);        /* Darker for contrast */
+  border: 2px solid var(--border);
+}
 ```
 
 ### Always Override Bootstrap Classes
@@ -31,7 +47,13 @@ Bootstrap uses hardcoded colors. Override them in your template's `<style>` bloc
 
 ```css
 .card {
-  background-color: var(--surface) !important;
+  background-color: var(--surface-hover) !important;  /* Outer container - lighter */
+  border: 2px solid var(--border) !important;         /* 2px border */
+  color: var(--text-primary) !important;
+}
+
+.card-header, .card-body {
+  background-color: var(--surface) !important;        /* Nested - darker */
   color: var(--text-primary) !important;
 }
 
@@ -76,9 +98,9 @@ var(--text-primary)      /* Main text */
 var(--text-secondary)    /* Muted text */
 var(--text-white)        /* White text */
 
-/* Surfaces */
-var(--surface)           /* Cards, panels */
-var(--surface-hover)     /* Hover states */
+/* Surfaces - Visual Hierarchy */
+var(--surface-hover)     /* Outer containers - lighter background */
+var(--surface)           /* Inner/nested elements - darker background */
 var(--background)        /* Page background */
 
 /* Brand & Status */
@@ -90,8 +112,8 @@ var(--warning)           /* Warning state */
 var(--error)             /* Error state */
 
 /* Layout */
-var(--border)            /* Border color */
-var(--border-light)      /* Light border */
+var(--border)            /* Border color - use with 2px solid */
+var(--border-light)      /* ⚠️ DEPRECATED - use var(--border) instead */
 var(--shadow)            /* Box shadow */
 var(--shadow-sm)         /* Small shadow */
 var(--shadow-md)         /* Medium shadow */
@@ -103,6 +125,10 @@ var(--radius-md)         /* Medium radius */
 ## Checklist Before Committing
 
 - [ ] All colors use CSS variables (no hex/rgb/named colors)
+- [ ] Outer containers use `var(--surface-hover)` background
+- [ ] Inner/nested elements use `var(--surface)` background
+- [ ] All borders use `2px solid var(--border)` (not 1px or border-light)
+- [ ] Visual hierarchy is clear (lighter outer, darker inner)
 - [ ] Bootstrap classes overridden where needed
 - [ ] Placeholder styling included if form controls are overridden
 - [ ] Tested in light mode

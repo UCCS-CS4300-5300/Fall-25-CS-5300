@@ -67,16 +67,23 @@ See `js/charts.js` for a reference implementation of reading CSS variables for C
 .my-element {
   color: #333;
   background: white;
-  border: 1px solid lightgray;
+  border: 1px solid lightgray;  /* Wrong: hardcoded AND thin border */
 }
 ```
 
 ✅ **CORRECT:**
 ```css
-.my-element {
+/* Use proper visual hierarchy */
+.outer-container {
   color: var(--text-primary);
-  background: var(--surface);
-  border: 1px solid var(--border-light);
+  background: var(--surface-hover);  /* Lighter for outer containers */
+  border: 2px solid var(--border);   /* Always use 2px borders */
+}
+
+.inner-item {
+  color: var(--text-primary);
+  background: var(--surface);        /* Darker for nested elements */
+  border: 2px solid var(--border);
 }
 ```
 
@@ -111,10 +118,10 @@ See `css/main.css` for the complete list. Common variables:
 --text-light
 --text-white
 
-/* Surfaces */
---background
---surface
---surface-hover
+/* Surfaces - Visual Hierarchy */
+--background           /* Page background */
+--surface-hover        /* Outer containers - lighter background */
+--surface              /* Inner/nested elements - darker background */
 
 /* Brand Colors */
 --primary
@@ -129,8 +136,8 @@ See `css/main.css` for the complete list. Common variables:
 --info
 
 /* Layout */
---border
---border-light
+--border               /* Border color - use with 2px solid */
+--border-light         /* ⚠️ DEPRECATED - use --border instead */
 --shadow
 --shadow-sm
 --shadow-md
@@ -162,6 +169,10 @@ If you need to add new theme-related variables:
 
 - [ ] No hardcoded colors in CSS files
 - [ ] No hardcoded colors in JavaScript files
+- [ ] All borders use `2px solid var(--border)` (not 1px or border-light)
+- [ ] Outer containers use `var(--surface-hover)` background
+- [ ] Inner/nested elements use `var(--surface)` background
+- [ ] Visual hierarchy is clear (lighter outer, darker inner)
 - [ ] New CSS variables added to both light and dark modes
 - [ ] Tested in light mode
 - [ ] Tested in dark mode

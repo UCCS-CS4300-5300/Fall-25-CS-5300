@@ -61,8 +61,8 @@ var(--info)             /* Info states */
 
 #### Layout
 ```css
-var(--border)           /* Border color */
-var(--border-light)     /* Lighter border */
+var(--border)           /* Border color - use for all borders (2px solid) */
+var(--border-light)     /* Lighter border (deprecated - use var(--border) instead) */
 var(--shadow)           /* Box shadow */
 var(--shadow-sm)        /* Small shadow */
 var(--shadow-md)        /* Medium shadow */
@@ -70,6 +70,8 @@ var(--radius)           /* Border radius */
 var(--radius-sm)        /* Small border radius */
 var(--radius-md)        /* Medium border radius */
 ```
+
+**Note:** Use `2px solid var(--border)` for all borders to maintain consistent, prominent visual hierarchy.
 
 ---
 
@@ -117,10 +119,15 @@ var(--radius-md)        /* Medium border radius */
 
 ### Section/Card Pattern
 
+**Visual Hierarchy:**
+- **Outer containers** use `var(--surface-hover)` with `2px solid var(--border)` - lighter, prominent borders
+- **Inner/nested elements** use `var(--surface)` with `2px solid var(--border)` - darker for contrast
+
 ```css
+/* Outer Section Container */
 .section-container {
-  background: var(--surface);
-  border: 1px solid var(--border-light);
+  background: var(--surface-hover);  /* Lighter background for outer container */
+  border: 2px solid var(--border);   /* Prominent 2px border */
   border-radius: var(--radius-md);
   padding: 2rem;
   margin-bottom: 2rem;
@@ -145,6 +152,15 @@ var(--radius-md)        /* Medium border radius */
   height: 1.5rem;
   background: var(--primary);
   border-radius: 2px;
+}
+
+/* Nested Inner Elements */
+.inner-item {
+  background: var(--surface);        /* Darker background for nested items */
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 0.75rem;
 }
 ```
 
@@ -224,19 +240,19 @@ textarea::placeholder {
 
 ```css
 .card {
-  background-color: var(--surface) !important;
-  border-color: var(--border) !important;
+  background-color: var(--surface-hover) !important;  /* Outer container - lighter */
+  border: 2px solid var(--border) !important;         /* Prominent 2px border */
   color: var(--text-primary) !important;
 }
 
 .card-header {
-  background-color: var(--surface-hover) !important;
+  background-color: var(--surface) !important;        /* Nested element - darker */
   border-color: var(--border) !important;
   color: var(--text-primary) !important;
 }
 
 .card-body {
-  background-color: var(--surface) !important;
+  background-color: var(--surface) !important;        /* Nested element - darker */
   color: var(--text-primary) !important;
 }
 ```
@@ -246,8 +262,8 @@ textarea::placeholder {
 ```css
 .list-item {
   padding: 1rem;
-  background: var(--surface-hover);
-  border: 1px solid var(--border-light);
+  background: var(--surface);            /* Nested element - darker background */
+  border: 2px solid var(--border);       /* Prominent 2px border */
   border-radius: var(--radius);
   margin-bottom: 0.75rem;
   display: flex;
@@ -329,11 +345,17 @@ p {
 .my-element {
   color: #333;
   background: white;
-  border: 1px solid #ddd;
+  border: 1px solid #ddd;  /* Wrong: hardcoded color AND thin border */
 }
 
 .btn {
   color: white;  /* Won't adapt to theme */
+}
+
+/* Don't use deprecated border-light or thin borders */
+.section {
+  background: var(--surface);
+  border: 1px solid var(--border-light);  /* ❌ Deprecated */
 }
 ```
 
@@ -342,12 +364,23 @@ p {
 /* Always use CSS variables */
 .my-element {
   color: var(--text-primary);
-  background: var(--surface);
-  border: 1px solid var(--border-light);
+  background: var(--surface-hover);      /* Lighter for outer containers */
+  border: 2px solid var(--border);       /* Always use 2px borders */
 }
 
 .btn {
   color: var(--text-white);  /* Adapts to theme */
+}
+
+/* Use proper hierarchy */
+.outer-section {
+  background: var(--surface-hover);  /* Lighter background */
+  border: 2px solid var(--border);
+}
+
+.inner-item {
+  background: var(--surface);        /* Darker for contrast */
+  border: 2px solid var(--border);
 }
 ```
 
@@ -412,8 +445,10 @@ Before creating or updating a page, ensure:
 - [ ] All colors use CSS variables (no hardcoded hex/rgb values)
 - [ ] Bootstrap classes are overridden where necessary
 - [ ] Headings use `var(--text-primary)`
-- [ ] Backgrounds use `var(--surface)` or `var(--background)`
-- [ ] Borders use `var(--border)` or `var(--border-light)`
+- [ ] Outer containers use `var(--surface-hover)` background
+- [ ] Inner/nested elements use `var(--surface)` background
+- [ ] All borders use `2px solid var(--border)` (not 1px or border-light)
+- [ ] Visual hierarchy is clear (lighter outer, darker inner)
 - [ ] Forms use proper theme-aware styling
 - [ ] Modals have theme-aware backgrounds
 - [ ] Page is responsive (test at different screen sizes)
@@ -464,7 +499,7 @@ Before creating or updating a page, ensure:
 ```css
 .info-item {
   padding: 0.75rem;
-  background: var(--surface-hover);
+  background: var(--surface);            /* Nested element - darker background */
   border-radius: var(--radius);
   border-left: 3px solid var(--primary);
 }

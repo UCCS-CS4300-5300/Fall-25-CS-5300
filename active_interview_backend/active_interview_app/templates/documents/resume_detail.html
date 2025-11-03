@@ -32,8 +32,8 @@
     }
 
     .resume-section {
-      background: var(--surface);
-      border: 1px solid var(--border-light);
+      background: var(--surface-hover);
+      border: 2px solid var(--border);
       border-radius: var(--radius-md);
       padding: 2rem;
       box-shadow: var(--shadow-sm);
@@ -83,13 +83,20 @@
       flex-direction: column;
     }
 
-    /* Parsing Status Styling */
+    /* Parsing Status Styling - inherits from .resume-section base styles */
     .parsing-status-box {
-      background: var(--surface-hover);
-      padding: 1rem 1.5rem;
-      border: 2px solid var(--border);
-      border-radius: var(--radius-md);
-      margin-bottom: 1.5rem;
+      padding: 1rem 1.5rem; /* Slightly tighter padding than default */
+    }
+
+    .parsing-status-box h3 {
+      margin-bottom: 1rem;
+      color: var(--text-primary);
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    .parsing-status-box strong {
+      color: var(--text-primary);
     }
 
     .parsing-status-box .badge {
@@ -100,13 +107,27 @@
       color: var(--text-secondary) !important;
     }
 
-    /* Parsed Data Sections */
+    .parsing-status-box .alert {
+      background-color: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+    }
+
+    .parsing-status-box .alert strong {
+      color: var(--text-primary);
+    }
+
+    /* Parsed Data Sections - inherits from .resume-section base styles */
     .parsed-data-section {
-      background: var(--surface-hover);
-      padding: 1.5rem;
-      border: 2px solid var(--border);
-      border-radius: var(--radius-md);
-      margin-bottom: 1.5rem;
+      padding: 1.5rem; /* Slightly tighter padding than default */
+    }
+
+    .parsed-data-section h3 {
+      color: var(--text-primary);
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 0.5rem;
+      margin-bottom: 1rem;
+      font-size: 1.4rem;
     }
 
     .skill-badge {
@@ -121,7 +142,7 @@
 
     .experience-card, .education-card {
       background: var(--surface);
-      border: 1px solid var(--border-light);
+      border: 2px solid var(--border);
       border-radius: var(--radius);
       padding: 1rem;
       margin-bottom: 1rem;
@@ -185,8 +206,8 @@
 
     .document-item {
       padding: 1rem;
-      background: var(--surface-hover);
-      border: 1px solid var(--border-light);
+      background: var(--surface);
+      border: 2px solid var(--border);
       border-radius: var(--radius);
       margin-bottom: 0.75rem;
       display: flex;
@@ -264,6 +285,49 @@
       color: var(--text-primary);
     }
 
+    /* Collapsible section toggle */
+    .section-header-with-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+
+    .section-header-with-toggle h2 {
+      margin-bottom: 0;
+    }
+
+    .toggle-btn {
+      background: var(--primary);
+      color: var(--text-white);
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius);
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .toggle-btn:hover {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .toggle-btn .collapse-text {
+      display: none;
+    }
+
+    .toggle-btn[aria-expanded="true"] .expand-text {
+      display: none;
+    }
+
+    .toggle-btn[aria-expanded="true"] .collapse-text {
+      display: inline;
+    }
+
     /* Responsive: Stack on mobile */
     @media (max-width: 992px) {
       .resume-layout {
@@ -274,14 +338,15 @@
 
   <div class="resume-page">
     <div class="page-header">
-      <h1>{{ resume.title }}</h1>
+      <h1>{% if is_owner %}Viewing Your Documents{% else %}Viewing {{ resume.user.username }}'s Documents{% endif %}</h1>
     </div>
 
     <div class="resume-layout">
       <!-- Left Column: Resume Content & Parsed Data -->
       <div class="left-column">
         <!-- Parsing Status Section -->
-        <div class="parsing-status-box">
+        <div class="resume-section parsing-status-box">
+          <h3>{{ resume.title }}</h3>
           <div class="d-flex align-items-center justify-content-between flex-wrap">
             <div>
               <strong>Parsing Status:</strong>
@@ -319,7 +384,7 @@
 
         <!-- Parsed Data: Skills -->
         {% if resume.parsing_status == 'success' %}
-          <div class="parsed-data-section">
+          <div class="resume-section parsed-data-section">
             <h3><i class="bi bi-code-square"></i> Skills</h3>
             {% if resume.skills and resume.skills|length > 0 %}
               <div class="d-flex flex-wrap">
@@ -335,7 +400,7 @@
           </div>
 
           <!-- Parsed Data: Work Experience -->
-          <div class="parsed-data-section">
+          <div class="resume-section parsed-data-section">
             <h3><i class="bi bi-briefcase"></i> Work Experience</h3>
             {% if resume.experience and resume.experience|length > 0 %}
               {% for exp in resume.experience %}
@@ -356,7 +421,7 @@
           </div>
 
           <!-- Parsed Data: Education -->
-          <div class="parsed-data-section">
+          <div class="resume-section parsed-data-section">
             <h3><i class="bi bi-mortarboard"></i> Education</h3>
             {% if resume.education and resume.education|length > 0 %}
               {% for edu in resume.education %}
@@ -382,8 +447,16 @@
 
         <!-- Raw Resume Content -->
         <div class="resume-section">
-          <h2><i class="bi bi-file-text"></i> Raw Resume Content</h2>
-          <div class="resume-content">{{ resume.content|linebreaksbr }}</div>
+          <div class="section-header-with-toggle">
+            <h2><i class="bi bi-file-text"></i> Raw Resume Content</h2>
+            <button class="toggle-btn" data-bs-toggle="collapse" data-bs-target="#rawResumeContent" aria-expanded="false" aria-controls="rawResumeContent">
+              <span class="expand-text">Expand</span>
+              <span class="collapse-text">Collapse</span>
+            </button>
+          </div>
+          <div class="collapse" id="rawResumeContent">
+            <div class="resume-content">{{ resume.content|linebreaksbr }}</div>
+          </div>
         </div>
       </div>
 
@@ -410,15 +483,18 @@
                   </span>
                   <div class="document-actions">
                     <a href="{% url 'resume_detail' resume_id=document.id %}">View</a>
-                    <a href="{% url 'edit_resume' document.id %}">Edit</a>
-                    <button type="button" class="delete-btn" data-bs-toggle="modal" data-bs-target="#deleteResumeModal{{ document.id }}">Delete</button>
+                    {% if is_owner %}
+                      <a href="{% url 'edit_resume' document.id %}">Edit</a>
+                      <button type="button" class="delete-btn" data-bs-toggle="modal" data-bs-target="#deleteResumeModal{{ document.id }}">Delete</button>
+                    {% endif %}
                   </div>
                 </li>
                 {% endif %}
               {% endfor %}
             </ul>
-            {% for document in resumes %}
-              <div class="modal fade" id="deleteResumeModal{{ document.id }}" tabindex="-1" aria-labelledby="deleteResumeLabel{{ document.id }}" aria-hidden="true">
+            {% if is_owner %}
+              {% for document in resumes %}
+                <div class="modal fade" id="deleteResumeModal{{ document.id }}" tabindex="-1" aria-labelledby="deleteResumeLabel{{ document.id }}" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered">
                   <div class="modal-content">
                     <div class="modal-header">
@@ -438,7 +514,8 @@
                   </div>
                 </div>
               </div>
-            {% endfor %}
+              {% endfor %}
+            {% endif %}
           {% endif %}
         </div>
 
@@ -456,11 +533,14 @@
                   <span class="document-name">{{ job.title }}</span>
                   <div class="document-actions">
                     <a href="{% url 'job_posting_detail' job_id=job.id %}">View</a>
-                    <a href="{% url 'edit_job_posting' job.id %}">Edit</a>
-                    <button type="button" class="delete-btn" data-bs-toggle="modal" data-bs-target="#deleteJobModal{{ job.id }}">Delete</button>
+                    {% if is_owner %}
+                      <a href="{% url 'edit_job_posting' job.id %}">Edit</a>
+                      <button type="button" class="delete-btn" data-bs-toggle="modal" data-bs-target="#deleteJobModal{{ job.id }}">Delete</button>
+                    {% endif %}
                   </div>
                 </li>
-                <div class="modal fade" id="deleteJobModal{{ job.id }}" tabindex="-1" aria-labelledby="deleteJobLabel{{ job.id }}" aria-hidden="true">
+                {% if is_owner %}
+                  <div class="modal fade" id="deleteJobModal{{ job.id }}" tabindex="-1" aria-labelledby="deleteJobLabel{{ job.id }}" aria-hidden="true">
                   <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
                       <div class="modal-header">
@@ -480,6 +560,7 @@
                     </div>
                   </div>
                 </div>
+                {% endif %}
               {% endfor %}
             </ul>
           {% endif %}
