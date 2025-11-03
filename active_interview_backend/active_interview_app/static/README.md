@@ -22,12 +22,27 @@ static/
 ## Theme System Files
 
 ### `css/main.css`
-**Central theme definition file.** Contains all CSS variable definitions for both light and dark modes.
+**Central theme definition file.** Contains all CSS variable definitions for both light and dark modes, plus the new **hierarchical class system**.
+
+**⭐ NEW: Hierarchical Class System**
+AIS now uses a base + modifier pattern for easy site-wide styling:
+- **Boxes:** `.box` + `.box-chat`, `.box-button`, `.box-section`, `.box-info`, `.box-score`, `.box-item`
+- **Buttons:** `.btn` + `.btn-primary`, `.btn-secondary`, `.btn-card`, `.btn-minimal`, `.btn-danger`
+- **Containers:** `.container-page` + `.container-narrow`, `.container-standard`, `.container-centered`
+- **Lists:** `.list-clean`, `.list-items`, `.list-grid` + `.list-grid-2`, `.list-grid-3`
+- **Text utilities:** `.text-brand`, `.text-lg`, `.text-bold`, etc.
+
+See lines 70-171 in `main.css` for full documentation and lines 2160-2276 for usage patterns.
 
 **When adding new CSS variables:**
 1. Define them in both `:root` (light mode) and `[data-theme="dark"]` (dark mode)
 2. Use semantic names (e.g., `--text-primary`, not `--color-1`)
 3. Update `docs/STYLE_GUIDE.md` to document new variables
+
+**When creating new variants:**
+1. Use the hierarchical system (e.g., `.box-myvariant`)
+2. Only define properties that differ from the base class
+3. Document in `docs/STYLE_GUIDE.md`
 
 ### `js/theme.js`
 **Theme switcher logic.** Handles toggling between light and dark modes.
@@ -58,6 +73,49 @@ const textColor = '#333';        // Hardcoded - won't work in dark mode!
 ### Example: charts.js
 
 See `js/charts.js` for a reference implementation of reading CSS variables for Chart.js configuration.
+
+## Using the Hierarchical Class System
+
+### Quick Examples
+
+**Instead of this (old):**
+```html
+<div class="chat-card">Content</div>
+```
+
+**Use this (new):**
+```html
+<div class="box box-chat">Content</div>
+```
+
+**More examples:**
+```html
+<!-- Content cards -->
+<div class="box box-chat">...</div>
+
+<!-- Action buttons -->
+<button class="btn btn-primary">Save</button>
+<button class="btn btn-danger">Delete</button>
+
+<!-- Page containers -->
+<div class="container-page container-standard">...</div>
+
+<!-- Lists -->
+<ul class="list-clean list-items">
+  <li class="box box-item">Item</li>
+</ul>
+
+<!-- Typography -->
+<p class="text-brand text-lg text-bold">Headline</p>
+```
+
+**Benefits:**
+- Change all boxes site-wide by editing `.box`
+- Easy to create new variants
+- Consistent naming pattern
+- Mix and match modifiers
+
+See `docs/STYLE_GUIDE.md` for comprehensive usage guide.
 
 ## Critical Rules
 

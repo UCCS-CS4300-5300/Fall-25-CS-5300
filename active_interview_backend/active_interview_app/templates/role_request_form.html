@@ -3,16 +3,8 @@
 {% block content %}
 <style>
     /* Override Bootstrap classes for theme support */
-    h2 {
-        color: var(--text-primary) !important;
-    }
     .text-muted {
         color: var(--text-secondary) !important;
-    }
-    .alert-info {
-        background-color: var(--info) !important;
-        color: var(--text-white) !important;
-        border-color: var(--info) !important;
     }
     .form-label {
         color: var(--text-primary) !important;
@@ -35,41 +27,39 @@
         opacity: 1 !important;
     }
 </style>
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <h2>Request Role Change</h2>
+<div class="container-page container-narrow container-centered">
+    <div class="box box-section" style="width: 100%; max-width: 700px;">
+        <h2 class="text-brand text-xl mb-4">Request Role Change</h2>
 
-            <div class="alert alert-info">
-                <strong>Current role:</strong> {{ request.user.profile.role|title }}
+        <div class="box box-info mb-4">
+            <p class="mb-0"><strong>Current role:</strong> {{ request.user.profile.role|title }}</p>
+        </div>
+
+        <form method="post" action="{% url 'request_role_change' %}">
+            {% csrf_token %}
+
+            <div class="mb-3">
+                <label class="form-label text-bold">Requested Role *</label>
+                <select name="requested_role" class="form-select" required>
+                    <option value="">-- Select Role --</option>
+                    <option value="interviewer">Interviewer</option>
+                </select>
+                <small class="text-secondary-color text-sm d-block mt-1">
+                    Interviewers can conduct practice interviews and view all candidate profiles.
+                </small>
             </div>
 
-            <form method="post" action="{% url 'request_role_change' %}">
-                {% csrf_token %}
+            <div class="mb-4">
+                <label class="form-label text-bold">Why do you want this role? (Optional)</label>
+                <textarea name="reason" class="form-control" rows="4"
+                          placeholder="Tell us about your experience and why you'd like to become an interviewer..."></textarea>
+            </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Requested Role *</label>
-                    <select name="requested_role" class="form-select" required>
-                        <option value="">-- Select Role --</option>
-                        <option value="interviewer">Interviewer</option>
-                    </select>
-                    <small class="text-muted">
-                        Interviewers can conduct practice interviews and view all candidate profiles.
-                    </small>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Why do you want this role? (Optional)</label>
-                    <textarea name="reason" class="form-control" rows="4"
-                              placeholder="Tell us about your experience and why you'd like to become an interviewer..."></textarea>
-                </div>
-
-                <div class="d-grid gap-2 d-md-flex">
-                    <button type="submit" class="btn btn-primary">Submit Request</button>
-                    <a href="{% url 'profile' %}" class="btn btn-secondary">Cancel</a>
-                </div>
-            </form>
-        </div>
+            <div class="d-flex gap-2" style="gap: 1rem;">
+                <button type="submit" class="btn btn-primary">Submit Request</button>
+                <a href="{% url 'profile' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}
