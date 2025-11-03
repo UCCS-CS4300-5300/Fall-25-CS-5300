@@ -17,7 +17,7 @@
     }
 
     .resume-detail {
-      max-width: 800px;
+      max-width: 900px;
       width: 100%;
       margin-bottom: 3rem;
     }
@@ -32,17 +32,85 @@
       margin-top: 20px;
     }
 
+    .parsing-status-box {
+      background-color: rgba(255, 255, 255, 0.1);
+      padding: 1rem 1.5rem;
+      border: 2px solid white;
+      border-radius: 10px;
+      margin-top: 1.5rem;
+      text-align: left;
+    }
+
+    .parsed-data-section {
+      background-color: rgba(255, 255, 255, 0.1);
+      padding: 1.5rem;
+      border: 2px solid white;
+      border-radius: 10px;
+      margin-top: 1.5rem;
+      text-align: left;
+    }
+
+    .parsed-data-section h3 {
+      color: white;
+      border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+      padding-bottom: 0.5rem;
+      margin-bottom: 1rem;
+      font-size: 1.4rem;
+    }
+
+    .skill-badge {
+      background-color: rgba(26, 115, 232, 0.8);
+      color: white;
+      padding: 0.4rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      margin: 0.3rem;
+      display: inline-block;
+    }
+
+    .experience-card, .education-card {
+      background-color: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .experience-card h4, .education-card h4 {
+      color: #1a73e8;
+      margin-bottom: 0.5rem;
+      font-size: 1.2rem;
+    }
+
+    .experience-card .company, .education-card .institution {
+      font-weight: bold;
+      font-size: 1.1rem;
+      color: white;
+    }
+
+    .experience-card .duration, .education-card .degree-info {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 0.95rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .experience-card .description {
+      color: rgba(255, 255, 255, 0.9);
+      margin-top: 0.5rem;
+      line-height: 1.5;
+    }
+
     .resume-content-box {
       background-color: rgba(255, 255, 255, 0.1);
-      padding: 2rem 1.5rem; /* Increased padding for more space within the box */
+      padding: 2rem 1.5rem;
       border: 2px solid white;
       border-radius: 10px;
       font-size: 1.2rem;
       margin-top: 2rem;
-      margin-bottom: 2rem; /* Added margin-bottom for space below content */
+      margin-bottom: 2rem;
       text-align: left;
       width: 100%;
-      min-height: 300px; /* Increased minimum height for more vertical space */
+      min-height: 300px;
     }
 
     .document-list-box {
@@ -59,17 +127,134 @@
     .document-list {
       margin-top: 0;
     }
+
+    .no-data-message {
+      color: rgba(255, 255, 255, 0.6);
+      font-style: italic;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .section-collapsed {
+      cursor: pointer;
+    }
+
+    .section-collapsed:hover {
+      background-color: rgba(255, 255, 255, 0.15);
+    }
   </style>
 
-  <div class="resume-detail">
-    <h1>{{ resume.title }}</h1>
-    <div>{{ resume.content|linebreaksbr }}</div>
   <div class="resume-detail-wrapper">
     <div class="resume-detail">
       <div class="resume-title">
         <h1>{{ resume.title }}</h1>
       </div>
+
+      <!-- Parsing Status Section -->
+      <div class="parsing-status-box">
+        <div class="d-flex align-items-center justify-content-between flex-wrap">
+          <div>
+            <strong>Parsing Status:</strong>
+            {% if resume.parsing_status == 'success' %}
+              <span class="badge bg-success ms-2">Success</span>
+            {% elif resume.parsing_status == 'error' %}
+              <span class="badge bg-danger ms-2">Error</span>
+            {% elif resume.parsing_status == 'in_progress' %}
+              <span class="badge bg-warning text-dark ms-2">In Progress</span>
+            {% elif resume.parsing_status == 'pending' %}
+              <span class="badge bg-secondary ms-2">Pending</span>
+            {% else %}
+              <span class="badge bg-secondary ms-2">Unknown</span>
+            {% endif %}
+          </div>
+          {% if resume.parsed_at %}
+            <div class="text-muted" style="font-size: 0.9rem;">
+              Parsed: {{ resume.parsed_at|date:"M d, Y g:i A" }}
+            </div>
+          {% endif %}
+        </div>
+
+        {% if resume.parsing_status == 'error' and resume.parsing_error %}
+          <div class="alert alert-danger mt-2 mb-0" style="font-size: 0.9rem;">
+            <strong>Error:</strong> {{ resume.parsing_error }}
+          </div>
+        {% endif %}
+
+        {% if resume.parsing_status == 'pending' %}
+          <div class="alert alert-info mt-2 mb-0" style="font-size: 0.9rem;">
+            This resume has not been parsed yet. Parsing will occur automatically on the next upload or system update.
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Parsed Data: Skills -->
+      {% if resume.parsing_status == 'success' %}
+        <div class="parsed-data-section">
+          <h3><i class="bi bi-code-square"></i> Skills</h3>
+          {% if resume.skills and resume.skills|length > 0 %}
+            <div class="d-flex flex-wrap">
+              {% for skill in resume.skills %}
+                <span class="skill-badge">{{ skill }}</span>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="no-data-message">
+              No skills extracted from resume.
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Parsed Data: Work Experience -->
+        <div class="parsed-data-section">
+          <h3><i class="bi bi-briefcase"></i> Work Experience</h3>
+          {% if resume.experience and resume.experience|length > 0 %}
+            {% for exp in resume.experience %}
+              <div class="experience-card">
+                <h4>{{ exp.title|default:"Position" }}</h4>
+                <div class="company">{{ exp.company|default:"Company Name" }}</div>
+                <div class="duration">{{ exp.duration|default:"Duration Unknown" }}</div>
+                {% if exp.description %}
+                  <div class="description">{{ exp.description }}</div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="no-data-message">
+              No work experience extracted from resume.
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Parsed Data: Education -->
+        <div class="parsed-data-section">
+          <h3><i class="bi bi-mortarboard"></i> Education</h3>
+          {% if resume.education and resume.education|length > 0 %}
+            {% for edu in resume.education %}
+              <div class="education-card">
+                <h4>{{ edu.degree|default:"Degree" }}{% if edu.field %} in {{ edu.field }}{% endif %}</h4>
+                <div class="institution">{{ edu.institution|default:"Institution" }}</div>
+                <div class="degree-info">
+                  {% if edu.year %}
+                    Graduated: {{ edu.year }}
+                  {% else %}
+                    Graduation year unknown
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="no-data-message">
+              No education information extracted from resume.
+            </div>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      <!-- Raw Resume Content -->
       <div class="resume-content-box">
+        <h3 style="border-bottom: 2px solid rgba(255, 255, 255, 0.3); padding-bottom: 0.5rem; margin-bottom: 1rem;">
+          <i class="bi bi-file-text"></i> Raw Resume Content
+        </h3>
         <div>{{ resume.content|linebreaksbr }}</div>
       </div>
     </div>
@@ -79,6 +264,5 @@
         {% include "documents/_document_list.html" %}
       </div>
     </div>
-  </div>
   </div>
 {% endblock content %}

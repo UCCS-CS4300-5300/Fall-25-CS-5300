@@ -37,6 +37,21 @@
     li{
       font-size: 23px;
     }
+
+    /* Resume parsing status badges */
+    .resume-status-badge {
+      font-size: 14px;
+      padding: 0.25rem 0.5rem;
+      border-radius: 12px;
+      margin-left: 0.5rem;
+    }
+
+    .resume-stats {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 16px;
+      margin-left: 0.5rem;
+      font-style: italic;
+    }
   </style>
 
   <div class="centered-container">
@@ -90,17 +105,45 @@
                 {% if document.title and document.title != "1" %}
                 <li>
                   {% if document.title and document.title != "1" %}
-                    {{ document.title }} -
-                    <a class="link-light" href="{% url 'resume_detail' resume_id=document.id %}">View</a> |
-                    <a class="link-light" href="{% url 'edit_resume' document.id %}">Edit</a> |  <!-- Edit Link -->
-                    <a class="link-light" href="#" data-bs-toggle="modal" data-bs-target="#deleteResumeModal{{ document.id }}">Delete</a>
+                    {{ document.title }}
                   {% elif document.file %}
-                    {{ document.original_filename }} -
-                    <a class="link-light" href="{% url 'resume_detail' resume_id=document.id %}">View</a> |
-                    <a class="link-light" href="{% url 'edit_resume' document.id %}">Edit</a> |  <!-- Edit Link -->
-                    <a class="link-light" href="#" data-bs-toggle="modal" data-bs-target="#deleteResumeModal{{ document.id }}">Delete</a>
+                    {{ document.original_filename }}
                   {% endif %}
-                </li>            
+
+                  <!-- Parsing Status Badge -->
+                  {% if document.parsing_status == 'success' %}
+                    <span class="badge bg-success resume-status-badge">
+                      <i class="bi bi-check-circle"></i> Parsed
+                    </span>
+                  {% elif document.parsing_status == 'error' %}
+                    <span class="badge bg-danger resume-status-badge">
+                      <i class="bi bi-x-circle"></i> Parse Error
+                    </span>
+                  {% elif document.parsing_status == 'in_progress' %}
+                    <span class="badge bg-warning text-dark resume-status-badge">
+                      <i class="bi bi-hourglass-split"></i> Parsing...
+                    </span>
+                  {% elif document.parsing_status == 'pending' %}
+                    <span class="badge bg-secondary resume-status-badge">
+                      <i class="bi bi-clock"></i> Pending
+                    </span>
+                  {% endif %}
+
+                  <!-- Quick Stats (only if successfully parsed) -->
+                  {% if document.parsing_status == 'success' %}
+                    <span class="resume-stats">
+                      ({{ document.skills|length }} skill{{ document.skills|length|pluralize }},
+                       {{ document.experience|length }} job{{ document.experience|length|pluralize }},
+                       {{ document.education|length }} degree{{ document.education|length|pluralize }})
+                    </span>
+                  {% endif %}
+                  <br>
+                  <span style="font-size: 18px;">
+                    <a class="link-light" href="{% url 'resume_detail' resume_id=document.id %}">View</a> |
+                    <a class="link-light" href="{% url 'edit_resume' document.id %}">Edit</a> |
+                    <a class="link-light" href="#" data-bs-toggle="modal" data-bs-target="#deleteResumeModal{{ document.id }}">Delete</a>
+                  </span>
+                </li>
                 {% endif %}
               {% endfor %}
             </ul>
