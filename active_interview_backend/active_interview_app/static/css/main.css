@@ -68,6 +68,109 @@
 }
 
 /* ===================================
+   HIERARCHICAL CLASS SYSTEM - GUIDE
+   ===================================
+
+   This CSS uses a hierarchical class system to make styling
+   easier to maintain and update site-wide.
+
+   CONCEPT:
+   Instead of creating standalone classes with all properties,
+   we use BASE CLASSES + MODIFIER CLASSES.
+
+   EXAMPLE:
+   Instead of: <div class="chat-card">
+   You can use: <div class="box box-chat">
+
+   BENEFITS:
+   1. Change all boxes at once by editing .box
+   2. Smaller, focused modifier classes
+   3. Easy to create new variants
+   4. Clear, predictable naming
+
+   ---
+
+   BOXES & CARDS - Base: .box
+   ---
+   .box               = Base box (border-radius, transition, padding)
+   .box-chat          = White background, border, subtle shadow
+   .box-button        = Primary colored, no border
+   .box-section       = Large content sections with extra padding
+   .box-info          = Highlighted background for info/notices
+   .box-score         = Centered content for stats/scores
+   .box-item          = List item with flex layout
+
+   Usage: <div class="box box-chat">...</div>
+
+   ---
+
+   BUTTONS - Base: .btn
+   ---
+   .btn               = Base button (border-radius, font-weight, transition)
+   .btn-primary       = Primary action (blue background)
+   .btn-secondary     = Secondary action (white with border)
+   .btn-card          = For use in cards/lists
+   .btn-minimal       = Subtle, transparent background
+   .btn-danger        = Destructive actions (red)
+
+   Usage: <button class="btn btn-primary">Click me</button>
+
+   ---
+
+   CONTAINERS - Base: .container-page
+   ---
+   .container-page    = Base container (auto margin, full width, padding)
+   .container-narrow  = Max width 700px (forms, auth)
+   .container-standard = Max width 1200px (most content)
+   .container-full    = Full width, no max
+   .container-centered = Flex centered, min-height 60vh
+
+   Usage: <div class="container-page container-narrow">...</div>
+
+   ---
+
+   LISTS - Base: .list-clean
+   ---
+   .list-clean        = Removes default list styling
+   .list-items        = Vertical stack with gap
+   .list-grid         = Grid layout with gap
+   .list-grid-2       = 2-column auto-fit grid
+   .list-grid-3       = 3-column auto-fit grid
+
+   Usage: <ul class="list-clean list-items">...</ul>
+
+   ---
+
+   TEXT UTILITIES
+   ---
+   Colors:
+   .text-primary-color   = Main text color
+   .text-secondary-color = Secondary text color
+   .text-light-color     = Light/muted text
+   .text-brand           = Brand primary color
+   .text-accent          = Accent color
+
+   Sizes:
+   .text-sm, .text-lg, .text-xl
+
+   Weight:
+   .text-bold, .text-normal
+
+   Usage: <p class="text-brand text-lg">...</p>
+
+   ---
+
+   MAKING SITE-WIDE CHANGES:
+   ---
+   Want to change all boxes?     → Edit .box
+   Want to change all buttons?   → Edit .btn
+   Want to change all containers? → Edit .container-page
+   Want to change just chat cards? → Edit .box-chat
+   Want to change colors?        → Edit :root variables
+
+   =================================== */
+
+/* ===================================
    Dark Theme
    =================================== */
 
@@ -164,9 +267,42 @@ a:hover {
 }
 
 /* ===================================
-   Layout Utilities
+   Layout Utilities & Containers - Hierarchical System
    =================================== */
 
+/* Base container - shared styles for ALL page containers */
+.container-page {
+    margin: 0 auto;
+    width: 100%;
+    background-color: var(--background);
+    padding: var(--spacing-lg);
+}
+
+/* Narrow container (for forms, auth pages) */
+.container-narrow {
+    max-width: 700px;
+}
+
+/* Standard container (for most content) */
+.container-standard {
+    max-width: 1200px;
+}
+
+/* Full-width container */
+.container-full {
+    max-width: 100%;
+}
+
+/* Centered content container */
+.container-centered {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 60vh;
+}
+
+/* Legacy containers - map to new hierarchy */
 .full-block-link {
     display: block;
     width: 100%;
@@ -356,9 +492,92 @@ a:hover {
 }
 
 /* ===================================
-   Cards
+   Cards & Boxes - Hierarchical System
    =================================== */
 
+/* Base box - shared styles for ALL boxes/cards */
+.box {
+    border-radius: var(--radius);
+    transition: all 0.2s ease;
+    padding: 1.5rem;
+}
+
+/* Chat-style box (white background with border) */
+.box-chat {
+    color: var(--text-primary);
+    border: 2px solid var(--border);
+    background-color: var(--surface);
+    box-shadow: var(--shadow-sm);
+}
+
+.box-chat:hover {
+    box-shadow: var(--shadow);
+    border-color: var(--primary-light);
+}
+
+/* Button-style box (primary colored) */
+.box-button {
+    color: var(--text-white);
+    background-color: var(--primary);
+    border: none;
+}
+
+.box-button:hover {
+    background-color: var(--primary-light);
+    box-shadow: var(--shadow);
+}
+
+/* Section-style box (for larger content sections) */
+.box-section {
+    background: var(--surface-hover);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-sm);
+    color: var(--text-primary);
+}
+
+/* Info box (highlighted background) */
+.box-info {
+    background-color: var(--surface-hover);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+    color: var(--text-primary);
+}
+
+/* Score/stat card (centered content) */
+.box-score {
+    background: var(--surface-hover);
+    padding: 1.5rem;
+    border-radius: var(--radius);
+    text-align: center;
+    border: 2px solid var(--border);
+    color: var(--text-primary);
+}
+
+/* Item box (for list items) */
+.box-item {
+    padding: 1.5rem;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+    color: var(--text-primary);
+}
+
+.box-item:hover {
+    box-shadow: var(--shadow-sm);
+    border-color: var(--primary);
+    transform: translateY(-1px);
+}
+
+/* Legacy class names - maps to new hierarchy */
 .chat-card {
     color: var(--text-primary);
     border: 1px solid var(--border-light) !important;
@@ -387,16 +606,19 @@ a:hover {
 }
 
 /* ===================================
-   Buttons
+   Buttons - Hierarchical System
    =================================== */
 
+/* Base button - shared styles for ALL buttons */
 .btn {
     border-radius: var(--radius);
     font-weight: 500;
     transition: all 0.2s ease;
     border: 1px solid transparent;
+    cursor: pointer;
 }
 
+/* Primary button (main action) */
 .btn-primary {
     background-color: var(--primary) !important;
     border-color: var(--primary) !important;
@@ -416,6 +638,7 @@ a:hover {
     border-color: var(--primary-dark) !important;
 }
 
+/* Secondary button (alternative action) */
 .btn-secondary {
     background-color: var(--surface) !important;
     border-color: var(--border) !important;
@@ -428,6 +651,54 @@ a:hover {
     color: var(--primary) !important;
 }
 
+/* Card-style button (for use in cards/lists) */
+.btn-card {
+    background-color: var(--surface) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-light) !important;
+}
+
+.btn-card:hover,
+.btn-card:focus {
+    background-color: var(--surface-hover) !important;
+    border-color: var(--primary-light) !important;
+    color: var(--primary) !important;
+}
+
+.btn-card.active,
+.btn-card:active {
+    background-color: var(--sidebar-active) !important;
+    border-color: var(--primary) !important;
+    color: var(--primary) !important;
+}
+
+/* Minimal button (subtle, text-focused) */
+.btn-minimal {
+    color: var(--text-secondary) !important;
+    border-color: var(--border) !important;
+    background: transparent !important;
+}
+
+.btn-minimal:hover {
+    color: var(--primary) !important;
+    border-color: var(--primary) !important;
+}
+
+/* Danger button (destructive actions) */
+.btn-danger {
+    background-color: var(--error) !important;
+    border-color: var(--error) !important;
+    color: var(--text-white) !important;
+}
+
+.btn-danger:hover,
+.btn-danger:focus {
+    background-color: #c0392b !important;
+    border-color: #c0392b !important;
+    box-shadow: var(--shadow);
+}
+
+/* Legacy button classes - map to new hierarchy */
 .chat-card-button {
     background-color: var(--surface) !important;
     color: var(--text-primary) !important;
@@ -460,7 +731,6 @@ a:hover {
     border-color: var(--primary) !important;
 }
 
-/* Chat send button */
 .button-chat-send {
     background-color: var(--primary) !important;
     border: 1px solid var(--primary) !important;
@@ -477,6 +747,87 @@ a:hover {
 .button-chat-send:active {
     background-color: var(--primary-dark) !important;
     border-color: var(--primary-dark) !important;
+}
+
+/* ===================================
+   Text & Typography - Hierarchical System
+   =================================== */
+
+/* Base text styles are in h1-h6 and body */
+
+/* Text color utilities */
+.text-primary-color {
+    color: var(--text-primary) !important;
+}
+
+.text-secondary-color {
+    color: var(--text-secondary) !important;
+}
+
+.text-light-color {
+    color: var(--text-light) !important;
+}
+
+.text-brand {
+    color: var(--primary) !important;
+}
+
+.text-accent {
+    color: var(--accent) !important;
+}
+
+/* Text size utilities */
+.text-lg {
+    font-size: 1.25rem;
+}
+
+.text-xl {
+    font-size: 1.5rem;
+}
+
+.text-sm {
+    font-size: 0.9rem;
+}
+
+/* Text weight utilities */
+.text-bold {
+    font-weight: 600;
+}
+
+.text-normal {
+    font-weight: 400;
+}
+
+/* ===================================
+   Lists & Items - Hierarchical System
+   =================================== */
+
+/* Base list (removes default styling) */
+.list-clean {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* Item list (vertical stack of items) */
+.list-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* Grid list (for card grids) */
+.list-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.list-grid-2 {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.list-grid-3 {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
 }
 
 /* ===================================
@@ -979,8 +1330,8 @@ a:hover {
 
 /* Profile Section Cards */
 .profile-section {
-    background: var(--surface);
-    border: 1px solid var(--border-light);
+    background: var(--surface-hover);
+    border: 2px solid var(--border);
     border-radius: var(--radius-md);
     padding: 2rem;
     margin-bottom: 2rem;
@@ -1015,7 +1366,7 @@ a:hover {
 
 .info-item {
     padding: 0.75rem;
-    background: var(--surface-hover);
+    background: var(--surface);
     border-radius: var(--radius);
     border-left: 3px solid var(--primary);
 }
@@ -1039,7 +1390,7 @@ a:hover {
 .role-info {
     text-align: center;
     padding: 1.5rem;
-    background: var(--surface-hover);
+    background: var(--surface);
     border-radius: var(--radius);
     margin-top: 1.5rem;
     padding-top: 1.5rem;
@@ -1126,8 +1477,8 @@ a:hover {
 
 .document-item {
     padding: 1rem;
-    background: var(--surface-hover);
-    border: 1px solid var(--border-light);
+    background: var(--surface);
+    border: 2px solid var(--border);
     border-radius: var(--radius);
     margin-bottom: 0.75rem;
     display: flex;
@@ -1699,8 +2050,8 @@ a:hover {
 /* Document Item Card */
 .document-item {
     padding: 1.5rem;
-    background: var(--surface-hover);
-    border: 1px solid var(--border-light);
+    background: var(--surface);
+    border: 2px solid var(--border);
     border-radius: var(--radius);
     display: flex;
     justify-content: space-between;
@@ -1809,3 +2160,121 @@ a:hover {
         flex: 1;
     }
 }
+
+/* ===================================
+   QUICK REFERENCE - COMMON PATTERNS
+   ===================================
+
+   This section shows common use cases for the hierarchical class system.
+   Copy these patterns and modify as needed for your components.
+
+   ---
+   PATTERN 1: Simple Content Card
+   ---
+   <div class="box box-chat">
+       <h3>Card Title</h3>
+       <p>Card content goes here</p>
+   </div>
+
+   ---
+   PATTERN 2: Action Card/Button
+   ---
+   <a href="/somewhere" class="box box-button">
+       <h4>Click Me</h4>
+       <p>I'm a clickable card</p>
+   </a>
+
+   ---
+   PATTERN 3: Info/Notice Box
+   ---
+   <div class="box box-info">
+       <p class="text-bold">Important Notice</p>
+       <p class="text-sm">This is some important information</p>
+   </div>
+
+   ---
+   PATTERN 4: List of Items
+   ---
+   <ul class="list-clean list-items">
+       <li class="box box-item">
+           <div>
+               <h3>Item Title</h3>
+               <p class="text-secondary-color text-sm">Item description</p>
+           </div>
+           <div>
+               <button class="btn btn-primary">Action</button>
+           </div>
+       </li>
+   </ul>
+
+   ---
+   PATTERN 5: Stats/Score Grid
+   ---
+   <div class="list-grid list-grid-2">
+       <div class="box box-score">
+           <h3 class="text-secondary-color text-sm">Total Users</h3>
+           <div class="text-brand" style="font-size: 2rem; font-weight: bold;">1,234</div>
+       </div>
+       <div class="box box-score">
+           <h3 class="text-secondary-color text-sm">Active Today</h3>
+           <div class="text-brand" style="font-size: 2rem; font-weight: bold;">567</div>
+       </div>
+   </div>
+
+   ---
+   PATTERN 6: Page Layout (Centered Form)
+   ---
+   <div class="container-page container-narrow container-centered">
+       <div class="box box-section">
+           <h2>Login</h2>
+           <form>
+               <!-- form fields -->
+               <button class="btn btn-primary">Submit</button>
+           </form>
+       </div>
+   </div>
+
+   ---
+   PATTERN 7: Page Layout (Wide Content)
+   ---
+   <div class="container-page container-standard">
+       <div class="box box-section">
+           <h2>Dashboard</h2>
+           <!-- content -->
+       </div>
+   </div>
+
+   ---
+   PATTERN 8: Button Group
+   ---
+   <div style="display: flex; gap: 1rem;">
+       <button class="btn btn-primary">Primary Action</button>
+       <button class="btn btn-secondary">Cancel</button>
+       <button class="btn btn-danger">Delete</button>
+   </div>
+
+   ---
+   PATTERN 9: Highlighted Text
+   ---
+   <p class="text-brand text-lg text-bold">Important headline</p>
+   <p class="text-secondary-color">Supporting text</p>
+   <p class="text-light-color text-sm">Fine print</p>
+
+   ---
+   HOW TO CREATE NEW VARIANTS:
+   ---
+   Need a new box type?
+   1. Add a new class like .box-myvariant
+   2. Only define what's DIFFERENT from .box
+   3. Use it with: <div class="box box-myvariant">
+
+   Example:
+   .box-warning {
+       background-color: var(--warning);
+       color: var(--text-white);
+       border: 2px solid var(--accent);
+   }
+
+   Usage: <div class="box box-warning">Warning message</div>
+
+   =================================== */

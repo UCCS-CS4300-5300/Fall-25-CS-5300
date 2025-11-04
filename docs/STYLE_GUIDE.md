@@ -5,11 +5,12 @@ This document provides comprehensive styling guidelines for the Active Interview
 ## Table of Contents
 1. [Theme System](#theme-system)
 2. [CSS Variables](#css-variables)
-3. [Page Layout Patterns](#page-layout-patterns)
-4. [Component Styling](#component-styling)
-5. [Typography](#typography)
-6. [Colors and Theming](#colors-and-theming)
-7. [Examples](#examples)
+3. **[Hierarchical Class System](#hierarchical-class-system)** ⭐ NEW
+4. [Page Layout Patterns](#page-layout-patterns)
+5. [Component Styling](#component-styling)
+6. [Typography](#typography)
+7. [Colors and Theming](#colors-and-theming)
+8. [Examples](#examples)
 
 ---
 
@@ -61,8 +62,8 @@ var(--info)             /* Info states */
 
 #### Layout
 ```css
-var(--border)           /* Border color */
-var(--border-light)     /* Lighter border */
+var(--border)           /* Border color - use for all borders (2px solid) */
+var(--border-light)     /* Lighter border (deprecated - use var(--border) instead) */
 var(--shadow)           /* Box shadow */
 var(--shadow-sm)        /* Small shadow */
 var(--shadow-md)        /* Medium shadow */
@@ -70,6 +71,247 @@ var(--radius)           /* Border radius */
 var(--radius-sm)        /* Small border radius */
 var(--radius-md)        /* Medium border radius */
 ```
+
+**Note:** Use `2px solid var(--border)` for all borders to maintain consistent, prominent visual hierarchy.
+
+---
+
+## Hierarchical Class System
+
+**NEW!** AIS now uses a hierarchical class system that makes styling easier to maintain and update site-wide.
+
+### Concept
+
+Instead of creating standalone classes with all properties duplicated, we use **BASE CLASSES + MODIFIER CLASSES**.
+
+**Before (old approach):**
+```html
+<div class="chat-card">Content</div>
+```
+Each class defined all properties independently, making site-wide changes difficult.
+
+**After (new approach):**
+```html
+<div class="box box-chat">Content</div>
+```
+Base class (`.box`) defines shared properties, modifier (`.box-chat`) adds specific styling.
+
+### Benefits
+
+1. **Easy site-wide changes** - Edit `.box` to change ALL boxes at once
+2. **Smaller, focused modifiers** - Only define what's different
+3. **Easy to add variants** - Just create a new modifier class
+4. **Clear, predictable naming** - `.base-modifier` pattern
+
+### Available Hierarchies
+
+#### Boxes & Cards - Base: `.box`
+
+All boxes/cards/sections can use the `.box` base class:
+
+```css
+/* Base - shared by all boxes */
+.box {
+  border-radius: var(--radius);
+  transition: all 0.2s ease;
+  padding: 1.5rem;
+}
+```
+
+**Modifiers:**
+- `.box-chat` - White background, border, subtle shadow (for content cards)
+- `.box-button` - Primary colored, no border (for clickable cards)
+- `.box-section` - Large sections with extra padding
+- `.box-info` - Highlighted background for notices
+- `.box-score` - Centered content for stats/scores
+- `.box-item` - List items with flex layout
+
+**Usage:**
+```html
+<!-- Content card -->
+<div class="box box-chat">
+  <h3>Card Title</h3>
+  <p>Content here</p>
+</div>
+
+<!-- Clickable action card -->
+<a href="/action" class="box box-button">
+  <h4>Take Action</h4>
+</a>
+
+<!-- Info notice -->
+<div class="box box-info">
+  <p class="text-bold">Important Information</p>
+</div>
+
+<!-- List item -->
+<div class="box box-item">
+  <span>Item Name</span>
+  <button class="btn btn-primary">Action</button>
+</div>
+```
+
+#### Buttons - Base: `.btn`
+
+All buttons should use the `.btn` base class:
+
+**Modifiers:**
+- `.btn-primary` - Primary action (blue background)
+- `.btn-secondary` - Secondary action (white with border)
+- `.btn-card` - For use in cards/lists
+- `.btn-minimal` - Subtle, transparent background
+- `.btn-danger` - Destructive actions (red)
+
+**Usage:**
+```html
+<button class="btn btn-primary">Save</button>
+<button class="btn btn-secondary">Cancel</button>
+<button class="btn btn-danger">Delete</button>
+```
+
+#### Containers - Base: `.container-page`
+
+Page-level containers for consistent layouts:
+
+**Modifiers:**
+- `.container-narrow` - Max width 700px (forms, auth pages)
+- `.container-standard` - Max width 1200px (most content)
+- `.container-full` - Full width, no max
+- `.container-centered` - Flex centered, min-height 60vh
+
+**Usage:**
+```html
+<!-- Narrow centered form page -->
+<div class="container-page container-narrow container-centered">
+  <div class="box box-section">
+    <h2>Login</h2>
+    <form>...</form>
+  </div>
+</div>
+
+<!-- Standard content page -->
+<div class="container-page container-standard">
+  <div class="box box-section">
+    <h2>Dashboard</h2>
+    <!-- content -->
+  </div>
+</div>
+```
+
+#### Lists - Base: `.list-clean` or `.list-items`
+
+For lists and collections:
+
+**Base Classes:**
+- `.list-clean` - Removes default list styling
+- `.list-items` - Vertical stack with gap
+- `.list-grid` - Grid layout with gap
+
+**Grid Modifiers:**
+- `.list-grid-2` - 2-column auto-fit grid
+- `.list-grid-3` - 3-column auto-fit grid
+
+**Usage:**
+```html
+<!-- Vertical list of items -->
+<ul class="list-clean list-items">
+  <li class="box box-item">Item 1</li>
+  <li class="box box-item">Item 2</li>
+</ul>
+
+<!-- Grid of score cards -->
+<div class="list-grid list-grid-2">
+  <div class="box box-score">
+    <h3>Score 1</h3>
+    <div class="text-brand" style="font-size: 2rem;">95</div>
+  </div>
+  <div class="box box-score">
+    <h3>Score 2</h3>
+    <div class="text-brand" style="font-size: 2rem;">87</div>
+  </div>
+</div>
+```
+
+#### Typography Utilities
+
+Utility classes for text styling:
+
+**Color:**
+- `.text-primary-color` - Main text color
+- `.text-secondary-color` - Secondary text color
+- `.text-light-color` - Light/muted text
+- `.text-brand` - Brand primary color
+- `.text-accent` - Accent color
+
+**Size:**
+- `.text-sm` - Small text (0.9rem)
+- `.text-lg` - Large text (1.25rem)
+- `.text-xl` - Extra large text (1.5rem)
+
+**Weight:**
+- `.text-bold` - Bold weight (600)
+- `.text-normal` - Normal weight (400)
+
+**Usage:**
+```html
+<p class="text-brand text-lg text-bold">Important Headline</p>
+<p class="text-secondary-color">Supporting text</p>
+<p class="text-light-color text-sm">Fine print</p>
+```
+
+### Making Site-Wide Changes
+
+The hierarchical system makes site-wide changes simple:
+
+**Want to change all boxes?**
+```css
+.box {
+  border-radius: var(--radius-lg);  /* Make all boxes rounder */
+  padding: 2rem;                     /* Make all boxes bigger */
+}
+```
+
+**Want to change just chat cards?**
+```css
+.box-chat {
+  background-color: var(--surface-hover);  /* Slightly darker */
+}
+```
+
+**Want to change all primary buttons?**
+```css
+.btn-primary {
+  background-color: var(--accent) !important;  /* Use accent color instead */
+}
+```
+
+### Creating New Variants
+
+Need a custom variant? Just create a modifier:
+
+```css
+/* Define only what's DIFFERENT from the base */
+.box-warning {
+  background-color: var(--warning);
+  color: var(--text-white);
+  border: 2px solid var(--accent);
+}
+```
+
+**Usage:**
+```html
+<div class="box box-warning">Warning message</div>
+```
+
+### Migration Path
+
+**Legacy classes still work!** All existing classes (`.chat-card`, `.button-card`, etc.) remain functional. You can:
+
+1. **Start using new classes immediately** in new code
+2. **Migrate gradually** - update as you touch existing pages
+3. **Mix approaches** - Both work simultaneously
+
+**Note:** See `static/css/main.css` lines 70-171 for complete documentation and lines 2160-2276 for common usage patterns.
 
 ---
 
@@ -117,10 +359,15 @@ var(--radius-md)        /* Medium border radius */
 
 ### Section/Card Pattern
 
+**Visual Hierarchy:**
+- **Outer containers** use `var(--surface-hover)` with `2px solid var(--border)` - lighter, prominent borders
+- **Inner/nested elements** use `var(--surface)` with `2px solid var(--border)` - darker for contrast
+
 ```css
+/* Outer Section Container */
 .section-container {
-  background: var(--surface);
-  border: 1px solid var(--border-light);
+  background: var(--surface-hover);  /* Lighter background for outer container */
+  border: 2px solid var(--border);   /* Prominent 2px border */
   border-radius: var(--radius-md);
   padding: 2rem;
   margin-bottom: 2rem;
@@ -145,6 +392,15 @@ var(--radius-md)        /* Medium border radius */
   height: 1.5rem;
   background: var(--primary);
   border-radius: 2px;
+}
+
+/* Nested Inner Elements */
+.inner-item {
+  background: var(--surface);        /* Darker background for nested items */
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 0.75rem;
 }
 ```
 
@@ -224,19 +480,19 @@ textarea::placeholder {
 
 ```css
 .card {
-  background-color: var(--surface) !important;
-  border-color: var(--border) !important;
+  background-color: var(--surface-hover) !important;  /* Outer container - lighter */
+  border: 2px solid var(--border) !important;         /* Prominent 2px border */
   color: var(--text-primary) !important;
 }
 
 .card-header {
-  background-color: var(--surface-hover) !important;
+  background-color: var(--surface) !important;        /* Nested element - darker */
   border-color: var(--border) !important;
   color: var(--text-primary) !important;
 }
 
 .card-body {
-  background-color: var(--surface) !important;
+  background-color: var(--surface) !important;        /* Nested element - darker */
   color: var(--text-primary) !important;
 }
 ```
@@ -246,8 +502,8 @@ textarea::placeholder {
 ```css
 .list-item {
   padding: 1rem;
-  background: var(--surface-hover);
-  border: 1px solid var(--border-light);
+  background: var(--surface);            /* Nested element - darker background */
+  border: 2px solid var(--border);       /* Prominent 2px border */
   border-radius: var(--radius);
   margin-bottom: 0.75rem;
   display: flex;
@@ -329,11 +585,17 @@ p {
 .my-element {
   color: #333;
   background: white;
-  border: 1px solid #ddd;
+  border: 1px solid #ddd;  /* Wrong: hardcoded color AND thin border */
 }
 
 .btn {
   color: white;  /* Won't adapt to theme */
+}
+
+/* Don't use deprecated border-light or thin borders */
+.section {
+  background: var(--surface);
+  border: 1px solid var(--border-light);  /* ❌ Deprecated */
 }
 ```
 
@@ -342,12 +604,23 @@ p {
 /* Always use CSS variables */
 .my-element {
   color: var(--text-primary);
-  background: var(--surface);
-  border: 1px solid var(--border-light);
+  background: var(--surface-hover);      /* Lighter for outer containers */
+  border: 2px solid var(--border);       /* Always use 2px borders */
 }
 
 .btn {
   color: var(--text-white);  /* Adapts to theme */
+}
+
+/* Use proper hierarchy */
+.outer-section {
+  background: var(--surface-hover);  /* Lighter background */
+  border: 2px solid var(--border);
+}
+
+.inner-item {
+  background: var(--surface);        /* Darker for contrast */
+  border: 2px solid var(--border);
 }
 ```
 
@@ -410,15 +683,19 @@ This page demonstrates:
 Before creating or updating a page, ensure:
 
 - [ ] All colors use CSS variables (no hardcoded hex/rgb values)
+- [ ] **Consider using hierarchical classes** (`.box box-chat`, `.btn btn-primary`, etc.)
 - [ ] Bootstrap classes are overridden where necessary
 - [ ] Headings use `var(--text-primary)`
-- [ ] Backgrounds use `var(--surface)` or `var(--background)`
-- [ ] Borders use `var(--border)` or `var(--border-light)`
+- [ ] Outer containers use `var(--surface-hover)` background
+- [ ] Inner/nested elements use `var(--surface)` background
+- [ ] All borders use `2px solid var(--border)` (not 1px or border-light)
+- [ ] Visual hierarchy is clear (lighter outer, darker inner)
 - [ ] Forms use proper theme-aware styling
 - [ ] Modals have theme-aware backgrounds
 - [ ] Page is responsive (test at different screen sizes)
 - [ ] `.text-muted` is overridden to use `var(--text-secondary)`
 - [ ] Buttons use `var(--text-white)` for text on colored backgrounds
+- [ ] **Leverage text utilities** (`.text-brand`, `.text-lg`, etc.) for consistent typography
 
 ---
 
@@ -464,7 +741,7 @@ Before creating or updating a page, ensure:
 ```css
 .info-item {
   padding: 0.75rem;
-  background: var(--surface-hover);
+  background: var(--surface);            /* Nested element - darker background */
   border-radius: var(--radius);
   border-left: 3px solid var(--primary);
 }

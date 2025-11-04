@@ -32,8 +32,8 @@
     }
 
     .job-section {
-      background: var(--surface);
-      border: 1px solid var(--border-light);
+      background: var(--surface-hover);
+      border: 2px solid var(--border);
       border-radius: var(--radius-md);
       padding: 2rem;
       box-shadow: var(--shadow-sm);
@@ -101,8 +101,8 @@
 
     .document-item {
       padding: 1rem;
-      background: var(--surface-hover);
-      border: 1px solid var(--border-light);
+      background: var(--surface);
+      border: 2px solid var(--border);
       border-radius: var(--radius);
       margin-bottom: 0.75rem;
       display: flex;
@@ -180,6 +180,49 @@
       color: var(--text-primary);
     }
 
+    /* Collapsible section toggle */
+    .section-header-with-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+
+    .section-header-with-toggle h2 {
+      margin-bottom: 0;
+    }
+
+    .toggle-btn {
+      background: var(--primary);
+      color: var(--text-white);
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius);
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .toggle-btn:hover {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .toggle-btn .collapse-text {
+      display: none;
+    }
+
+    .toggle-btn[aria-expanded="true"] .expand-text {
+      display: none;
+    }
+
+    .toggle-btn[aria-expanded="true"] .collapse-text {
+      display: inline;
+    }
+
     /* Responsive: Stack on mobile */
     @media (max-width: 992px) {
       .job-layout {
@@ -197,8 +240,16 @@
       <!-- Left Column: Job Posting Content -->
       <div class="left-column">
         <div class="job-section">
-          <h2>{{ job.title }}</h2>
-          <div class="job-content">{{ job.content|linebreaksbr }}</div>
+          <div class="section-header-with-toggle">
+            <h2>{{ job.title }}</h2>
+            <button class="toggle-btn" data-bs-toggle="collapse" data-bs-target="#jobContent" aria-expanded="false" aria-controls="jobContent">
+              <span class="expand-text">Expand</span>
+              <span class="collapse-text">Collapse</span>
+            </button>
+          </div>
+          <div class="collapse" id="jobContent">
+            <div class="job-content">{{ job.content|linebreaksbr }}</div>
+          </div>
         </div>
       </div>
 
