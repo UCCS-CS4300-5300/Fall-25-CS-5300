@@ -1,116 +1,124 @@
 {% extends "base.html" %}
 
 {% block title %}
-  AIS - Profile
+  AIS - User Profile
 {% endblock title %}
 
 {% block content %}
-  <style>
-    .profile-page {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      color: white;
-    }
+  <!-- All styles moved to main.css Profile & User Pages section -->
 
-    p {
-      font-size: 20px;
-      text-align: center;
-    }
-    td {
-      font-size: 20px;
-    }
-    h1{
-      font-size: 40px;
-      text-align: center;
-    }
-    h2{
-      text-align: center;
-    }
-    ul {
-      list-style-position: inside;
-    }
-    .card {
-      background-color: var(--shallows) !important;
-      border-radius: 2rem;
-    }
-    li{
-      font-size: 23px;
-    }
-  </style>
+  <div class="profile-page">
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1>User Profile</h1>
+      <div class="username">{{ profile_user.username }}</div>
+    </div>
 
-  <div class="centered-container">
-    <div class="card p-3 my-5">
-      <div class="profile-page">
-        <div class="row mb-3">
-          <h1>Profile</h1>
-        </div>
+    <!-- Two Column Layout -->
+    <div class="profile-layout">
+      <!-- Left Column: User Info & Role -->
+      <div class="left-column">
+        <div class="profile-section">
+          <h2>User Information</h2>
 
-        <!-- User Information -->
-        <div class="row">
-          <h2>{{ profile_user }}</h2>
-        </div>
+          <!-- User Details -->
+          <div class="user-info-grid">
+            <div class="info-item">
+              <div class="info-label">Username</div>
+              <div class="info-value">{{ profile_user.username }}</div>
+            </div>
 
-        <!-- Role Information -->
-        <div class="row mb-3">
-          <div class="text-center">
-            <p class="mb-2">
-              <strong>Role:</strong>
-              <span class="badge bg-{% if profile_user.profile.role == 'admin' %}danger{% elif profile_user.profile.role == 'interviewer' %}primary{% else %}secondary{% endif %}" style="font-size: 18px;">
+            {% if profile_user.email %}
+            <div class="info-item">
+              <div class="info-label">Email</div>
+              <div class="info-value">{{ profile_user.email }}</div>
+            </div>
+            {% endif %}
+
+            {% if profile_user.first_name %}
+            <div class="info-item">
+              <div class="info-label">First Name</div>
+              <div class="info-value">{{ profile_user.first_name }}</div>
+            </div>
+            {% endif %}
+
+            {% if profile_user.last_name %}
+            <div class="info-item">
+              <div class="info-label">Last Name</div>
+              <div class="info-value">{{ profile_user.last_name }}</div>
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- Role Information -->
+          <div class="role-info">
+            <div>
+              <strong>Current Role:</strong>
+              <span class="role-badge {{ profile_user.profile.role }}">
                 {{ profile_user.profile.role|title }}
               </span>
-            </p>
+            </div>
 
             {% if is_own_profile %}
-              <a href="{% url 'profile' %}" class="btn btn-outline-light btn-lg mt-2">
-                Go to My Profile
-              </a>
-              <p class="text-muted mt-2" style="font-size: 16px;">
-                To edit your profile, manage resumes, or request role changes.
-              </p>
+              <div class="mt-1rem">
+                <a href="{% url 'profile' %}" class="btn-go-to-profile">
+                  Go to My Profile
+                </a>
+                <p class="help-text">
+                  To edit your profile, manage resumes, or request role changes.
+                </p>
+              </div>
             {% endif %}
           </div>
         </div>
+      </div>
 
-        <hr class="white-break">
-
-        <div class="row mb-3">
-          <h3>Uploaded Resumes</h3>
-          {% if resumes|length == 0 %}
-            <center><h5>No Resumes Uploaded</h5></center>
-          {% else %}
-            <ul>
-              {% for document in resumes %}
+      <!-- Right Column: Documents -->
+      <div class="right-column">
+        <!-- Resumes Section -->
+        <div class="profile-section">
+          <h2>Uploaded Resumes</h2>
+      {% if resumes|length == 0 %}
+        <div class="empty-state">
+          <p>No resumes uploaded yet</p>
+        </div>
+      {% else %}
+        <ul class="document-list">
+          {% for document in resumes %}
+            {% if document.title and document.title != "1" %}
+            <li class="document-item">
+              <span class="document-name">
                 {% if document.title and document.title != "1" %}
-                <li>
-                  {% if document.title and document.title != "1" %}
-                    {{ document.title }} -
-                    <a class="link-light" href="{% url 'resume_detail' resume_id=document.id %}">View</a>
-                  {% elif document.file %}
-                    {{ document.original_filename }} -
-                    <a class="link-light" href="{% url 'resume_detail' resume_id=document.id %}">View</a>
-                  {% endif %}
-                </li>
+                  {{ document.title }}
+                {% elif document.file %}
+                  {{ document.original_filename }}
                 {% endif %}
-              {% endfor %}
-            </ul>
+              </span>
+              <div class="document-actions">
+                <a href="{% url 'resume_detail' resume_id=document.id %}">View</a>
+              </div>
+            </li>
+            {% endif %}
+          {% endfor %}
+        </ul>
           {% endif %}
         </div>
 
-        <hr class="white-break">
-
-        <div class="row mb-3">
-          <h3>Uploaded Job Listings</h3>
+        <!-- Job Listings Section -->
+        <div class="profile-section">
+          <h2>Uploaded Job Listings</h2>
           {% if job_listings|length == 0 %}
-            <center><h5>No Job Listings Uploaded</h5></center>
+            <div class="empty-state">
+              <p>No job listings uploaded yet</p>
+            </div>
           {% else %}
-            <ul>
+            <ul class="document-list">
               {% for job in job_listings %}
-                <li>
-                  {% if job.title %}
-                    {{ job.title }} -
-                    <a class="link-light" href="{% url 'job_posting_detail' job_id=job.id %}">View</a>
-                  {% endif %}
+                <li class="document-item">
+                  <span class="document-name">{{ job.title }}</span>
+                  <div class="document-actions">
+                    <a href="{% url 'job_posting_detail' job_id=job.id %}">View</a>
+                  </div>
                 </li>
               {% endfor %}
             </ul>

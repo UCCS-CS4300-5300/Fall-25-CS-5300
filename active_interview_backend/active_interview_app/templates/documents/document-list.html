@@ -6,32 +6,12 @@
 
 {% block content %}
   <style>
-    .document-page {
-      max-width: 900px;
-      margin: 2rem auto;
-      padding: 0 1.5rem;
-    }
+    /* Page header and document-page styles moved to main.css */
 
-    .page-header {
-      text-align: center;
-      margin-bottom: 2rem;
-    }
-
-    .page-header h1 {
-      color: var(--primary);
-      font-size: 2rem;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-    }
-
-    .page-header p {
-      color: var(--text-secondary);
-      font-size: 1rem;
-    }
-
+    /* Upload Section - Page specific */
     .upload-section {
-      background: var(--surface);
-      border: 1px solid var(--border-light);
+      background: var(--surface-hover);
+      border: 2px solid var(--border);
       border-radius: var(--radius-md);
       padding: 2rem;
       margin-bottom: 2rem;
@@ -113,7 +93,7 @@
 
     .btn-upload {
       background-color: var(--primary);
-      color: white;
+      color: var(--text-white);
       border: none;
       padding: 0.75rem 2rem;
       border-radius: var(--radius);
@@ -137,6 +117,8 @@
       background-color: var(--primary-dark);
     }
 
+    /* Messages styles removed - now handled globally in base.html */
+
     .section-divider {
       height: 2px;
       background: linear-gradient(to right, transparent, var(--border), transparent);
@@ -144,69 +126,9 @@
       border: none;
     }
 
-    .messages {
-      list-style: none;
-      padding: 0;
-      margin: 0 0 2rem 0;
-    }
-
-    .messages li {
-      padding: 1rem 1.5rem;
-      border-radius: var(--radius);
-      margin-bottom: 0.75rem;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .messages li.success {
-      background-color: #d4edda;
-      color: #155724;
-      border: 1px solid #c3e6cb;
-    }
-
-    .messages li.success::before {
-      content: "✓";
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 1.5rem;
-      height: 1.5rem;
-      background-color: var(--success);
-      color: white;
-      border-radius: 50%;
-      font-weight: 700;
-    }
-
-    .messages li.error {
-      background-color: #f8d7da;
-      color: #721c24;
-      border: 1px solid #f5c6cb;
-    }
-
-    .messages li.error::before {
-      content: "✕";
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 1.5rem;
-      height: 1.5rem;
-      background-color: var(--error);
-      color: white;
-      border-radius: 50%;
-      font-weight: 700;
-    }
-
-    .messages li.info {
-      background-color: #d1ecf1;
-      color: #0c5460;
-      border: 1px solid #bee5eb;
-    }
-
     .markdown-preview {
-      background: var(--surface);
-      border: 1px solid var(--border-light);
+      background: var(--surface-hover);
+      border: 2px solid var(--border);
       border-radius: var(--radius-md);
       padding: 2rem;
       margin-top: 2rem;
@@ -219,7 +141,7 @@
       font-weight: 600;
       margin-bottom: 1rem;
       padding-bottom: 0.5rem;
-      border-bottom: 2px solid var(--border-light);
+      border-bottom: 2px solid var(--border);
     }
 
     .markdown-preview div {
@@ -292,14 +214,7 @@
   </style>
 
   <div class="document-page">
-    <!-- Messages -->
-    {% if messages %}
-      <ul class="messages">
-        {% for message in messages %}
-          <li class="{{ message.tags }}">{{ message }}</li>
-        {% endfor %}
-      </ul>
-    {% endif %}
+    <!-- Messages now displayed globally in base.html -->
 
     <!-- Page Header -->
     <div class="page-header">

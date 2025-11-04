@@ -924,12 +924,16 @@ def view_user_profile(request, user_id):
 @login_required
 def resume_detail(request, resume_id):
     resume = get_object_or_404(UploadedResume, id=resume_id)
-    resumes = UploadedResume.objects.filter(user=request.user)
-    job_listings = UploadedJobListing.objects.filter(user=request.user)
+    # Show the resume owner's documents, not the logged-in user's
+    resumes = UploadedResume.objects.filter(user=resume.user)
+    job_listings = UploadedJobListing.objects.filter(user=resume.user)
+    # Check if the logged-in user is the owner
+    is_owner = request.user == resume.user
     return render(request, 'documents/resume_detail.html', {
         'resume': resume,
         'resumes': resumes,
         'job_listings': job_listings,
+        'is_owner': is_owner,
     })
 
 
@@ -1050,9 +1054,12 @@ def upload_file(request):
     return redirect('document-list')
 
 
+@login_required
 def edit_resume(request, resume_id):
     # Adjust model logic as needed (for resumes or job listings)
-    document = get_object_or_404(UploadedResume, id=resume_id)
+    document = get_object_or_404(UploadedResume,
+                                  id=resume_id,
+                                  user=request.user)
 
     if request.method == 'POST':
         form = DocumentEditForm(request.POST, instance=document)
@@ -1072,12 +1079,16 @@ def edit_resume(request, resume_id):
 @login_required
 def job_posting_detail(request, job_id):
     job = get_object_or_404(UploadedJobListing, id=job_id)
-    resumes = UploadedResume.objects.filter(user=request.user)
-    job_listings = UploadedJobListing.objects.filter(user=request.user)
+    # Show the job listing owner's documents, not the logged-in user's
+    resumes = UploadedResume.objects.filter(user=job.user)
+    job_listings = UploadedJobListing.objects.filter(user=job.user)
+    # Check if the logged-in user is the owner
+    is_owner = request.user == job.user
     return render(request, 'documents/job_posting_detail.html', {
         'job': job,
         'resumes': resumes,
         'job_listings': job_listings,
+        'is_owner': is_owner,
     })
 
 

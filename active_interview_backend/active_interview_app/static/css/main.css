@@ -68,6 +68,109 @@
 }
 
 /* ===================================
+   HIERARCHICAL CLASS SYSTEM - GUIDE
+   ===================================
+
+   This CSS uses a hierarchical class system to make styling
+   easier to maintain and update site-wide.
+
+   CONCEPT:
+   Instead of creating standalone classes with all properties,
+   we use BASE CLASSES + MODIFIER CLASSES.
+
+   EXAMPLE:
+   Instead of: <div class="chat-card">
+   You can use: <div class="box box-chat">
+
+   BENEFITS:
+   1. Change all boxes at once by editing .box
+   2. Smaller, focused modifier classes
+   3. Easy to create new variants
+   4. Clear, predictable naming
+
+   ---
+
+   BOXES & CARDS - Base: .box
+   ---
+   .box               = Base box (border-radius, transition, padding)
+   .box-chat          = White background, border, subtle shadow
+   .box-button        = Primary colored, no border
+   .box-section       = Large content sections with extra padding
+   .box-info          = Highlighted background for info/notices
+   .box-score         = Centered content for stats/scores
+   .box-item          = List item with flex layout
+
+   Usage: <div class="box box-chat">...</div>
+
+   ---
+
+   BUTTONS - Base: .btn
+   ---
+   .btn               = Base button (border-radius, font-weight, transition)
+   .btn-primary       = Primary action (blue background)
+   .btn-secondary     = Secondary action (white with border)
+   .btn-card          = For use in cards/lists
+   .btn-minimal       = Subtle, transparent background
+   .btn-danger        = Destructive actions (red)
+
+   Usage: <button class="btn btn-primary">Click me</button>
+
+   ---
+
+   CONTAINERS - Base: .container-page
+   ---
+   .container-page    = Base container (auto margin, full width, padding)
+   .container-narrow  = Max width 700px (forms, auth)
+   .container-standard = Max width 1200px (most content)
+   .container-full    = Full width, no max
+   .container-centered = Flex centered, min-height 60vh
+
+   Usage: <div class="container-page container-narrow">...</div>
+
+   ---
+
+   LISTS - Base: .list-clean
+   ---
+   .list-clean        = Removes default list styling
+   .list-items        = Vertical stack with gap
+   .list-grid         = Grid layout with gap
+   .list-grid-2       = 2-column auto-fit grid
+   .list-grid-3       = 3-column auto-fit grid
+
+   Usage: <ul class="list-clean list-items">...</ul>
+
+   ---
+
+   TEXT UTILITIES
+   ---
+   Colors:
+   .text-primary-color   = Main text color
+   .text-secondary-color = Secondary text color
+   .text-light-color     = Light/muted text
+   .text-brand           = Brand primary color
+   .text-accent          = Accent color
+
+   Sizes:
+   .text-sm, .text-lg, .text-xl
+
+   Weight:
+   .text-bold, .text-normal
+
+   Usage: <p class="text-brand text-lg">...</p>
+
+   ---
+
+   MAKING SITE-WIDE CHANGES:
+   ---
+   Want to change all boxes?     → Edit .box
+   Want to change all buttons?   → Edit .btn
+   Want to change all containers? → Edit .container-page
+   Want to change just chat cards? → Edit .box-chat
+   Want to change colors?        → Edit :root variables
+
+   =================================== */
+
+/* ===================================
    Dark Theme
    =================================== */
 
@@ -164,9 +267,42 @@ a:hover {
 }
 
 /* ===================================
-   Layout Utilities
+   Layout Utilities & Containers - Hierarchical System
    =================================== */
 
+/* Base container - shared styles for ALL page containers */
+.container-page {
+    margin: 0 auto;
+    width: 100%;
+    background-color: var(--background);
+    padding: var(--spacing-lg);
+}
+
+/* Narrow container (for forms, auth pages) */
+.container-narrow {
+    max-width: 700px;
+}
+
+/* Standard container (for most content) */
+.container-standard {
+    max-width: 1200px;
+}
+
+/* Full-width container */
+.container-full {
+    max-width: 100%;
+}
+
+/* Centered content container */
+.container-centered {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 60vh;
+}
+
+/* Legacy containers - map to new hierarchy */
 .full-block-link {
     display: block;
     width: 100%;
@@ -356,9 +492,92 @@ a:hover {
 }
 
 /* ===================================
-   Cards
+   Cards & Boxes - Hierarchical System
    =================================== */
 
+/* Base box - shared styles for ALL boxes/cards */
+.box {
+    border-radius: var(--radius);
+    transition: all 0.2s ease;
+    padding: 1.5rem;
+}
+
+/* Chat-style box (white background with border) */
+.box-chat {
+    color: var(--text-primary);
+    border: 2px solid var(--border);
+    background-color: var(--surface);
+    box-shadow: var(--shadow-sm);
+}
+
+.box-chat:hover {
+    box-shadow: var(--shadow);
+    border-color: var(--primary-light);
+}
+
+/* Button-style box (primary colored) */
+.box-button {
+    color: var(--text-white);
+    background-color: var(--primary);
+    border: none;
+}
+
+.box-button:hover {
+    background-color: var(--primary-light);
+    box-shadow: var(--shadow);
+}
+
+/* Section-style box (for larger content sections) */
+.box-section {
+    background: var(--surface-hover);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-sm);
+    color: var(--text-primary);
+}
+
+/* Info box (highlighted background) */
+.box-info {
+    background-color: var(--surface-hover);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+    color: var(--text-primary);
+}
+
+/* Score/stat card (centered content) */
+.box-score {
+    background: var(--surface-hover);
+    padding: 1.5rem;
+    border-radius: var(--radius);
+    text-align: center;
+    border: 2px solid var(--border);
+    color: var(--text-primary);
+}
+
+/* Item box (for list items) */
+.box-item {
+    padding: 1.5rem;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+    color: var(--text-primary);
+}
+
+.box-item:hover {
+    box-shadow: var(--shadow-sm);
+    border-color: var(--primary);
+    transform: translateY(-1px);
+}
+
+/* Legacy class names - maps to new hierarchy */
 .chat-card {
     color: var(--text-primary);
     border: 1px solid var(--border-light) !important;
@@ -387,16 +606,19 @@ a:hover {
 }
 
 /* ===================================
-   Buttons
+   Buttons - Hierarchical System
    =================================== */
 
+/* Base button - shared styles for ALL buttons */
 .btn {
     border-radius: var(--radius);
     font-weight: 500;
     transition: all 0.2s ease;
     border: 1px solid transparent;
+    cursor: pointer;
 }
 
+/* Primary button (main action) */
 .btn-primary {
     background-color: var(--primary) !important;
     border-color: var(--primary) !important;
@@ -416,6 +638,7 @@ a:hover {
     border-color: var(--primary-dark) !important;
 }
 
+/* Secondary button (alternative action) */
 .btn-secondary {
     background-color: var(--surface) !important;
     border-color: var(--border) !important;
@@ -428,6 +651,54 @@ a:hover {
     color: var(--primary) !important;
 }
 
+/* Card-style button (for use in cards/lists) */
+.btn-card {
+    background-color: var(--surface) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-light) !important;
+}
+
+.btn-card:hover,
+.btn-card:focus {
+    background-color: var(--surface-hover) !important;
+    border-color: var(--primary-light) !important;
+    color: var(--primary) !important;
+}
+
+.btn-card.active,
+.btn-card:active {
+    background-color: var(--sidebar-active) !important;
+    border-color: var(--primary) !important;
+    color: var(--primary) !important;
+}
+
+/* Minimal button (subtle, text-focused) */
+.btn-minimal {
+    color: var(--text-secondary) !important;
+    border-color: var(--border) !important;
+    background: transparent !important;
+}
+
+.btn-minimal:hover {
+    color: var(--primary) !important;
+    border-color: var(--primary) !important;
+}
+
+/* Danger button (destructive actions) */
+.btn-danger {
+    background-color: var(--error) !important;
+    border-color: var(--error) !important;
+    color: var(--text-white) !important;
+}
+
+.btn-danger:hover,
+.btn-danger:focus {
+    background-color: #c0392b !important;
+    border-color: #c0392b !important;
+    box-shadow: var(--shadow);
+}
+
+/* Legacy button classes - map to new hierarchy */
 .chat-card-button {
     background-color: var(--surface) !important;
     color: var(--text-primary) !important;
@@ -460,7 +731,6 @@ a:hover {
     border-color: var(--primary) !important;
 }
 
-/* Chat send button */
 .button-chat-send {
     background-color: var(--primary) !important;
     border: 1px solid var(--primary) !important;
@@ -477,6 +747,87 @@ a:hover {
 .button-chat-send:active {
     background-color: var(--primary-dark) !important;
     border-color: var(--primary-dark) !important;
+}
+
+/* ===================================
+   Text & Typography - Hierarchical System
+   =================================== */
+
+/* Base text styles are in h1-h6 and body */
+
+/* Text color utilities */
+.text-primary-color {
+    color: var(--text-primary) !important;
+}
+
+.text-secondary-color {
+    color: var(--text-secondary) !important;
+}
+
+.text-light-color {
+    color: var(--text-light) !important;
+}
+
+.text-brand {
+    color: var(--primary) !important;
+}
+
+.text-accent {
+    color: var(--accent) !important;
+}
+
+/* Text size utilities */
+.text-lg {
+    font-size: 1.25rem;
+}
+
+.text-xl {
+    font-size: 1.5rem;
+}
+
+.text-sm {
+    font-size: 0.9rem;
+}
+
+/* Text weight utilities */
+.text-bold {
+    font-weight: 600;
+}
+
+.text-normal {
+    font-weight: 400;
+}
+
+/* ===================================
+   Lists & Items - Hierarchical System
+   =================================== */
+
+/* Base list (removes default styling) */
+.list-clean {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* Item list (vertical stack of items) */
+.list-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* Grid list (for card grids) */
+.list-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.list-grid-2 {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.list-grid-3 {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
 }
 
 /* ===================================
@@ -500,6 +851,20 @@ a:hover {
 .form-label {
     color: var(--text-primary);
     font-weight: 500;
+}
+
+/* Placeholder text styling for all inputs */
+::placeholder {
+    color: var(--text-light) !important;
+    opacity: 1;
+}
+
+:-ms-input-placeholder {
+    color: var(--text-light) !important;
+}
+
+::-ms-input-placeholder {
+    color: var(--text-light) !important;
 }
 
 .input-card {
@@ -536,6 +901,10 @@ a:hover {
 
 .whiteTextOverride {
     color: var(--text-primary) !important;
+}
+
+.mt-1rem {
+    margin-top: 1rem !important;
 }
 
 .create-button-or-spinner {
@@ -658,3 +1027,1254 @@ a:hover {
     white-space: nowrap !important;
     border: 0 !important;
 }
+
+/* ===================================
+   Authentication Components
+   =================================== */
+
+/* Shared layout for authentication pages (login, register, logout) */
+.auth-page-layout,
+.login-page,
+.register-page,
+.logout-page {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 60vh;
+    padding: 2rem;
+}
+
+.logout-page {
+    padding: 3rem 1rem;
+}
+
+/* Authentication page headings */
+.auth-page-layout h2,
+.login-page h2,
+.register-page h2,
+.logout-page h2 {
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+/* Authentication page paragraphs */
+.auth-page-layout p,
+.login-page p,
+.register-page p,
+.logout-page p {
+    font-size: 1.2rem;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+/* Form field labels in authentication pages */
+.login-field {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.field-label {
+    color: var(--text-primary) !important;
+    font-weight: 600 !important;
+    font-size: 1rem !important;
+    white-space: nowrap;
+}
+
+/* Authentication form inputs */
+.auth-page-layout input[type="text"],
+.auth-page-layout input[type="email"],
+.auth-page-layout input[type="password"],
+.login-page input[type="text"],
+.login-page input[type="email"],
+.login-page input[type="password"],
+.register-page input[type="text"],
+.register-page input[type="email"],
+.register-page input[type="password"] {
+    background-color: var(--surface) !important;
+    color: var(--text-primary) !important;
+    border: 2px solid var(--border);
+    padding: 0.5rem;
+    border-radius: 4px;
+    margin-left: 0.5rem;
+}
+
+.auth-page-layout input[type="text"]:focus,
+.auth-page-layout input[type="email"]:focus,
+.auth-page-layout input[type="password"]:focus,
+.login-page input[type="text"]:focus,
+.login-page input[type="email"]:focus,
+.login-page input[type="password"]:focus,
+.register-page input[type="text"]:focus,
+.register-page input[type="email"]:focus,
+.register-page input[type="password"]:focus {
+    outline: none;
+    border-color: var(--primary);
+    background-color: var(--surface) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Authentication page links */
+.auth-page-layout a,
+.login-page a,
+.register-page a {
+    color: var(--primary);
+    font-weight: 600;
+    text-decoration: underline;
+}
+
+.auth-page-layout a:hover,
+.login-page a:hover,
+.register-page a:hover {
+    color: var(--primary-light);
+    text-decoration: underline;
+}
+
+/* Google OAuth Button */
+.google-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    background-color: var(--surface);
+    color: var(--text-primary);
+    border: 2px solid var(--border);
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 500;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow);
+}
+
+.google-btn:hover {
+    background-color: var(--surface-hover);
+    color: var(--text-primary);
+    text-decoration: none;
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+    border-color: var(--primary);
+}
+
+.google-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.google-btn svg {
+    margin-right: 12px;
+    flex-shrink: 0;
+}
+
+/* OAuth Divider ("OR" separator) */
+.divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 20px 0;
+    color: var(--text-secondary);
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 2px solid var(--border);
+}
+
+.divider::before {
+    margin-right: 10px;
+}
+
+.divider::after {
+    margin-left: 10px;
+}
+
+/* Info/Message Boxes (logout confirmation, OAuth info, etc.) */
+.info-box,
+.logout-message,
+.logout-confirmation {
+    background-color: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    max-width: 500px;
+    text-align: center;
+    box-shadow: var(--shadow);
+}
+
+.info-box p,
+.logout-message p,
+.logout-confirmation p {
+    font-size: 1.1rem;
+    margin: 0;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.info-box p:nth-of-type(2),
+.logout-message p:nth-of-type(2) {
+    margin-top: 1rem;
+    font-size: 1rem;
+    color: var(--text-secondary);
+    font-weight: 400;
+}
+
+/* Action Button Containers */
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 400px;
+    width: 100%;
+}
+
+.action-buttons .btn {
+    width: 100%;
+    padding: 12px 24px;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.action-buttons .btn-primary {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: var(--text-white);
+}
+
+.action-buttons .btn-primary:hover {
+    background-color: var(--primary-dark);
+    border-color: var(--primary-dark);
+    color: var(--text-white);
+}
+
+.action-buttons .btn-secondary {
+    background-color: var(--surface);
+    border: 2px solid var(--border);
+    color: var(--text-primary);
+}
+
+.action-buttons .btn-secondary:hover {
+    background-color: var(--surface-hover);
+    border-color: var(--primary);
+    color: var(--text-primary);
+}
+
+/* Responsive: side by side on larger screens */
+@media (min-width: 576px) {
+    .action-buttons {
+        flex-direction: row;
+    }
+    .action-buttons .btn {
+        flex: 1;
+    }
+
+    .google-btn {
+        padding: 10px 20px;
+        font-size: 15px;
+    }
+}
+
+/* ===================================
+   Profile & User Pages
+   =================================== */
+
+/* Profile Page Container */
+.profile-page {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+}
+
+/* Page Header */
+.page-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding: 2rem 1rem;
+}
+
+.page-header h1 {
+    color: var(--primary);
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.page-header .username,
+.page-header p {
+    color: var(--text-secondary);
+    font-size: 1.25rem;
+    font-weight: 500;
+}
+
+/* Profile Layout */
+.profile-layout {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+.left-column,
+.right-column {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Profile Section Cards */
+.profile-section {
+    background: var(--surface-hover);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.profile-section h2 {
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.profile-section h2::before {
+    content: "";
+    display: inline-block;
+    width: 4px;
+    height: 1.5rem;
+    background: var(--primary);
+    border-radius: 2px;
+}
+
+/* User Info Grid */
+.user-info-grid {
+    display: grid;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.info-item {
+    padding: 0.75rem;
+    background: var(--surface);
+    border-radius: var(--radius);
+    border-left: 3px solid var(--primary);
+}
+
+.info-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-value {
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+/* Role Information */
+.role-info {
+    text-align: center;
+    padding: 1.5rem;
+    background: var(--surface);
+    border-radius: var(--radius);
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid var(--border);
+    color: var(--text-primary);
+}
+
+.role-info strong {
+    color: var(--text-primary);
+}
+
+/* Role Badge */
+.role-badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius);
+    font-weight: 600;
+    font-size: 1rem;
+    margin-top: 0.5rem;
+}
+
+.role-badge.admin {
+    background: var(--error);
+    color: var(--text-white);
+}
+
+.role-badge.interviewer {
+    background: var(--primary);
+    color: var(--text-white);
+}
+
+.role-badge.candidate {
+    background: var(--text-secondary);
+    color: var(--text-white);
+}
+
+/* Alert Info */
+.alert-info {
+    background-color: rgba(52, 152, 219, 0.1);
+    color: var(--text-primary);
+    border: 1px solid var(--info);
+    border-radius: var(--radius);
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+/* Profile Action Buttons */
+.btn-request-role,
+.btn-go-to-profile {
+    background-color: var(--primary);
+    color: var(--text-white);
+    border: none;
+    padding: 0.75rem 2rem;
+    border-radius: var(--radius);
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-block;
+    margin-top: 1rem;
+}
+
+.btn-request-role:hover,
+.btn-go-to-profile:hover {
+    background-color: var(--primary-light);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow);
+    color: var(--text-white);
+}
+
+.help-text {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+/* Document List in Profile */
+.document-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.document-item {
+    padding: 1rem;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.document-item:hover {
+    box-shadow: var(--shadow-sm);
+    border-color: var(--primary);
+}
+
+.document-name {
+    color: var(--text-primary);
+    font-weight: 500;
+    font-size: 1rem;
+}
+
+/* Document Actions */
+.document-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.document-actions a,
+.document-actions button {
+    color: var(--primary);
+    text-decoration: none;
+    font-size: 0.9rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s ease;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.document-actions a:hover,
+.document-actions button:hover {
+    background: var(--primary);
+    color: var(--text-white);
+}
+
+.document-actions .delete-btn {
+    color: var(--error);
+}
+
+.document-actions .delete-btn:hover {
+    background: var(--error);
+    color: var(--text-white);
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary);
+}
+
+/* Section Divider */
+.section-divider {
+    height: 2px;
+    background: linear-gradient(to right, transparent, var(--border), transparent);
+    margin: 2rem 0;
+    border: none;
+}
+
+/* Modal Theme Fixes for Profile */
+.modal-content {
+    background-color: var(--surface) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border);
+}
+
+.modal-header {
+    border-color: var(--border);
+}
+
+.modal-footer {
+    border-color: var(--border);
+}
+
+.modal-body {
+    color: var(--text-primary);
+}
+
+/* Responsive Design for Profile Pages */
+@media (max-width: 992px) {
+    .profile-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .profile-page {
+        padding: 0 1rem;
+    }
+
+    .profile-section {
+        padding: 1.5rem;
+    }
+
+    .document-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .document-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+}
+
+/* ===================================
+   Chat Input Components
+   =================================== */
+
+/* Chat input styling */
+.chat-input {
+    background-color: var(--surface) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius);
+    font-size: 1rem;
+    outline: none;
+    resize: none;
+}
+
+.chat-input:focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 0.2rem rgba(31, 123, 166, 0.15);
+}
+
+/* ===================================
+   Loading & Progress Components
+   =================================== */
+
+.loading-gif {
+    width: 24px;
+    height: 24px;
+}
+
+.progress {
+    height: 20px;
+}
+
+#timer-bar {
+    width: 100%;
+}
+
+/* ===================================
+   Pagination Components
+   =================================== */
+
+.pagination .page-link {
+    background-color: var(--surface) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border) !important;
+}
+
+.pagination .page-link.active {
+    background-color: var(--primary) !important;
+    color: var(--text-white) !important;
+    border-color: var(--primary) !important;
+}
+
+.pagination .page-link:hover {
+    background-color: var(--surface-hover) !important;
+    border-color: var(--primary) !important;
+}
+
+/* ===================================
+   Theme Toggle Button
+   =================================== */
+
+.theme-toggle-btn {
+    border: none !important;
+    background: none !important;
+}
+
+.theme-icon {
+    display: none;
+}
+
+.theme-icon.active {
+    display: block;
+}
+
+/* ===================================
+   Signup Page Components
+   =================================== */
+
+.signup-page {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem 0;
+    min-height: 60vh;
+}
+
+.signup-page h2 {
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    font-size: 2rem;
+}
+
+.signup-page p {
+    font-size: 18px;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}
+
+.signup-page .form-label {
+    font-size: 18px;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.oauth-info {
+    background-color: var(--surface-hover);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    max-width: 500px;
+}
+
+.oauth-info p {
+    margin: 0;
+    font-size: 16px;
+    color: var(--text-primary);
+}
+
+.provider-icon {
+    display: inline-block;
+    margin-right: 8px;
+}
+
+.signup-container {
+    max-width: 500px;
+    width: 100%;
+}
+
+/* ===================================
+   Connections Page Components
+   =================================== */
+
+.connections-page {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem 0;
+    min-height: 60vh;
+}
+
+.connections-page h2 {
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    font-size: 2rem;
+}
+
+.connections-page p {
+    font-size: 18px;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}
+
+.connections-container {
+    max-width: 600px;
+    width: 100%;
+}
+
+.account-card {
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.account-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.account-details h5 {
+    margin: 0 0 0.25rem 0;
+    color: var(--text-primary);
+}
+
+.account-details p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.no-accounts {
+    text-align: center;
+    padding: 2rem;
+    background-color: var(--surface-hover);
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.add-account-section {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+}
+
+.add-account-section h4 {
+    color: var(--text-primary);
+}
+
+/* ===================================
+   Export Report Components
+   =================================== */
+
+.export-header {
+    margin: 2rem auto;
+    max-width: 1200px;
+    text-align: center;
+}
+
+.export-header h1 {
+    color: var(--primary);
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    margin-bottom: 1rem;
+}
+
+.export-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.report-section {
+    background: var(--surface);
+    border: 2px solid var(--border-light);
+    border-radius: 10px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow);
+}
+
+.report-section h2 {
+    color: var(--primary);
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid var(--primary-lighter);
+    padding-bottom: 0.5rem;
+}
+
+.metadata-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+}
+
+.metadata-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-primary);
+}
+
+.metadata-table td:first-child {
+    font-weight: bold;
+    color: var(--text-secondary);
+    width: 30%;
+}
+
+.scores-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.score-card {
+    background: var(--surface-hover);
+    padding: 1.5rem;
+    border-radius: 8px;
+    text-align: center;
+    border: 2px solid var(--border-light);
+}
+
+.score-card h3 {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+}
+
+.score-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--primary);
+}
+
+.score-rating {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+.feedback-text {
+    background: var(--surface-hover);
+    padding: 1.5rem;
+    border-radius: 8px;
+    border-left: 4px solid var(--primary);
+    line-height: 1.6;
+    white-space: pre-wrap;
+    color: var(--text-primary);
+}
+
+.export-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin: 2rem 0;
+    flex-wrap: wrap;
+}
+
+.export-btn {
+    padding: 1rem 2rem;
+    font-size: 1rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.export-btn-pdf {
+    background: var(--error);
+    color: var(--text-white);
+}
+
+.export-btn-pdf:hover {
+    background: #c0392b;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    color: var(--text-white);
+}
+
+.export-btn-back {
+    background: #95a5a6;
+    color: var(--text-white);
+}
+
+.export-btn-back:hover {
+    background: #7f8c8d;
+    color: var(--text-white);
+}
+
+.statistics {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+    margin: 1rem 0;
+}
+
+.stat-item {
+    flex: 1;
+    min-width: 200px;
+}
+
+.stat-item strong {
+    display: block;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+}
+
+.stat-item span {
+    color: var(--text-primary);
+}
+
+.qa-section {
+    max-height: 500px;
+    overflow-y: auto;
+    padding: 1rem;
+    background: var(--surface-hover);
+    border-radius: 8px;
+}
+
+.qa-item {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: var(--surface);
+    border-radius: 8px;
+    border-left: 4px solid var(--primary);
+}
+
+.qa-question {
+    font-weight: bold;
+    color: var(--primary);
+    margin-bottom: 0.5rem;
+}
+
+.qa-answer {
+    margin-left: 1rem;
+    color: var(--text-primary);
+    line-height: 1.5;
+}
+
+.qa-more-info {
+    text-align: center;
+    color: var(--text-light);
+    margin-top: 1rem;
+}
+
+/* ===================================
+   Document & File Management Components
+   =================================== */
+
+/* Document Page Container */
+.document-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+/* Document Section */
+.document-section {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.document-section h2 {
+    color: var(--primary);
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.document-section h2::before {
+    content: "";
+    display: inline-block;
+    width: 4px;
+    height: 1.5rem;
+    background: var(--primary);
+    border-radius: 2px;
+}
+
+/* Document List */
+.document-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* Document Item Card */
+.document-item {
+    padding: 1.5rem;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+    gap: 1rem;
+}
+
+.document-item:hover {
+    box-shadow: var(--shadow-sm);
+    border-color: var(--primary);
+    transform: translateY(-1px);
+}
+
+.document-item-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.document-item-info h3 {
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.document-item-info p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* Document Actions */
+.document-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.document-actions .btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--text-secondary);
+}
+
+.empty-state svg,
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Upload Form */
+.upload-form {
+    background: var(--surface);
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.upload-form:hover {
+    border-color: var(--primary);
+    background: var(--surface-hover);
+}
+
+.upload-form input[type="file"] {
+    display: none;
+}
+
+.upload-form label {
+    cursor: pointer;
+    color: var(--primary);
+    font-weight: 600;
+}
+
+/* Responsive Document Items */
+@media (max-width: 768px) {
+    .document-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .document-actions {
+        width: 100%;
+        justify-content: stretch;
+    }
+
+    .document-actions .btn {
+        flex: 1;
+    }
+}
+
+/* ===================================
+   QUICK REFERENCE - COMMON PATTERNS
+   ===================================
+
+   This section shows common use cases for the hierarchical class system.
+   Copy these patterns and modify as needed for your components.
+
+   ---
+   PATTERN 1: Simple Content Card
+   ---
+   <div class="box box-chat">
+       <h3>Card Title</h3>
+       <p>Card content goes here</p>
+   </div>
+
+   ---
+   PATTERN 2: Action Card/Button
+   ---
+   <a href="/somewhere" class="box box-button">
+       <h4>Click Me</h4>
+       <p>I'm a clickable card</p>
+   </a>
+
+   ---
+   PATTERN 3: Info/Notice Box
+   ---
+   <div class="box box-info">
+       <p class="text-bold">Important Notice</p>
+       <p class="text-sm">This is some important information</p>
+   </div>
+
+   ---
+   PATTERN 4: List of Items
+   ---
+   <ul class="list-clean list-items">
+       <li class="box box-item">
+           <div>
+               <h3>Item Title</h3>
+               <p class="text-secondary-color text-sm">Item description</p>
+           </div>
+           <div>
+               <button class="btn btn-primary">Action</button>
+           </div>
+       </li>
+   </ul>
+
+   ---
+   PATTERN 5: Stats/Score Grid
+   ---
+   <div class="list-grid list-grid-2">
+       <div class="box box-score">
+           <h3 class="text-secondary-color text-sm">Total Users</h3>
+           <div class="text-brand" style="font-size: 2rem; font-weight: bold;">1,234</div>
+       </div>
+       <div class="box box-score">
+           <h3 class="text-secondary-color text-sm">Active Today</h3>
+           <div class="text-brand" style="font-size: 2rem; font-weight: bold;">567</div>
+       </div>
+   </div>
+
+   ---
+   PATTERN 6: Page Layout (Centered Form)
+   ---
+   <div class="container-page container-narrow container-centered">
+       <div class="box box-section">
+           <h2>Login</h2>
+           <form>
+               <!-- form fields -->
+               <button class="btn btn-primary">Submit</button>
+           </form>
+       </div>
+   </div>
+
+   ---
+   PATTERN 7: Page Layout (Wide Content)
+   ---
+   <div class="container-page container-standard">
+       <div class="box box-section">
+           <h2>Dashboard</h2>
+           <!-- content -->
+       </div>
+   </div>
+
+   ---
+   PATTERN 8: Button Group
+   ---
+   <div style="display: flex; gap: 1rem;">
+       <button class="btn btn-primary">Primary Action</button>
+       <button class="btn btn-secondary">Cancel</button>
+       <button class="btn btn-danger">Delete</button>
+   </div>
+
+   ---
+   PATTERN 9: Highlighted Text
+   ---
+   <p class="text-brand text-lg text-bold">Important headline</p>
+   <p class="text-secondary-color">Supporting text</p>
+   <p class="text-light-color text-sm">Fine print</p>
+
+   ---
+   HOW TO CREATE NEW VARIANTS:
+   ---
+   Need a new box type?
+   1. Add a new class like .box-myvariant
+   2. Only define what's DIFFERENT from .box
+   3. Use it with: <div class="box box-myvariant">
+
+   Example:
+   .box-warning {
+       background-color: var(--warning);
+       color: var(--text-white);
+       border: 2px solid var(--accent);
+   }
+
+   Usage: <div class="box box-warning">Warning message</div>
+
+   =================================== */
