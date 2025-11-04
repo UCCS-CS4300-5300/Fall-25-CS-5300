@@ -244,10 +244,10 @@ jobs:
           echo ''
           echo '## Bandit Scan (Code Security Issues)'
           echo '```'
-          bandit -r . --exclude './.git' -f screen || true
+          bandit -r . --exclude './.git,./active_interview_backend/active_interview_app/tests' -f screen || true
           echo '```'
         } >> $GITHUB_STEP_SUMMARY
-        bandit -r . --exclude './.git,test_*.py' -f json -o bandit-report.json || true
+        bandit -r . --exclude './.git,./active_interview_backend/active_interview_app/tests' -f json -o bandit-report.json || true
 
     - name: Upload Security Reports
       if: always()
