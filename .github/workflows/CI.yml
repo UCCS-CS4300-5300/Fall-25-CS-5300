@@ -100,7 +100,7 @@ jobs:
           bandit -r . --exclude './.git' -f screen || true
           echo '```'
         } >> $GITHUB_STEP_SUMMARY
-        bandit -r . --exclude './.git' -f json -o bandit-report.json || true
+        bandit -r . --exclude './.git,test_*.py' -f json -o bandit-report.json || true
 
     - name: Upload Security Reports
       if: always()

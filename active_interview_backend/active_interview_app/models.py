@@ -287,6 +287,28 @@ class RoleChangeRequest(models.Model):
         )
 
 
+# DUMMY MODELS FOR TESTING MIGRATION WORKFLOW
+class TestDummyModel(models.Model):
+    """Dummy model to test migration generation"""
+    name = models.CharField(max_length=100)
+    test_field = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+
+class AnotherTestModel(models.Model):
+    """Another dummy model for testing"""
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    dummy_relation = models.ForeignKey(TestDummyModel, on_delete=models.CASCADE, null=True)
+
+    def __str__(self):
+        return self.title
+
+
 # Import token tracking models (must be at end to avoid circular imports)
 from .token_usage_models import TokenUsage  # noqa: E402, F401
 from .merge_stats_models import MergeTokenStats  # noqa: E402, F401

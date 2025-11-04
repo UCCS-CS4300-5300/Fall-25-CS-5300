@@ -8,7 +8,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('active_interview_app', '0004_alter_chat_type'),
+        ('active_interview_app', '0003_split_branch_conflict'),  # MODIFIED - wrong dependency!
     ]
 
     operations = [
