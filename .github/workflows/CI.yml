@@ -32,8 +32,6 @@ jobs:
     name: Auto-fix Django Migrations
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
-    outputs:
-      migrations_fixed: ${{ steps.push.outputs.pushed }}
 
     steps:
       - uses: actions/checkout@v4
@@ -137,12 +135,18 @@ jobs:
             git push
 
             echo "pushed=true" >> $GITHUB_OUTPUT
-            echo "::notice::Migrations have been automatically regenerated on top of main"
-            echo "::notice::A new CI run will be triggered with the fixed migrations. This run will be skipped."
+            echo "::notice::Migrations have been automatically regenerated and pushed"
           else
             echo "pushed=false" >> $GITHUB_OUTPUT
             echo "::notice::No migration changes needed"
           fi
+
+      - name: Checkout fresh code after push
+        if: steps.push.outputs.pushed == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
 
       - name: Create Migration Fix Summary
         if: always()
@@ -153,8 +157,7 @@ jobs:
             if [ "${{ steps.push.outputs.pushed }}" == "true" ]; then
               echo '✅ **Migrations were fixed and pushed**'
               echo ''
-              echo 'A new CI workflow run will be triggered automatically with the corrected migrations.'
-              echo 'This workflow run will skip remaining jobs to avoid testing stale code.'
+              echo 'Fixed migrations have been pulled back and CI will continue with the corrected code.'
             elif [ "${{ steps.check.outputs.needs_sync }}" == "true" ]; then
               echo '✅ **Migrations checked, no changes needed**'
               echo ''
@@ -170,10 +173,7 @@ jobs:
     name: Run Linting
     runs-on: ubuntu-latest
     needs: [fix-migrations]
-    if: |
-      always() &&
-      (needs.fix-migrations.result == 'success' || needs.fix-migrations.result == 'skipped') &&
-      (needs.fix-migrations.result == 'skipped' || needs.fix-migrations.outputs.migrations_fixed != 'true')
+    if: always() && (needs.fix-migrations.result == 'success' || needs.fix-migrations.result == 'skipped')
 
     steps:
     - name: Checkout code
@@ -590,9 +590,7 @@ jobs:
     name: Cleanup & Archive
     runs-on: ubuntu-latest
     needs: [fix-migrations, lint, security, test, ai-review, loc-metrics]
-    if: |
-      always() &&
-      (needs.fix-migrations.result == 'skipped' || needs.fix-migrations.outputs.migrations_fixed != 'true')
+    if: always()
 
     steps:
     - name: Download Coverage Report
