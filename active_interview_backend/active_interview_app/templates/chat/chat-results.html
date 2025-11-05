@@ -91,27 +91,34 @@
       margin-bottom: var(--results-button-margin-bottom);
     }
 
-    /* Dark mode support - targeted overrides */
-    @media (prefers-color-scheme: dark) {
-      .results-page-heading,
-      h1 {
-        color: #e0e0e0;
-      }
+    /* Light mode styles (default) */
+    canvas {
+      background-color: var(--surface);
+      border: 2px solid var(--border-light);
+      border-radius: var(--results-canvas-border-radius);
+      padding: var(--results-canvas-padding);
+    }
 
-      #feedbackbox {
-        border-color: #4A9AC7;
-        background-color: #2d2d2d;
-      }
+    /* Dark mode support - uses data-theme attribute for consistency */
+    [data-theme="dark"] .results-page-heading,
+    [data-theme="dark"] h1 {
+      color: var(--text-primary);
+    }
 
-      #feedbackpara {
-        color: #e0e0e0;
-      }
+    [data-theme="dark"] #feedbackbox {
+      border-color: var(--primary-light);
+      background-color: var(--surface);
+    }
 
-      canvas {
-        background-color: #2d2d2d;
-        border-radius: var(--results-canvas-border-radius);
-        padding: var(--results-canvas-padding);
-      }
+    [data-theme="dark"] #feedbackpara {
+      color: var(--text-primary);
+    }
+
+    [data-theme="dark"] canvas {
+      background-color: var(--surface);
+      border-color: var(--border);
+      border-radius: var(--results-canvas-border-radius);
+      padding: var(--results-canvas-padding);
     }
   </style>
   <div id="content-scroll" class="d-flex flex-column overflow-y-auto overflow-x-hidden pe-0">
@@ -132,12 +139,13 @@
     </div>
 
     <!-- Generate Report Button -->
-    <div class="container report-button-container">
+    <div class="container" style="justify-content: center; margin-top: 3rem; margin-bottom: 2rem;">
       <form method="post" action="{% url 'generate_report' chat.id %}" aria-label="Generate interview report form">
         {% csrf_token %}
         <button
           type="submit"
-          class="export-btn export-btn-generate"
+          class="btn btn-primary"
+          style="padding: 1rem 2rem; font-size: 1rem;"
           aria-label="Generate and download detailed interview report as PDF">
           Generate Detailed Report
         </button>

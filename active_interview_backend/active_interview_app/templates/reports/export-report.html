@@ -3,25 +3,25 @@
   AIS - Export Report - {{ chat.title }}
 {% endblock title %}
 {% block content %}
-  <!-- All styles moved to main.css Export Report Components section -->
+  <!-- Following hierarchical class system from style guide -->
 
-  <div class="export-header">
-    <h1>Exportable Report: {{ chat.title }}</h1>
-  </div>
+  <div class="container-page container-standard">
+    <div style="text-align: center; margin: 2rem 0;">
+      <h1 class="text-brand">Exportable Report: {{ chat.title }}</h1>
+    </div>
 
-  <div class="export-container">
     <!-- Export Actions -->
-    <div class="export-actions">
-      <a href="{% url 'download_pdf_report' chat.id %}" class="export-btn export-btn-pdf">
+    <div style="display: flex; gap: 1rem; justify-content: center; margin: 2rem 0; flex-wrap: wrap;">
+      <a href="{% url 'download_pdf_report' chat.id %}" class="btn btn-danger" style="padding: 1rem 2rem; font-size: 1rem;">
         Download as PDF
       </a>
-      <a href="{% url 'chat-results' chat.id %}" class="export-btn export-btn-back">
+      <a href="{% url 'chat-results' chat.id %}" class="btn btn-secondary" style="padding: 1rem 2rem; font-size: 1rem;">
         Back to Results
       </a>
     </div>
 
     <!-- Interview Metadata -->
-    <div class="report-section">
+    <div class="box box-section">
       <h2>Interview Details</h2>
       <table class="metadata-table">
         <tr>
@@ -57,28 +57,28 @@
 
     <!-- Performance Scores -->
     {% if report.overall_score %}
-    <div class="report-section">
+    <div class="box box-section">
       <h2>Performance Assessment</h2>
-      <div class="scores-grid">
-        <div class="score-card">
-          <h3>Professionalism</h3>
-          <div class="score-value">{{ report.professionalism_score|default:"N/A" }}</div>
-          <div class="score-rating">/100</div>
+      <div class="list-grid list-grid-2" style="gap: 1rem; margin: 1rem 0;">
+        <div class="box box-score">
+          <h3 class="text-secondary-color text-sm" style="text-transform: uppercase; margin-bottom: 0.5rem;">Professionalism</h3>
+          <div class="text-brand" style="font-size: 2rem; font-weight: bold;">{{ report.professionalism_score|default:"N/A" }}</div>
+          <div class="text-secondary-color text-sm" style="margin-top: 0.5rem;">/100</div>
         </div>
-        <div class="score-card">
-          <h3>Subject Knowledge</h3>
-          <div class="score-value">{{ report.subject_knowledge_score|default:"N/A" }}</div>
-          <div class="score-rating">/100</div>
+        <div class="box box-score">
+          <h3 class="text-secondary-color text-sm" style="text-transform: uppercase; margin-bottom: 0.5rem;">Subject Knowledge</h3>
+          <div class="text-brand" style="font-size: 2rem; font-weight: bold;">{{ report.subject_knowledge_score|default:"N/A" }}</div>
+          <div class="text-secondary-color text-sm" style="margin-top: 0.5rem;">/100</div>
         </div>
-        <div class="score-card">
-          <h3>Clarity</h3>
-          <div class="score-value">{{ report.clarity_score|default:"N/A" }}</div>
-          <div class="score-rating">/100</div>
+        <div class="box box-score">
+          <h3 class="text-secondary-color text-sm" style="text-transform: uppercase; margin-bottom: 0.5rem;">Clarity</h3>
+          <div class="text-brand" style="font-size: 2rem; font-weight: bold;">{{ report.clarity_score|default:"N/A" }}</div>
+          <div class="text-secondary-color text-sm" style="margin-top: 0.5rem;">/100</div>
         </div>
-        <div class="score-card">
-          <h3>Overall Score</h3>
-          <div class="score-value">{{ report.overall_score|default:"N/A" }}</div>
-          <div class="score-rating">/100</div>
+        <div class="box box-score">
+          <h3 class="text-secondary-color text-sm" style="text-transform: uppercase; margin-bottom: 0.5rem;">Overall Score</h3>
+          <div class="text-brand" style="font-size: 2rem; font-weight: bold;">{{ report.overall_score|default:"N/A" }}</div>
+          <div class="text-secondary-color text-sm" style="margin-top: 0.5rem;">/100</div>
         </div>
       </div>
     </div>
@@ -86,62 +86,55 @@
 
     <!-- AI Feedback -->
     {% if report.feedback_text %}
-    <div class="report-section">
+    <div class="box box-section">
       <h2>AI Feedback</h2>
-      <div class="feedback-text">{{ report.feedback_text }}</div>
+      <div class="box box-info" style="white-space: pre-wrap; line-height: 1.6;">{{ report.feedback_text }}</div>
     </div>
     {% endif %}
+
+    <!-- Recommended Exercises -->
+    <div class="box box-section">
+      <h2>Recommended Exercises</h2>
+      <div class="box box-info">
+        <h3 class="text-brand" style="margin-bottom: 1rem;">To improve your interview skills, we recommend:</h3>
+        <ul style="line-height: 1.8; color: var(--text-primary);">
+          <li><strong>Practice STAR Method:</strong> Structure your answers using Situation, Task, Action, and Result to provide clear, concise responses.</li>
+          <li><strong>Mock Interviews:</strong> Continue practicing with our AI interviewer or with peers to build confidence and fluency.</li>
+          <li><strong>Research Common Questions:</strong> Review frequently asked questions for your industry and prepare thoughtful responses.</li>
+          <li><strong>Technical Skills:</strong> Keep your technical skills sharp through coding challenges, projects, or online courses.</li>
+          <li><strong>Behavioral Preparation:</strong> Reflect on your past experiences and prepare examples that showcase your skills and problem-solving abilities.</li>
+          <li><strong>Company Research:</strong> Learn about the companies you're interviewing with to tailor your responses and ask informed questions.</li>
+        </ul>
+      </div>
+    </div>
 
     <!-- Interview Statistics -->
-    <div class="report-section">
+    <div class="box box-section">
       <h2>Interview Statistics</h2>
-      <div class="statistics">
-        <div class="stat-item">
-          <strong>Total Questions Asked:</strong>
-          <span>{{ report.total_questions_asked }}</span>
+      <div style="display: flex; gap: 2rem; flex-wrap: wrap; margin: 1rem 0;">
+        <div style="flex: 1; min-width: 200px;">
+          <strong class="text-secondary-color" style="display: block; margin-bottom: 0.25rem;">Total Questions Asked:</strong>
+          <span class="text-primary-color">{{ report.total_questions_asked }}</span>
         </div>
-        <div class="stat-item">
-          <strong>Total Responses Given:</strong>
-          <span>{{ report.total_responses_given }}</span>
+        <div style="flex: 1; min-width: 200px;">
+          <strong class="text-secondary-color" style="display: block; margin-bottom: 0.25rem;">Total Responses Given:</strong>
+          <span class="text-primary-color">{{ report.total_responses_given }}</span>
         </div>
         {% if report.interview_duration_minutes %}
-        <div class="stat-item">
-          <strong>Interview Duration:</strong>
-          <span>{{ report.interview_duration_minutes }} minutes</span>
+        <div style="flex: 1; min-width: 200px;">
+          <strong class="text-secondary-color" style="display: block; margin-bottom: 0.25rem;">Interview Duration:</strong>
+          <span class="text-primary-color">{{ report.interview_duration_minutes }} minutes</span>
         </div>
         {% endif %}
       </div>
     </div>
-
-    <!-- Question & Answer Preview -->
-    {% if report.question_responses %}
-    <div class="report-section">
-      <h2>Interview Questions & Responses (Preview)</h2>
-      <div class="qa-section">
-        {% for qa in report.question_responses|slice:":5" %}
-        <div class="qa-item">
-          <div class="qa-question">Q{{ forloop.counter }}: {{ qa.question|truncatewords:50 }}</div>
-          <div class="qa-answer"><strong>Answer:</strong> {{ qa.answer|truncatewords:50 }}</div>
-          {% if qa.score %}
-          <div class="qa-answer"><strong>Score:</strong> {{ qa.score }}/10</div>
-          {% endif %}
-        </div>
-        {% endfor %}
-        {% if report.question_responses|length > 5 %}
-        <p class="qa-more-info">
-          And {{ report.question_responses|length|add:"-5" }} more questions... Download PDF for full report.
-        </p>
-        {% endif %}
-      </div>
-    </div>
-    {% endif %}
 
     <!-- Export Actions (Bottom) -->
-    <div class="export-actions">
-      <a href="{% url 'download_pdf_report' chat.id %}" class="export-btn export-btn-pdf">
+    <div style="display: flex; gap: 1rem; justify-content: center; margin: 2rem 0; flex-wrap: wrap;">
+      <a href="{% url 'download_pdf_report' chat.id %}" class="btn btn-danger" style="padding: 1rem 2rem; font-size: 1rem;">
         Download as PDF
       </a>
-      <a href="{% url 'chat-results' chat.id %}" class="export-btn export-btn-back">
+      <a href="{% url 'chat-results' chat.id %}" class="btn btn-secondary" style="padding: 1rem 2rem; font-size: 1rem;">
         Back to Results
       </a>
     </div>

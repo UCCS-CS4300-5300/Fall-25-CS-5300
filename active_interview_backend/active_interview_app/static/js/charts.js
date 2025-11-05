@@ -30,17 +30,15 @@ const chart1 = new Chart(BarChart, {
       }]
     },
     options: {
-        font: {
-          family: "Verdana, Geneva, Tahoma, sans-serif",
-          size: 15,
-          color: textPrimaryColor,
-        },
         legend: {
           display: false,
         },
         title: {
           display: true,
           text: "Category scores (out of 100)",
+          fontColor: textPrimaryColor,
+          fontFamily: "Verdana, Geneva, Tahoma, sans-serif",
+          fontSize: 16,
         },
         scales: {
           yAxes: [{
@@ -48,11 +46,25 @@ const chart1 = new Chart(BarChart, {
               beginAtZero: true,
               min: 0,
               max: 100,
-              stepSize: 20
+              stepSize: 20,
+              fontColor: textPrimaryColor,
+              fontFamily: "Verdana, Geneva, Tahoma, sans-serif",
+            },
+            gridLines: {
+              color: 'rgba(128, 128, 128, 0.2)',
             }
           }],
-      }  
-    } 
+          xAxes: [{
+            ticks: {
+              fontColor: textPrimaryColor,
+              fontFamily: "Verdana, Geneva, Tahoma, sans-serif",
+            },
+            gridLines: {
+              color: 'rgba(128, 128, 128, 0.2)',
+            }
+          }]
+      }
+    }
   });
 
 
@@ -79,6 +91,15 @@ const chart2 = new Chart(DonutChart, {
     title:{
       display: true,
       text: 'Categories',
+      fontColor: textPrimaryColor,
+      fontFamily: "Verdana, Geneva, Tahoma, sans-serif",
+      fontSize: 16,
+    },
+    legend: {
+      labels: {
+        fontColor: textPrimaryColor,
+        fontFamily: "Verdana, Geneva, Tahoma, sans-serif",
+      }
     },
   },
 });

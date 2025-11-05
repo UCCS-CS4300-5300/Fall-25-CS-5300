@@ -1229,25 +1229,26 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
         """Generate or update the exportable report for a chat"""
         chat = get_object_or_404(Chat, id=chat_id)
 
-        # Check if report already exists, update it if so
-        report, created = ExportableReport.objects.get_or_create(chat=chat)
+        # Delete existing report to force fresh generation
+        ExportableReport.objects.filter(chat=chat).delete()
 
-        # Extract scores from messages if they exist
-        # Look for the results in the chat messages
-        scores = self._extract_scores_from_chat(chat)
+        # Create a new report
+        report = ExportableReport.objects.create(chat=chat)
+
+        # Generate scores using AI (same approach as ResultCharts view)
+        scores = self._generate_scores_from_ai(chat)
 
         # Update report fields
-        if scores:
-            report.professionalism_score = scores.get('Professionalism', 0)
-            report.subject_knowledge_score = scores.get('Subject Knowledge', 0)
-            report.clarity_score = scores.get('Clarity', 0)
-            report.overall_score = scores.get('Overall', 0)
+        report.professionalism_score = scores.get('Professionalism', 0)
+        report.subject_knowledge_score = scores.get('Subject Knowledge', 0)
+        report.clarity_score = scores.get('Clarity', 0)
+        report.overall_score = scores.get('Overall', 0)
 
-        # Extract feedback text
-        report.feedback_text = self._extract_feedback_from_chat(chat)
+        # Extract feedback text using AI
+        report.feedback_text = self._generate_feedback_from_ai(chat)
 
-        # Build question responses
-        report.question_responses = self._extract_question_responses(chat)
+        # Build question responses - disabled for now
+        report.question_responses = []
 
         # Calculate statistics
         chat_messages = chat.messages
@@ -1263,59 +1264,112 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
         messages.success(request, 'Report generated successfully!')
         return redirect('export_report', chat_id=chat_id)
 
-    def _extract_scores_from_chat(self, chat):
+    def _generate_scores_from_ai(self, chat):
         """
-        Extract performance scores from chat messages.
-        This looks for AI-generated scoring data in the messages.
+        Generate performance scores using AI.
+        This matches the approach used in ResultCharts view.
         """
-        # Look through messages for score data
-        # In the actual implementation, scores would be extracted from
-        # the AI response that contains the scoring information
-        chat_messages = chat.messages
+        scores_prompt = textwrap.dedent("""\
+            Based on the interview so far, please rate the interviewee in the
+            following categories from 0 to 100, and return the result as a JSON
+            object with integers only, in the following order that list only
+            the integers:
 
-        # Find the most recent message containing scores
-        for msg in reversed(chat_messages):
-            if msg.get('role') == 'assistant':
-                content = msg.get('content', '')
-                # Try to parse scores from the content
-                scores = {}
+            - Professionalism
+            - Subject Knowledge
+            - Clarity
+            - Overall
 
-                # Look for score patterns in the message
-                patterns = [
-                    r'Professionalism[:\s]+(\d+)',
-                    r'Subject Knowledge[:\s]+(\d+)',
-                    r'Clarity[:\s]+(\d+)',
-                    r'Overall[:\s]+(\d+)',
-                ]
-                keys = ['Professionalism', 'Subject Knowledge',
-                       'Clarity', 'Overall']
+            Example format:
+                8
+                7
+                9
+                6
+        """)
 
-                for pattern, key in zip(patterns, keys):
-                    match = re.search(pattern, content, re.IGNORECASE)
-                    if match:
-                        scores[key] = int(match.group(1))
+        input_messages = chat.messages.copy()
+        input_messages.append({"role": "user", "content": scores_prompt})
 
-                if scores:
-                    return scores
+        if not _ai_available():
+            return {
+                'Professionalism': 0,
+                'Subject Knowledge': 0,
+                'Clarity': 0,
+                'Overall': 0
+            }
 
-        return {}
+        try:
+            response = get_openai_client().chat.completions.create(
+                model="gpt-4o",
+                messages=input_messages,
+                max_tokens=MAX_TOKENS
+            )
+            ai_message = response.choices[0].message.content.strip()
+            scores_list = [int(line.strip())
+                          for line in ai_message.splitlines() if line.strip().isdigit()]
 
-    def _extract_feedback_from_chat(self, chat):
-        """Extract AI feedback text from chat messages"""
-        chat_messages = chat.messages
+            if len(scores_list) == 4:
+                professionalism, subject_knowledge, clarity, overall = scores_list
+            else:
+                professionalism, subject_knowledge, clarity, overall = [0, 0, 0, 0]
 
-        # Find messages that look like feedback
-        feedback_parts = []
-        for msg in reversed(chat_messages):
-            if msg.get('role') == 'assistant':
-                content = msg.get('content', '')
-                # If the message contains feedback keywords, include it
-                if any(keyword in content.lower() for keyword in
-                      ['feedback', 'assessment', 'evaluation', 'overall']):
-                    feedback_parts.append(content)
-                    break  # Take the most recent feedback
+            return {
+                'Professionalism': professionalism,
+                'Subject Knowledge': subject_knowledge,
+                'Clarity': clarity,
+                'Overall': overall
+            }
+        except Exception:
+            return {
+                'Professionalism': 0,
+                'Subject Knowledge': 0,
+                'Clarity': 0,
+                'Overall': 0
+            }
 
-        return '\n\n'.join(feedback_parts)
+    def _generate_feedback_from_ai(self, chat):
+        """Generate AI feedback text using OpenAI"""
+        scores_prompt = textwrap.dedent("""\
+            Based on the interview so far, please rate the interviewee in the
+            following categories from 0 to 100, and return the result as a JSON
+            object with integers only, in the following order that list only
+            the integers:
+
+            - Professionalism
+            - Subject Knowledge
+            - Clarity
+            - Overall
+
+            Example format:
+                8
+                7
+                9
+                6
+        """)
+
+        input_messages = chat.messages.copy()
+        input_messages.append({"role": "user", "content": scores_prompt})
+
+        explain = textwrap.dedent("""\
+            Explain the reason for the following scores so that the user can
+            understand, do not include json object for scores IF NO response
+            was given since start of interview please tell them to start
+            interview
+        """)
+        input_messages.append({"role": "user", "content": explain})
+
+        if not _ai_available():
+            return "AI features are currently unavailable."
+
+        try:
+            response = get_openai_client().chat.completions.create(
+                model="gpt-4o",
+                messages=input_messages,
+                max_tokens=MAX_TOKENS
+            )
+            return response.choices[0].message.content
+        except Exception:
+            return "Unable to generate feedback at this time."
 
     def _extract_question_responses(self, chat):
         """
