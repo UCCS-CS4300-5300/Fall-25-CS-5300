@@ -29,8 +29,19 @@ def import_token_usage_from_json_files():
         print(f"ℹ️  No temp directory found at {temp_dir}")
         return 0
 
-    # Find all token usage JSON files
-    json_files = glob.glob(os.path.join(temp_dir, 'token_usage_*.json'))
+    # Find all token usage JSON files (multiple patterns)
+    patterns = [
+        'token_usage_*.json',     # CI/CD ai-review tokens
+        'claude_local_*.json',    # Local Claude Code tracking
+        '*_tokens.json',          # Generic exported tokens
+    ]
+
+    json_files = []
+    for pattern in patterns:
+        json_files.extend(glob.glob(os.path.join(temp_dir, pattern)))
+
+    # Remove duplicates
+    json_files = list(set(json_files))
 
     if not json_files:
         print(f"ℹ️  No token usage JSON files found in {temp_dir}")

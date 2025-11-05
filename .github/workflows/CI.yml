@@ -555,6 +555,17 @@ jobs:
         path: temp/
       continue-on-error: true
 
+    - name: Check for Local Token Files
+      run: |
+        echo "Checking for token files in temp/..."
+        if [ -d "temp" ]; then
+          echo "Contents of temp/:"
+          ls -lah temp/ || echo "Empty temp directory"
+        else
+          echo "No temp directory found, creating..."
+          mkdir -p temp
+        fi
+
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
@@ -577,16 +588,34 @@ jobs:
 
     - name: Show Token Files to Import
       run: |
-        echo "Token files found:"
-        ls -la temp/*.json 2>/dev/null || echo "No token files found"
+        echo "=========================================="
+        echo "Token files available for import:"
+        echo "=========================================="
+        echo ""
+        echo "AI Review tokens (token_usage_*.json):"
+        ls -lh temp/token_usage_*.json 2>/dev/null || echo "  None found"
+        echo ""
+        echo "Local Claude tracking (claude_local_*.json):"
+        ls -lh temp/claude_local_*.json 2>/dev/null || echo "  None found"
+        echo ""
+        echo "Exported tokens (*_tokens.json):"
+        ls -lh temp/*_tokens.json 2>/dev/null || echo "  None found"
+        echo ""
+        echo "All JSON files in temp/:"
+        ls -lh temp/*.json 2>/dev/null || echo "  No JSON files found"
+        echo ""
+        echo "=========================================="
 
-    - name: Import Token Usage from CI/CD Scripts
+    - name: Import Token Usage from All Sources
       working-directory: .
       env:
         DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       run: |
-        python scripts/import-token-usage.py || echo "No token files to import"
+        echo ""
+        echo "Starting import of all token files..."
+        echo ""
+        python token_metrics/scripts/import-token-usage.py || echo "⚠️ Import completed with warnings"
 
     - name: Generate Token Metrics Report
       working-directory: .
@@ -599,17 +628,58 @@ jobs:
         GITHUB_HEAD_REF: ${{ github.head_ref }}
         GITHUB_EVENT_NAME: ${{ github.event_name }}
       run: |
-        python scripts/report-token-metrics.py | tee token-metrics-report.txt
+        echo ""
+        echo "=========================================="
+        echo "Generating comprehensive token report..."
+        echo "=========================================="
+        echo ""
+        python token_metrics/scripts/report-token-metrics.py | tee token-metrics-report.txt
+        echo ""
+        echo "✅ Report generated successfully"
 
     - name: Add Token Metrics to Summary
       if: always()
       run: |
         {
-          echo '# 🤖 Token Usage Metrics'
+          echo '# 🤖 Token Usage Metrics Report'
+          echo ''
+          echo '> **Tracking all token usage from:**'
+          echo '> - 🔍 AI Code Review (OpenAI)'
+          echo '> - 💬 Claude Code Sessions (Local + CI/CD)'
+          echo '> - 📤 Exported Token Files'
+          echo '> - 🔧 Django API Calls'
+          echo ''
+          echo '---'
           echo ''
           echo '```'
-          cat token-metrics-report.txt
+          cat token-metrics-report.txt 2>/dev/null || echo "Report generation failed - see logs above"
           echo '```'
+          echo ''
+          echo '---'
+          echo ''
+          echo '### 📊 Report Includes'
+          echo ''
+          echo '- ✅ **Current Branch Summary** - All tokens used on this branch'
+          echo '- ✅ **Recent Activity** - Last 7 days of API calls'
+          echo '- ✅ **Branch Breakdown** - Token usage across all branches'
+          echo '- ✅ **Cost Estimates** - Approximate USD costs'
+          echo '- ✅ **Model Breakdown** - Claude vs OpenAI usage'
+          echo ''
+          echo '### 💡 Tracking Your Local Tokens'
+          echo ''
+          echo 'To track your local Claude Code sessions:'
+          echo '```bash'
+          echo '# Add tokens from current session'
+          echo 'add-tokens.bat 70000 "Feature description"'
+          echo ''
+          echo '# Export for sharing/backup'
+          echo 'export-tokens.bat my_work.json'
+          echo ''
+          echo '# Submit to database when ready'
+          echo 'submit-tokens.bat'
+          echo '```'
+          echo ''
+          echo 'See `TOKEN_TRACKING_GUIDE.md` for full documentation.'
         } >> $GITHUB_STEP_SUMMARY
 
     - name: Upload Token Metrics Report

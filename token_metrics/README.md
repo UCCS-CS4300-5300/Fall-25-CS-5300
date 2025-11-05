@@ -1,6 +1,29 @@
 # Token Metrics System
 
-This folder contains all token usage tracking functionality for Claude and OpenAI APIs.
+Complete token tracking system for Claude and OpenAI API usage with persistent storage, export/import capabilities, and CI/CD integration.
+
+## Quick Start
+
+### Track Local Claude Code Tokens
+
+```bash
+# From token_metrics/ directory
+add-tokens.bat 70000 "Feature description"
+show-tokens.bat
+submit-tokens.bat
+```
+
+### Export/Import for Sharing
+
+```bash
+# Export
+export-tokens.bat my_work.json
+
+# Import (on different machine/instance)
+import-tokens.bat my_work.json --merge
+```
+
+---
 
 ## Directory Structure
 
