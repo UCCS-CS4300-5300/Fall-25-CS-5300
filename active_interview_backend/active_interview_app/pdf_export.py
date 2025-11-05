@@ -211,11 +211,12 @@ def _create_feedback_section(exportable_report, heading_style, normal_style):
     return elements
 
 
-def _create_recommended_exercises_section(heading_style, normal_style):
+def _create_recommended_exercises_section(exportable_report, heading_style, normal_style):
     """
-    Create the recommended exercises section.
+    Create the recommended exercises section based on performance scores.
 
     Args:
+        exportable_report: An ExportableReport model instance
         heading_style: The heading style to use
         normal_style: The normal text style to use
 
@@ -240,17 +241,62 @@ def _create_recommended_exercises_section(heading_style, normal_style):
         fontName='Helvetica-Bold',
         spaceAfter=12,
     )
-    elements.append(Paragraph("To improve your interview skills, we recommend:", intro_style))
 
-    # Recommendations
-    recommendations = [
-        ("<b>Practice STAR Method:</b>", "Structure your answers using Situation, Task, Action, and Result to provide clear, concise responses."),
+    # Determine weakest areas based on scores
+    scores = {
+        'Professionalism': exportable_report.professionalism_score or 0,
+        'Subject Knowledge': exportable_report.subject_knowledge_score or 0,
+        'Clarity': exportable_report.clarity_score or 0,
+    }
+
+    # Sort by score to prioritize areas needing improvement
+    sorted_areas = sorted(scores.items(), key=lambda x: x[1])
+
+    # Build customized recommendations
+    all_recommendations = {
+        'Professionalism': [
+            ("<b>Professional Communication:</b>", "Practice maintaining professional tone and demeanor throughout the interview. Focus on appropriate body language and active listening."),
+            ("<b>Business Etiquette:</b>", "Review professional email writing, meeting etiquette, and workplace communication best practices."),
+        ],
+        'Subject Knowledge': [
+            ("<b>Technical Skills:</b>", "Deepen your knowledge in your field through coding challenges, technical documentation, and hands-on projects."),
+            ("<b>Industry Research:</b>", "Stay current with industry trends, tools, and best practices through articles, courses, and professional communities."),
+        ],
+        'Clarity': [
+            ("<b>Practice STAR Method:</b>", "Structure your answers using Situation, Task, Action, and Result to provide clear, concise responses."),
+            ("<b>Communication Skills:</b>", "Work on articulating your thoughts clearly. Practice explaining complex topics in simple terms."),
+        ],
+    }
+
+    # Add general recommendations
+    general_recommendations = [
         ("<b>Mock Interviews:</b>", "Continue practicing with our AI interviewer or with peers to build confidence and fluency."),
-        ("<b>Research Common Questions:</b>", "Review frequently asked questions for your industry and prepare thoughtful responses."),
-        ("<b>Technical Skills:</b>", "Keep your technical skills sharp through coding challenges, projects, or online courses."),
-        ("<b>Behavioral Preparation:</b>", "Reflect on your past experiences and prepare examples that showcase your skills and problem-solving abilities."),
         ("<b>Company Research:</b>", "Learn about the companies you're interviewing with to tailor your responses and ask informed questions."),
     ]
+
+    # Select recommendations based on scores
+    recommendations = []
+
+    # Prioritize lowest scoring areas
+    for area, score in sorted_areas[:2]:  # Focus on 2 weakest areas
+        if area in all_recommendations:
+            recommendations.extend(all_recommendations[area])
+
+    # Add general recommendations
+    recommendations.extend(general_recommendations)
+
+    # Customize introduction based on overall score
+    overall_score = exportable_report.overall_score or 0
+    if overall_score >= 90:
+        intro_text = "Excellent performance! To maintain and further enhance your skills:"
+    elif overall_score >= 75:
+        intro_text = "Good performance! Here are some targeted exercises to help you excel:"
+    elif overall_score >= 60:
+        intro_text = "To improve your interview performance, we recommend focusing on:"
+    else:
+        intro_text = "To build stronger interview skills, we recommend starting with:"
+
+    elements.append(Paragraph(intro_text, intro_style))
 
     bullet_style = ParagraphStyle(
         'BulletText',
@@ -374,7 +420,7 @@ def generate_pdf_report(exportable_report):
     elements.extend(_create_metadata_section(exportable_report, heading_style))
     elements.extend(_create_performance_scores_section(exportable_report, heading_style, normal_style))
     elements.extend(_create_feedback_section(exportable_report, heading_style, normal_style))
-    elements.extend(_create_recommended_exercises_section(heading_style, normal_style))
+    elements.extend(_create_recommended_exercises_section(exportable_report, heading_style, normal_style))
     elements.extend(_create_statistics_section(exportable_report, heading_style))
     elements.extend(_create_footer())
 

@@ -1236,7 +1236,7 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
         report = ExportableReport.objects.create(chat=chat)
 
         # Generate scores using AI (same approach as ResultCharts view)
-        scores = self._generate_scores_from_ai(chat)
+        scores = self._extract_scores_from_chat(chat)
 
         # Update report fields
         report.professionalism_score = scores.get('Professionalism', 0)
@@ -1245,10 +1245,8 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
         report.overall_score = scores.get('Overall', 0)
 
         # Extract feedback text using AI
-        report.feedback_text = self._generate_feedback_from_ai(chat)
+        report.feedback_text = self._extract_feedback_from_chat(chat)
 
-        # Build question responses - disabled for now
-        report.question_responses = []
 
         # Calculate statistics
         chat_messages = chat.messages
@@ -1264,10 +1262,10 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
         messages.success(request, 'Report generated successfully!')
         return redirect('export_report', chat_id=chat_id)
 
-    def _generate_scores_from_ai(self, chat):
+    def _extract_scores_from_chat(self, chat):
         """
-        Generate performance scores using AI.
-        This matches the approach used in ResultCharts view.
+        Generate performance scores from chat messages using AI.
+        This uses the same approach as ResultCharts view.
         """
         scores_prompt = textwrap.dedent("""\
             Based on the interview so far, please rate the interviewee in the
@@ -1286,77 +1284,47 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
                 9
                 6
         """)
-
-        input_messages = chat.messages.copy()
+        input_messages = list(chat.messages)
         input_messages.append({"role": "user", "content": scores_prompt})
 
         if not _ai_available():
-            return {
-                'Professionalism': 0,
-                'Subject Knowledge': 0,
-                'Clarity': 0,
-                'Overall': 0
-            }
-
-        try:
-            response = get_openai_client().chat.completions.create(
-                model="gpt-4o",
-                messages=input_messages,
-                max_tokens=MAX_TOKENS
-            )
-            ai_message = response.choices[0].message.content.strip()
-            scores_list = [int(line.strip())
-                          for line in ai_message.splitlines() if line.strip().isdigit()]
-
-            if len(scores_list) == 4:
-                professionalism, subject_knowledge, clarity, overall = scores_list
-            else:
+            professionalism, subject_knowledge, clarity, overall = [0, 0, 0, 0]
+        else:
+            try:
+                response = get_openai_client().chat.completions.create(
+                    model="gpt-4o",
+                    messages=input_messages,
+                    max_tokens=MAX_TOKENS
+                )
+                ai_message = response.choices[0].message.content.strip()
+                scores = [int(line.strip())
+                              for line in ai_message.splitlines() if line.strip()
+                                .isdigit()]
+                if len(scores) == 4:
+                    professionalism, subject_knowledge, clarity, overall = scores
+                else:
+                    professionalism, subject_knowledge, clarity, overall = [0, 0, 0, 0]
+            except Exception:
                 professionalism, subject_knowledge, clarity, overall = [0, 0, 0, 0]
 
-            return {
-                'Professionalism': professionalism,
-                'Subject Knowledge': subject_knowledge,
-                'Clarity': clarity,
-                'Overall': overall
-            }
-        except Exception:
-            return {
-                'Professionalism': 0,
-                'Subject Knowledge': 0,
-                'Clarity': 0,
-                'Overall': 0
-            }
+        return {
+            'Professionalism': professionalism,
+            'Subject Knowledge': subject_knowledge,
+            'Clarity': clarity,
+            'Overall': overall
+        }
 
-    def _generate_feedback_from_ai(self, chat):
-        """Generate AI feedback text using OpenAI"""
-        scores_prompt = textwrap.dedent("""\
-            Based on the interview so far, please rate the interviewee in the
-            following categories from 0 to 100, and return the result as a JSON
-            object with integers only, in the following order that list only
-            the integers:
-
-            - Professionalism
-            - Subject Knowledge
-            - Clarity
-            - Overall
-
-            Example format:
-                8
-                7
-                9
-                6
+    def _extract_feedback_from_chat(self, chat):
+        """Generate AI feedback text from chat messages"""
+        explain_prompt = textwrap.dedent("""\
+            Provide a comprehensive evaluation of the interviewee's performance.
+            Include specific strengths, areas for improvement, and overall assessment.
+            Focus on professionalism, subject knowledge, and communication clarity.
+            If no response was given since start of interview, please tell them to start the interview.
         """)
 
-        input_messages = chat.messages.copy()
-        input_messages.append({"role": "user", "content": scores_prompt})
-
-        explain = textwrap.dedent("""\
-            Explain the reason for the following scores so that the user can
-            understand, do not include json object for scores IF NO response
-            was given since start of interview please tell them to start
-            interview
-        """)
-        input_messages.append({"role": "user", "content": explain})
+        input_messages = list(chat.messages)
+        input_messages.append({"role": "user", "content": explain_prompt})
 
         if not _ai_available():
             return "AI features are currently unavailable."
@@ -1367,7 +1335,7 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
                 messages=input_messages,
                 max_tokens=MAX_TOKENS
             )
-            return response.choices[0].message.content
+            return response.choices[0].message.content.strip()
         except Exception:
             return "Unable to generate feedback at this time."
 

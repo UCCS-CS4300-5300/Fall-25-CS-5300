@@ -5,7 +5,6 @@ This module provides extensive coverage of all PDF export utility functions,
 including edge cases and error handling.
 """
 
-import pytest
 from django.test import TestCase
 from django.contrib.auth.models import User
 from active_interview_app.models import Chat, ExportableReport, UploadedJobListing, UploadedResume
@@ -16,11 +15,9 @@ from active_interview_app.pdf_export import (
     _create_metadata_section,
     _create_performance_scores_section,
     _create_feedback_section,
-    _create_question_responses_section,
     _create_statistics_section,
     _create_footer
 )
-from datetime import datetime, timedelta
 
 
 class GetScoreRatingTest(TestCase):
@@ -277,88 +274,6 @@ class PDFSectionCreationTest(TestCase):
         self.assertIsInstance(result, list)
         self.assertGreater(len(result), 0)
 
-    def test_create_question_responses_section(self):
-        """Test question responses section"""
-        qa_report = ExportableReport.objects.create(
-            chat=Chat.objects.create(
-                owner=self.user,
-                title='QA Interview',
-                difficulty=7,
-                messages=[],
-                type='GEN'
-            ),
-            question_responses=[
-                {
-                    'question': 'What is your experience?',
-                    'answer': 'I have 5 years of experience.',
-                    'score': 8,
-                    'feedback': 'Good answer'
-                },
-                {
-                    'question': 'Why this company?',
-                    'answer': 'I am passionate about the mission.',
-                    'score': 9,
-                    'feedback': 'Excellent response'
-                }
-            ],
-            total_questions_asked=2,
-            total_responses_given=2
-        )
-
-        _, heading_style, _ = _create_styles()
-        result = _create_question_responses_section(qa_report, heading_style)
-
-        self.assertIsInstance(result, list)
-        self.assertGreater(len(result), 0)
-
-    def test_create_question_responses_section_no_responses(self):
-        """Test question responses section with no responses"""
-        report_no_qa = ExportableReport.objects.create(
-            chat=Chat.objects.create(
-                owner=self.user,
-                title='No QA Interview',
-                difficulty=5,
-                messages=[],
-                type='GEN'
-            ),
-            question_responses=[],
-            total_questions_asked=0,
-            total_responses_given=0
-        )
-
-        _, heading_style, _ = _create_styles()
-        result = _create_question_responses_section(report_no_qa, heading_style)
-
-        self.assertIsInstance(result, list)
-        # Should be empty when no question responses
-        self.assertEqual(len(result), 0)
-
-    def test_create_question_responses_section_minimal_qa(self):
-        """Test question responses with minimal data (no score/feedback)"""
-        minimal_qa_report = ExportableReport.objects.create(
-            chat=Chat.objects.create(
-                owner=self.user,
-                title='Minimal QA Interview',
-                difficulty=5,
-                messages=[],
-                type='GEN'
-            ),
-            question_responses=[
-                {
-                    'question': 'Tell me about yourself',
-                    'answer': 'I am a software engineer.'
-                }
-            ],
-            total_questions_asked=1,
-            total_responses_given=1
-        )
-
-        _, heading_style, _ = _create_styles()
-        result = _create_question_responses_section(minimal_qa_report, heading_style)
-
-        self.assertIsInstance(result, list)
-        self.assertGreater(len(result), 0)
-
     def test_create_statistics_section(self):
         """Test statistics section"""
         _, heading_style, _ = _create_styles()
@@ -561,39 +476,6 @@ class GeneratePDFReportTest(TestCase):
 
         self.assertIsNotNone(pdf_content)
         self.assertTrue(pdf_content.startswith(b'%PDF'))
-
-    def test_generate_pdf_many_questions(self):
-        """Test PDF with many question responses"""
-        questions = [
-            {
-                'question': f'Question {i}',
-                'answer': f'Answer {i}',
-                'score': (i % 10) + 1,
-                'feedback': f'Feedback {i}'
-            }
-            for i in range(25)
-        ]
-        chat = Chat.objects.create(
-            owner=self.user,
-            title='Many Questions Interview',
-            difficulty=7,
-            messages=[],
-            type='GEN'
-        )
-        report = ExportableReport.objects.create(
-            chat=chat,
-            question_responses=questions,
-            overall_score=85,
-            total_questions_asked=25,
-            total_responses_given=25
-        )
-
-        pdf_content = generate_pdf_report(report)
-
-        self.assertIsNotNone(pdf_content)
-        self.assertTrue(pdf_content.startswith(b'%PDF'))
-        # Should be longer with many questions
-        self.assertGreater(len(pdf_content), 5000)
 
     def test_generate_pdf_special_characters_in_title(self):
         """Test PDF with special characters in title"""
