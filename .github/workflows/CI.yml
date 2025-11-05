@@ -539,7 +539,8 @@ jobs:
   token-metrics:
     name: Report Token Usage Metrics
     runs-on: ubuntu-latest
-    needs: [test, ai-review, loc-metrics]
+    needs: [test, ai-review]
+    if: always() && (needs.test.result == 'success' || needs.test.result == 'failure')
 
     steps:
     - name: Checkout code
