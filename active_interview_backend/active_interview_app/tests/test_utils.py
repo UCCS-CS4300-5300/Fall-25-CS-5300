@@ -30,7 +30,6 @@ class TestFileUploadUtils(TestCase):
             saved_content = f.read()
         self.assertEqual(saved_content, content)
 
-    @override_settings(MEDIA_ROOT=property(lambda s: s.test_upload_dir))
     @patch('builtins.open')
     def test_permission_error_handling(self, mock_open):
         """Test handling of permission errors during file upload"""
@@ -43,7 +42,6 @@ class TestFileUploadUtils(TestCase):
         with self.assertRaisesRegex(ValueError, "There was an error saving the file"):
             handle_uploaded_file(test_file)
 
-    @override_settings(MEDIA_ROOT=property(lambda s: s.test_upload_dir))
     @patch('os.makedirs')
     def test_generic_error_handling(self, mock_makedirs):
         """Test handling of generic errors during file upload"""

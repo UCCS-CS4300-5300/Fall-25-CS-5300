@@ -28,7 +28,7 @@ class SignalsTest(TestCase):
 
         self.assertEqual(Group.objects.filter(name='average_role').count(), 1)
 
-    @patch('active_interview_backend.active_interview_app.signals.Group.objects.get_or_create')
+    @patch('active_interview_app.signals.Group.objects.get_or_create')
     def test_calls_get_or_create(self, mock_get_or_create):
         """Verify the handler uses Group.objects.get_or_create with the expected name."""
         signals.ensure_average_role_group(sender=None)
