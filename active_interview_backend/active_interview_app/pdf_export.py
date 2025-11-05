@@ -190,85 +190,129 @@ def _create_feedback_section(exportable_report, heading_style, normal_style):
                                   color=colors.HexColor('#1a73e8')))
         elements.append(Spacer(1, 0.1 * inch))
 
+        # Create a feedback style with proper word wrapping
+        feedback_style = ParagraphStyle(
+            'FeedbackText',
+            parent=normal_style,
+            fontSize=11,
+            leading=14,
+            wordWrap='CJK',
+            rightIndent=0,
+            leftIndent=0,
+        )
+
         feedback_lines = exportable_report.feedback_text.split('\n')
         for line in feedback_lines:
             if line.strip():
-                elements.append(Paragraph(line, normal_style))
+                elements.append(Paragraph(line, feedback_style))
                 elements.append(Spacer(1, 0.05 * inch))
         elements.append(Spacer(1, 0.2 * inch))
 
     return elements
 
 
-def _create_question_responses_section(exportable_report, heading_style):
+def _create_recommended_exercises_section(exportable_report, heading_style, normal_style):
     """
-    Create the question responses section.
+    Create the recommended exercises section based on performance scores.
 
     Args:
         exportable_report: An ExportableReport model instance
         heading_style: The heading style to use
+        normal_style: The normal text style to use
 
     Returns:
-        list: List of flowable elements for the question responses section
+        list: List of flowable elements for the recommended exercises section
     """
     elements = []
 
-    if exportable_report.question_responses:
-        elements.append(PageBreak())
-        elements.append(Paragraph("Interview Questions and Responses", heading_style))
-        elements.append(HRFlowable(width="100%", thickness=1,
-                                  color=colors.HexColor('#1a73e8')))
-        elements.append(Spacer(1, 0.2 * inch))
+    elements.append(PageBreak())
+    elements.append(Paragraph("Recommended Exercises", heading_style))
+    elements.append(HRFlowable(width="100%", thickness=1,
+                              color=colors.HexColor('#1a73e8')))
+    elements.append(Spacer(1, 0.2 * inch))
 
-        styles = getSampleStyleSheet()
-        for idx, qa in enumerate(exportable_report.question_responses, 1):
-            # Question
-            question_style = ParagraphStyle(
-                'Question',
-                parent=styles['BodyText'],
-                fontSize=11,
-                textColor=colors.HexColor('#1a73e8'),
-                fontName='Helvetica-Bold',
-                spaceAfter=6,
-            )
-            elements.append(Paragraph(f"Q{idx}: {qa.get('question', 'N/A')}",
-                                     question_style))
+    # Introduction
+    intro_style = ParagraphStyle(
+        'IntroText',
+        parent=normal_style,
+        fontSize=11,
+        leading=14,
+        textColor=colors.HexColor('#1a73e8'),
+        fontName='Helvetica-Bold',
+        spaceAfter=12,
+    )
 
-            # Answer
-            answer_style = ParagraphStyle(
-                'Answer',
-                parent=styles['BodyText'],
-                fontSize=10,
-                leftIndent=20,
-                spaceAfter=6,
-            )
-            answer_text = qa.get('answer', 'No response')
-            elements.append(Paragraph(f"<b>Answer:</b> {answer_text}",
-                                     answer_style))
+    # Determine weakest areas based on scores
+    scores = {
+        'Professionalism': exportable_report.professionalism_score or 0,
+        'Subject Knowledge': exportable_report.subject_knowledge_score or 0,
+        'Clarity': exportable_report.clarity_score or 0,
+    }
 
-            # Score and Feedback if available
-            if 'score' in qa or 'feedback' in qa:
-                feedback_data = []
-                if 'score' in qa:
-                    feedback_data.append(['Score:', f"{qa['score']}/10"])
-                if 'feedback' in qa:
-                    feedback_data.append(['Feedback:', qa['feedback']])
+    # Sort by score to prioritize areas needing improvement
+    sorted_areas = sorted(scores.items(), key=lambda x: x[1])
 
-                feedback_table = Table(feedback_data,
-                                      colWidths=[1 * inch, 5 * inch])
-                feedback_table.setStyle(TableStyle([
-                    ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-                    ('FONTSIZE', (0, 0), (-1, -1), 10),
-                    ('TEXTCOLOR', (0, 0), (0, -1), colors.HexColor('#555555')),
-                    ('LEFTPADDING', (0, 0), (-1, -1), 20),
-                    ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-                ]))
-                elements.append(feedback_table)
+    # Build customized recommendations
+    all_recommendations = {
+        'Professionalism': [
+            ("<b>Professional Communication:</b>", "Practice maintaining professional tone and demeanor throughout the interview. Focus on appropriate body language and active listening."),
+            ("<b>Business Etiquette:</b>", "Review professional email writing, meeting etiquette, and workplace communication best practices."),
+        ],
+        'Subject Knowledge': [
+            ("<b>Technical Skills:</b>", "Deepen your knowledge in your field through coding challenges, technical documentation, and hands-on projects."),
+            ("<b>Industry Research:</b>", "Stay current with industry trends, tools, and best practices through articles, courses, and professional communities."),
+        ],
+        'Clarity': [
+            ("<b>Practice STAR Method:</b>", "Structure your answers using Situation, Task, Action, and Result to provide clear, concise responses."),
+            ("<b>Communication Skills:</b>", "Work on articulating your thoughts clearly. Practice explaining complex topics in simple terms."),
+        ],
+    }
 
-            elements.append(Spacer(1, 0.15 * inch))
-            elements.append(HRFlowable(width="80%", thickness=0.5,
-                                      color=colors.HexColor('#cccccc'),
-                                      spaceAfter=0.15 * inch))
+    # Add general recommendations
+    general_recommendations = [
+        ("<b>Mock Interviews:</b>", "Continue practicing with our AI interviewer or with peers to build confidence and fluency."),
+        ("<b>Company Research:</b>", "Learn about the companies you're interviewing with to tailor your responses and ask informed questions."),
+    ]
+
+    # Select recommendations based on scores
+    recommendations = []
+
+    # Prioritize lowest scoring areas
+    for area, score in sorted_areas[:2]:  # Focus on 2 weakest areas
+        if area in all_recommendations:
+            recommendations.extend(all_recommendations[area])
+
+    # Add general recommendations
+    recommendations.extend(general_recommendations)
+
+    # Customize introduction based on overall score
+    overall_score = exportable_report.overall_score or 0
+    if overall_score >= 90:
+        intro_text = "Excellent performance! To maintain and further enhance your skills:"
+    elif overall_score >= 75:
+        intro_text = "Good performance! Here are some targeted exercises to help you excel:"
+    elif overall_score >= 60:
+        intro_text = "To improve your interview performance, we recommend focusing on:"
+    else:
+        intro_text = "To build stronger interview skills, we recommend starting with:"
+
+    elements.append(Paragraph(intro_text, intro_style))
+
+    bullet_style = ParagraphStyle(
+        'BulletText',
+        parent=normal_style,
+        fontSize=11,
+        leading=16,
+        leftIndent=20,
+        bulletIndent=10,
+        spaceAfter=8,
+    )
+
+    for title, description in recommendations:
+        text = f"• {title} {description}"
+        elements.append(Paragraph(text, bullet_style))
+
+    elements.append(Spacer(1, 0.2 * inch))
 
     return elements
 
@@ -376,7 +420,7 @@ def generate_pdf_report(exportable_report):
     elements.extend(_create_metadata_section(exportable_report, heading_style))
     elements.extend(_create_performance_scores_section(exportable_report, heading_style, normal_style))
     elements.extend(_create_feedback_section(exportable_report, heading_style, normal_style))
-    elements.extend(_create_question_responses_section(exportable_report, heading_style))
+    elements.extend(_create_recommended_exercises_section(exportable_report, heading_style, normal_style))
     elements.extend(_create_statistics_section(exportable_report, heading_style))
     elements.extend(_create_footer())
 
