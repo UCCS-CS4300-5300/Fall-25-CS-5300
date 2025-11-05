@@ -401,8 +401,12 @@ a:hover {
 
 .chat-sidebar {
     background-color: var(--sidebar-bg);
-    max-height: 100dvh !important;
+    min-height: 100dvh;
     border-right: 1px solid var(--border-light);
+}
+
+.sidebar-content {
+    min-height: 100%;
 }
 
 .offcanvas {
@@ -1941,6 +1945,18 @@ a:hover {
 
 .export-btn-back:hover {
     background: #7f8c8d;
+    color: var(--text-white);
+}
+
+.export-btn-generate {
+    background: var(--primary);
+    color: var(--text-white);
+}
+
+.export-btn-generate:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     color: var(--text-white);
 }
 

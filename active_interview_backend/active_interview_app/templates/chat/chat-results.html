@@ -11,11 +11,11 @@
   </head>
   <style>
     .h1{
-      margin-left: auto; 
-      margin-right: auto; 
+      margin-left: auto;
+      margin-right: auto;
       margin-top: 2%;
       margin-bottom: 5%;
-      color: #4482a6;
+      color: var(--primary);
       font-family: Verdana, Geneva, Tahoma, sans-serif;
     }
     .container{
@@ -35,7 +35,8 @@
       border: solid;
       border-radius: 15px;
       border-width: 3px;
-      border-color: lightblue;
+      border-color: var(--primary-lighter);
+      background-color: var(--surface);
       max-width: fit-content;
       height: fit-content;
       margin-top: 5%;
@@ -44,25 +45,55 @@
     }
     #feedbackpara{
       font-family: Verdana, Geneva, Tahoma, sans-serif;
-      color: #4482a6;
+      color: var(--text-primary);
       font-size: large;
       max-width: 800px;
       padding: 2em;
     }
     #BarChart{
-      width:100%; 
-      max-width:500px; 
-      height:100%; 
+      width:100%;
+      max-width:500px;
+      height:100%;
       max-height: 450px;
     }
     #DonutChart{
       width: auto;
-      max-width:500px; 
-      height:100%; 
+      max-width:500px;
+      height:100%;
       max-height: 450px;
     }
     h1{
       margin-bottom: 1%;
+      color: var(--text-primary);
+    }
+
+    /* Dark mode support */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --primary: #4A9AC7;
+        --primary-light: #6BB3D9;
+        --primary-lighter: #87CEEB;
+        --primary-dark: #1F7BA6;
+        --background: #1a1a1a;
+        --surface: #2d2d2d;
+        --surface-hover: #3a3a3a;
+        --border: #4a4a4a;
+        --border-light: #3a3a3a;
+        --text-primary: #e0e0e0;
+        --text-secondary: #b0b0b0;
+        --text-light: #808080;
+      }
+
+      #feedbackbox {
+        border-color: var(--primary);
+        background-color: var(--surface);
+      }
+
+      canvas {
+        background-color: var(--surface);
+        border-radius: 10px;
+        padding: 10px;
+      }
     }
   </style>
   <div id="content-scroll" class="d-flex flex-column overflow-y-auto overflow-x-hidden pe-0">
@@ -80,6 +111,16 @@
       <p id="feedbackpara">
         {{ feedback|linebreaksbr }}
       </p>
+    </div>
+
+    <!-- Generate Report Button -->
+    <div class="container" style="justify-content: center; margin-top: 3rem; margin-bottom: 2rem;">
+      <form method="post" action="{% url 'generate_report' chat.id %}">
+        {% csrf_token %}
+        <button type="submit" class="export-btn export-btn-generate">
+          Generate Detailed Report
+        </button>
+      </form>
     </div>
   </div>
 {% endblock content %}
