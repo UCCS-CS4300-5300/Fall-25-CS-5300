@@ -528,3 +528,74 @@ jobs:
           echo '- Essential files archived and uploaded'
           echo '- Docker resources cleaned up in test job'
         } >> $GITHUB_STEP_SUMMARY
+
+  token-metrics:
+    name: Report Token Usage Metrics
+    runs-on: ubuntu-latest
+    needs: [test, ai-code-review, loc-metrics]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history for accurate git info
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r active_interview_backend/requirements.txt
+
+    - name: Run Database Migrations
+      working-directory: active_interview_backend
+      env:
+        DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      run: |
+        python manage.py makemigrations --check --dry-run || python manage.py makemigrations
+        python manage.py migrate --noinput
+
+    - name: Import Token Usage from CI/CD Scripts
+      working-directory: .
+      env:
+        DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      run: |
+        python scripts/import-token-usage.py || echo "No token files to import"
+
+    - name: Generate Token Metrics Report
+      working-directory: .
+      env:
+        DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        GITHUB_SHA: ${{ github.sha }}
+        GITHUB_REF_NAME: ${{ github.ref_name }}
+        GITHUB_BASE_REF: ${{ github.base_ref }}
+        GITHUB_HEAD_REF: ${{ github.head_ref }}
+        GITHUB_EVENT_NAME: ${{ github.event_name }}
+      run: |
+        python scripts/report-token-metrics.py | tee token-metrics-report.txt
+
+    - name: Add Token Metrics to Summary
+      if: always()
+      run: |
+        {
+          echo '# 🤖 Token Usage Metrics'
+          echo ''
+          echo '```'
+          cat token-metrics-report.txt
+          echo '```'
+        } >> $GITHUB_STEP_SUMMARY
+
+    - name: Upload Token Metrics Report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: token-metrics-report
+        path: token-metrics-report.txt
+        retention-days: ${{ env.RETENTION_DAYS }}

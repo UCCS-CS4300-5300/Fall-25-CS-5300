@@ -1,0 +1,72 @@
+#!/bin/bash
+#
+# Post-Commit Hook: Track Claude Code Token Usage
+#
+# This hook prompts you to track token usage from Claude Code sessions
+# after each commit. Token data is stored for aggregation on merge to main.
+#
+
+# Colors for output
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+# Get the repository root
+REPO_ROOT=$(git rev-parse --show-toplevel)
+
+# Check if running in a terminal (not in a background process)
+if [ ! -t 0 ]; then
+    # Not in a terminal, skip prompting
+    exit 0
+fi
+
+# Display prompt
+echo ""
+echo -e "${CYAN}╔══════════════════════════════════════════════════════════╗${NC}"
+echo -e "${CYAN}║         🤖 Claude Code Token Usage Tracker              ║${NC}"
+echo -e "${CYAN}╚══════════════════════════════════════════════════════════╝${NC}"
+echo ""
+echo -e "${BLUE}Did you use Claude Code for this commit?${NC}"
+echo -e "${YELLOW}Check the Claude Code UI for token counts (bottom right)${NC}"
+echo ""
+
+# Prompt user
+read -p "Track tokens? (y/N): " -n 1 -r TRACK_TOKENS
+echo ""
+
+if [[ ! $TRACK_TOKENS =~ ^[Yy]$ ]]; then
+    echo -e "${YELLOW}⏭  Skipped token tracking${NC}"
+    echo ""
+    exit 0
+fi
+
+# Get token counts
+echo ""
+echo -e "${BLUE}Enter token counts from Claude Code:${NC}"
+read -p "  Input tokens:  " INPUT_TOKENS
+read -p "  Output tokens: " OUTPUT_TOKENS
+
+# Validate input
+if ! [[ "$INPUT_TOKENS" =~ ^[0-9]+$ ]] || ! [[ "$OUTPUT_TOKENS" =~ ^[0-9]+$ ]]; then
+    echo -e "${YELLOW}⚠  Invalid input, skipping...${NC}"
+    echo ""
+    exit 0
+fi
+
+# Call the Python script to save the record
+if command -v python3 >/dev/null 2>&1; then
+    python3 "$REPO_ROOT/scripts/track-claude-tokens.py" \
+        --input-tokens "$INPUT_TOKENS" \
+        --output-tokens "$OUTPUT_TOKENS" 2>/dev/null
+elif command -v python >/dev/null 2>&1; then
+    python "$REPO_ROOT/scripts/track-claude-tokens.py" \
+        --input-tokens "$INPUT_TOKENS" \
+        --output-tokens "$OUTPUT_TOKENS" 2>/dev/null
+else
+    echo -e "${YELLOW}⚠  Python not found, cannot save token record${NC}"
+fi
+
+echo ""
+exit 0
