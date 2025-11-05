@@ -304,7 +304,12 @@
     <!-- Page Header -->
     <div class="page-header">
       <h1>Document Management</h1>
-      <p>Upload your resume and add job listings to create personalized interview experiences</p>
+      <p>
+        Upload your resume and add job listings to create personalized interview experiences
+        {% if user.profile.role == 'admin' or user.profile.role == 'interviewer' %}
+          <br>Create interview templates to organize and structure your interviews
+        {% endif %}
+      </p>
     </div>
 
     <!-- Resume Upload Section -->
@@ -395,6 +400,91 @@
         </button>
       </form>
     </div>
+
+    {% if user.profile.role == 'admin' or user.profile.role == 'interviewer' %}
+      <hr class="section-divider">
+
+      <!-- Interview Templates Section -->
+      <div class="upload-section">
+        <h2>Interview Templates</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+          Create and manage reusable interview templates to organize your interviews.
+        </p>
+
+        <!-- Create Template Form -->
+        <form method="post" action="{% url 'create_template' %}">
+          {% csrf_token %}
+
+          <div class="form-group">
+            <label for="template-name">Template Name</label>
+            <input
+              type="text"
+              name="name"
+              id="template-name"
+              placeholder="e.g., Technical Interview - Software Engineer"
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="template-description">Description (Optional)</label>
+            <textarea
+              name="description"
+              id="template-description"
+              placeholder="Describe the purpose of this template...&#10;&#10;e.g., Template for conducting technical interviews with senior software engineers."
+              style="min-height: 100px;"
+            ></textarea>
+          </div>
+
+          <button type="submit" class="btn-upload" name="submit">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 13A6 6 0 1 1 8 2a6 6 0 0 1 0 12z"/>
+              <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+            </svg>
+            Create Template
+          </button>
+        </form>
+
+        <!-- List of Existing Templates -->
+        {% if templates %}
+          <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-light);">
+            <h3 style="color: var(--text-primary); font-size: 1.1rem; margin-bottom: 1rem;">Your Templates ({{ templates|length }})</h3>
+            <div style="display: grid; gap: 1rem;">
+              {% for template in templates %}
+                <div style="padding: 1rem; background-color: var(--surface-hover); border: 1px solid var(--border-light); border-radius: var(--radius); display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                    <a href="{% url 'template_detail' template.id %}" style="color: var(--primary); font-weight: 500; text-decoration: none;">
+                      {{ template.name }}
+                    </a>
+                    {% if template.description %}
+                      <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem; margin-bottom: 0;">
+                        {{ template.description|truncatewords:15 }}
+                      </p>
+                    {% endif %}
+                    <p style="color: var(--text-light); font-size: 0.85rem; margin-top: 0.25rem; margin-bottom: 0;">
+                      Created {{ template.created_at|date:"M d, Y" }}
+                    </p>
+                  </div>
+                  <div style="display: flex; gap: 0.5rem;">
+                    <a href="{% url 'edit_template' template.id %}" style="padding: 0.5rem 1rem; background-color: var(--primary); color: white; text-decoration: none; border-radius: var(--radius-sm); font-size: 0.9rem;">
+                      Edit
+                    </a>
+                    <a href="{% url 'template_detail' template.id %}" style="padding: 0.5rem 1rem; background-color: var(--surface); color: var(--text-primary); border: 1px solid var(--border); text-decoration: none; border-radius: var(--radius-sm); font-size: 0.9rem;">
+                      View
+                    </a>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+            <div style="margin-top: 1rem; text-align: center;">
+              <a href="{% url 'template_list' %}" style="color: var(--primary); text-decoration: none; font-weight: 500;">
+                View All Templates →
+              </a>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
 
     <!-- Markdown Preview (if available) -->
     {% if markdown_text %}

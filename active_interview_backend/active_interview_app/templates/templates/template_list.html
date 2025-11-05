@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}
+  AIS - Interview Templates
+{% endblock title %}
+
+{% block content %}
+  <style>
+    .templates-page {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      color: var(--text-primary);
+    }
+
+    .templates-page p {
+      font-size: 20px;
+      text-align: center;
+    }
+    .templates-page h1 {
+      font-size: 40px;
+      text-align: center;
+    }
+    .templates-page h2 {
+      text-align: center;
+    }
+    .templates-page h3 {
+      font-size: 28px;
+    }
+    .templates-page ul {
+      list-style: none;
+      padding: 0;
+    }
+    .templates-page .card {
+      background-color: var(--surface) !important;
+      border-radius: 2rem;
+    }
+    .template-item {
+      background-color: var(--surface);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.2s ease;
+    }
+    .template-item:hover {
+      box-shadow: var(--shadow);
+      border-color: var(--primary-light);
+    }
+    .template-item-title {
+      font-size: 23px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+    .template-description {
+      color: var(--text-secondary);
+      font-size: 18px;
+      font-style: italic;
+      margin-top: 0.5rem;
+    }
+    .template-item-actions {
+      font-size: 18px;
+      margin-top: 0.75rem;
+    }
+    .template-item-meta {
+      color: var(--text-light);
+      font-size: 16px;
+      margin-top: 0.5rem;
+    }
+  </style>
+
+  <div class="centered-container">
+    <div class="card p-3 my-5">
+      <div class="templates-page">
+        <div class="row mb-3">
+          <h1>Interview Templates</h1>
+        </div>
+
+        <div class="row mb-3">
+          <div class="text-center">
+            <a href="{% url 'create_template' %}" class="btn btn-primary btn-lg">
+              <i class="bi bi-plus-circle"></i> Create New Template
+            </a>
+          </div>
+        </div>
+
+        <hr class="white-break">
+
+        <div class="row mb-3">
+          <h3>My Templates</h3>
+          {% if templates|length == 0 %}
+            <center><h5>No Templates Created</h5></center>
+            <p class="text-center">Create your first interview template to start organizing your interview structure.</p>
+          {% else %}
+            <ul>
+              {% for template in templates %}
+                <li class="template-item">
+                  <div class="template-item-title">
+                    {{ template.name }}
+                    {% if template.is_complete %}
+                      <span class="badge bg-success">Complete</span>
+                    {% else %}
+                      <span class="badge bg-warning text-dark">WIP</span>
+                    {% endif %}
+                  </div>
+                  {% if template.description %}
+                    <div class="template-description">{{ template.description }}</div>
+                  {% endif %}
+                  <div class="template-item-actions">
+                    <a href="{% url 'template_detail' template_id=template.id %}">View</a> |
+                    <a href="{% url 'edit_template' template.id %}">Edit</a> |
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#deleteTemplateModal{{ template.id }}">Delete</a>
+                  </div>
+                  <div class="template-item-meta">
+                    Created {{ template.created_at|date:"M d, Y" }} | Weight: {{ template.get_total_weight }}%
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+
+            <!-- Delete Modals -->
+            {% for template in templates %}
+              <div class="modal fade" id="deleteTemplateModal{{ template.id }}" tabindex="-1" aria-labelledby="deleteTemplateLabel{{ template.id }}" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title" id="deleteTemplateLabel{{ template.id }}">Confirm Delete</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                      Are you sure you want to delete <strong>{{ template.name }}</strong>?
+                    </div>
+                    <div class="modal-footer">
+                      <form method="post" action="{% url 'delete_template' template_id=template.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %}

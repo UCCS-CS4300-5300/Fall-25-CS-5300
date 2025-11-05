@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}
+  AIS - Create Interview Template
+{% endblock title %}
+
+{% block content %}
+  <style>
+    .create-template-page {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      color: var(--text-primary);
+    }
+
+    .create-template-page h1 {
+      font-size: 40px;
+      text-align: center;
+    }
+
+    .create-template-page .card {
+      background-color: var(--surface) !important;
+      border-radius: 2rem;
+    }
+
+    .form-label {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+
+    .form-control {
+      font-size: 18px;
+    }
+
+    .btn-lg {
+      font-size: 20px;
+      padding: 0.75rem 2rem;
+    }
+  </style>
+
+  <div class="centered-container">
+    <div class="card p-4 my-5">
+      <div class="create-template-page">
+        <div class="row mb-4">
+          <h1>Create Interview Template</h1>
+        </div>
+
+        <form method="post">
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+              {{ form.non_field_errors }}
+            </div>
+          {% endif %}
+
+          <div class="mb-4">
+            <label for="{{ form.name.id_for_label }}" class="form-label">
+              Template Name <span class="text-danger">*</span>
+            </label>
+            {{ form.name }}
+            {% if form.name.errors %}
+              <div class="text-danger mt-2">
+                {{ form.name.errors }}
+              </div>
+            {% endif %}
+            <small class="form-text text-muted">
+              Give your template a descriptive name (e.g., "Technical Interview", "Behavioral Interview")
+            </small>
+          </div>
+
+          <div class="mb-4">
+            <label for="{{ form.description.id_for_label }}" class="form-label">
+              Description (Optional)
+            </label>
+            {{ form.description }}
+            {% if form.description.errors %}
+              <div class="text-danger mt-2">
+                {{ form.description.errors }}
+              </div>
+            {% endif %}
+            <small class="form-text text-muted">
+              Optional: Describe the purpose of this template
+            </small>
+          </div>
+
+          <div class="row mt-4">
+            <div class="col text-center">
+              <button type="submit" class="btn btn-primary btn-lg">
+                <i class="bi bi-check-circle"></i> Create Template
+              </button>
+              <a href="{% url 'template_list' %}" class="btn btn-secondary btn-lg ms-2">
+                <i class="bi bi-x-circle"></i> Cancel
+              </a>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock content %}

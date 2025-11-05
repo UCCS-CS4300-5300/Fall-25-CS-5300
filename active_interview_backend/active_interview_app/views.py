@@ -10,7 +10,8 @@ from docx import Document
 
 from .models import (
     UploadedResume, UploadedJobListing, Chat,
-    ExportableReport, UserProfile, RoleChangeRequest
+    ExportableReport, UserProfile, RoleChangeRequest,
+    InterviewTemplate
 )
 from .forms import (
     CreateUserForm,
@@ -18,7 +19,8 @@ from .forms import (
     EditChatForm,
     UploadFileForm,
     DocumentEditForm,
-    JobPostingEditForm
+    JobPostingEditForm,
+    InterviewTemplateForm
 )
 from .serializers import (
     UploadedResumeSerializer,
@@ -1045,7 +1047,16 @@ def upload_file(request):
             messages.error(request, "There was an issue with the form.")
     else:
         form = UploadFileForm()
-        return render(request, 'documents/document-list.html', {'form': form})
+        context = {'form': form}
+
+        # Add interview templates for admin/interviewer users
+        if request.user.profile.role in ['admin', 'interviewer']:
+            templates = InterviewTemplate.objects.filter(
+                user=request.user
+            ).order_by('-created_at')[:5]  # Show last 5 templates
+            context['templates'] = templates
+
+        return render(request, 'documents/document-list.html', context)
 
     return redirect('document-list')
 
@@ -1198,7 +1209,16 @@ class JobListingList(APIView):
 
 class DocumentList(LoginRequiredMixin, View):
     def get(self, request):
-        return render(request, 'documents/document-list.html')
+        context = {}
+
+        # Add interview templates for admin/interviewer users
+        if request.user.profile.role in ['admin', 'interviewer']:
+            templates = InterviewTemplate.objects.filter(
+                user=request.user
+            ).order_by('-created_at')[:5]  # Show last 5 templates
+            context['templates'] = templates
+
+        return render(request, 'documents/document-list.html', context)
 
 
 # Exportable Report Views
@@ -1546,3 +1566,330 @@ def candidate_search(request):
         'candidates': candidates,
     }
     return render(request, 'candidates/search.html', context)
+
+
+# =============================================================================
+# Interview Template Views
+# =============================================================================
+
+@admin_or_interviewer_required
+def template_list(request):
+    """
+    List all interview templates for the current user.
+    GET /templates/
+    """
+    templates = InterviewTemplate.objects.filter(
+        user=request.user
+    ).order_by('-created_at')
+
+    context = {
+        'templates': templates,
+    }
+    return render(request, 'templates/template_list.html', context)
+
+
+@admin_or_interviewer_required
+def create_template(request):
+    """
+    Create a new interview template.
+    GET /templates/create/ - Show form
+    POST /templates/create/ - Save template
+    """
+    if request.method == 'POST':
+        form = InterviewTemplateForm(request.POST)
+        if form.is_valid():
+            template = form.save(commit=False)
+            template.user = request.user
+            template.save()
+            messages.success(
+                request,
+                f'Template "{template.name}" created successfully'
+            )
+            return redirect('template_list')
+    else:
+        form = InterviewTemplateForm()
+
+    context = {
+        'form': form,
+    }
+    return render(request, 'templates/create_template.html', context)
+
+
+@admin_or_interviewer_required
+def template_detail(request, template_id):
+    """
+    View a single interview template.
+    GET /templates/<id>/
+    """
+    template = get_object_or_404(
+        InterviewTemplate,
+        id=template_id,
+        user=request.user
+    )
+
+    # Calculate total weight
+    sections = template.sections if template.sections else []
+    total_weight = sum(s.get('weight', 0) for s in sections)
+    remaining_weight = 100 - total_weight
+    is_complete = total_weight == 100
+
+    context = {
+        'template': template,
+        'total_weight': total_weight,
+        'remaining_weight': remaining_weight,
+        'is_complete': is_complete,
+    }
+    return render(request, 'templates/template_detail.html', context)
+
+
+@admin_or_interviewer_required
+def edit_template(request, template_id):
+    """
+    Edit an existing interview template.
+    GET /templates/<id>/edit/ - Show form
+    POST /templates/<id>/edit/ - Save changes
+    """
+    template = get_object_or_404(
+        InterviewTemplate,
+        id=template_id,
+        user=request.user
+    )
+
+    if request.method == 'POST':
+        form = InterviewTemplateForm(request.POST, instance=template)
+        if form.is_valid():
+            form.save()
+            messages.success(
+                request,
+                f'Template "{template.name}" updated successfully'
+            )
+            return redirect('template_detail', template_id=template.id)
+    else:
+        form = InterviewTemplateForm(instance=template)
+
+    context = {
+        'form': form,
+        'template': template,
+    }
+    return render(request, 'templates/edit_template.html', context)
+
+
+@admin_or_interviewer_required
+def delete_template(request, template_id):
+    """
+    Delete an interview template.
+    POST /templates/<id>/delete/
+    """
+    template = get_object_or_404(
+        InterviewTemplate,
+        id=template_id,
+        user=request.user
+    )
+
+    if request.method == 'POST':
+        template_name = template.name
+        template.delete()
+        messages.success(
+            request,
+            f'Template "{template_name}" deleted successfully'
+        )
+        return redirect('template_list')
+
+    # If GET request, redirect to template detail
+    return redirect('template_detail', template_id=template.id)
+
+
+# =============================================================================
+# Template Section Management Views
+# =============================================================================
+
+@admin_or_interviewer_required
+def add_section(request, template_id):
+    """
+    Add a new section to an interview template.
+    POST /templates/<id>/sections/add/
+    """
+    import uuid
+
+    template = get_object_or_404(
+        InterviewTemplate,
+        id=template_id,
+        user=request.user
+    )
+
+    if request.method == 'POST':
+        title = request.POST.get('title', '').strip()
+        content = request.POST.get('content', '').strip()
+        weight = request.POST.get('weight', '0').strip()
+
+        # Validate inputs
+        if not title:
+            messages.error(request, 'Section title is required')
+            return redirect('template_detail', template_id=template.id)
+
+        try:
+            weight = int(weight)
+            if weight < 0:
+                messages.error(request, 'Weight must be a non-negative number')
+                return redirect('template_detail', template_id=template.id)
+        except ValueError:
+            messages.error(request, 'Weight must be a valid number')
+            return redirect('template_detail', template_id=template.id)
+
+        # Create new section
+        sections = template.sections if template.sections else []
+
+        # Check total weight doesn't exceed 100%
+        current_total_weight = sum(s.get('weight', 0) for s in sections)
+        new_total_weight = current_total_weight + weight
+
+        if new_total_weight > 100:
+            messages.error(
+                request,
+                f'Cannot add section: Total weight would be {new_total_weight}%, '
+                f'which exceeds 100%. Current total: {current_total_weight}%'
+            )
+            return redirect('template_detail', template_id=template.id)
+
+        # Determine order (append to end)
+        order = len(sections)
+
+        new_section = {
+            'id': str(uuid.uuid4()),
+            'title': title,
+            'content': content,
+            'order': order,
+            'weight': weight
+        }
+
+        sections.append(new_section)
+        template.sections = sections
+        template.save()
+
+        messages.success(
+            request,
+            f'Section "{title}" added successfully'
+        )
+        return redirect('template_detail', template_id=template.id)
+
+    # If GET, redirect to template detail
+    return redirect('template_detail', template_id=template.id)
+
+
+@admin_or_interviewer_required
+def edit_section(request, template_id, section_id):
+    """
+    Edit an existing section in a template.
+    POST /templates/<id>/sections/<section_id>/edit/
+    """
+    template = get_object_or_404(
+        InterviewTemplate,
+        id=template_id,
+        user=request.user
+    )
+
+    if request.method == 'POST':
+        title = request.POST.get('title', '').strip()
+        content = request.POST.get('content', '').strip()
+        weight = request.POST.get('weight', '0').strip()
+
+        # Validate inputs
+        if not title:
+            messages.error(request, 'Section title is required')
+            return redirect('template_detail', template_id=template.id)
+
+        try:
+            weight = int(weight)
+            if weight < 0:
+                messages.error(request, 'Weight must be a non-negative number')
+                return redirect('template_detail', template_id=template.id)
+        except ValueError:
+            messages.error(request, 'Weight must be a valid number')
+            return redirect('template_detail', template_id=template.id)
+
+        # Find and update section
+        sections = template.sections if template.sections else []
+        section_found = False
+        old_weight = 0
+
+        for section in sections:
+            if section.get('id') == section_id:
+                old_weight = section.get('weight', 0)
+                section_found = True
+                break
+
+        if not section_found:
+            messages.error(request, 'Section not found')
+            return redirect('template_detail', template_id=template.id)
+
+        # Check total weight doesn't exceed 100%
+        # Calculate total excluding the section being edited
+        current_total_weight = sum(
+            s.get('weight', 0) for s in sections if s.get('id') != section_id
+        )
+        new_total_weight = current_total_weight + weight
+
+        if new_total_weight > 100:
+            messages.error(
+                request,
+                f'Cannot update section: Total weight would be {new_total_weight}%, '
+                f'which exceeds 100%. Current total (excluding this section): {current_total_weight}%'
+            )
+            return redirect('template_detail', template_id=template.id)
+
+        # Update the section
+        for section in sections:
+            if section.get('id') == section_id:
+                section['title'] = title
+                section['content'] = content
+                section['weight'] = weight
+                break
+
+        template.sections = sections
+        template.save()
+
+        messages.success(
+            request,
+            f'Section "{title}" updated successfully'
+        )
+        return redirect('template_detail', template_id=template.id)
+
+    # If GET, redirect to template detail
+    return redirect('template_detail', template_id=template.id)
+
+
+@admin_or_interviewer_required
+def delete_section(request, template_id, section_id):
+    """
+    Delete a section from a template.
+    POST /templates/<id>/sections/<section_id>/delete/
+    """
+    template = get_object_or_404(
+        InterviewTemplate,
+        id=template_id,
+        user=request.user
+    )
+
+    if request.method == 'POST':
+        # Find and remove section
+        sections = template.sections if template.sections else []
+        original_length = len(sections)
+
+        sections = [s for s in sections if s.get('id') != section_id]
+
+        if len(sections) == original_length:
+            messages.error(request, 'Section not found')
+            return redirect('template_detail', template_id=template.id)
+
+        # Reorder remaining sections
+        for i, section in enumerate(sections):
+            section['order'] = i
+
+        template.sections = sections
+        template.save()
+
+        messages.success(request, 'Section deleted successfully')
+        return redirect('template_detail', template_id=template.id)
+
+    # If GET, redirect to template detail
+    return redirect('template_detail', template_id=template.id)

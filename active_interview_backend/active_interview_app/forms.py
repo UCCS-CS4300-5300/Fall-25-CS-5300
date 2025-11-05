@@ -75,6 +75,32 @@ class EditChatForm(ModelForm):
         fields = ["title"]
 
 
+class InterviewTemplateForm(ModelForm):
+    """
+    Form for creating and editing interview templates.
+    """
+    name = forms.CharField(
+        required=True,
+        max_length=255,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'e.g., Technical Interview, Behavioral Interview'
+        })
+    )
+    description = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 4,
+            'placeholder': 'Optional: Describe the purpose of this template'
+        })
+    )
+
+    class Meta:
+        model = InterviewTemplate
+        fields = ['name', 'description']
+
+
 # Defines a Django form for handling file uploads.
 class UploadFileForm(ModelForm):
 
