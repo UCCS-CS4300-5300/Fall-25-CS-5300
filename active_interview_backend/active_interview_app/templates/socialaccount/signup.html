@@ -7,54 +7,7 @@
 
 {% block content %}
 <body>
-  <style>
-   .signup-page {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      color: white;
-      padding: 2rem 0;
-   }
-   h2 {
-     color: white;
-     margin-bottom: 1.5rem;
-   }
-   p {
-     font-size: 18px;
-     margin-bottom: 1rem;
-   }
-   .form-label {
-     font-size: 18px;
-     color: white;
-     margin-bottom: 0.5rem;
-   }
-   .oauth-info {
-     background-color: rgba(68, 130, 166, 0.2);
-     border: 1px solid var(--shallows);
-     border-radius: 8px;
-     padding: 1rem;
-     margin-bottom: 1.5rem;
-     max-width: 500px;
-   }
-   .oauth-info p {
-     margin: 0;
-     font-size: 16px;
-   }
-   .provider-icon {
-     display: inline-block;
-     margin-right: 8px;
-   }
-   .form-control {
-     background-color: rgba(255, 255, 255, 0.9);
-     border: 1px solid rgba(0, 0, 0, 0.1);
-     margin-bottom: 1rem;
-   }
-   .signup-container {
-     max-width: 500px;
-     width: 100%;
-   }
-  </style>
+  <!-- All styles moved to main.css Signup Page Components section -->
 
   <div class="container">
     <div class="signup-page">
@@ -130,7 +83,7 @@
         </form>
 
         <div class="row mb-3 text-center">
-          <p><a href="{% url 'login' %}" style="color: var(--shallows);">Back to Login</a></p>
+          <p><a href="{% url 'login' %}">Back to Login</a></p>
         </div>
       </div>
     </div>

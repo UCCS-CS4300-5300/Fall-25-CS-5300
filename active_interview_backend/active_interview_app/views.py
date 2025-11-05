@@ -926,12 +926,16 @@ def view_user_profile(request, user_id):
 @login_required
 def resume_detail(request, resume_id):
     resume = get_object_or_404(UploadedResume, id=resume_id)
-    resumes = UploadedResume.objects.filter(user=request.user)
-    job_listings = UploadedJobListing.objects.filter(user=request.user)
+    # Show the resume owner's documents, not the logged-in user's
+    resumes = UploadedResume.objects.filter(user=resume.user)
+    job_listings = UploadedJobListing.objects.filter(user=resume.user)
+    # Check if the logged-in user is the owner
+    is_owner = request.user == resume.user
     return render(request, 'documents/resume_detail.html', {
         'resume': resume,
         'resumes': resumes,
         'job_listings': job_listings,
+        'is_owner': is_owner,
     })
 
 
@@ -1061,9 +1065,12 @@ def upload_file(request):
     return redirect('document-list')
 
 
+@login_required
 def edit_resume(request, resume_id):
     # Adjust model logic as needed (for resumes or job listings)
-    document = get_object_or_404(UploadedResume, id=resume_id)
+    document = get_object_or_404(UploadedResume,
+                                  id=resume_id,
+                                  user=request.user)
 
     if request.method == 'POST':
         form = DocumentEditForm(request.POST, instance=document)
@@ -1083,12 +1090,16 @@ def edit_resume(request, resume_id):
 @login_required
 def job_posting_detail(request, job_id):
     job = get_object_or_404(UploadedJobListing, id=job_id)
-    resumes = UploadedResume.objects.filter(user=request.user)
-    job_listings = UploadedJobListing.objects.filter(user=request.user)
+    # Show the job listing owner's documents, not the logged-in user's
+    resumes = UploadedResume.objects.filter(user=job.user)
+    job_listings = UploadedJobListing.objects.filter(user=job.user)
+    # Check if the logged-in user is the owner
+    is_owner = request.user == job.user
     return render(request, 'documents/job_posting_detail.html', {
         'job': job,
         'resumes': resumes,
         'job_listings': job_listings,
+        'is_owner': is_owner,
     })
 
 
@@ -1238,25 +1249,24 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
         """Generate or update the exportable report for a chat"""
         chat = get_object_or_404(Chat, id=chat_id)
 
-        # Check if report already exists, update it if so
-        report, created = ExportableReport.objects.get_or_create(chat=chat)
+        # Delete existing report to force fresh generation
+        ExportableReport.objects.filter(chat=chat).delete()
 
-        # Extract scores from messages if they exist
-        # Look for the results in the chat messages
+        # Create a new report
+        report = ExportableReport.objects.create(chat=chat)
+
+        # Generate scores using AI (same approach as ResultCharts view)
         scores = self._extract_scores_from_chat(chat)
 
         # Update report fields
-        if scores:
-            report.professionalism_score = scores.get('Professionalism', 0)
-            report.subject_knowledge_score = scores.get('Subject Knowledge', 0)
-            report.clarity_score = scores.get('Clarity', 0)
-            report.overall_score = scores.get('Overall', 0)
+        report.professionalism_score = scores.get('Professionalism', 0)
+        report.subject_knowledge_score = scores.get('Subject Knowledge', 0)
+        report.clarity_score = scores.get('Clarity', 0)
+        report.overall_score = scores.get('Overall', 0)
 
-        # Extract feedback text
+        # Extract feedback text using AI
         report.feedback_text = self._extract_feedback_from_chat(chat)
 
-        # Build question responses
-        report.question_responses = self._extract_question_responses(chat)
 
         # Calculate statistics
         chat_messages = chat.messages
@@ -1274,57 +1284,80 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
 
     def _extract_scores_from_chat(self, chat):
         """
-        Extract performance scores from chat messages.
-        This looks for AI-generated scoring data in the messages.
+        Generate performance scores from chat messages using AI.
+        This uses the same approach as ResultCharts view.
         """
-        # Look through messages for score data
-        # In the actual implementation, scores would be extracted from
-        # the AI response that contains the scoring information
-        chat_messages = chat.messages
+        scores_prompt = textwrap.dedent("""\
+            Based on the interview so far, please rate the interviewee in the
+            following categories from 0 to 100, and return the result as a JSON
+            object with integers only, in the following order that list only
+            the integers:
 
-        # Find the most recent message containing scores
-        for msg in reversed(chat_messages):
-            if msg.get('role') == 'assistant':
-                content = msg.get('content', '')
-                # Try to parse scores from the content
-                scores = {}
+            - Professionalism
+            - Subject Knowledge
+            - Clarity
+            - Overall
 
-                # Look for score patterns in the message
-                patterns = [
-                    r'Professionalism[:\s]+(\d+)',
-                    r'Subject Knowledge[:\s]+(\d+)',
-                    r'Clarity[:\s]+(\d+)',
-                    r'Overall[:\s]+(\d+)',
-                ]
-                keys = ['Professionalism', 'Subject Knowledge',
-                       'Clarity', 'Overall']
+            Example format:
+                8
+                7
+                9
+                6
+        """)
+        input_messages = list(chat.messages)
+        input_messages.append({"role": "user", "content": scores_prompt})
 
-                for pattern, key in zip(patterns, keys):
-                    match = re.search(pattern, content, re.IGNORECASE)
-                    if match:
-                        scores[key] = int(match.group(1))
+        if not _ai_available():
+            professionalism, subject_knowledge, clarity, overall = [0, 0, 0, 0]
+        else:
+            try:
+                response = get_openai_client().chat.completions.create(
+                    model="gpt-4o",
+                    messages=input_messages,
+                    max_tokens=MAX_TOKENS
+                )
+                ai_message = response.choices[0].message.content.strip()
+                scores = [int(line.strip())
+                              for line in ai_message.splitlines() if line.strip()
+                                .isdigit()]
+                if len(scores) == 4:
+                    professionalism, subject_knowledge, clarity, overall = scores
+                else:
+                    professionalism, subject_knowledge, clarity, overall = [0, 0, 0, 0]
+            except Exception:
+                professionalism, subject_knowledge, clarity, overall = [0, 0, 0, 0]
 
-                if scores:
-                    return scores
-
-        return {}
+        return {
+            'Professionalism': professionalism,
+            'Subject Knowledge': subject_knowledge,
+            'Clarity': clarity,
+            'Overall': overall
+        }
 
     def _extract_feedback_from_chat(self, chat):
-        """Extract AI feedback text from chat messages"""
-        chat_messages = chat.messages
+        """Generate AI feedback text from chat messages"""
+        explain_prompt = textwrap.dedent("""\
+            Provide a comprehensive evaluation of the interviewee's performance.
+            Include specific strengths, areas for improvement, and overall assessment.
+            Focus on professionalism, subject knowledge, and communication clarity.
+            If no response was given since start of interview, please tell them to start the interview.
+        """)
 
-        # Find messages that look like feedback
-        feedback_parts = []
-        for msg in reversed(chat_messages):
-            if msg.get('role') == 'assistant':
-                content = msg.get('content', '')
-                # If the message contains feedback keywords, include it
-                if any(keyword in content.lower() for keyword in
-                      ['feedback', 'assessment', 'evaluation', 'overall']):
-                    feedback_parts.append(content)
-                    break  # Take the most recent feedback
+        input_messages = list(chat.messages)
+        input_messages.append({"role": "user", "content": explain_prompt})
 
-        return '\n\n'.join(feedback_parts)
+        if not _ai_available():
+            return "AI features are currently unavailable."
+
+        try:
+            response = get_openai_client().chat.completions.create(
+                model="gpt-4o",
+                messages=input_messages,
+                max_tokens=MAX_TOKENS
+            )
+            return response.choices[0].message.content.strip()
+        except Exception:
+            return "Unable to generate feedback at this time."
 
     def _extract_question_responses(self, chat):
         """

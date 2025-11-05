@@ -7,150 +7,444 @@
 {% block content %}
   <style>
     .profile-page {
-      display: flex;
-      flex-direction: column; 
-      justify-content: center;
-      color: white;
-    }
-      
-    p {
-      font-size: 20px;
-      text-align: center;
-    }
-    td {
-      font-size: 20px;
-    }
-    h1{
-      font-size: 40px;
-      text-align: center;
-    }
-    h2{
-      text-align: center;
-    }
-    ul {
-      list-style-position: inside;
-    }
-    .card {
-      background-color: var(--shallows) !important;
-      border-radius: 2rem;
-    }
-    li{
-      font-size: 23px;
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
     }
 
-    /* Resume parsing status badges */
+    .page-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .page-header h1 {
+      color: var(--primary);
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .page-header .username {
+      color: var(--text-secondary);
+      font-size: 1.25rem;
+      font-weight: 500;
+    }
+
+    .profile-layout {
+      display: grid;
+      grid-template-columns: 1fr 1.5fr;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    .profile-section {
+      background: var(--surface-hover);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .profile-section h2 {
+      color: var(--text-primary);
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .profile-section h2::before {
+      content: "";
+      display: inline-block;
+      width: 4px;
+      height: 1.5rem;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+
+    .left-column {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .right-column {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .user-info-grid {
+      display: grid;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .info-item {
+      padding: 0.75rem;
+      background: var(--surface);
+      border-radius: var(--radius);
+      border-left: 3px solid var(--primary);
+    }
+
+    .info-label {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .info-value {
+      color: var(--text-primary);
+      font-size: 1rem;
+      font-weight: 500;
+    }
+
+    .role-info {
+      text-align: center;
+      padding: 1.5rem;
+      background: var(--surface);
+      border-radius: var(--radius);
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 2px solid var(--border);
+      color: var(--text-primary);
+    }
+
+    .role-info strong {
+      color: var(--text-primary);
+    }
+
+    .role-badge {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius);
+      font-weight: 600;
+      font-size: 1rem;
+      margin-top: 0.5rem;
+    }
+
+    .role-badge.admin { background: var(--error); color: var(--text-white); }
+    .role-badge.interviewer { background: var(--primary); color: var(--text-white); }
+    .role-badge.candidate { background: var(--text-secondary); color: var(--text-white); }
+
+    .alert-info {
+      background-color: rgba(52, 152, 219, 0.1);
+      color: var(--text-primary);
+      border: 1px solid var(--info);
+      border-radius: var(--radius);
+      padding: 1rem;
+      margin-top: 1rem;
+    }
+
+    .btn-request-role {
+      background-color: var(--primary);
+      color: var(--text-white);
+      border: none;
+      padding: 0.75rem 2rem;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      display: inline-block;
+      margin-top: 1rem;
+    }
+
+    .btn-request-role:hover {
+      background-color: var(--primary-light);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow);
+      color: var(--text-white);
+    }
+
+    .help-text {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+    }
+
+    .document-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .document-item {
+      padding: 1rem;
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 0.75rem;
+      transition: all 0.2s ease;
+    }
+
+    .document-item:hover {
+      box-shadow: var(--shadow-sm);
+      border-color: var(--primary);
+    }
+
+    .document-name-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .document-name {
+      color: var(--text-primary);
+      font-weight: 500;
+      font-size: 1rem;
+    }
+
     .resume-status-badge {
-      font-size: 14px;
+      font-size: 0.75rem;
       padding: 0.25rem 0.5rem;
       border-radius: 12px;
       margin-left: 0.5rem;
     }
 
-    .resume-stats {
-      color: rgba(255, 255, 255, 0.7);
-      font-size: 16px;
-      margin-left: 0.5rem;
+    .resume-stats-row {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
       font-style: italic;
+      margin-bottom: 0.5rem;
+    }
+
+    .document-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .document-actions a,
+    .document-actions button {
+      color: var(--primary);
+      text-decoration: none;
+      font-size: 0.9rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: var(--radius-sm);
+      transition: all 0.2s ease;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+    }
+
+    .document-actions a:hover,
+    .document-actions button:hover {
+      background: var(--primary);
+      color: var(--text-white);
+    }
+
+    .document-actions .delete-btn {
+      color: var(--error);
+    }
+
+    .document-actions .delete-btn:hover {
+      background: var(--error);
+      color: var(--text-white);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-secondary);
+    }
+
+    .section-divider {
+      height: 2px;
+      background: linear-gradient(to right, transparent, var(--border), transparent);
+      margin: 2rem 0;
+      border: none;
+    }
+
+    /* Modal fixes */
+    .modal-content {
+      background-color: var(--surface) !important;
+      color: var(--text-primary) !important;
+      border: 1px solid var(--border);
+    }
+
+    .modal-header {
+      border-color: var(--border);
+    }
+
+    .modal-footer {
+      border-color: var(--border);
+    }
+
+    .modal-body {
+      color: var(--text-primary);
+    }
+
+    @media (max-width: 992px) {
+      .profile-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .profile-page {
+        padding: 0 1rem;
+      }
+
+      .profile-section {
+        padding: 1.5rem;
+      }
+
+      .document-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+      }
+
+      .document-actions {
+        width: 100%;
+        justify-content: flex-start;
+      }
     }
   </style>
 
-  <div class="centered-container">
-    <div class="card p-3 my-5">
-      <div class="profile-page">
-        <div class="row mb-3">
-          <h1>Profile</h1>
-        </div>
+  <div class="profile-page">
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1>Profile</h1>
+      <div class="username">{{ user.username }}</div>
+    </div>
 
-        <!-- Manually render each form field -->
-        <div class="row">
-          <h2>{{ user }}</h2>
-        </div>
+    <!-- Two Column Layout -->
+    <div class="profile-layout">
+      <!-- Left Column: User Info & Role -->
+      <div class="left-column">
+        <div class="profile-section">
+          <h2>User Information</h2>
 
-        <!-- Role Information -->
-        <div class="row mb-3">
-          <div class="text-center">
-            <p class="mb-2">
-              <strong>Role:</strong>
-              <span class="badge bg-{% if user.profile.role == 'admin' %}danger{% elif user.profile.role == 'interviewer' %}primary{% else %}secondary{% endif %}" style="font-size: 18px;">
+          <!-- User Details -->
+          <div class="user-info-grid">
+            <div class="info-item">
+              <div class="info-label">Username</div>
+              <div class="info-value">{{ user.username }}</div>
+            </div>
+
+            {% if user.email %}
+            <div class="info-item">
+              <div class="info-label">Email</div>
+              <div class="info-value">{{ user.email }}</div>
+            </div>
+            {% endif %}
+
+            {% if user.first_name %}
+            <div class="info-item">
+              <div class="info-label">First Name</div>
+              <div class="info-value">{{ user.first_name }}</div>
+            </div>
+            {% endif %}
+
+            {% if user.last_name %}
+            <div class="info-item">
+              <div class="info-label">Last Name</div>
+              <div class="info-value">{{ user.last_name }}</div>
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- Role Information -->
+          <div class="role-info">
+            <div>
+              <strong>Current Role:</strong>
+              <span class="role-badge {{ user.profile.role }}">
                 {{ user.profile.role|title }}
               </span>
-            </p>
+            </div>
 
             {% if user.profile.role == 'candidate' %}
               {% if has_pending_request %}
-                <div class="alert alert-info d-inline-block">
+                <div class="alert-info">
                   You have a pending role change request. An admin will review it soon.
                 </div>
               {% else %}
-                <a href="{% url 'request_role_change' %}" class="btn btn-outline-light btn-lg">
-                  Request Interviewer Role
-                </a>
-                <p class="text-muted mt-2" style="font-size: 16px;">
-                  Want to conduct interviews? Request to become an interviewer.
-                </p>
+                <div class="mt-1rem">
+                  <a href="{% url 'request_role_change' %}" class="btn-request-role">
+                    Request Interviewer Role
+                  </a>
+                  <p class="help-text">
+                    Want to conduct interviews? Request to become an interviewer.
+                  </p>
+                </div>
               {% endif %}
             {% endif %}
           </div>
         </div>
+      </div>
 
-        <hr class="white-break">
-
-        <div class="row mb-3">
-          <h3>Uploaded Resumes</h3>
-          {% if resumes|length == 0 %}
-            <center><h5>No Resumes Uploaded</h5></center>
-          {% else %}
-            <ul>
-              {% for document in resumes %}
-                {% if document.title and document.title != "1" %}
-                <li>
+      <!-- Right Column: Documents -->
+      <div class="right-column">
+        <!-- Resumes Section -->
+        <div class="profile-section">
+          <h2>Uploaded Resumes</h2>
+      {% if resumes|length == 0 %}
+        <div class="empty-state">
+          <p>No resumes uploaded yet</p>
+        </div>
+      {% else %}
+        <ul class="document-list">
+          {% for document in resumes %}
+            {% if document.title and document.title != "1" %}
+            <li class="document-item">
+              <div class="document-name-row">
+                <span class="document-name">
                   {% if document.title and document.title != "1" %}
                     {{ document.title }}
                   {% elif document.file %}
                     {{ document.original_filename }}
                   {% endif %}
+                </span>
 
-                  <!-- Parsing Status Badge -->
-                  {% if document.parsing_status == 'success' %}
-                    <span class="badge bg-success resume-status-badge">
-                      <i class="bi bi-check-circle"></i> Parsed
-                    </span>
-                  {% elif document.parsing_status == 'error' %}
-                    <span class="badge bg-danger resume-status-badge">
-                      <i class="bi bi-x-circle"></i> Parse Error
-                    </span>
-                  {% elif document.parsing_status == 'in_progress' %}
-                    <span class="badge bg-warning text-dark resume-status-badge">
-                      <i class="bi bi-hourglass-split"></i> Parsing...
-                    </span>
-                  {% elif document.parsing_status == 'pending' %}
-                    <span class="badge bg-secondary resume-status-badge">
-                      <i class="bi bi-clock"></i> Pending
-                    </span>
-                  {% endif %}
-
-                  <!-- Quick Stats (only if successfully parsed) -->
-                  {% if document.parsing_status == 'success' %}
-                    <span class="resume-stats">
-                      ({{ document.skills|length }} skill{{ document.skills|length|pluralize }},
-                       {{ document.experience|length }} job{{ document.experience|length|pluralize }},
-                       {{ document.education|length }} degree{{ document.education|length|pluralize }})
-                    </span>
-                  {% endif %}
-                  <br>
-                  <span style="font-size: 18px;">
-                    <a class="link-light" href="{% url 'resume_detail' resume_id=document.id %}">View</a> |
-                    <a class="link-light" href="{% url 'edit_resume' document.id %}">Edit</a> |
-                    <a class="link-light" href="#" data-bs-toggle="modal" data-bs-target="#deleteResumeModal{{ document.id }}">Delete</a>
+                <!-- Parsing Status Badge -->
+                {% if document.parsing_status == 'success' %}
+                  <span class="badge bg-success resume-status-badge">
+                    <i class="bi bi-check-circle"></i> Parsed
                   </span>
-                </li>
+                {% elif document.parsing_status == 'error' %}
+                  <span class="badge bg-danger resume-status-badge">
+                    <i class="bi bi-x-circle"></i> Parse Error
+                  </span>
+                {% elif document.parsing_status == 'in_progress' %}
+                  <span class="badge bg-warning text-dark resume-status-badge">
+                    <i class="bi bi-hourglass-split"></i> Parsing...
+                  </span>
+                {% elif document.parsing_status == 'pending' %}
+                  <span class="badge bg-secondary resume-status-badge">
+                    <i class="bi bi-clock"></i> Pending
+                  </span>
                 {% endif %}
-              {% endfor %}
-            </ul>
-            {% for document in resumes %}
+              </div>
+
+              <!-- Quick Stats (only if successfully parsed) -->
+              {% if document.parsing_status == 'success' %}
+                <div class="resume-stats-row">
+                  ({{ document.skills|length }} skill{{ document.skills|length|pluralize }},
+                   {{ document.experience|length }} job{{ document.experience|length|pluralize }},
+                   {{ document.education|length }} degree{{ document.education|length|pluralize }})
+                </div>
+              {% endif %}
+
+              <div class="document-actions">
+                <a href="{% url 'resume_detail' resume_id=document.id %}">View</a>
+                <a href="{% url 'edit_resume' document.id %}">Edit</a>
+                <button type="button" class="delete-btn" data-bs-toggle="modal" data-bs-target="#deleteResumeModal{{ document.id }}">Delete</button>
+              </div>
+            </li>
+            {% endif %}
+          {% endfor %}
+        </ul>
+        {% for document in resumes %}
               <div class="modal fade" id="deleteResumeModal{{ document.id }}" tabindex="-1" aria-labelledby="deleteResumeLabel{{ document.id }}" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered">
-                  <div class="modal-content text-black">
+                  <div class="modal-content">
                     <div class="modal-header">
                       <h5 class="modal-title" id="deleteResumeLabel{{ document.id }}">Confirm Delete</h5>
                       <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -172,43 +466,44 @@
           {% endif %}
         </div>
 
-        <hr class="white-break">
-
-        <div class="row mb-3">
-          <h3>Uploaded Job Listings</h3>
+        <!-- Job Listings Section -->
+        <div class="profile-section">
+          <h2>Uploaded Job Listings</h2>
           {% if job_listings|length == 0 %}
-            <center><h5>No Job Listings Uploaded</h5></center>
+            <div class="empty-state">
+              <p>No job listings uploaded yet</p>
+            </div>
           {% else %}
-            <ul>
+            <ul class="document-list">
               {% for job in job_listings %}
-                <li>
-                  {% if job.title %}
-                    {{ job.title }} -
-                    <a class="link-light" href="{% url 'job_posting_detail' job_id=job.id %}">View</a> |
-                    <a class="link-light" href="{% url 'edit_job_posting' job.id %}">Edit</a> | <!-- Edit Link -->
-                    <a class="link-light" href="#" data-bs-toggle="modal" data-bs-target="#deleteJobModal{{ job.id }}">Delete</a>
-                  {% endif %}
-                  <div class="modal fade" id="deleteJobModal{{ job.id }}" tabindex="-1" aria-labelledby="deleteJobLabel{{ job.id }}" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered">
-                      <div class="modal-content text-black">
-                        <div class="modal-header">
-                          <h5 class="modal-title" id="deleteJobLabel{{ job.id }}">Confirm Delete</h5>
-                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                          Are you sure you want to delete <strong>{{ job.title }}</strong>?
-                        </div>
-                        <div class="modal-footer">
-                          <form method="post" action="{% url 'delete_job' job_id=job.id %}">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-danger">Yes, Delete</button>
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                          </form>
-                        </div>
+                <li class="document-item">
+                  <span class="document-name">{{ job.title }}</span>
+                  <div class="document-actions">
+                    <a href="{% url 'job_posting_detail' job_id=job.id %}">View</a>
+                    <a href="{% url 'edit_job_posting' job.id %}">Edit</a>
+                    <button type="button" class="delete-btn" data-bs-toggle="modal" data-bs-target="#deleteJobModal{{ job.id }}">Delete</button>
+                  </div>
+                </li>
+                <div class="modal fade" id="deleteJobModal{{ job.id }}" tabindex="-1" aria-labelledby="deleteJobLabel{{ job.id }}" aria-hidden="true">
+                  <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="deleteJobLabel{{ job.id }}">Confirm Delete</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+                      <div class="modal-body">
+                        Are you sure you want to delete <strong>{{ job.title }}</strong>?
+                      </div>
+                      <div class="modal-footer">
+                        <form method="post" action="{% url 'delete_job' job_id=job.id %}">
+                          {% csrf_token %}
+                          <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        </form>
                       </div>
                     </div>
                   </div>
-                </li>
+                </div>
               {% endfor %}
             </ul>
           {% endif %}
