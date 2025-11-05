@@ -136,10 +136,14 @@ class ExportableReportViewTest(TestCase):
 
     def test_generate_report_view(self):
         """Test generating a report via the GenerateReportView"""
+        from unittest.mock import patch
+
         self.client.login(username='testuser', password='testpass123')
         url = reverse('generate_report', kwargs={'chat_id': self.chat.id})
 
-        response = self.client.post(url, follow=True)
+        # Mock the AI functions to avoid external API calls in tests
+        with patch('active_interview_app.views._ai_available', return_value=False):
+            response = self.client.post(url, follow=True)
 
         # Check that report was created
         self.assertTrue(ExportableReport.objects.filter(chat=self.chat).exists())
@@ -148,6 +152,12 @@ class ExportableReportViewTest(TestCase):
         # Check that statistics were calculated
         self.assertEqual(report.total_questions_asked, 2)
         self.assertEqual(report.total_responses_given, 1)
+
+        # When AI is unavailable, scores should default to 0
+        self.assertEqual(report.professionalism_score, 0)
+        self.assertEqual(report.subject_knowledge_score, 0)
+        self.assertEqual(report.clarity_score, 0)
+        self.assertEqual(report.overall_score, 0)
 
     def test_export_report_view_requires_login(self):
         """Test that viewing the export report requires login"""
