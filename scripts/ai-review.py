@@ -5,6 +5,9 @@
 
 from datetime import datetime
 import sys
+import os
+import json
+import subprocess
 from zoneinfo import ZoneInfo
 
 from openai import OpenAI
@@ -12,6 +15,62 @@ from openai import OpenAI
 
 TIMEZONE = "America/Denver"
 TIME_FORMAT = "%m-%d-%Y_%I%M%p"
+
+
+def get_current_git_branch():
+    """Get the current git branch name."""
+    try:
+        result = subprocess.run(
+            ['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+        if result.returncode == 0:
+            return result.stdout.strip()
+    except Exception:
+        pass
+    return os.environ.get('GITHUB_HEAD_REF') or \
+           os.environ.get('GITHUB_REF_NAME') or \
+           'unknown'
+
+
+def track_token_usage_standalone(model_name, prompt_tokens, completion_tokens):
+    """
+    Track token usage for CI/CD scripts that don't have Django context.
+    This writes to a temporary file that can be imported later.
+    """
+    git_branch = get_current_git_branch()
+
+    # Create a record file for later import
+    record = {
+        'timestamp': datetime.now().isoformat(),
+        'git_branch': git_branch,
+        'model_name': model_name,
+        'endpoint': 'chat.completions',
+        'prompt_tokens': prompt_tokens,
+        'completion_tokens': completion_tokens,
+        'total_tokens': prompt_tokens + completion_tokens
+    }
+
+    # Write to a temp file in the repo
+    # Get script directory
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    repo_root = os.path.dirname(script_dir)
+    temp_dir = os.path.join(repo_root, 'temp')
+    os.makedirs(temp_dir, exist_ok=True)
+
+    filename = f"token_usage_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    filepath = os.path.join(temp_dir, filename)
+
+    with open(filepath, 'w') as f:
+        json.dump(record, f, indent=2)
+
+    print(f"\n📊 Token Usage: {record['total_tokens']} tokens "
+          f"({prompt_tokens} prompt + {completion_tokens} completion)")
+    print(f"   Model: {model_name}")
+    print(f"   Branch: {git_branch}")
+    print(f"   Saved to: {filepath}\n")
 
 
 # Startup open ai client
@@ -141,6 +200,14 @@ completion = client.chat.completions.create(
     ]
 )
 response = completion.choices[0].message.content
+
+# Track token usage
+if hasattr(completion, 'usage') and completion.usage:
+    track_token_usage_standalone(
+        model_name=completion.model,
+        prompt_tokens=completion.usage.prompt_tokens,
+        completion_tokens=completion.usage.completion_tokens
+    )
 
 # Print the response and write markdown file
 print(response)

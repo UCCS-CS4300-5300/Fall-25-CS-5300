@@ -341,6 +341,13 @@ jobs:
         path: review-*.md
         retention-days: ${{ env.RETENTION_DAYS }}
 
+    - name: Upload Token Usage Data
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ai-review-token-data
+        path: temp/token_usage_*.json
+        retention-days: ${{ env.RETENTION_DAYS }}
 
     - name: Post AI Report PR Comment
       if: github.event_name == 'pull_request'
@@ -540,6 +547,13 @@ jobs:
       with:
         fetch-depth: 0  # Full history for accurate git info
 
+    - name: Download AI Review Token Data
+      uses: actions/download-artifact@v4
+      with:
+        name: ai-review-token-data
+        path: temp/
+      continue-on-error: true
+
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
@@ -559,6 +573,11 @@ jobs:
       run: |
         python manage.py makemigrations --check --dry-run || python manage.py makemigrations
         python manage.py migrate --noinput
+
+    - name: Show Token Files to Import
+      run: |
+        echo "Token files found:"
+        ls -la temp/*.json 2>/dev/null || echo "No token files found"
 
     - name: Import Token Usage from CI/CD Scripts
       working-directory: .
