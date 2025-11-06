@@ -1,0 +1,19 @@
+#!/bin/bash
+# Git Post-Commit Hook - Automatic Claude Token Tracking
+#
+# This hook runs after every commit and attempts to track
+# Claude Code token usage automatically.
+#
+# Installation:
+#   Copy or symlink this file to .git/hooks/post-commit
+#   chmod +x .git/hooks/post-commit
+
+# Get the repository root
+REPO_ROOT=$(git rev-parse --show-toplevel)
+
+# Run the token extraction script
+echo ""
+echo "🤖 Auto-tracking Claude Code tokens..."
+python3 "$REPO_ROOT/token_metrics/scripts/extract-claude-tokens.py" --auto-track --notes "Auto-tracked on commit" --silent
+
+exit 0

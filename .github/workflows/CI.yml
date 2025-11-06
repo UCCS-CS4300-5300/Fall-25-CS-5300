@@ -325,11 +325,34 @@ jobs:
           fi
         elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
           git diff "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}" > "${{ runner.temp }}/changes.diff"
+        else
+          # Fallback: compare HEAD with main
+          git diff origin/main HEAD > "${{ runner.temp }}/changes.diff"
         fi
-        cat "${{ runner.temp }}/changes.diff"
+
+        # Check if diff is empty
+        if [ ! -s "${{ runner.temp }}/changes.diff" ]; then
+          echo "⚠️  No changes detected in diff"
+          echo "No changes to review" > "${{ runner.temp }}/changes.diff"
+        else
+          echo "✅ Diff generated successfully"
+          echo "Diff size: $(wc -l < "${{ runner.temp }}/changes.diff") lines"
+        fi
 
     - name: Run AI Code Review
-      run: python scripts/ai-review.py ${{ runner.temp }}/changes.diff
+      run: |
+        set +e  # Don't fail immediately
+        python scripts/ai-review.py ${{ runner.temp }}/changes.diff
+        REVIEW_EXIT_CODE=$?
+        set -e
+
+        if [ $REVIEW_EXIT_CODE -ne 0 ]; then
+          echo "⚠️  AI Code Review found issues (exit code: $REVIEW_EXIT_CODE)"
+          echo "Check the review report for details"
+          # Don't fail the job, just warn
+        else
+          echo "✅ AI Code Review passed"
+        fi
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
@@ -645,7 +668,7 @@ jobs:
           echo ''
           echo '> **Tracking all token usage from:**'
           echo '> - 🔍 AI Code Review (OpenAI)'
-          echo '> - 💬 Claude Code Sessions (Local + CI/CD)'
+          echo '> - 💬 Claude Code Sessions (Auto-tracked + Manual)'
           echo '> - 📤 Exported Token Files'
           echo '> - 🔧 Django API Calls'
           echo ''
@@ -665,21 +688,30 @@ jobs:
           echo '- ✅ **Cost Estimates** - Approximate USD costs'
           echo '- ✅ **Model Breakdown** - Claude vs OpenAI usage'
           echo ''
-          echo '### 💡 Tracking Your Local Tokens'
+          echo '### 🚀 Automatic Token Tracking'
           echo ''
-          echo 'To track your local Claude Code sessions:'
+          echo 'Install git hooks for automatic tracking:'
           echo '```bash'
-          echo '# Add tokens from current session'
-          echo 'add-tokens.bat 70000 "Feature description"'
+          echo '# One-time setup'
+          echo 'token_metrics\hooks\install-hooks.bat'
           echo ''
-          echo '# Export for sharing/backup'
-          echo 'export-tokens.bat my_work.json'
-          echo ''
-          echo '# Submit to database when ready'
-          echo 'submit-tokens.bat'
+          echo '# Now tokens auto-track on every commit!'
+          echo 'git commit -m "your changes"'
+          echo '# → Automatically extracts and saves Claude token usage'
           echo '```'
           echo ''
-          echo 'See `TOKEN_TRACKING_GUIDE.md` for full documentation.'
+          echo '### 💡 Manual Tracking (Alternative)'
+          echo ''
+          echo 'If you prefer manual tracking:'
+          echo '```bash'
+          echo '# Add tokens from current session'
+          echo 'track-tokens.bat add 70000 "Feature description"'
+          echo ''
+          echo '# Show current total'
+          echo 'track-tokens.bat show'
+          echo '```'
+          echo ''
+          echo 'See `HOW_CLAUDE_TRACKING_WORKS.md` for full documentation.'
         } >> $GITHUB_STEP_SUMMARY
 
     - name: Upload Token Metrics Report

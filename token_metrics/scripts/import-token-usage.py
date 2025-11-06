@@ -23,10 +23,23 @@ from active_interview_app.token_usage_models import TokenUsage
 
 def import_token_usage_from_json_files():
     """Import token usage records from temporary JSON files."""
-    temp_dir = os.path.join(os.path.dirname(__file__), '..', 'temp')
+    # Try multiple possible temp directory locations
+    script_dir = os.path.dirname(__file__)
+    possible_temp_dirs = [
+        os.path.join(script_dir, '..', '..', 'temp'),  # From token_metrics/scripts
+        os.path.join(script_dir, '..', 'temp'),         # From token_metrics
+        'temp',                                         # Relative to working dir
+    ]
 
-    if not os.path.exists(temp_dir):
-        print(f"ℹ️  No temp directory found at {temp_dir}")
+    temp_dir = None
+    for possible_dir in possible_temp_dirs:
+        abs_path = os.path.abspath(possible_dir)
+        if os.path.exists(abs_path):
+            temp_dir = abs_path
+            break
+
+    if not temp_dir:
+        print(f"ℹ️  No temp directory found")
         return 0
 
     # Find all token usage JSON files (multiple patterns)
@@ -57,14 +70,46 @@ def import_token_usage_from_json_files():
             with open(json_file, 'r') as f:
                 record = json.load(f)
 
-            # Check if already imported (by timestamp and model)
-            timestamp = datetime.fromisoformat(record['timestamp'])
+            # Handle different JSON formats
+            # Format 1: Direct format (from ai-review.py and track-claude-tokens.py)
+            if 'git_branch' in record and 'timestamp' in record:
+                git_branch = record['git_branch']
+                timestamp = datetime.fromisoformat(record['timestamp'])
+                model_name = record['model_name']
+                endpoint = record.get('endpoint', 'unknown')
+                prompt_tokens = record['prompt_tokens']
+                completion_tokens = record['completion_tokens']
+                total_tokens = record['total_tokens']
+
+            # Format 2: Export format (from export-tokens.py)
+            elif 'token_data' in record:
+                token_data = record['token_data']
+                git_branch = token_data['branch']
+
+                # Use the last session timestamp
+                if token_data['sessions']:
+                    timestamp = datetime.fromisoformat(token_data['sessions'][-1]['timestamp'])
+                else:
+                    timestamp = datetime.fromisoformat(token_data['last_updated'])
+
+                # Default model for exported data
+                model_name = 'claude-sonnet-4-5-20250929'
+                endpoint = 'messages'
+
+                # Estimate split (80/20)
+                total_tokens = token_data['total_tokens']
+                prompt_tokens = int(total_tokens * 0.8)
+                completion_tokens = total_tokens - prompt_tokens
+            else:
+                print(f"⚠️  Unknown format: {os.path.basename(json_file)}")
+                skipped_count += 1
+                continue
 
             # Check for duplicate
             existing = TokenUsage.objects.filter(
                 created_at=timestamp,
-                model_name=record['model_name'],
-                git_branch=record['git_branch']
+                model_name=model_name,
+                git_branch=git_branch
             ).first()
 
             if existing:
@@ -72,21 +117,21 @@ def import_token_usage_from_json_files():
                 skipped_count += 1
                 continue
 
-            # Create the record
+            # Create the record with proper branch tracking
             TokenUsage.objects.create(
-                git_branch=record['git_branch'],
-                model_name=record['model_name'],
-                endpoint=record['endpoint'],
-                prompt_tokens=record['prompt_tokens'],
-                completion_tokens=record['completion_tokens'],
-                total_tokens=record['total_tokens'],
+                git_branch=git_branch,
+                model_name=model_name,
+                endpoint=endpoint,
+                prompt_tokens=prompt_tokens,
+                completion_tokens=completion_tokens,
+                total_tokens=total_tokens,
                 created_at=timestamp
             )
 
             print(f"✅ Imported: {os.path.basename(json_file)}")
-            print(f"   Branch: {record['git_branch']}")
-            print(f"   Model: {record['model_name']}")
-            print(f"   Tokens: {record['total_tokens']:,}\n")
+            print(f"   Branch: {git_branch}")
+            print(f"   Model: {model_name}")
+            print(f"   Tokens: {total_tokens:,}\n")
 
             imported_count += 1
 
@@ -95,6 +140,8 @@ def import_token_usage_from_json_files():
 
         except Exception as e:
             print(f"❌ Error importing {json_file}: {e}")
+            import traceback
+            traceback.print_exc()
             continue
 
     print(f"\n{'='*70}")

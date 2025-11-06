@@ -38,19 +38,25 @@ def get_repo_root():
 
 
 def get_git_info():
-    """Get current git branch."""
+    """Get current git branch and commit."""
     try:
-        result = subprocess.run(
+        branch = subprocess.run(
             ['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
             capture_output=True,
             text=True,
             timeout=5
-        )
-        if result.returncode == 0:
-            return result.stdout.strip()
+        ).stdout.strip()
+
+        commit = subprocess.run(
+            ['git', 'rev-parse', 'HEAD'],
+            capture_output=True,
+            text=True,
+            timeout=5
+        ).stdout.strip()
+
+        return {'branch': branch, 'commit': commit}
     except Exception:
-        pass
-    return 'unknown'
+        return {'branch': 'unknown', 'commit': 'unknown'}
 
 
 def get_tracking_file():
@@ -59,7 +65,8 @@ def get_tracking_file():
     tracking_dir = os.path.join(repo_root, 'token_metrics', 'local_tracking')
     os.makedirs(tracking_dir, exist_ok=True)
 
-    branch = get_git_info()
+    git_info = get_git_info()
+    branch = git_info['branch']
     # Sanitize branch name for filename
     safe_branch = branch.replace('/', '_').replace('\\', '_')
     return os.path.join(tracking_dir, f'tokens_{safe_branch}.json')
@@ -77,8 +84,9 @@ def load_tracking_data():
             print(f"Warning: Could not load tracking data: {e}")
 
     # Return default structure
+    git_info = get_git_info()
     return {
-        'branch': get_git_info(),
+        'branch': git_info['branch'],
         'total_tokens': 0,
         'sessions': [],
         'created_at': datetime.now().isoformat(),

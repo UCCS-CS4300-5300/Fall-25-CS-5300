@@ -9,17 +9,21 @@ echo.
 
 if "%1"=="" (
     echo Commands:
-    echo   track-tokens.bat add [count] [notes]     - Add tokens
+    echo   track-tokens.bat add [count] [notes]     - Add tokens (auto-exports)
     echo   track-tokens.bat show                    - Show total
     echo   track-tokens.bat submit                  - Submit to DB
-    echo   track-tokens.bat export [file]           - Export
-    echo   track-tokens.bat import [file]           - Import
+    echo   track-tokens.bat export [file]           - Manual export
+    echo   track-tokens.bat import [file]           - Import from file
     echo   track-tokens.bat help                    - Full docs
     echo.
     echo Examples:
-    echo   track-tokens.bat add 50000 "My feature"
+    echo   track-tokens.bat add 135000 "My feature work"
     echo   track-tokens.bat show
     echo   track-tokens.bat submit
+    echo.
+    echo NOTE: 'add' automatically exports to temp/ for:
+    echo   - Team merging at end of iteration
+    echo   - CI/CD pipeline reporting
     echo.
     exit /b 0
 )
@@ -27,11 +31,11 @@ if "%1"=="" (
 if /i "%1"=="add" (
     if "%2"=="" (
         echo Error: Token count required
-        echo Usage: track-tokens.bat add [count] [notes] [--auto-export]
+        echo Usage: track-tokens.bat add [count] [notes]
         exit /b 1
     )
     cd token_metrics
-    call add-tokens.bat %2 "%~3" %4
+    call add-tokens.bat %2 "%~3"
     cd ..
     exit /b %errorlevel%
 )
