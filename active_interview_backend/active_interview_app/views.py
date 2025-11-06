@@ -865,6 +865,7 @@ def register(request):
 def profile(request):
     resumes = UploadedResume.objects.filter(user=request.user)
     job_listings = UploadedJobListing.objects.filter(user=request.user)
+    templates = InterviewTemplate.objects.filter(user=request.user)
 
     # Check for pending role change requests
     has_pending_request = RoleChangeRequest.objects.filter(
@@ -875,6 +876,7 @@ def profile(request):
     return render(request, 'profile.html', {
         'resumes': resumes,
         'job_listings': job_listings,
+        'templates': templates,
         'has_pending_request': has_pending_request
     })
 

@@ -1,151 +1,282 @@
 {% extends "base.html" %}
-
 {% block title %}
-  AIS - Interview Templates
+    AIS - Interview Templates
 {% endblock title %}
-
 {% block content %}
-  <style>
-    .templates-page {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      color: var(--text-primary);
+    <style>
+    .template-page {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
     }
 
-    .templates-page p {
-      font-size: 20px;
+    .page-header {
       text-align: center;
+      margin-bottom: 2rem;
     }
-    .templates-page h1 {
-      font-size: 40px;
-      text-align: center;
-    }
-    .templates-page h2 {
-      text-align: center;
-    }
-    .templates-page h3 {
-      font-size: 28px;
-    }
-    .templates-page ul {
-      list-style: none;
-      padding: 0;
-    }
-    .templates-page .card {
-      background-color: var(--surface) !important;
-      border-radius: 2rem;
-    }
-    .template-item {
-      background-color: var(--surface);
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius-md);
-      padding: 1.5rem;
-      margin-bottom: 1rem;
-      box-shadow: var(--shadow-sm);
-      transition: all 0.2s ease;
-    }
-    .template-item:hover {
-      box-shadow: var(--shadow);
-      border-color: var(--primary-light);
-    }
-    .template-item-title {
-      font-size: 23px;
-      font-weight: 600;
-      color: var(--text-primary);
+
+    .page-header h1 {
+      color: var(--primary);
+      font-size: 2rem;
+      font-weight: 700;
       margin-bottom: 0.5rem;
     }
-    .template-description {
+
+    .template-section {
+      background: var(--surface-hover);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .template-section h2 {
+      color: var(--text-primary);
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .template-section h2::before {
+      content: "";
+      display: inline-block;
+      width: 4px;
+      height: 1.5rem;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+
+    /* Document list styling (matching profile) */
+    .document-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .document-item {
+      padding: 1rem;
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 0.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s ease;
+    }
+
+    .document-item:hover {
+      box-shadow: var(--shadow-sm);
+      border-color: var(--primary);
+    }
+
+    .document-name {
+      color: var(--text-primary);
+      font-weight: 500;
+      font-size: 1rem;
+    }
+
+    .document-meta {
       color: var(--text-secondary);
-      font-size: 18px;
-      font-style: italic;
-      margin-top: 0.5rem;
+      font-size: 0.9rem;
+      margin-top: 0.25rem;
     }
-    .template-item-actions {
-      font-size: 18px;
-      margin-top: 0.75rem;
-    }
-    .template-item-meta {
-      color: var(--text-light);
-      font-size: 16px;
-      margin-top: 0.5rem;
-    }
-  </style>
 
-  <div class="centered-container">
-    <div class="card p-3 my-5">
-      <div class="templates-page">
-        <div class="row mb-3">
-          <h1>Interview Templates</h1>
+    .document-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .document-actions a,
+    .document-actions button {
+      color: var(--primary);
+      text-decoration: none;
+      font-size: 0.9rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: var(--radius-sm);
+      transition: all 0.2s ease;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+    }
+
+    .document-actions a:hover,
+    .document-actions button:hover {
+      background: var(--primary);
+      color: var(--text-white);
+    }
+
+    .document-actions .delete-btn {
+      color: var(--error);
+    }
+
+    .document-actions .delete-btn:hover {
+      background: var(--error);
+      color: var(--text-white);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-secondary);
+    }
+
+    /* Badge styling to respect dark mode */
+    .status-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-left: 0.5rem;
+    }
+
+    .status-badge.complete {
+      background-color: var(--success);
+      color: var(--text-white);
+    }
+
+    .status-badge.wip {
+      background-color: var(--warning);
+      color: var(--text-primary);
+    }
+
+    /* Modal fixes */
+    .modal-content {
+      background-color: var(--surface) !important;
+      color: var(--text-primary) !important;
+      border: 1px solid var(--border);
+    }
+
+    .modal-header {
+      border-color: var(--border);
+    }
+
+    .modal-footer {
+      border-color: var(--border);
+    }
+
+    .modal-body {
+      color: var(--text-primary);
+    }
+
+    /* Action buttons */
+    .action-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Responsive: Stack on mobile */
+    @media (max-width: 768px) {
+      .template-page {
+        padding: 0 1rem;
+      }
+
+      .template-section {
+        padding: 1.5rem;
+      }
+
+      .document-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+      }
+
+      .document-actions {
+        width: 100%;
+        justify-content: flex-start;
+      }
+    }
+    </style>
+    <div class="template-page">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>Interview Templates</h1>
         </div>
-
-        <div class="row mb-3">
-          <div class="text-center">
-            <a href="{% url 'create_template' %}" class="btn btn-primary btn-lg">
-              <i class="bi bi-plus-circle"></i> Create New Template
-            </a>
-          </div>
+        <!-- Create Button -->
+        <div style="text-align: center;">
+            <div class="action-buttons">
+                <a href="{% url 'create_template' %}" class="btn btn-primary btn-lg">
+                    <i class="bi bi-plus-circle"></i> Create New Template
+                </a>
+            </div>
         </div>
-
-        <hr class="white-break">
-
-        <div class="row mb-3">
-          <h3>My Templates</h3>
-          {% if templates|length == 0 %}
-            <center><h5>No Templates Created</h5></center>
-            <p class="text-center">Create your first interview template to start organizing your interview structure.</p>
-          {% else %}
-            <ul>
-              {% for template in templates %}
-                <li class="template-item">
-                  <div class="template-item-title">
-                    {{ template.name }}
-                    {% if template.is_complete %}
-                      <span class="badge bg-success">Complete</span>
-                    {% else %}
-                      <span class="badge bg-warning text-dark">WIP</span>
-                    {% endif %}
-                  </div>
-                  {% if template.description %}
-                    <div class="template-description">{{ template.description }}</div>
-                  {% endif %}
-                  <div class="template-item-actions">
-                    <a href="{% url 'template_detail' template_id=template.id %}">View</a> |
-                    <a href="{% url 'edit_template' template.id %}">Edit</a> |
-                    <a href="#" data-bs-toggle="modal" data-bs-target="#deleteTemplateModal{{ template.id }}">Delete</a>
-                  </div>
-                  <div class="template-item-meta">
-                    Created {{ template.created_at|date:"M d, Y" }} | Weight: {{ template.get_total_weight }}%
-                  </div>
-                </li>
-              {% endfor %}
-            </ul>
-
-            <!-- Delete Modals -->
-            {% for template in templates %}
-              <div class="modal fade" id="deleteTemplateModal{{ template.id }}" tabindex="-1" aria-labelledby="deleteTemplateLabel{{ template.id }}" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                  <div class="modal-content">
-                    <div class="modal-header">
-                      <h5 class="modal-title" id="deleteTemplateLabel{{ template.id }}">Confirm Delete</h5>
-                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                      Are you sure you want to delete <strong>{{ template.name }}</strong>?
-                    </div>
-                    <div class="modal-footer">
-                      <form method="post" action="{% url 'delete_template' template_id=template.id %}">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-danger">Yes, Delete</button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                      </form>
-                    </div>
-                  </div>
+        <!-- Templates List Section -->
+        <div class="template-section">
+            <h2>My Templates</h2>
+            {% if templates|length == 0 %}
+                <div class="empty-state">
+                    <p>No templates created yet</p>
+                    <p>Create your first interview template to start organizing your interview structure.</p>
                 </div>
-              </div>
-            {% endfor %}
-          {% endif %}
+            {% else %}
+                <ul class="document-list">
+                    {% for template in templates %}
+                        <li class="document-item">
+                            <div>
+                                <div class="document-name">
+                                    {{ template.name }}
+                                    {% if template.is_complete %}
+                                        <span class="status-badge complete">Complete</span>
+                                    {% else %}
+                                        <span class="status-badge wip">WIP</span>
+                                    {% endif %}
+                                </div>
+                                {% if template.description %}<div class="document-meta">{{ template.description }}</div>{% endif %}
+                                <div class="document-meta">
+                                    Created {{ template.created_at|date:"M d, Y" }} | Weight: {{ template.get_total_weight }}%
+                                </div>
+                            </div>
+                            <div class="document-actions">
+                                <a href="{% url 'template_detail' template_id=template.id %}">View</a>
+                                <a href="{% url 'edit_template' template.id %}">Edit</a>
+                                <button type="button"
+                                        class="delete-btn"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#deleteTemplateModal{{ template.id }}">Delete</button>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+                <!-- Delete Modals -->
+                {% for template in templates %}
+                    <div class="modal fade"
+                         id="deleteTemplateModal{{ template.id }}"
+                         tabindex="-1"
+                         aria-labelledby="deleteTemplateLabel{{ template.id }}"
+                         aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="deleteTemplateLabel{{ template.id }}">Confirm Delete</h5>
+                                    <button type="button"
+                                            class="btn-close"
+                                            data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    Are you sure you want to delete <strong>{{ template.name }}</strong>?
+                                </div>
+                                <div class="modal-footer">
+                                    <form method="post"
+                                          action="{% url 'delete_template' template_id=template.id %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
         </div>
-      </div>
     </div>
-  </div>
 {% endblock content %}

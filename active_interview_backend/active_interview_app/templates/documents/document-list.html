@@ -211,6 +211,54 @@
         justify-content: center;
       }
     }
+
+    /* Template List Section */
+    .template-list-section {
+      margin-top: 2rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border-light);
+    }
+
+    .template-list-heading {
+      color: var(--text-primary);
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+    }
+
+    .template-item-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .template-link {
+      color: var(--primary);
+      font-weight: 500;
+      text-decoration: none;
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+
+    .template-link:hover {
+      color: var(--primary-light);
+      text-decoration: underline;
+    }
+
+    .template-item-info p {
+      margin: 0.25rem 0 0 0;
+    }
+
+    .template-list-footer {
+      margin-top: 1rem;
+      text-align: center;
+    }
+
+    .template-list-footer a {
+      text-decoration: none;
+    }
+
+    .template-list-footer a:hover {
+      text-decoration: underline;
+    }
   </style>
 
   <div class="document-page">
@@ -360,44 +408,12 @@
           </button>
         </form>
 
-        <!-- List of Existing Templates -->
-        {% if templates %}
-          <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-light);">
-            <h3 style="color: var(--text-primary); font-size: 1.1rem; margin-bottom: 1rem;">Your Templates ({{ templates|length }})</h3>
-            <div style="display: grid; gap: 1rem;">
-              {% for template in templates %}
-                <div style="padding: 1rem; background-color: var(--surface-hover); border: 1px solid var(--border-light); border-radius: var(--radius); display: flex; justify-content: space-between; align-items: center;">
-                  <div>
-                    <a href="{% url 'template_detail' template.id %}" style="color: var(--primary); font-weight: 500; text-decoration: none;">
-                      {{ template.name }}
-                    </a>
-                    {% if template.description %}
-                      <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem; margin-bottom: 0;">
-                        {{ template.description|truncatewords:15 }}
-                      </p>
-                    {% endif %}
-                    <p style="color: var(--text-light); font-size: 0.85rem; margin-top: 0.25rem; margin-bottom: 0;">
-                      Created {{ template.created_at|date:"M d, Y" }}
-                    </p>
-                  </div>
-                  <div style="display: flex; gap: 0.5rem;">
-                    <a href="{% url 'edit_template' template.id %}" style="padding: 0.5rem 1rem; background-color: var(--primary); color: white; text-decoration: none; border-radius: var(--radius-sm); font-size: 0.9rem;">
-                      Edit
-                    </a>
-                    <a href="{% url 'template_detail' template.id %}" style="padding: 0.5rem 1rem; background-color: var(--surface); color: var(--text-primary); border: 1px solid var(--border); text-decoration: none; border-radius: var(--radius-sm); font-size: 0.9rem;">
-                      View
-                    </a>
-                  </div>
-                </div>
-              {% endfor %}
-            </div>
-            <div style="margin-top: 1rem; text-align: center;">
-              <a href="{% url 'template_list' %}" style="color: var(--primary); text-decoration: none; font-weight: 500;">
-                View All Templates →
-              </a>
-            </div>
-          </div>
-        {% endif %}
+        <!-- View Templates Link -->
+        <div class="template-list-footer">
+          <a href="{% url 'profile' %}" class="text-brand text-bold">
+            View Your Templates →
+          </a>
+        </div>
       </div>
     {% endif %}
 

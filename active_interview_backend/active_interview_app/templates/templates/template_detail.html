@@ -1,308 +1,535 @@
 {% extends "base.html" %}
-
 {% block title %}
-  AIS - {{ template.name }}
+    AIS - {{ template.name }}
 {% endblock title %}
-
 {% block content %}
-  <style>
-    .template-detail-page {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      color: var(--text-primary);
+    <style>
+    .template-page {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
     }
 
-    .template-detail-page h1 {
-      font-size: 40px;
+    .page-header {
       text-align: center;
+      margin-bottom: 2rem;
     }
 
-    .template-detail-page .card {
-      background-color: var(--surface) !important;
-      border-radius: 2rem;
+    .page-header h1 {
+      color: var(--primary);
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
     }
 
-    .template-detail-page .detail-label {
-      font-size: 20px;
-      font-weight: bold;
+    .template-section {
+      background: var(--surface-hover);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .template-section h2 {
       color: var(--text-primary);
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
 
-    .template-detail-page .detail-value {
-      font-size: 22px;
+    .template-section h2::before {
+      content: "";
+      display: inline-block;
+      width: 4px;
+      height: 1.5rem;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+
+    .detail-label {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .detail-value {
+      font-size: 1.1rem;
+      color: var(--text-primary);
       margin-bottom: 1.5rem;
     }
 
+    /* Section item styling */
+    .section-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
     .section-item {
-      background-color: var(--user-bubble) !important;
-      color: var(--user-bubble-text) !important;
-      border: 1px solid var(--primary) !important;
-      border-radius: var(--radius-md);
+      padding: 1rem;
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 0.75rem;
       transition: all 0.2s ease;
     }
 
     .section-item:hover {
-      box-shadow: var(--shadow);
-      border-color: var(--primary-light) !important;
+      box-shadow: var(--shadow-sm);
+      border-color: var(--primary);
     }
 
     .section-item h5 {
       color: var(--text-primary);
       font-weight: 600;
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
     }
 
     .section-item p {
       color: var(--text-primary);
+      margin-bottom: 0.5rem;
     }
 
     .section-item small {
+      color: var(--text-secondary);
+    }
+
+    /* Alert styling to respect dark mode */
+    .alert {
+      background-color: var(--surface);
+      border: 2px solid var(--border);
+      color: var(--text-primary);
+      padding: 1rem;
+      border-radius: var(--radius);
+      margin-bottom: 1rem;
+    }
+
+    .alert.alert-success {
+      border-color: var(--success);
+      background-color: var(--surface);
+    }
+
+    .alert.alert-danger {
+      border-color: var(--error);
+      background-color: var(--surface);
+    }
+
+    .alert.alert-info {
+      border-color: var(--info);
+      background-color: var(--surface);
+    }
+
+    .alert strong {
+      color: var(--text-primary);
+    }
+
+    .alert .text-danger {
+      color: var(--error) !important;
+    }
+
+    .alert .text-success {
+      color: var(--success) !important;
+    }
+
+    .alert .text-muted {
       color: var(--text-secondary) !important;
     }
-  </style>
 
-  <div class="centered-container">
-    <div class="card p-4 my-5">
-      <div class="template-detail-page">
-        <div class="row mb-4">
-          <h1>{{ template.name }}</h1>
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-secondary);
+    }
+
+    /* Modal fixes */
+    .modal-content {
+      background-color: var(--surface) !important;
+      color: var(--text-primary) !important;
+      border: 1px solid var(--border);
+    }
+
+    .modal-header {
+      border-color: var(--border);
+    }
+
+    .modal-header.bg-danger {
+      background-color: var(--error) !important;
+      color: var(--text-white) !important;
+    }
+
+    .modal-footer {
+      border-color: var(--border);
+    }
+
+    .modal-body {
+      color: var(--text-primary);
+    }
+
+    /* Form control styling */
+    .form-control {
+      background-color: var(--surface) !important;
+      color: var(--text-primary) !important;
+      border-color: var(--border) !important;
+    }
+
+    .form-control:focus {
+      background-color: var(--surface) !important;
+      color: var(--text-primary) !important;
+      border-color: var(--primary) !important;
+    }
+
+    .form-label {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .form-text {
+      color: var(--text-secondary) !important;
+    }
+
+    /* Action buttons */
+    .action-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-top: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    /* Section header with button */
+    .section-header-with-button {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .section-header-with-button h2 {
+      margin-bottom: 0;
+    }
+
+    /* Responsive: Stack on mobile */
+    @media (max-width: 768px) {
+      .template-page {
+        padding: 0 1rem;
+      }
+
+      .template-section {
+        padding: 1.5rem;
+      }
+
+      .action-buttons {
+        flex-direction: column;
+      }
+
+      .action-buttons .btn {
+        width: 100%;
+      }
+    }
+    </style>
+    <div class="template-page">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>{{ template.name }}</h1>
         </div>
-
-        <div class="row mb-3">
-          <div class="col">
-            <p class="detail-label">Description:</p>
-            <p class="detail-value">
-              {% if template.description %}
-                {{ template.description }}
-              {% else %}
-                <span style="color: rgba(255, 255, 255, 0.5);">No description provided</span>
-              {% endif %}
-            </p>
-          </div>
-        </div>
-
-        <div class="row mb-3">
-          <div class="col">
-            <p class="detail-label">Created:</p>
-            <p class="detail-value">{{ template.created_at|date:"F d, Y \\a\\t g:i A" }}</p>
-          </div>
-        </div>
-
-        <div class="row mb-3">
-          <div class="col">
-            <p class="detail-label">Last Updated:</p>
-            <p class="detail-value">{{ template.updated_at|date:"F d, Y \\a\\t g:i A" }}</p>
-          </div>
-        </div>
-
-        <hr class="white-break">
-
-        <!-- Sections Management -->
-        <div class="row mb-3">
-          <div class="col">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <p class="detail-label mb-0">Sections:</p>
-              <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addSectionModal" id="addSectionBtn" {% if is_complete %}disabled{% endif %}>
-                <i class="bi bi-plus-circle"></i> Add Section
-              </button>
+        <!-- Template Details Section -->
+        <div class="template-section">
+            <h2>Template Details</h2>
+            <div class="detail-label">Description:</div>
+            <div class="detail-value">
+                {% if template.description %}
+                    {{ template.description }}
+                {% else %}
+                    <span class="text-light-color">No description provided</span>
+                {% endif %}
             </div>
-
+            <div class="detail-label">Created:</div>
+            <div class="detail-value">{{ template.created_at|date:"F d, Y \a\t g:i A" }}</div>
+            <div class="detail-label">Last Updated:</div>
+            <div class="detail-value">{{ template.updated_at|date:"F d, Y \a\t g:i A" }}</div>
+        </div>
+        <!-- Sections Management -->
+        <div class="template-section">
+            <div class="section-header-with-button">
+                <h2>Sections</h2>
+                <button class="btn btn-success"
+                        data-bs-toggle="modal"
+                        data-bs-target="#addSectionModal"
+                        id="addSectionBtn"
+                        {% if is_complete %}disabled{% endif %}>
+                    <i class="bi bi-plus-circle"></i> Add Section
+                </button>
+            </div>
             <!-- Weight Summary -->
             {% if template.sections %}
-              <div class="alert {% if total_weight > 100 %}alert-danger{% elif total_weight == 100 %}alert-success{% else %}alert-info{% endif %} mb-3" role="alert">
-                <strong>Total Weight:</strong> {{ total_weight }}% / 100%
-                <span class="ms-3">
-                  {% if total_weight > 100 %}
-                    <span class="text-danger"><strong>⚠ Exceeds 100% by {{ total_weight|add:"-100" }}%</strong></span>
-                  {% elif total_weight == 100 %}
-                    <span class="text-success"><strong>✓ Complete</strong></span>
-                  {% else %}
-                    <span class="text-muted">{{ remaining_weight }}% remaining</span>
-                  {% endif %}
-                </span>
-              </div>
+                <div class="alert {% if total_weight > 100 %}alert-danger{% elif total_weight == 100 %}alert-success{% else %}alert-info{% endif %}"
+                     role="alert">
+                    <strong>Total Weight:</strong> {{ total_weight }}% / 100%
+                    <span style="margin-left: 1rem;">
+                        {% if total_weight > 100 %}
+                            <span class="text-danger"><strong>⚠ Exceeds 100% by {{ total_weight|add:"-100" }}%</strong></span>
+                        {% elif total_weight == 100 %}
+                            <span class="text-success"><strong>✓ Complete</strong></span>
+                        {% else %}
+                            <span class="text-muted">{{ remaining_weight }}% remaining</span>
+                        {% endif %}
+                    </span>
+                </div>
             {% endif %}
-
             {% if template.sections %}
-              <div class="list-group">
-                {% for section in template.sections %}
-                  <div class="list-group-item section-item mb-2">
-                    <div class="d-flex justify-content-between align-items-start">
-                      <div class="flex-grow-1">
-                        <h5 class="mb-1">{{ section.title }}</h5>
-                        <p class="mb-1">{{ section.content|default:"No content" }}</p>
-                        <small>Weight: <strong>{{ section.weight|default:"0" }}</strong></small>
-                      </div>
-                      <div class="btn-group ms-3">
-                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editSectionModal{{ section.id }}">
-                          <i class="bi bi-pencil"></i> Edit
-                        </button>
-                        <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteSectionModal{{ section.id }}">
-                          <i class="bi bi-trash"></i> Delete
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Edit Section Modal -->
-                  <div class="modal fade" id="editSectionModal{{ section.id }}" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog">
-                      <div class="modal-content">
-                        <div class="modal-header">
-                          <h5 class="modal-title">Edit Section</h5>
-                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <form method="post" action="{% url 'edit_section' template_id=template.id section_id=section.id %}">
-                          {% csrf_token %}
-                          <div class="modal-body">
-                            <div class="mb-3">
-                              <label class="form-label">Section Title <span class="text-danger">*</span></label>
-                              <input type="text" name="title" class="form-control" value="{{ section.title }}" required>
+                <ul class="section-list">
+                    {% for section in template.sections %}
+                        <li class="section-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h5>{{ section.title }}</h5>
+                                    <p>{{ section.content|default:"No content" }}</p>
+                                    <small>Weight: <strong>{{ section.weight|default:"0" }}</strong></small>
+                                </div>
+                                <div class="btn-group ms-3">
+                                    <button class="btn btn-sm btn-primary"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editSectionModal{{ section.id }}">
+                                        <i class="bi bi-pencil"></i> Edit
+                                    </button>
+                                    <button class="btn btn-sm btn-danger"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#deleteSectionModal{{ section.id }}">
+                                        <i class="bi bi-trash"></i> Delete
+                                    </button>
+                                </div>
                             </div>
-                            <div class="mb-3">
-                              <label class="form-label">Content</label>
-                              <textarea name="content" class="form-control" rows="4">{{ section.content }}</textarea>
+                        </li>
+                        <!-- Edit Section Modal -->
+                        <div class="modal fade"
+                             id="editSectionModal{{ section.id }}"
+                             tabindex="-1"
+                             aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Edit Section</h5>
+                                        <button type="button"
+                                                class="btn-close"
+                                                data-bs-dismiss="modal"
+                                                aria-label="Close"></button>
+                                    </div>
+                                    <form method="post"
+                                          action="{% url 'edit_section' template_id=template.id section_id=section.id %}">
+                                        {% csrf_token %}
+                                        <div class="modal-body">
+                                            <div class="mb-3">
+                                                <label class="form-label">
+                                                    Section Title <span style="color: var(--error);">*</span>
+                                                </label>
+                                                <input type="text"
+                                                       name="title"
+                                                       class="form-control"
+                                                       value="{{ section.title }}"
+                                                       required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Content</label>
+                                                <textarea name="content" class="form-control" rows="4">{{ section.content }}</textarea>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">
+                                                    Weight <span style="color: var(--error);">*</span>
+                                                </label>
+                                                <input type="number"
+                                                       name="weight"
+                                                       class="form-control"
+                                                       value="{{ section.weight|default:'0' }}"
+                                                       min="0"
+                                                       required>
+                                                <small class="form-text">Weight determines the importance/scoring of this section</small>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                                        </div>
+                                    </form>
+                                </div>
                             </div>
-                            <div class="mb-3">
-                              <label class="form-label">Weight <span class="text-danger">*</span></label>
-                              <input type="number" name="weight" class="form-control" value="{{ section.weight|default:'0' }}" min="0" required>
-                              <small class="form-text text-muted">Weight determines the importance/scoring of this section</small>
+                        </div>
+                        <!-- Delete Section Modal -->
+                        <div class="modal fade"
+                             id="deleteSectionModal{{ section.id }}"
+                             tabindex="-1"
+                             aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Confirm Delete</h5>
+                                        <button type="button"
+                                                class="btn-close"
+                                                data-bs-dismiss="modal"
+                                                aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        Are you sure you want to delete section <strong>{{ section.title }}</strong>?
+                                    </div>
+                                    <div class="modal-footer">
+                                        <form method="post"
+                                              action="{% url 'delete_section' template_id=template.id section_id=section.id %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                        </form>
+                                    </div>
+                                </div>
                             </div>
-                          </div>
-                          <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-primary">Save Changes</button>
-                          </div>
-                        </form>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Delete Section Modal -->
-                  <div class="modal fade" id="deleteSectionModal{{ section.id }}" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog">
-                      <div class="modal-content">
-                        <div class="modal-header">
-                          <h5 class="modal-title">Confirm Delete</h5>
-                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <div class="modal-body">
-                          Are you sure you want to delete section <strong>{{ section.title }}</strong>?
-                        </div>
-                        <div class="modal-footer">
-                          <form method="post" action="{% url 'delete_section' template_id=template.id section_id=section.id %}">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-danger">Yes, Delete</button>
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                          </form>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                {% endfor %}
-              </div>
+                    {% endfor %}
+                </ul>
             {% else %}
-              <p class="text-muted">No sections added yet. Click "Add Section" to create your first section.</p>
+                <div class="empty-state">
+                    <p>No sections added yet. Click "Add Section" to create your first section.</p>
+                </div>
             {% endif %}
-          </div>
         </div>
-
-        <hr class="white-break">
-
-        <div class="row mt-4">
-          <div class="col text-center">
-            <a href="{% url 'edit_template' template.id %}" class="btn btn-primary btn-lg">
-              <i class="bi bi-pencil"></i> Edit Template
+    </div>
+    <!-- Action Buttons (outside template-page for full width centering) -->
+    <div style="text-align: center; margin-top: 2rem; margin-bottom: 2rem;">
+        <div class="action-buttons"
+             style="max-width: 1200px;
+                    margin-left: auto;
+                    margin-right: auto">
+            <a href="{% url 'edit_template' template.id %}"
+               class="btn btn-primary btn-lg">
+                <i class="bi bi-pencil"></i> Edit Template
             </a>
-            <a href="{% url 'template_list' %}" class="btn btn-secondary btn-lg ms-2">
-              <i class="bi bi-arrow-left"></i> Back to Templates
+            <a href="{% url 'template_list' %}" class="btn btn-secondary btn-lg">
+                <i class="bi bi-arrow-left"></i> Back to Templates
             </a>
-            <a href="#" class="btn btn-danger btn-lg ms-2" data-bs-toggle="modal" data-bs-target="#deleteTemplateModal">
-              <i class="bi bi-trash"></i> Delete
+            <a href="#"
+               class="btn btn-danger btn-lg"
+               data-bs-toggle="modal"
+               data-bs-target="#deleteTemplateModal">
+                <i class="bi bi-trash"></i> Delete
             </a>
-          </div>
         </div>
-      </div>
     </div>
-  </div>
-
-  <!-- Delete Template Modal -->
-  <div class="modal fade" id="deleteTemplateModal" tabindex="-1" aria-labelledby="deleteTemplateLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="deleteTemplateLabel">Confirm Delete</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          Are you sure you want to delete <strong>{{ template.name }}</strong>?
-        </div>
-        <div class="modal-footer">
-          <form method="post" action="{% url 'delete_template' template_id=template.id %}">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-danger">Yes, Delete</button>
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Add Section Modal -->
-  <div class="modal fade" id="addSectionModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Add New Section</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <form method="post" action="{% url 'add_section' template_id=template.id %}">
-          {% csrf_token %}
-          <div class="modal-body">
-            <div class="mb-3">
-              <label class="form-label">Section Title <span class="text-danger">*</span></label>
-              <input type="text" name="title" class="form-control" placeholder="e.g., Technical Skills, Experience, Education" required>
+    <!-- Delete Template Modal -->
+    <div class="modal fade"
+         id="deleteTemplateModal"
+         tabindex="-1"
+         aria-labelledby="deleteTemplateLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteTemplateLabel">Confirm Delete</h5>
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to delete <strong>{{ template.name }}</strong>?
+                </div>
+                <div class="modal-footer">
+                    <form method="post"
+                          action="{% url 'delete_template' template_id=template.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    </form>
+                </div>
             </div>
-            <div class="mb-3">
-              <label class="form-label">Content</label>
-              <textarea name="content" class="form-control" rows="4" placeholder="Optional: Description or instructions for this section"></textarea>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Weight <span class="text-danger">*</span></label>
-              <input type="number" name="weight" class="form-control" value="0" min="0" required>
-              <small class="form-text text-muted">Weight determines the importance/scoring of this section (e.g., 30 for 30% weight)</small>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-success">Add Section</button>
-          </div>
-        </form>
-      </div>
+        </div>
     </div>
-  </div>
-
-  <!-- Weight Validation Error Modal -->
-  <div class="modal fade" id="weightErrorModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header bg-danger text-white">
-          <h5 class="modal-title">
-            <i class="bi bi-exclamation-triangle"></i> Weight Limit Exceeded
-          </h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+    <!-- Add Section Modal -->
+    <div class="modal fade"
+         id="addSectionModal"
+         tabindex="-1"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Section</h5>
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <form method="post"
+                      action="{% url 'add_section' template_id=template.id %}">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">
+                                Section Title <span style="color: var(--error);">*</span>
+                            </label>
+                            <input type="text"
+                                   name="title"
+                                   class="form-control"
+                                   placeholder="e.g., Technical Skills, Experience, Education"
+                                   required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Content</label>
+                            <textarea name="content"
+                                      class="form-control"
+                                      rows="4"
+                                      placeholder="Optional: Description or instructions for this section"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">
+                                Weight <span style="color: var(--error);">*</span>
+                            </label>
+                            <input type="number"
+                                   name="weight"
+                                   class="form-control"
+                                   value="0"
+                                   min="0"
+                                   required>
+                            <small class="form-text">Weight determines the importance/scoring of this section (e.g., 30 for 30% weight)</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">Add Section</button>
+                    </div>
+                </form>
+            </div>
         </div>
-        <div class="modal-body">
-          <p id="weightErrorMessage"></p>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">OK</button>
-        </div>
-      </div>
     </div>
-  </div>
-
-  <script>
+    <!-- Weight Validation Error Modal -->
+    <div class="modal fade"
+         id="weightErrorModal"
+         tabindex="-1"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-exclamation-triangle"></i> Weight Limit Exceeded
+                    </h5>
+                    <button type="button"
+                            class="btn-close btn-close-white"
+                            data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="weightErrorMessage"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
     // Weight validation for adding sections
     document.addEventListener('DOMContentLoaded', function() {
       const addSectionForm = document.querySelector('#addSectionModal form');
@@ -379,5 +606,5 @@
         });
       });
     });
-  </script>
+    </script>
 {% endblock content %}
