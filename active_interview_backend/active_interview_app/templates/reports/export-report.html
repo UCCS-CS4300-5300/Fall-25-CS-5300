@@ -15,6 +15,9 @@
       <a href="{% url 'download_pdf_report' chat.id %}" class="btn btn-danger" style="padding: 1rem 2rem; font-size: 1rem;">
         Download as PDF
       </a>
+      <a href="{% url 'download_csv_report' chat.id %}" class="btn btn-success" style="padding: 1rem 2rem; font-size: 1rem;">
+        Download as CSV
+      </a>
       <a href="{% url 'chat-results' chat.id %}" class="btn btn-secondary" style="padding: 1rem 2rem; font-size: 1rem;">
         Back to Results
       </a>
@@ -63,22 +66,97 @@
         <div class="box box-score">
           <h3 class="text-secondary-color text-sm" style="text-transform: uppercase; margin-bottom: 0.5rem;">Professionalism</h3>
           <div class="text-brand" style="font-size: 2rem; font-weight: bold;">{{ report.professionalism_score|default:"N/A" }}</div>
-          <div class="text-secondary-color text-sm" style="margin-top: 0.5rem;">/100</div>
+          <div class="text-secondary-color text-sm" style="margin-top: 0.5rem;">/100 (Weight: {{ report.professionalism_weight }}%)</div>
         </div>
         <div class="box box-score">
           <h3 class="text-secondary-color text-sm" style="text-transform: uppercase; margin-bottom: 0.5rem;">Subject Knowledge</h3>
           <div class="text-brand" style="font-size: 2rem; font-weight: bold;">{{ report.subject_knowledge_score|default:"N/A" }}</div>
-          <div class="text-secondary-color text-sm" style="margin-top: 0.5rem;">/100</div>
+          <div class="text-secondary-color text-sm" style="margin-top: 0.5rem;">/100 (Weight: {{ report.subject_knowledge_weight }}%)</div>
         </div>
         <div class="box box-score">
           <h3 class="text-secondary-color text-sm" style="text-transform: uppercase; margin-bottom: 0.5rem;">Clarity</h3>
           <div class="text-brand" style="font-size: 2rem; font-weight: bold;">{{ report.clarity_score|default:"N/A" }}</div>
-          <div class="text-secondary-color text-sm" style="margin-top: 0.5rem;">/100</div>
+          <div class="text-secondary-color text-sm" style="margin-top: 0.5rem;">/100 (Weight: {{ report.clarity_weight }}%)</div>
         </div>
         <div class="box box-score">
           <h3 class="text-secondary-color text-sm" style="text-transform: uppercase; margin-bottom: 0.5rem;">Overall Score</h3>
           <div class="text-brand" style="font-size: 2rem; font-weight: bold;">{{ report.overall_score|default:"N/A" }}</div>
           <div class="text-secondary-color text-sm" style="margin-top: 0.5rem;">/100</div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Score Breakdown & Rationales -->
+    {% if report.overall_score %}
+    <div class="box box-section">
+      <h2>Score Breakdown & Rationales</h2>
+      <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+        Understanding how your final score was computed:
+      </p>
+
+      <!-- Professionalism -->
+      <div class="box box-info" style="margin-bottom: 1rem; padding: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+          <h3 class="text-brand" style="margin: 0;">Professionalism</h3>
+          <div>
+            <span class="text-brand" style="font-size: 1.5rem; font-weight: bold;">{{ report.professionalism_score }}</span>
+            <span class="text-secondary-color">/100 × {{ report.professionalism_weight }}% weight</span>
+          </div>
+        </div>
+        <div style="background-color: var(--bg-secondary); padding: 1rem; border-radius: 4px; margin-top: 0.5rem;">
+          <strong style="color: var(--text-secondary); font-size: 0.875rem;">Rationale:</strong>
+          <p style="color: var(--text-primary); margin: 0.5rem 0 0 0; line-height: 1.6;">
+            {{ report.professionalism_rationale|default:"No rationale available." }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Subject Knowledge -->
+      <div class="box box-info" style="margin-bottom: 1rem; padding: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+          <h3 class="text-brand" style="margin: 0;">Subject Knowledge</h3>
+          <div>
+            <span class="text-brand" style="font-size: 1.5rem; font-weight: bold;">{{ report.subject_knowledge_score }}</span>
+            <span class="text-secondary-color">/100 × {{ report.subject_knowledge_weight }}% weight</span>
+          </div>
+        </div>
+        <div style="background-color: var(--bg-secondary); padding: 1rem; border-radius: 4px; margin-top: 0.5rem;">
+          <strong style="color: var(--text-secondary); font-size: 0.875rem;">Rationale:</strong>
+          <p style="color: var(--text-primary); margin: 0.5rem 0 0 0; line-height: 1.6;">
+            {{ report.subject_knowledge_rationale|default:"No rationale available." }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Clarity -->
+      <div class="box box-info" style="margin-bottom: 1rem; padding: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+          <h3 class="text-brand" style="margin: 0;">Clarity</h3>
+          <div>
+            <span class="text-brand" style="font-size: 1.5rem; font-weight: bold;">{{ report.clarity_score }}</span>
+            <span class="text-secondary-color">/100 × {{ report.clarity_weight }}% weight</span>
+          </div>
+        </div>
+        <div style="background-color: var(--bg-secondary); padding: 1rem; border-radius: 4px; margin-top: 0.5rem;">
+          <strong style="color: var(--text-secondary); font-size: 0.875rem;">Rationale:</strong>
+          <p style="color: var(--text-primary); margin: 0.5rem 0 0 0; line-height: 1.6;">
+            {{ report.clarity_rationale|default:"No rationale available." }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Overall Score Explanation -->
+      <div class="box box-info" style="padding: 1.5rem; background-color: var(--bg-brand-subtle, #e8f0fe);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+          <h3 class="text-brand" style="margin: 0;">Overall Score</h3>
+          <span class="text-brand" style="font-size: 1.5rem; font-weight: bold;">{{ report.overall_score }}/100</span>
+        </div>
+        <div style="background-color: white; padding: 1rem; border-radius: 4px; margin-top: 0.5rem;">
+          <strong style="color: var(--text-secondary); font-size: 0.875rem;">Rationale:</strong>
+          <p style="color: var(--text-primary); margin: 0.5rem 0 0 0; line-height: 1.6;">
+            {{ report.overall_rationale|default:"No rationale available." }}
+          </p>
         </div>
       </div>
     </div>
@@ -133,6 +211,9 @@
     <div style="display: flex; gap: 1rem; justify-content: center; margin: 2rem 0; flex-wrap: wrap;">
       <a href="{% url 'download_pdf_report' chat.id %}" class="btn btn-danger" style="padding: 1rem 2rem; font-size: 1rem;">
         Download as PDF
+      </a>
+      <a href="{% url 'download_csv_report' chat.id %}" class="btn btn-success" style="padding: 1rem 2rem; font-size: 1rem;">
+        Download as CSV
       </a>
       <a href="{% url 'chat-results' chat.id %}" class="btn btn-secondary" style="padding: 1rem 2rem; font-size: 1rem;">
         Back to Results

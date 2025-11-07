@@ -87,6 +87,8 @@ urlpatterns = [
          views.ExportReportView.as_view(), name='export_report'),
     path('chat/<int:chat_id>/download-pdf/',
          views.DownloadPDFReportView.as_view(), name='download_pdf_report'),
+    path('chat/<int:chat_id>/download-csv/',
+         views.DownloadCSVReportView.as_view(), name='download_csv_report'),
 
     # User Profile View (Issue #69)
     path('user/<int:user_id>/profile/', views.view_user_profile,

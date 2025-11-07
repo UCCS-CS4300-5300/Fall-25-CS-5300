@@ -377,3 +377,254 @@ class ExportableReportSerializerTest(TestCase):
         self.assertEqual(data['chat_title'], 'Test Interview')
         self.assertEqual(data['chat_difficulty'], 7)
         self.assertEqual(data['chat_type'], 'General')
+
+
+class ScoreWeightsAndRationalesTest(TestCase):
+    """Test the score weights and rationales functionality"""
+
+    def setUp(self):
+        """Set up test fixtures"""
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='testpass123'
+        )
+        self.chat = Chat.objects.create(
+            owner=self.user,
+            title='Test Interview',
+            difficulty=7,
+            messages=[
+                {'role': 'assistant', 'content': 'What is your greatest strength?'},
+                {'role': 'user', 'content': 'My greatest strength is teamwork.'}
+            ],
+            type='GEN'
+        )
+
+    def test_default_weights(self):
+        """Test that reports have default weights"""
+        report = ExportableReport.objects.create(
+            chat=self.chat,
+            professionalism_score=85,
+            subject_knowledge_score=78,
+            clarity_score=82,
+            overall_score=81
+        )
+
+        self.assertEqual(report.professionalism_weight, 30)
+        self.assertEqual(report.subject_knowledge_weight, 40)
+        self.assertEqual(report.clarity_weight, 30)
+
+    def test_custom_weights(self):
+        """Test that custom weights can be set"""
+        report = ExportableReport.objects.create(
+            chat=self.chat,
+            professionalism_score=85,
+            subject_knowledge_score=78,
+            clarity_score=82,
+            overall_score=81,
+            professionalism_weight=25,
+            subject_knowledge_weight=50,
+            clarity_weight=25
+        )
+
+        self.assertEqual(report.professionalism_weight, 25)
+        self.assertEqual(report.subject_knowledge_weight, 50)
+        self.assertEqual(report.clarity_weight, 25)
+
+    def test_rationales_storage(self):
+        """Test that rationales can be stored"""
+        report = ExportableReport.objects.create(
+            chat=self.chat,
+            professionalism_score=85,
+            subject_knowledge_score=78,
+            clarity_score=82,
+            overall_score=81,
+            professionalism_rationale='The candidate demonstrated professional behavior throughout.',
+            subject_knowledge_rationale='Good understanding of core concepts but needs improvement in advanced topics.',
+            clarity_rationale='Communication was clear and concise.',
+            overall_rationale='Solid performance with room for improvement in technical depth.'
+        )
+
+        self.assertIn('professional behavior', report.professionalism_rationale)
+        self.assertIn('core concepts', report.subject_knowledge_rationale)
+        self.assertIn('clear and concise', report.clarity_rationale)
+        self.assertIn('Solid performance', report.overall_rationale)
+
+    def test_pdf_includes_weights(self):
+        """Test that PDF export includes weight information"""
+        report = ExportableReport.objects.create(
+            chat=self.chat,
+            professionalism_score=85,
+            subject_knowledge_score=78,
+            clarity_score=82,
+            overall_score=81,
+            professionalism_weight=30,
+            subject_knowledge_weight=40,
+            clarity_weight=30,
+            professionalism_rationale='Professional throughout.',
+            subject_knowledge_rationale='Good knowledge.',
+            clarity_rationale='Clear communication.',
+            overall_rationale='Solid performance.'
+        )
+
+        pdf_content = generate_pdf_report(report)
+
+        # PDF should be generated successfully
+        self.assertIsNotNone(pdf_content)
+        self.assertTrue(pdf_content.startswith(b'%PDF'))
+
+
+class CSVExportTest(TestCase):
+    """Test CSV export functionality"""
+
+    def setUp(self):
+        """Set up test fixtures"""
+        self.client = Client()
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='testpass123'
+        )
+        self.chat = Chat.objects.create(
+            owner=self.user,
+            title='Test Interview',
+            difficulty=7,
+            messages=[
+                {'role': 'assistant', 'content': 'What is your greatest strength?'},
+                {'role': 'user', 'content': 'My greatest strength is teamwork.'}
+            ],
+            type='GEN'
+        )
+        self.report = ExportableReport.objects.create(
+            chat=self.chat,
+            professionalism_score=85,
+            subject_knowledge_score=78,
+            clarity_score=82,
+            overall_score=81,
+            professionalism_weight=30,
+            subject_knowledge_weight=40,
+            clarity_weight=30,
+            professionalism_rationale='Professional behavior demonstrated.',
+            subject_knowledge_rationale='Good technical knowledge.',
+            clarity_rationale='Clear and concise responses.',
+            overall_rationale='Strong overall performance.',
+            feedback_text='Excellent interview performance with minor areas for improvement.',
+            total_questions_asked=10,
+            total_responses_given=10
+        )
+
+    def test_download_csv_requires_login(self):
+        """Test that downloading CSV requires login"""
+        url = reverse('download_csv_report', kwargs={'chat_id': self.chat.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 302)  # Redirect to login
+
+    def test_download_csv_view(self):
+        """Test downloading the CSV report"""
+        self.client.login(username='testuser', password='testpass123')
+        url = reverse('download_csv_report', kwargs={'chat_id': self.chat.id})
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'text/csv')
+        self.assertIn('attachment', response['Content-Disposition'])
+        self.assertIn('interview_report', response['Content-Disposition'])
+        self.assertIn('.csv', response['Content-Disposition'])
+
+    def test_csv_contains_scores_and_weights(self):
+        """Test that CSV contains scores and weights"""
+        self.client.login(username='testuser', password='testpass123')
+        url = reverse('download_csv_report', kwargs={'chat_id': self.chat.id})
+        response = self.client.get(url)
+
+        content = response.content.decode('utf-8')
+
+        # Check for scores
+        self.assertIn('85/100', content)
+        self.assertIn('78/100', content)
+        self.assertIn('82/100', content)
+        self.assertIn('81/100', content)
+
+        # Check for weights
+        self.assertIn('30%', content)
+        self.assertIn('40%', content)
+
+        # Check for score categories
+        self.assertIn('Professionalism', content)
+        self.assertIn('Subject Knowledge', content)
+        self.assertIn('Clarity', content)
+        self.assertIn('Overall Score', content)
+
+    def test_csv_contains_rationales(self):
+        """Test that CSV contains rationales"""
+        self.client.login(username='testuser', password='testpass123')
+        url = reverse('download_csv_report', kwargs={'chat_id': self.chat.id})
+        response = self.client.get(url)
+
+        content = response.content.decode('utf-8')
+
+        # Check for rationales section
+        self.assertIn('Score Breakdown & Rationales', content)
+        self.assertIn('Professional behavior demonstrated', content)
+        self.assertIn('Good technical knowledge', content)
+        self.assertIn('Clear and concise responses', content)
+        self.assertIn('Strong overall performance', content)
+
+    def test_csv_contains_metadata(self):
+        """Test that CSV contains interview metadata"""
+        self.client.login(username='testuser', password='testpass123')
+        url = reverse('download_csv_report', kwargs={'chat_id': self.chat.id})
+        response = self.client.get(url)
+
+        content = response.content.decode('utf-8')
+
+        # Check for metadata
+        self.assertIn('Interview Details', content)
+        self.assertIn('Test Interview', content)
+        self.assertIn('7/10', content)  # Difficulty
+
+    def test_csv_redirects_if_no_report(self):
+        """Test that CSV download redirects if no report exists"""
+        self.client.login(username='testuser', password='testpass123')
+
+        # Create a new chat without a report
+        new_chat = Chat.objects.create(
+            owner=self.user,
+            title='New Interview',
+            difficulty=5,
+            messages=[],
+            type='GEN'
+        )
+
+        url = reverse('download_csv_report', kwargs={'chat_id': new_chat.id})
+        response = self.client.get(url)
+
+        # Should redirect
+        self.assertEqual(response.status_code, 302)
+
+    def test_user_can_only_download_own_csv(self):
+        """Test that users can only download their own CSV reports"""
+        # Create another user and their chat
+        other_user = User.objects.create_user(
+            username='otheruser',
+            password='otherpass123'
+        )
+        other_chat = Chat.objects.create(
+            owner=other_user,
+            title='Other Interview',
+            difficulty=5,
+            messages=[],
+            type='GEN'
+        )
+        other_report = ExportableReport.objects.create(
+            chat=other_chat,
+            overall_score=75
+        )
+
+        # Login as first user
+        self.client.login(username='testuser', password='testpass123')
+
+        # Try to download other user's CSV
+        url = reverse('download_csv_report', kwargs={'chat_id': other_chat.id})
+        response = self.client.get(url)
+
+        # Should be forbidden (403) or redirect
+        self.assertIn(response.status_code, [403, 302])
