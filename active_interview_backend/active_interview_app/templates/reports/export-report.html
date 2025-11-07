@@ -169,6 +169,9 @@
       <a href="{% url 'download_pdf_report' chat.id %}" class="export-btn export-btn-pdf">
         Download as PDF
       </a>
+      <a href="{% url 'download_csv_report' chat.id %}" class="export-btn" style="background: #27ae60; color: white;">
+        Download as CSV
+      </a>
       <a href="{% url 'chat-results' chat.id %}" class="export-btn export-btn-back">
         Back to Results
       </a>
@@ -217,23 +220,51 @@
         <div class="score-card">
           <h3>Professionalism</h3>
           <div class="score-value">{{ report.professionalism_score|default:"N/A" }}</div>
-          <div class="score-rating">/100</div>
+          <div class="score-rating">/100 (Weight: {{ report.professionalism_weight }}%)</div>
         </div>
         <div class="score-card">
           <h3>Subject Knowledge</h3>
           <div class="score-value">{{ report.subject_knowledge_score|default:"N/A" }}</div>
-          <div class="score-rating">/100</div>
+          <div class="score-rating">/100 (Weight: {{ report.subject_knowledge_weight }}%)</div>
         </div>
         <div class="score-card">
           <h3>Clarity</h3>
           <div class="score-value">{{ report.clarity_score|default:"N/A" }}</div>
-          <div class="score-rating">/100</div>
+          <div class="score-rating">/100 (Weight: {{ report.clarity_weight }}%)</div>
         </div>
         <div class="score-card">
           <h3>Overall Score</h3>
           <div class="score-value">{{ report.overall_score|default:"N/A" }}</div>
           <div class="score-rating">/100</div>
         </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Score Rationales -->
+    {% if report.professionalism_rationale %}
+    <div class="report-section">
+      <h2>Score Breakdown & Rationales</h2>
+      <p style="color: #777; margin-bottom: 1.5rem;">Understanding how your final score was computed:</p>
+
+      <div style="margin-bottom: 1.5rem; padding: 1rem; background: #f9f9f9; border-left: 4px solid #4482a6; border-radius: 4px;">
+        <h3 style="color: #4482a6; margin-bottom: 0.5rem;">Professionalism: {{ report.professionalism_score }}/100 (Weight: {{ report.professionalism_weight }}%)</h3>
+        <p style="margin: 0; line-height: 1.6;">{{ report.professionalism_rationale }}</p>
+      </div>
+
+      <div style="margin-bottom: 1.5rem; padding: 1rem; background: #f9f9f9; border-left: 4px solid #4482a6; border-radius: 4px;">
+        <h3 style="color: #4482a6; margin-bottom: 0.5rem;">Subject Knowledge: {{ report.subject_knowledge_score }}/100 (Weight: {{ report.subject_knowledge_weight }}%)</h3>
+        <p style="margin: 0; line-height: 1.6;">{{ report.subject_knowledge_rationale }}</p>
+      </div>
+
+      <div style="margin-bottom: 1.5rem; padding: 1rem; background: #f9f9f9; border-left: 4px solid #4482a6; border-radius: 4px;">
+        <h3 style="color: #4482a6; margin-bottom: 0.5rem;">Clarity: {{ report.clarity_score }}/100 (Weight: {{ report.clarity_weight }}%)</h3>
+        <p style="margin: 0; line-height: 1.6;">{{ report.clarity_rationale }}</p>
+      </div>
+
+      <div style="padding: 1rem; background: #e8f4f8; border-left: 4px solid #4482a6; border-radius: 4px;">
+        <h3 style="color: #4482a6; margin-bottom: 0.5rem;">Overall Score: {{ report.overall_score }}/100</h3>
+        <p style="margin: 0; line-height: 1.6;">{{ report.overall_rationale }}</p>
       </div>
     </div>
     {% endif %}
@@ -294,6 +325,9 @@
     <div class="export-actions">
       <a href="{% url 'download_pdf_report' chat.id %}" class="export-btn export-btn-pdf">
         Download as PDF
+      </a>
+      <a href="{% url 'download_csv_report' chat.id %}" class="export-btn" style="background: #27ae60; color: white;">
+        Download as CSV
       </a>
       <a href="{% url 'chat-results' chat.id %}" class="export-btn export-btn-back">
         Back to Results

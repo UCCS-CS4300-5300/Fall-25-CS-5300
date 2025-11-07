@@ -119,22 +119,26 @@ def _create_performance_scores_section(exportable_report, heading_style, normal_
 
     if exportable_report.overall_score is not None:
         scores_data = [
-            ['Category', 'Score', 'Rating'],
+            ['Category', 'Score', 'Weight', 'Rating'],
             ['Professionalism',
              f"{exportable_report.professionalism_score or 0}/100",
+             f"{exportable_report.professionalism_weight}%",
              get_score_rating(exportable_report.professionalism_score)],
             ['Subject Knowledge',
              f"{exportable_report.subject_knowledge_score or 0}/100",
+             f"{exportable_report.subject_knowledge_weight}%",
              get_score_rating(exportable_report.subject_knowledge_score)],
             ['Clarity',
              f"{exportable_report.clarity_score or 0}/100",
+             f"{exportable_report.clarity_weight}%",
              get_score_rating(exportable_report.clarity_score)],
             ['Overall Score',
              f"{exportable_report.overall_score or 0}/100",
+             'N/A',
              get_score_rating(exportable_report.overall_score)],
         ]
 
-        scores_table = Table(scores_data, colWidths=[2.5 * inch, 1.5 * inch, 2.5 * inch])
+        scores_table = Table(scores_data, colWidths=[2 * inch, 1.3 * inch, 1 * inch, 2.2 * inch])
         scores_table.setStyle(TableStyle([
             # Header row
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1a73e8')),
@@ -195,6 +199,97 @@ def _create_feedback_section(exportable_report, heading_style, normal_style):
             if line.strip():
                 elements.append(Paragraph(line, normal_style))
                 elements.append(Spacer(1, 0.05 * inch))
+        elements.append(Spacer(1, 0.2 * inch))
+
+    return elements
+
+
+def _create_score_rationales_section(exportable_report, heading_style, normal_style):
+    """
+    Create the score rationales section explaining each score component.
+
+    Args:
+        exportable_report: An ExportableReport model instance
+        heading_style: The heading style to use
+        normal_style: The normal text style to use
+
+    Returns:
+        list: List of flowable elements for the rationales section
+    """
+    elements = []
+
+    if exportable_report.overall_score is not None and exportable_report.professionalism_rationale:
+        elements.append(Paragraph("Score Breakdown & Rationales", heading_style))
+        elements.append(HRFlowable(width="100%", thickness=1,
+                                  color=colors.HexColor('#1a73e8')))
+        elements.append(Spacer(1, 0.1 * inch))
+
+        # Create styles for rationales
+        category_style = ParagraphStyle(
+            'CategoryText',
+            parent=normal_style,
+            fontSize=12,
+            fontName='Helvetica-Bold',
+            textColor=colors.HexColor('#1a73e8'),
+            spaceAfter=6,
+        )
+
+        rationale_style = ParagraphStyle(
+            'RationaleText',
+            parent=normal_style,
+            fontSize=10,
+            leading=13,
+            leftIndent=12,
+            spaceAfter=12,
+        )
+
+        # Professionalism
+        if exportable_report.professionalism_rationale:
+            elements.append(Paragraph(
+                f"Professionalism: {exportable_report.professionalism_score}/100 " +
+                f"(Weight: {exportable_report.professionalism_weight}%)",
+                category_style
+            ))
+            elements.append(Paragraph(
+                exportable_report.professionalism_rationale,
+                rationale_style
+            ))
+
+        # Subject Knowledge
+        if exportable_report.subject_knowledge_rationale:
+            elements.append(Paragraph(
+                f"Subject Knowledge: {exportable_report.subject_knowledge_score}/100 " +
+                f"(Weight: {exportable_report.subject_knowledge_weight}%)",
+                category_style
+            ))
+            elements.append(Paragraph(
+                exportable_report.subject_knowledge_rationale,
+                rationale_style
+            ))
+
+        # Clarity
+        if exportable_report.clarity_rationale:
+            elements.append(Paragraph(
+                f"Clarity: {exportable_report.clarity_score}/100 " +
+                f"(Weight: {exportable_report.clarity_weight}%)",
+                category_style
+            ))
+            elements.append(Paragraph(
+                exportable_report.clarity_rationale,
+                rationale_style
+            ))
+
+        # Overall
+        if exportable_report.overall_rationale:
+            elements.append(Paragraph(
+                f"Overall Score: {exportable_report.overall_score}/100",
+                category_style
+            ))
+            elements.append(Paragraph(
+                exportable_report.overall_rationale,
+                rationale_style
+            ))
+
         elements.append(Spacer(1, 0.2 * inch))
 
     return elements
@@ -375,6 +470,7 @@ def generate_pdf_report(exportable_report):
     # Add sections
     elements.extend(_create_metadata_section(exportable_report, heading_style))
     elements.extend(_create_performance_scores_section(exportable_report, heading_style, normal_style))
+    elements.extend(_create_score_rationales_section(exportable_report, heading_style, normal_style))
     elements.extend(_create_feedback_section(exportable_report, heading_style, normal_style))
     elements.extend(_create_question_responses_section(exportable_report, heading_style))
     elements.extend(_create_statistics_section(exportable_report, heading_style))

@@ -194,6 +194,26 @@ class ExportableReport(models.Model):
     # AI-generated feedback
     feedback_text = models.TextField(blank=True)
 
+    # Scoring rationales - explanations for each score component
+    professionalism_rationale = models.TextField(blank=True)
+    subject_knowledge_rationale = models.TextField(blank=True)
+    clarity_rationale = models.TextField(blank=True)
+    overall_rationale = models.TextField(blank=True)
+
+    # Score weights - percentages for weighted scoring (default 30/40/30)
+    professionalism_weight = models.IntegerField(
+        default=30,
+        validators=[MinValueValidator(0), MaxValueValidator(100)]
+    )
+    subject_knowledge_weight = models.IntegerField(
+        default=40,
+        validators=[MinValueValidator(0), MaxValueValidator(100)]
+    )
+    clarity_weight = models.IntegerField(
+        default=30,
+        validators=[MinValueValidator(0), MaxValueValidator(100)]
+    )
+
     # Question-by-question analysis
     question_responses = models.JSONField(default=list)
     # Structure: [{"question": str, "answer": str, "score": int, "feedback": str}, ...]
