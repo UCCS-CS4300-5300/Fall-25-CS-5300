@@ -95,6 +95,37 @@
         Understanding how your final score was computed:
       </p>
 
+      <!-- Score Computation Explanation -->
+      <div class="box box-info" style="margin-bottom: 2rem; padding: 1.5rem; background: var(--bg-warning, #fff8e1); border: 2px solid var(--border-warning, #ffd54f);">
+        <h3 style="color: var(--text-warning, #f57f17); margin-bottom: 0.75rem; font-size: 1.1rem;">💡 How Your Score is Calculated</h3>
+        <p style="margin: 0 0 0.5rem 0; line-height: 1.6; color: var(--text-secondary, #555);">
+          Your interview performance is evaluated across three key categories, each with specific weights that reflect their importance.
+          The final score is computed as a weighted average of these section scores.
+        </p>
+        <div style="margin-top: 1rem; padding: 1rem; background: var(--surface, white); border-radius: 4px; font-family: monospace; font-size: 0.95rem;">
+          <strong style="color: var(--primary, #1a73e8);">Section Scores with Weights:</strong><br>
+          • Professionalism ({{ report.professionalism_weight }}% weight): {{ report.professionalism_score }}/100<br>
+          • Subject Knowledge ({{ report.subject_knowledge_weight }}% weight): {{ report.subject_knowledge_score }}/100<br>
+          • Clarity ({{ report.clarity_weight }}% weight): {{ report.clarity_score }}/100<br>
+          <div style="margin-top: 1rem; padding: 1rem; background: var(--bg-info, #e3f2fd); border-left: 4px solid var(--primary, #1a73e8); border-radius: 4px;">
+            <strong style="color: var(--primary, #1a73e8);">Weighted Score Calculation:</strong><br>
+            <span style="font-size: 0.9rem;">
+              ({{ report.professionalism_score }} × {{ report.professionalism_weight }}%) +
+              ({{ report.subject_knowledge_score }} × {{ report.subject_knowledge_weight }}%) +
+              ({{ report.clarity_score }} × {{ report.clarity_weight }}%)
+            </span>
+          </div>
+          <div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 2px solid var(--primary, #1a73e8);">
+          <strong style="color: var(--primary, #1a73e8); font-size: 1.1rem;">Final Weighted Score:</strong> <span style="font-size: 1.2rem; color: var(--success, #2e7d32);">{{ report.overall_score }}/100</span>
+          </div>
+        </div>
+        <p style="margin: 1rem 0 0 0; font-size: 0.9rem; color: var(--text-secondary, #777); font-style: italic;">
+          💡 Use these insights to identify your strengths and areas for improvement in future interviews.
+        </p>
+      </div>
+
+      <h3 class="text-brand" style="margin-bottom: 1rem; font-size: 1.2rem;">Detailed Section Scores & Rationales</h3>
+
       <!-- Professionalism -->
       <div class="box box-info" style="margin-bottom: 1rem; padding: 1.5rem;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
