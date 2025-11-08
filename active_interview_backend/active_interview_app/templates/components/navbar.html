@@ -22,9 +22,11 @@
         <li class="nav-item">
           <a class="nav-link" href="{% url "document-list" %}">Documents</a>
         </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{% url "question_banks" %}">Question Banks</a>
-        </li>
+        {% if user.profile.role == 'admin' or user.profile.role == 'interviewer' %}
+          <li class="nav-item">
+            <a class="nav-link" href="{% url "question_banks" %}">Question Banks</a>
+          </li>
+        {% endif %}
         {% if user.profile.role == 'admin' or user.profile.role == 'interviewer' %}
           <li class="nav-item">
             <a class="nav-link" href="{% url "candidate_search" %}">Search Candidates</a>

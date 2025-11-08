@@ -150,6 +150,17 @@
     color: var(--text-white);
   }
 
+  .btn-success {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: var(--text-white);
+  }
+
+  .btn-success:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+  }
+
   .input-group .btn-outline-secondary {
     background-color: var(--surface-hover);
     border-color: var(--border);
@@ -229,8 +240,11 @@
       <p class="question-bank-subtitle">Manage your interview question banks and tags</p>
     </div>
     <div class="col-md-4 text-end">
-      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createBankModal">
+      <button class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#createBankModal">
         <i class="bi bi-plus-circle"></i> Create Question Bank
+      </button>
+      <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#autoAssembleModal">
+        <i class="bi bi-magic"></i> Auto-Assemble Interview
       </button>
     </div>
   </div>
@@ -343,6 +357,106 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
         <button type="button" class="btn btn-primary" onclick="saveQuestion()">Save Question</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Auto-Assemble Interview Modal -->
+<div class="modal fade" id="autoAssembleModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Auto-Assemble Interview</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="autoAssembleForm">
+          <div class="mb-3">
+            <label for="interviewTitle" class="form-label">Interview Title</label>
+            <input type="text" class="form-control" id="interviewTitle" placeholder="e.g., Python Backend Interview" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="questionCount" class="form-label">Number of Questions</label>
+            <input type="number" class="form-control" id="questionCount" min="1" max="50" value="10" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Select Tags to Include</label>
+            <div id="autoAssembleAvailableTags" class="mb-2">
+              <!-- Available tags will be loaded here -->
+            </div>
+            <small class="text-muted">Select at least one tag to filter questions</small>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Selected Tags:</label>
+            <div id="autoAssembleSelectedTags">
+              <span class="text-muted">No tags selected</span>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Difficulty Distribution (%)</label>
+            <div class="row">
+              <div class="col-md-4">
+                <label for="easyPercentage" class="form-label">Easy</label>
+                <input type="number" class="form-control" id="easyPercentage" min="0" max="100" value="30" required>
+              </div>
+              <div class="col-md-4">
+                <label for="mediumPercentage" class="form-label">Medium</label>
+                <input type="number" class="form-control" id="mediumPercentage" min="0" max="100" value="50" required>
+              </div>
+              <div class="col-md-4">
+                <label for="hardPercentage" class="form-label">Hard</label>
+                <input type="number" class="form-control" id="hardPercentage" min="0" max="100" value="20" required>
+              </div>
+            </div>
+            <small class="text-muted">Percentages should total 100%</small>
+          </div>
+
+          <div class="mb-3">
+            <label for="questionBankSelect" class="form-label">Question Bank (Optional)</label>
+            <select class="form-control" id="questionBankSelect">
+              <option value="">All Question Banks</option>
+              <!-- Question banks will be loaded here -->
+            </select>
+            <small class="text-muted">Leave blank to search across all question banks</small>
+          </div>
+
+          <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="randomizeQuestions" checked>
+            <label class="form-check-label" for="randomizeQuestions">
+              Randomize question selection
+            </label>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-success" onclick="assembleInterview()">Assemble Interview</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Interview Results Modal -->
+<div class="modal fade" id="assemblyResultsModal" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="resultsTitle">Interview Preview</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="assemblyResults">
+          <!-- Results will be displayed here -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" onclick="saveAssembledInterview()">Save as Interview Template</button>
       </div>
     </div>
   </div>
@@ -683,6 +797,254 @@
       console.error('Error deleting question:', error);
       alert('Error deleting question');
     });
+  }
+
+  // Auto-Assembly Feature
+  let autoAssembleSelectedTagIds = [];
+  let assembledInterviewData = null;
+
+  // Setup modal event listeners
+  document.addEventListener('DOMContentLoaded', function() {
+    const autoAssembleModal = document.getElementById('autoAssembleModal');
+    autoAssembleModal.addEventListener('show.bs.modal', function() {
+      loadAutoAssembleTags();
+      loadQuestionBanksForSelect();
+    });
+  });
+
+  // Load tags for auto-assembly
+  function loadAutoAssembleTags() {
+    fetch('/api/tags/')
+      .then(response => response.json())
+      .then(data => {
+        allTags = data;
+        displayAutoAssembleAvailableTags(data);
+      })
+      .catch(error => {
+        console.error('Error loading tags:', error);
+      });
+  }
+
+  // Display available tags for auto-assembly
+  function displayAutoAssembleAvailableTags(tags) {
+    const container = document.getElementById('autoAssembleAvailableTags');
+
+    if (tags.length === 0) {
+      container.innerHTML = '<small class="text-muted">No tags available. Create questions with tags first.</small>';
+      return;
+    }
+
+    container.innerHTML = tags.map(tag => {
+      const isSelected = autoAssembleSelectedTagIds.includes(tag.id);
+      const badgeClass = isSelected ? 'badge bg-primary' : 'badge bg-secondary';
+      return `<span class="${badgeClass} me-1 mb-1" style="cursor: pointer;" onclick="toggleAutoAssembleTag(${tag.id})">${tag.name}</span>`;
+    }).join('');
+  }
+
+  // Toggle tag selection for auto-assembly
+  function toggleAutoAssembleTag(tagId) {
+    const index = autoAssembleSelectedTagIds.indexOf(tagId);
+    if (index > -1) {
+      autoAssembleSelectedTagIds.splice(index, 1);
+    } else {
+      autoAssembleSelectedTagIds.push(tagId);
+    }
+    displayAutoAssembleAvailableTags(allTags);
+    updateAutoAssembleSelectedTagsDisplay();
+  }
+
+  // Update selected tags display for auto-assembly
+  function updateAutoAssembleSelectedTagsDisplay() {
+    const container = document.getElementById('autoAssembleSelectedTags');
+
+    if (autoAssembleSelectedTagIds.length === 0) {
+      container.innerHTML = '<span class="text-muted">No tags selected</span>';
+      return;
+    }
+
+    const selectedTags = allTags.filter(tag => autoAssembleSelectedTagIds.includes(tag.id));
+    container.innerHTML = selectedTags.map(tag =>
+      `<span class="badge bg-primary me-1">${tag.name} <span style="cursor: pointer;" onclick="toggleAutoAssembleTag(${tag.id})">×</span></span>`
+    ).join('');
+  }
+
+  // Load question banks for select dropdown
+  function loadQuestionBanksForSelect() {
+    fetch('/api/question-banks/')
+      .then(response => response.json())
+      .then(data => {
+        const select = document.getElementById('questionBankSelect');
+        const currentOptions = select.innerHTML;
+
+        if (data.length > 0) {
+          select.innerHTML = '<option value="">All Question Banks</option>' +
+            data.map(bank => `<option value="${bank.id}">${bank.name}</option>`).join('');
+        }
+      })
+      .catch(error => {
+        console.error('Error loading question banks:', error);
+      });
+  }
+
+  // Assemble interview
+  function assembleInterview() {
+    const title = document.getElementById('interviewTitle').value.trim();
+    const questionCount = parseInt(document.getElementById('questionCount').value);
+    const easyPercentage = parseInt(document.getElementById('easyPercentage').value);
+    const mediumPercentage = parseInt(document.getElementById('mediumPercentage').value);
+    const hardPercentage = parseInt(document.getElementById('hardPercentage').value);
+    const questionBankId = document.getElementById('questionBankSelect').value;
+    const randomize = document.getElementById('randomizeQuestions').checked;
+
+    // Validation
+    if (!title) {
+      alert('Please enter an interview title');
+      return;
+    }
+
+    if (autoAssembleSelectedTagIds.length === 0) {
+      alert('Please select at least one tag');
+      return;
+    }
+
+    const totalPercentage = easyPercentage + mediumPercentage + hardPercentage;
+    if (totalPercentage !== 100) {
+      alert(`Difficulty percentages must total 100% (currently ${totalPercentage}%)`);
+      return;
+    }
+
+    // Build request data
+    const requestData = {
+      title: title,
+      tag_ids: autoAssembleSelectedTagIds,
+      question_count: questionCount,
+      difficulty_distribution: {
+        easy: easyPercentage,
+        medium: mediumPercentage,
+        hard: hardPercentage
+      },
+      randomize: randomize
+    };
+
+    if (questionBankId) {
+      requestData.question_bank_id = parseInt(questionBankId);
+    }
+
+    // Show loading state
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Assembling...';
+    button.disabled = true;
+
+    // Make API request
+    fetch('/api/auto-assemble-interview/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify(requestData)
+    })
+    .then(response => response.json())
+    .then(data => {
+      // Reset button
+      button.innerHTML = originalText;
+      button.disabled = false;
+
+      // Store the assembled data
+      assembledInterviewData = data;
+
+      // Close the auto-assemble modal
+      bootstrap.Modal.getInstance(document.getElementById('autoAssembleModal')).hide();
+
+      // Show results modal
+      displayAssemblyResults(data);
+    })
+    .catch(error => {
+      console.error('Error assembling interview:', error);
+      alert('Error assembling interview. Please try again.');
+      button.innerHTML = originalText;
+      button.disabled = false;
+    });
+  }
+
+  // Display assembly results
+  function displayAssemblyResults(data) {
+    const container = document.getElementById('assemblyResults');
+    document.getElementById('resultsTitle').textContent = data.title || 'Interview Preview';
+
+    let html = `
+      <div class="alert alert-info mb-4">
+        <h5>Interview Summary</h5>
+        <p class="mb-2"><strong>Total Questions:</strong> ${data.total_questions}</p>
+        <p class="mb-2"><strong>Difficulty Breakdown:</strong></p>
+        <ul class="mb-0">
+          <li>Easy: ${data.difficulty_breakdown.easy} questions</li>
+          <li>Medium: ${data.difficulty_breakdown.medium} questions</li>
+          <li>Hard: ${data.difficulty_breakdown.hard} questions</li>
+        </ul>
+    `;
+
+    if (data.warning) {
+      html += `<div class="alert alert-warning mt-3 mb-0">${data.warning}</div>`;
+    }
+
+    html += `</div>`;
+
+    // Display tag breakdown
+    if (data.tag_breakdown && Object.keys(data.tag_breakdown).length > 0) {
+      html += `
+        <div class="mb-4">
+          <h5>Tag Distribution:</h5>
+          <div>
+            ${Object.entries(data.tag_breakdown).map(([tag, count]) =>
+              `<span class="badge bg-primary me-1">${tag}: ${count}</span>`
+            ).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    // Display questions
+    html += `<h5>Questions Preview:</h5>`;
+
+    if (data.questions && data.questions.length > 0) {
+      html += `
+        <div class="list-group">
+          ${data.questions.map((q, index) => `
+            <div class="list-group-item">
+              <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                  <strong>${index + 1}.</strong> ${q.text}
+                  <div class="mt-2">
+                    <span class="badge bg-secondary">${q.difficulty}</span>
+                    ${q.tags.map(tag => `<span class="badge bg-primary ms-1">${tag.name}</span>`).join('')}
+                  </div>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    } else {
+      html += `<p class="text-muted">No questions found matching your criteria.</p>`;
+    }
+
+    container.innerHTML = html;
+
+    // Show the results modal
+    new bootstrap.Modal(document.getElementById('assemblyResultsModal')).show();
+  }
+
+  // Save assembled interview (placeholder - can be extended)
+  function saveAssembledInterview() {
+    if (!assembledInterviewData) {
+      alert('No interview data to save');
+      return;
+    }
+
+    alert('Save as Interview Template functionality coming soon! For now, you can use this preview to create interviews manually.');
+    // TODO: Implement saving to InterviewTemplate model
   }
 </script>
 {% endblock %}

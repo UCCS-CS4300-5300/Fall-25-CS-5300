@@ -26,12 +26,15 @@ from .serializers import (
     TagSerializer,
     InterviewTemplateSerializer
 )
+from .permissions import IsAdminOrInterviewer
+from .decorators import admin_or_interviewer_required
 
 
 # Template views
 @login_required
+@admin_or_interviewer_required
 def question_banks_view(request):
-    """Render the question banks management page"""
+    """Render the question banks management page (Interviewers and Admins only)"""
     return render(request, 'question_banks.html')
 
 
@@ -39,8 +42,9 @@ class QuestionBankViewSet(viewsets.ModelViewSet):
     """
     ViewSet for QuestionBank CRUD operations.
     Implements Issue #38: Question Bank Creation
+    Restricted to Interviewers and Admins only.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrInterviewer]
     serializer_class = QuestionBankSerializer
 
     def get_serializer_class(self):
@@ -61,8 +65,9 @@ class QuestionViewSet(viewsets.ModelViewSet):
     """
     ViewSet for Question CRUD operations and tagging.
     Implements Issue #39: Basic Question Tagging
+    Restricted to Interviewers and Admins only.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrInterviewer]
     serializer_class = QuestionSerializer
 
     def get_queryset(self):
@@ -167,8 +172,9 @@ class TagViewSet(viewsets.ModelViewSet):
     """
     ViewSet for Tag management.
     Implements Issue #40: Tag Management
+    Restricted to Interviewers and Admins only.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrInterviewer]
     serializer_class = TagSerializer
     queryset = Tag.objects.all()
 
@@ -268,8 +274,9 @@ class InterviewTemplateViewSet(viewsets.ModelViewSet):
     """
     ViewSet for Interview Template management.
     Allows saving and reusing interview assembly configurations.
+    Restricted to Interviewers and Admins only.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrInterviewer]
     serializer_class = InterviewTemplateSerializer
 
     def get_queryset(self):
@@ -285,8 +292,9 @@ class AutoAssembleInterviewView(APIView):
     """
     Auto-assemble an interview based on tags and configuration.
     Implements Issue #42: Auto-Interview Assembly
+    Restricted to Interviewers and Admins only.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrInterviewer]
 
     def post(self, request):
         """
