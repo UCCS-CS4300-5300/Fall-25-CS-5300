@@ -23,3 +23,4 @@
 # Code Style
 - Python styling conventions apply.
 - Always save temporary scripts in a /temp file
+- Always update existing tests before making new testing files for testing files

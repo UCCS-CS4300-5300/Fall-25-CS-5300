@@ -883,10 +883,16 @@ def view_user_profile(request, user_id):
     View another user's profile (read-only).
     Accessible by admins and interviewers.
     """
-    # Check permissions
     from .decorators import check_user_permission
     from django.http import HttpResponseForbidden, Http404
 
+    # Get user first - return 404 if user doesn't exist
+    try:
+        profile_user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        raise Http404("User not found")
+
+    # Check permissions
     has_permission = check_user_permission(
         request, user_id,
         allow_self=True,
@@ -896,12 +902,6 @@ def view_user_profile(request, user_id):
 
     if not has_permission:
         return HttpResponseForbidden("You don't have permission to view this profile.")
-
-    # Get user
-    try:
-        profile_user = User.objects.get(id=user_id)
-    except User.DoesNotExist:
-        raise Http404("User not found")
 
     # Get user's resumes and job listings
     resumes = UploadedResume.objects.filter(user=profile_user)
@@ -1521,7 +1521,7 @@ class DownloadPDFReportView(LoginRequiredMixin, UserPassesTestMixin, View):
             report = ExportableReport.objects.get(chat=chat)
         except ExportableReport.DoesNotExist:
             messages.error(request, 'No report exists. Please generate one first.')
-            return redirect('chat_results', chat_id=chat_id)
+            return redirect('chat-results', chat_id=chat_id)
 
         # Generate PDF
         pdf_content = generate_pdf_report(report)
@@ -1559,7 +1559,7 @@ class DownloadCSVReportView(LoginRequiredMixin, UserPassesTestMixin, View):
             report = ExportableReport.objects.get(chat=chat)
         except ExportableReport.DoesNotExist:
             messages.error(request, 'No report exists. Please generate one first.')
-            return redirect('chat_results', chat_id=chat_id)
+            return redirect('chat-results', chat_id=chat_id)
 
         # Create CSV in memory
         csv_buffer = StringIO()

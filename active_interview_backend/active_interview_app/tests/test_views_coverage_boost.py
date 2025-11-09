@@ -96,6 +96,12 @@ class GenerateReportAITest(TestCase):
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create_user(username='testuser', password='pass123')
+        self.job = UploadedJobListing.objects.create(
+            user=self.user,
+            title='Job',
+            filename='job.pdf',
+            content='Job content'
+        )
         self.chat = Chat.objects.create(
             owner=self.user,
             title='Test',
@@ -104,7 +110,8 @@ class GenerateReportAITest(TestCase):
                 {'role': 'assistant', 'content': 'Hello'},
                 {'role': 'user', 'content': 'Hi'}
             ],
-            type='GEN'
+            type='GEN',
+            job_listing=self.job
         )
 
     def test_generate_report_ai_exception(self):
@@ -162,17 +169,20 @@ class GenerateReportAITest(TestCase):
         self.client.login(username='testuser', password='pass123')
         url = reverse('generate_report', kwargs={'chat_id': self.chat.id})
 
-        mock_scores = MagicMock()
-        mock_scores.choices = [MagicMock()]
-        mock_scores.choices[0].message.content = "85\n78\n82\n81"
+        with patch('active_interview_app.views._ai_available', return_value=True):
+            with patch('active_interview_app.views.get_openai_client') as mock_client:
+                # Create proper mock responses for the three AI calls
+                mock_scores = MagicMock()
+                mock_scores.choices = [MagicMock()]
+                mock_scores.choices[0].message.content = "85\n78\n82\n81"
 
-        mock_feedback = MagicMock()
-        mock_feedback.choices = [MagicMock()]
-        mock_feedback.choices[0].message.content = "Good job!"
+                mock_feedback = MagicMock()
+                mock_feedback.choices = [MagicMock()]
+                mock_feedback.choices[0].message.content = "Good job!"
 
-        mock_rationale = MagicMock()
-        mock_rationale.choices = [MagicMock()]
-        mock_rationale.choices[0].message.content = """
+                mock_rationale = MagicMock()
+                mock_rationale.choices = [MagicMock()]
+                mock_rationale.choices[0].message.content = """
 Professionalism: Good professional behavior.
 
 Subject Knowledge: Strong knowledge base.
@@ -182,8 +192,6 @@ Clarity: Clear communication.
 Overall: Great performance.
 """
 
-        with patch('active_interview_app.views._ai_available', return_value=True):
-            with patch('active_interview_app.views.get_openai_client') as mock_client:
                 mock_client.return_value.chat.completions.create.side_effect = [
                     mock_scores,
                     mock_feedback,
@@ -202,17 +210,20 @@ Overall: Great performance.
         self.client.login(username='testuser', password='pass123')
         url = reverse('generate_report', kwargs={'chat_id': self.chat.id})
 
-        mock_scores = MagicMock()
-        mock_scores.choices = [MagicMock()]
-        mock_scores.choices[0].message.content = "85\n78\n82\n81"
+        with patch('active_interview_app.views._ai_available', return_value=True):
+            with patch('active_interview_app.views.get_openai_client') as mock_client:
+                # Create proper mock responses for the three AI calls
+                mock_scores = MagicMock()
+                mock_scores.choices = [MagicMock()]
+                mock_scores.choices[0].message.content = "85\n78\n82\n81"
 
-        mock_feedback = MagicMock()
-        mock_feedback.choices = [MagicMock()]
-        mock_feedback.choices[0].message.content = "Good!"
+                mock_feedback = MagicMock()
+                mock_feedback.choices = [MagicMock()]
+                mock_feedback.choices[0].message.content = "Good!"
 
-        mock_rationale = MagicMock()
-        mock_rationale.choices = [MagicMock()]
-        mock_rationale.choices[0].message.content = """
+                mock_rationale = MagicMock()
+                mock_rationale.choices = [MagicMock()]
+                mock_rationale.choices[0].message.content = """
 Professionalism: Professional throughout.
 Maintained good posture.
 
@@ -224,8 +235,6 @@ Clarity: Clear.
 Overall: Good.
 """
 
-        with patch('active_interview_app.views._ai_available', return_value=True):
-            with patch('active_interview_app.views.get_openai_client') as mock_client:
                 mock_client.return_value.chat.completions.create.side_effect = [
                     mock_scores,
                     mock_feedback,
@@ -243,16 +252,17 @@ Overall: Good.
         self.client.login(username='testuser', password='pass123')
         url = reverse('generate_report', kwargs={'chat_id': self.chat.id})
 
-        mock_scores = MagicMock()
-        mock_scores.choices = [MagicMock()]
-        mock_scores.choices[0].message.content = "85\n78\n82\n81"
-
-        mock_feedback = MagicMock()
-        mock_feedback.choices = [MagicMock()]
-        mock_feedback.choices[0].message.content = "Good!"
-
         with patch('active_interview_app.views._ai_available', return_value=True):
             with patch('active_interview_app.views.get_openai_client') as mock_client:
+                # Create proper mock responses for the three AI calls
+                mock_scores = MagicMock()
+                mock_scores.choices = [MagicMock()]
+                mock_scores.choices[0].message.content = "85\n78\n82\n81"
+
+                mock_feedback = MagicMock()
+                mock_feedback.choices = [MagicMock()]
+                mock_feedback.choices[0].message.content = "Good!"
+
                 mock_client.return_value.chat.completions.create.side_effect = [
                     mock_scores,
                     mock_feedback,
@@ -468,12 +478,12 @@ class UserManagementViewsTest(TestCase):
 
     def test_register_get(self):
         """Test registration page"""
-        response = self.client.get(reverse('register'))
+        response = self.client.get(reverse('register_page'))
         self.assertEqual(response.status_code, 200)
 
     def test_register_post_valid(self):
         """Test valid registration"""
-        response = self.client.post(reverse('register'), {
+        response = self.client.post(reverse('register_page'), {
             'username': 'newuser',
             'email': 'new@test.com',
             'password1': 'TestPass123!',
@@ -651,7 +661,7 @@ class DocumentViewsTest(TestCase):
     def test_uploaded_job_listing_post_empty_text(self):
         """Test posting empty text"""
         self.client.login(username='testuser', password='pass123')
-        response = self.client.post(reverse('paste-text'), {
+        response = self.client.post(reverse('save_pasted_text'), {
             'paste-text': '',
             'title': 'Test'
         })
@@ -660,7 +670,7 @@ class DocumentViewsTest(TestCase):
     def test_uploaded_job_listing_post_empty_title(self):
         """Test posting empty title"""
         self.client.login(username='testuser', password='pass123')
-        response = self.client.post(reverse('paste-text'), {
+        response = self.client.post(reverse('save_pasted_text'), {
             'paste-text': 'Some text',
             'title': ''
         })
@@ -669,7 +679,7 @@ class DocumentViewsTest(TestCase):
     def test_uploaded_job_listing_post_valid(self):
         """Test posting valid job listing"""
         self.client.login(username='testuser', password='pass123')
-        response = self.client.post(reverse('paste-text'), {
+        response = self.client.post(reverse('save_pasted_text'), {
             'paste-text': 'Job description',
             'title': 'Job Title'
         })
@@ -734,7 +744,7 @@ class KeyQuestionsViewTest(TestCase):
             key_questions=[{'id': 0, 'title': 'Q1', 'content': 'Question?', 'duration': 60}]
         )
         self.client.login(username='testuser', password='pass123')
-        url = reverse('key-questions-view', kwargs={'chat_id': chat.id, 'question_id': 0})
+        url = reverse('key-questions', kwargs={'chat_id': chat.id, 'question_id': 0})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
@@ -756,7 +766,7 @@ class KeyQuestionsViewTest(TestCase):
             key_questions=[{'id': 0, 'content': 'Q?', 'duration': 60}]
         )
         self.client.login(username='testuser', password='pass123')
-        url = reverse('key-questions-view', kwargs={'chat_id': chat.id, 'question_id': 0})
+        url = reverse('key-questions', kwargs={'chat_id': chat.id, 'question_id': 0})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
@@ -771,23 +781,30 @@ class KeyQuestionsViewTest(TestCase):
             key_questions=[{'id': 0, 'content': 'Q?', 'duration': 60}]
         )
         self.client.login(username='testuser', password='pass123')
-        url = reverse('key-questions-view', kwargs={'chat_id': chat.id, 'question_id': 0})
+        url = reverse('key-questions', kwargs={'chat_id': chat.id, 'question_id': 0})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
     @patch('active_interview_app.views._ai_available', return_value=False)
     def test_key_questions_post_ai_unavailable(self, mock_ai):
         """Test key questions POST when AI unavailable"""
+        job = UploadedJobListing.objects.create(
+            user=self.user,
+            title='Job',
+            filename='job.pdf',
+            content='Job content'
+        )
         chat = Chat.objects.create(
             owner=self.user,
             title='Test',
             difficulty=5,
             messages=[],
             type='GEN',
+            job_listing=job,
             key_questions=[{'id': 0, 'content': 'Q?', 'duration': 60}]
         )
         self.client.login(username='testuser', password='pass123')
-        url = reverse('key-questions-view', kwargs={'chat_id': chat.id, 'question_id': 0})
+        url = reverse('key-questions', kwargs={'chat_id': chat.id, 'question_id': 0})
         response = self.client.post(url, {'message': 'Answer'},
                                    HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         self.assertEqual(response.status_code, 503)
@@ -831,8 +848,24 @@ class CreateChatViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn('form', response.context)
 
-    def test_create_chat_post_with_resume(self):
+    @patch('active_interview_app.views._ai_available', return_value=True)
+    @patch('active_interview_app.views.get_openai_client')
+    def test_create_chat_post_with_resume(self, mock_client, mock_ai):
         """Test CreateChat POST with resume"""
+        # Mock AI responses
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        mock_response.choices[0].message.content = "Hello! Let's begin the interview."
+
+        mock_questions_response = MagicMock()
+        mock_questions_response.choices = [MagicMock()]
+        mock_questions_response.choices[0].message.content = '[{"id": 0, "title": "Q1", "content": "Question?", "duration": 60}]'
+
+        mock_client.return_value.chat.completions.create.side_effect = [
+            mock_response,
+            mock_questions_response
+        ]
+
         job = UploadedJobListing.objects.create(
             user=self.user,
             title='Job',
@@ -859,8 +892,24 @@ class CreateChatViewTest(TestCase):
         # Check chat was created
         self.assertTrue(Chat.objects.filter(title='Test Interview').exists())
 
-    def test_create_chat_post_without_resume(self):
+    @patch('active_interview_app.views._ai_available', return_value=True)
+    @patch('active_interview_app.views.get_openai_client')
+    def test_create_chat_post_without_resume(self, mock_client, mock_ai):
         """Test CreateChat POST without resume"""
+        # Mock AI responses
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        mock_response.choices[0].message.content = "Hello! Let's begin the interview."
+
+        mock_questions_response = MagicMock()
+        mock_questions_response.choices = [MagicMock()]
+        mock_questions_response.choices[0].message.content = '[{"id": 0, "title": "Q1", "content": "Question?", "duration": 60}]'
+
+        mock_client.return_value.chat.completions.create.side_effect = [
+            mock_response,
+            mock_questions_response
+        ]
+
         job = UploadedJobListing.objects.create(
             user=self.user,
             title='Job',
@@ -873,7 +922,7 @@ class CreateChatViewTest(TestCase):
             'title': 'No Resume Interview',
             'listing_choice': job.id,
             'difficulty': 7,
-            'type': 'TEC'
+            'type': 'ISK'
         })
         self.assertEqual(response.status_code, 302)
 
@@ -888,7 +937,7 @@ class UploadFileViewTest(TestCase):
     def test_upload_file_get(self):
         """Test upload file GET"""
         self.client.login(username='testuser', password='pass123')
-        response = self.client.get(reverse('upload'))
+        response = self.client.get(reverse('upload_file'))
         self.assertEqual(response.status_code, 200)
 
 
@@ -952,13 +1001,13 @@ class APIViewsTest(TestCase):
     def test_job_listing_list_get(self):
         """Test JobListingList GET"""
         self.client.login(username='testuser', password='pass123')
-        response = self.client.get(reverse('job-listing-list'))
+        response = self.client.get(reverse('pasted_text_list'))
         self.assertEqual(response.status_code, 200)
 
     def test_job_listing_list_post(self):
         """Test JobListingList POST"""
         self.client.login(username='testuser', password='pass123')
-        response = self.client.post(reverse('job-listing-list'), {
+        response = self.client.post(reverse('pasted_text_list'), {
             'title': 'API Job',
             'content': 'API Job Content'
         }, content_type='application/json')

@@ -210,9 +210,6 @@ LOGGING = {
     },
 }
 
-# WhiteNoise configuration for serving static files
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
 # Authentication backends
 AUTHENTICATION_BACKENDS = [
     # Needed to login by username in Django admin, regardless of `allauth`
@@ -257,7 +254,7 @@ SOCIALACCOUNT_PROVIDERS = {
 }
 import sys
 # Use regular storage during tests to avoid manifest issues
-if 'test' in sys.argv:
+if 'test' in sys.argv or 'pytest' in sys.modules:
     STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
 else:
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
