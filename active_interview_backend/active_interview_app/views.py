@@ -1302,7 +1302,7 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
                     messages=input_messages,
                     max_tokens=MAX_TOKENS
                 )
-                ai_message = response.choices[0].message.content.strip()
+                ai_message = str(response.choices[0].message.content.strip())
                 scores = [int(line.strip())
                               for line in ai_message.splitlines() if line.strip()
                                 .isdigit()]
@@ -1341,7 +1341,9 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
                 messages=input_messages,
                 max_tokens=MAX_TOKENS
             )
-            return response.choices[0].message.content.strip()
+            result = response.choices[0].message.content.strip()
+            # Ensure we return a string, not a mock object
+            return str(result) if result else "Unable to generate feedback at this time."
         except Exception:
             return "Unable to generate feedback at this time."
 
@@ -1387,7 +1389,7 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
                 messages=input_messages,
                 max_tokens=MAX_TOKENS
             )
-            rationale_text = response.choices[0].message.content.strip()
+            rationale_text = str(response.choices[0].message.content.strip())
 
             # Parse the rationales
             rationales = {}
@@ -1571,6 +1573,7 @@ class DownloadCSVReportView(LoginRequiredMixin, UserPassesTestMixin, View):
 
         # Write metadata
         writer.writerow(['Interview Details'])
+        writer.writerow(['Interview Title', chat.title])
         writer.writerow(['Interview Type', chat.get_type_display()])
         writer.writerow(['Difficulty Level', f"{chat.difficulty}/10"])
         writer.writerow(['Date Completed', chat.modified_date.strftime('%B %d, %Y')])

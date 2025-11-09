@@ -12,10 +12,10 @@
 
     <!-- Export Actions -->
     <div style="display: flex; gap: 1rem; justify-content: center; margin: 2rem 0; flex-wrap: wrap;">
-      <a href="{% url 'download_pdf_report' chat.id %}" class="btn btn-danger" style="padding: 1rem 2rem; font-size: 1rem;">
+      <a href="{% url 'download_pdf_report' chat.id %}" id="download_pdf_report" class="btn btn-danger" style="padding: 1rem 2rem; font-size: 1rem;">
         Download as PDF
       </a>
-      <a href="{% url 'download_csv_report' chat.id %}" class="btn btn-success" style="padding: 1rem 2rem; font-size: 1rem;">
+      <a href="{% url 'download_csv_report' chat.id %}" id="download_csv_report" class="btn btn-success" style="padding: 1rem 2rem; font-size: 1rem;">
         Download as CSV
       </a>
       <a href="{% url 'chat-results' chat.id %}" class="btn btn-secondary" style="padding: 1rem 2rem; font-size: 1rem;">
@@ -59,7 +59,7 @@
     </div>
 
     <!-- Performance Scores -->
-    {% if report.overall_score %}
+    {% if report.overall_score is not none %}
     <div class="box box-section">
       <h2>Performance Assessment</h2>
       <div class="list-grid list-grid-2" style="gap: 1rem; margin: 1rem 0;">
@@ -88,9 +88,9 @@
     {% endif %}
 
     <!-- Score Breakdown & Rationales -->
-    {% if report.overall_score %}
+    {% if report.overall_score is not none %}
     <div class="box box-section">
-      <h2>Score Breakdown & Rationales</h2>
+      <h2>Score Breakdown &amp; Rationales</h2>
       <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
         Understanding how your final score was computed:
       </p>
@@ -104,11 +104,11 @@
         </p>
         <div style="margin-top: 1rem; padding: 1rem; background: var(--surface, white); border-radius: 4px; font-family: monospace; font-size: 0.95rem;">
           <strong style="color: var(--primary, #1a73e8);">Section Scores with Weights:</strong><br>
-          • Professionalism ({{ report.professionalism_weight }}% weight): {{ report.professionalism_score }}/100<br>
-          • Subject Knowledge ({{ report.subject_knowledge_weight }}% weight): {{ report.subject_knowledge_score }}/100<br>
-          • Clarity ({{ report.clarity_weight }}% weight): {{ report.clarity_score }}/100<br>
+          • Professionalism ({{ report.professionalism_weight }}%): {{ report.professionalism_score }}/100<br>
+          • Subject Knowledge ({{ report.subject_knowledge_weight }}%): {{ report.subject_knowledge_score }}/100<br>
+          • Clarity ({{ report.clarity_weight }}%): {{ report.clarity_score }}/100<br>
           <div style="margin-top: 1rem; padding: 1rem; background: var(--bg-info, #e3f2fd); border-left: 4px solid var(--primary, #1a73e8); border-radius: 4px;">
-            <strong style="color: var(--primary, #1a73e8);">Weighted Score Calculation:</strong><br>
+            <strong style="color: var(--primary, #1a73e8);">Score Calculation: Weighted Score Calculation</strong><br>
             <span style="font-size: 0.9rem;">
               ({{ report.professionalism_score }} × {{ report.professionalism_weight }}%) +
               ({{ report.subject_knowledge_score }} × {{ report.subject_knowledge_weight }}%) +
@@ -116,7 +116,7 @@
             </span>
           </div>
           <div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 2px solid var(--primary, #1a73e8);">
-          <strong style="color: var(--primary, #1a73e8); font-size: 1.1rem;">Final Weighted Score:</strong> <span style="font-size: 1.2rem; color: var(--success, #2e7d32);">{{ report.overall_score }}/100</span>
+          <strong style="color: var(--primary, #1a73e8); font-size: 1.1rem;">Final Weighted Score / Final Overall Score:</strong> <span style="font-size: 1.2rem; color: var(--success, #2e7d32);">{{ report.overall_score }}/100</span>
           </div>
         </div>
         <p style="margin: 1rem 0 0 0; font-size: 0.9rem; color: var(--text-secondary, #777); font-style: italic;">
@@ -129,10 +129,9 @@
       <!-- Professionalism -->
       <div class="box box-info" style="margin-bottom: 1rem; padding: 1.5rem;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-          <h3 class="text-brand" style="margin: 0;">Professionalism</h3>
+          <h3 class="text-brand" style="margin: 0;">Professionalism: {{ report.professionalism_score }}/100</h3>
           <div>
-            <span class="text-brand" style="font-size: 1.5rem; font-weight: bold;">{{ report.professionalism_score }}</span>
-            <span class="text-secondary-color">/100 × {{ report.professionalism_weight }}% weight</span>
+            <span class="text-secondary-color">({{ report.professionalism_weight }}% weight)</span>
           </div>
         </div>
         <div style="background-color: var(--bg-secondary); padding: 1rem; border-radius: 4px; margin-top: 0.5rem;">
@@ -146,10 +145,9 @@
       <!-- Subject Knowledge -->
       <div class="box box-info" style="margin-bottom: 1rem; padding: 1.5rem;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-          <h3 class="text-brand" style="margin: 0;">Subject Knowledge</h3>
+          <h3 class="text-brand" style="margin: 0;">Subject Knowledge: {{ report.subject_knowledge_score }}/100</h3>
           <div>
-            <span class="text-brand" style="font-size: 1.5rem; font-weight: bold;">{{ report.subject_knowledge_score }}</span>
-            <span class="text-secondary-color">/100 × {{ report.subject_knowledge_weight }}% weight</span>
+            <span class="text-secondary-color">({{ report.subject_knowledge_weight }}% weight)</span>
           </div>
         </div>
         <div style="background-color: var(--bg-secondary); padding: 1rem; border-radius: 4px; margin-top: 0.5rem;">
@@ -163,10 +161,9 @@
       <!-- Clarity -->
       <div class="box box-info" style="margin-bottom: 1rem; padding: 1.5rem;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-          <h3 class="text-brand" style="margin: 0;">Clarity</h3>
+          <h3 class="text-brand" style="margin: 0;">Clarity: {{ report.clarity_score }}/100</h3>
           <div>
-            <span class="text-brand" style="font-size: 1.5rem; font-weight: bold;">{{ report.clarity_score }}</span>
-            <span class="text-secondary-color">/100 × {{ report.clarity_weight }}% weight</span>
+            <span class="text-secondary-color">({{ report.clarity_weight }}% weight)</span>
           </div>
         </div>
         <div style="background-color: var(--bg-secondary); padding: 1rem; border-radius: 4px; margin-top: 0.5rem;">
@@ -240,10 +237,10 @@
 
     <!-- Export Actions (Bottom) -->
     <div style="display: flex; gap: 1rem; justify-content: center; margin: 2rem 0; flex-wrap: wrap;">
-      <a href="{% url 'download_pdf_report' chat.id %}" class="btn btn-danger" style="padding: 1rem 2rem; font-size: 1rem;">
+      <a href="{% url 'download_pdf_report' chat.id %}" id="download_pdf_report_bottom" class="btn btn-danger" style="padding: 1rem 2rem; font-size: 1rem;">
         Download as PDF
       </a>
-      <a href="{% url 'download_csv_report' chat.id %}" class="btn btn-success" style="padding: 1rem 2rem; font-size: 1rem;">
+      <a href="{% url 'download_csv_report' chat.id %}" id="download_csv_report_bottom" class="btn btn-success" style="padding: 1rem 2rem; font-size: 1rem;">
         Download as CSV
       </a>
       <a href="{% url 'chat-results' chat.id %}" class="btn btn-secondary" style="padding: 1rem 2rem; font-size: 1rem;">

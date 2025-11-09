@@ -140,7 +140,7 @@
 
     <!-- Generate Detailed Report Button -->
     <div class="container report-button-container" style="text-align: center;">
-      <form method="POST" action="{% url 'generate_report' chat.id %}" aria-label="Generate interview report form">
+      <form method="POST" action="{% url 'generate_report' chat.id %}" id="generate_report" aria-label="Generate interview report form">
         {% csrf_token %}
         <button
           type="submit"
