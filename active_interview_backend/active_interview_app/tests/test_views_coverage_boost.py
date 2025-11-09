@@ -336,3 +336,481 @@ class DownloadCSVTest(TestCase):
         self.assertIn('Excellent', content)
         self.assertIn('Good', content)
         self.assertIn('Fair', content)
+
+
+class SimpleViewsTest(TestCase):
+    """Test simple static views"""
+
+    def setUp(self):
+        self.client = Client()
+
+    def test_index_view(self):
+        """Test index page"""
+        response = self.client.get(reverse('index'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_aboutus_view(self):
+        """Test about us page"""
+        response = self.client.get(reverse('aboutus'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_features_view(self):
+        """Test features page"""
+        response = self.client.get(reverse('features'))
+        self.assertEqual(response.status_code, 200)
+
+
+class ChatManagementViewsTest(TestCase):
+    """Test chat CRUD operations"""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username='testuser', password='pass123')
+
+    def test_chat_list_view(self):
+        """Test chat list"""
+        self.client.login(username='testuser', password='pass123')
+        response = self.client.get(reverse('chat-list'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_delete_chat_view(self):
+        """Test delete chat"""
+        self.client.login(username='testuser', password='pass123')
+        chat = Chat.objects.create(
+            owner=self.user,
+            title='Test',
+            difficulty=5,
+            messages=[],
+            type='GEN'
+        )
+        url = reverse('chat-delete', kwargs={'chat_id': chat.id})
+        response = self.client.post(url, {'delete': 'true'})
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(Chat.objects.filter(id=chat.id).exists())
+
+    def test_restart_chat_view(self):
+        """Test restart chat"""
+        self.client.login(username='testuser', password='pass123')
+        chat = Chat.objects.create(
+            owner=self.user,
+            title='Test',
+            difficulty=5,
+            messages=[
+                {'role': 'system', 'content': 'System'},
+                {'role': 'assistant', 'content': 'Hi'},
+                {'role': 'user', 'content': 'Hello'},
+                {'role': 'assistant', 'content': 'How?'}
+            ],
+            type='GEN'
+        )
+        url = reverse('chat-restart', kwargs={'chat_id': chat.id})
+        response = self.client.post(url, {'restart': 'true'})
+        self.assertEqual(response.status_code, 302)
+        chat.refresh_from_db()
+        self.assertEqual(len(chat.messages), 2)
+
+    def test_edit_chat_get(self):
+        """Test edit chat GET"""
+        self.client.login(username='testuser', password='pass123')
+        chat = Chat.objects.create(
+            owner=self.user,
+            title='Test',
+            difficulty=5,
+            messages=[{'role': 'system', 'content': 'Test <<5>>'}],
+            type='GEN'
+        )
+        url = reverse('chat-edit', kwargs={'chat_id': chat.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_edit_chat_post_update(self):
+        """Test edit chat POST with update"""
+        self.client.login(username='testuser', password='pass123')
+        chat = Chat.objects.create(
+            owner=self.user,
+            title='Test',
+            difficulty=5,
+            messages=[{'role': 'system', 'content': 'Test <<5>>'}],
+            type='GEN'
+        )
+        url = reverse('chat-edit', kwargs={'chat_id': chat.id})
+        response = self.client.post(url, {
+            'update': 'true',
+            'title': 'Updated',
+            'difficulty': 7
+        })
+        self.assertEqual(response.status_code, 302)
+        chat.refresh_from_db()
+        self.assertEqual(chat.difficulty, 7)
+        self.assertIn('<<7>>', chat.messages[0]['content'])
+
+    def test_edit_chat_post_no_update(self):
+        """Test edit chat POST without update button"""
+        self.client.login(username='testuser', password='pass123')
+        chat = Chat.objects.create(
+            owner=self.user,
+            title='Test',
+            difficulty=5,
+            messages=[],
+            type='GEN'
+        )
+        url = reverse('chat-edit', kwargs={'chat_id': chat.id})
+        response = self.client.post(url, {'title': 'Ignored'})
+        self.assertEqual(response.status_code, 302)
+
+
+class UserManagementViewsTest(TestCase):
+    """Test user-related views"""
+
+    def setUp(self):
+        self.client = Client()
+
+    def test_register_get(self):
+        """Test registration page"""
+        response = self.client.get(reverse('register'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_register_post_valid(self):
+        """Test valid registration"""
+        response = self.client.post(reverse('register'), {
+            'username': 'newuser',
+            'email': 'new@test.com',
+            'password1': 'TestPass123!',
+            'password2': 'TestPass123!'
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(User.objects.filter(username='newuser').exists())
+
+    def test_profile_view(self):
+        """Test profile page"""
+        user = User.objects.create_user(username='testuser', password='pass123')
+        self.client.login(username='testuser', password='pass123')
+        response = self.client.get(reverse('profile'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_loggedin_view(self):
+        """Test logged in view"""
+        user = User.objects.create_user(username='testuser', password='pass123')
+        self.client.login(username='testuser', password='pass123')
+        response = self.client.get(reverse('loggedin'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_view_user_profile_own(self):
+        """Test viewing own profile"""
+        user = User.objects.create_user(username='testuser', password='pass123')
+        self.client.login(username='testuser', password='pass123')
+        url = reverse('view_user_profile', kwargs={'user_id': user.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context['is_own_profile'])
+
+    def test_view_user_profile_other(self):
+        """Test viewing other user's profile without permission"""
+        user1 = User.objects.create_user(username='user1', password='pass123')
+        user2 = User.objects.create_user(username='user2', password='pass123')
+        self.client.login(username='user1', password='pass123')
+        url = reverse('view_user_profile', kwargs={'user_id': user2.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 403)
+
+    def test_view_user_profile_notfound(self):
+        """Test viewing non-existent profile"""
+        user = User.objects.create_user(username='testuser', password='pass123')
+        self.client.login(username='testuser', password='pass123')
+        url = reverse('view_user_profile', kwargs={'user_id': 99999})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+
+class DocumentViewsTest(TestCase):
+    """Test document-related views"""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username='testuser', password='pass123')
+
+    def test_resume_detail(self):
+        """Test resume detail view"""
+        resume = UploadedResume.objects.create(
+            user=self.user,
+            title='My Resume',
+            content='Content',
+            original_filename='resume.pdf'
+        )
+        self.client.login(username='testuser', password='pass123')
+        url = reverse('resume_detail', kwargs={'resume_id': resume.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context['is_owner'])
+
+    def test_delete_resume(self):
+        """Test delete resume"""
+        resume = UploadedResume.objects.create(
+            user=self.user,
+            title='Test',
+            content='Content',
+            original_filename='test.pdf'
+        )
+        self.client.login(username='testuser', password='pass123')
+        url = reverse('delete_resume', kwargs={'resume_id': resume.id})
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(UploadedResume.objects.filter(id=resume.id).exists())
+
+    def test_edit_resume_get(self):
+        """Test edit resume GET"""
+        resume = UploadedResume.objects.create(
+            user=self.user,
+            title='Original',
+            content='Content',
+            original_filename='resume.pdf'
+        )
+        self.client.login(username='testuser', password='pass123')
+        url = reverse('edit_resume', kwargs={'resume_id': resume.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_edit_resume_post(self):
+        """Test edit resume POST"""
+        resume = UploadedResume.objects.create(
+            user=self.user,
+            title='Original',
+            content='Content',
+            original_filename='resume.pdf'
+        )
+        self.client.login(username='testuser', password='pass123')
+        url = reverse('edit_resume', kwargs={'resume_id': resume.id})
+        response = self.client.post(url, {
+            'title': 'Updated',
+            'content': 'New content'
+        })
+        self.assertEqual(response.status_code, 302)
+
+    def test_job_posting_detail(self):
+        """Test job posting detail"""
+        job = UploadedJobListing.objects.create(
+            user=self.user,
+            title='Job',
+            filename='job.pdf',
+            content='Content'
+        )
+        self.client.login(username='testuser', password='pass123')
+        url = reverse('job_posting_detail', kwargs={'job_id': job.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_delete_job(self):
+        """Test delete job"""
+        job = UploadedJobListing.objects.create(
+            user=self.user,
+            title='Job',
+            filename='job.pdf',
+            content='Content'
+        )
+        self.client.login(username='testuser', password='pass123')
+        url = reverse('delete_job', kwargs={'job_id': job.id})
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 302)
+
+    def test_edit_job_posting_get(self):
+        """Test edit job GET"""
+        job = UploadedJobListing.objects.create(
+            user=self.user,
+            title='Original',
+            filename='job.pdf',
+            content='Content'
+        )
+        self.client.login(username='testuser', password='pass123')
+        url = reverse('edit_job_posting', kwargs={'job_id': job.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_edit_job_posting_post(self):
+        """Test edit job POST"""
+        job = UploadedJobListing.objects.create(
+            user=self.user,
+            title='Original',
+            filename='job.pdf',
+            content='Content'
+        )
+        self.client.login(username='testuser', password='pass123')
+        url = reverse('edit_job_posting', kwargs={'job_id': job.id})
+        response = self.client.post(url, {
+            'title': 'Updated',
+            'content': 'New'
+        })
+        self.assertEqual(response.status_code, 302)
+
+    def test_document_list_view(self):
+        """Test document list"""
+        self.client.login(username='testuser', password='pass123')
+        response = self.client.get(reverse('document-list'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_uploaded_job_listing_post_empty_text(self):
+        """Test posting empty text"""
+        self.client.login(username='testuser', password='pass123')
+        response = self.client.post(reverse('paste-text'), {
+            'paste-text': '',
+            'title': 'Test'
+        })
+        self.assertEqual(response.status_code, 302)
+
+    def test_uploaded_job_listing_post_empty_title(self):
+        """Test posting empty title"""
+        self.client.login(username='testuser', password='pass123')
+        response = self.client.post(reverse('paste-text'), {
+            'paste-text': 'Some text',
+            'title': ''
+        })
+        self.assertEqual(response.status_code, 302)
+
+    def test_uploaded_job_listing_post_valid(self):
+        """Test posting valid job listing"""
+        self.client.login(username='testuser', password='pass123')
+        response = self.client.post(reverse('paste-text'), {
+            'paste-text': 'Job description',
+            'title': 'Job Title'
+        })
+        self.assertEqual(response.status_code, 302)
+
+
+class ResultViewsTest(TestCase):
+    """Test result/scoring views"""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username='testuser', password='pass123')
+
+    @patch('active_interview_app.views._ai_available', return_value=False)
+    def test_results_chat_ai_unavailable(self, mock_ai):
+        """Test results when AI unavailable"""
+        chat = Chat.objects.create(
+            owner=self.user,
+            title='Test',
+            difficulty=5,
+            messages=[],
+            type='GEN'
+        )
+        self.client.login(username='testuser', password='pass123')
+        url = reverse('chat-results', kwargs={'chat_id': chat.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('AI features are currently unavailable', response.context['feedback'])
+
+    @patch('active_interview_app.views._ai_available', return_value=False)
+    def test_result_charts_ai_unavailable(self, mock_ai):
+        """Test result charts when AI unavailable"""
+        chat = Chat.objects.create(
+            owner=self.user,
+            title='Test',
+            difficulty=5,
+            messages=[],
+            type='GEN'
+        )
+        self.client.login(username='testuser', password='pass123')
+        url = reverse('result-charts', kwargs={'chat_id': chat.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['scores']['Overall'], 0)
+
+
+class KeyQuestionsViewTest(TestCase):
+    """Test key questions view"""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username='testuser', password='pass123')
+
+    def test_key_questions_get(self):
+        """Test key questions GET"""
+        chat = Chat.objects.create(
+            owner=self.user,
+            title='Test',
+            difficulty=5,
+            messages=[],
+            type='GEN',
+            key_questions=[{'id': 0, 'title': 'Q1', 'content': 'Question?', 'duration': 60}]
+        )
+        self.client.login(username='testuser', password='pass123')
+        url = reverse('key-questions-view', kwargs={'chat_id': chat.id, 'question_id': 0})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_key_questions_with_resume(self):
+        """Test key questions with resume"""
+        resume = UploadedResume.objects.create(
+            user=self.user,
+            title='Resume',
+            content='Content',
+            original_filename='resume.pdf'
+        )
+        chat = Chat.objects.create(
+            owner=self.user,
+            title='Test',
+            difficulty=5,
+            messages=[],
+            type='GEN',
+            resume=resume,
+            key_questions=[{'id': 0, 'content': 'Q?', 'duration': 60}]
+        )
+        self.client.login(username='testuser', password='pass123')
+        url = reverse('key-questions-view', kwargs={'chat_id': chat.id, 'question_id': 0})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_key_questions_without_resume(self):
+        """Test key questions without resume"""
+        chat = Chat.objects.create(
+            owner=self.user,
+            title='Test',
+            difficulty=5,
+            messages=[],
+            type='GEN',
+            key_questions=[{'id': 0, 'content': 'Q?', 'duration': 60}]
+        )
+        self.client.login(username='testuser', password='pass123')
+        url = reverse('key-questions-view', kwargs={'chat_id': chat.id, 'question_id': 0})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+    @patch('active_interview_app.views._ai_available', return_value=False)
+    def test_key_questions_post_ai_unavailable(self, mock_ai):
+        """Test key questions POST when AI unavailable"""
+        chat = Chat.objects.create(
+            owner=self.user,
+            title='Test',
+            difficulty=5,
+            messages=[],
+            type='GEN',
+            key_questions=[{'id': 0, 'content': 'Q?', 'duration': 60}]
+        )
+        self.client.login(username='testuser', password='pass123')
+        url = reverse('key-questions-view', kwargs={'chat_id': chat.id, 'question_id': 0})
+        response = self.client.post(url, {'message': 'Answer'},
+                                   HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(response.status_code, 503)
+
+
+class ChatViewPostTest(TestCase):
+    """Test ChatView POST method"""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username='testuser', password='pass123')
+
+    @patch('active_interview_app.views._ai_available', return_value=False)
+    def test_chat_view_post_ai_unavailable(self, mock_ai):
+        """Test chat POST when AI unavailable"""
+        chat = Chat.objects.create(
+            owner=self.user,
+            title='Test',
+            difficulty=5,
+            messages=[],
+            type='GEN'
+        )
+        self.client.login(username='testuser', password='pass123')
+        url = reverse('chat-view', kwargs={'chat_id': chat.id})
+        response = self.client.post(url, {'message': 'Hello'},
+                                   HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(response.status_code, 503)
