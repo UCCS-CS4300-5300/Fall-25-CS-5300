@@ -1299,7 +1299,7 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
                 messages=input_messages,
                 max_tokens=MAX_TOKENS
             )
-            ai_message = response.choices[0].message.content.strip()
+            ai_message = str(response.choices[0].message.content.strip())
 
             # Parse scores from response
             score_lines = [line.strip() for line in ai_message.splitlines() if line.strip().isdigit()]
@@ -1370,7 +1370,7 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
                 messages=input_messages,
                 max_tokens=MAX_TOKENS
             )
-            rationale_text = response.choices[0].message.content.strip()
+            rationale_text = str(response.choices[0].message.content.strip())
 
             # Parse rationales from response
             rationales = {}
@@ -1454,7 +1454,9 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
                 messages=input_messages,
                 max_tokens=MAX_TOKENS
             )
-            return response.choices[0].message.content.strip()
+            result = response.choices[0].message.content.strip()
+            # Ensure we return a string, not a mock object
+            return str(result) if result else "Unable to generate feedback at this time."
         except Exception as e:
             # Log error in production
             return "Unable to generate feedback at this time."
