@@ -3,6 +3,7 @@ Tests to boost views.py coverage to >80%
 Focuses on untested methods and code paths
 """
 
+import json
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.urls import reverse
@@ -814,3 +815,151 @@ class ChatViewPostTest(TestCase):
         response = self.client.post(url, {'message': 'Hello'},
                                    HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         self.assertEqual(response.status_code, 503)
+
+
+class CreateChatViewTest(TestCase):
+    """Test CreateChat view"""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username='testuser', password='pass123')
+
+    def test_create_chat_get(self):
+        """Test CreateChat GET"""
+        self.client.login(username='testuser', password='pass123')
+        response = self.client.get(reverse('chat-create'))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('form', response.context)
+
+    def test_create_chat_post_with_resume(self):
+        """Test CreateChat POST with resume"""
+        job = UploadedJobListing.objects.create(
+            user=self.user,
+            title='Job',
+            filename='job.pdf',
+            content='Job content'
+        )
+        resume = UploadedResume.objects.create(
+            user=self.user,
+            title='Resume',
+            content='Resume content',
+            original_filename='resume.pdf'
+        )
+        self.client.login(username='testuser', password='pass123')
+        response = self.client.post(reverse('chat-create'), {
+            'create': 'true',
+            'title': 'Test Interview',
+            'listing_choice': job.id,
+            'resume_choice': resume.id,
+            'difficulty': 5,
+            'type': 'GEN'
+        })
+        # Should redirect after creation
+        self.assertEqual(response.status_code, 302)
+        # Check chat was created
+        self.assertTrue(Chat.objects.filter(title='Test Interview').exists())
+
+    def test_create_chat_post_without_resume(self):
+        """Test CreateChat POST without resume"""
+        job = UploadedJobListing.objects.create(
+            user=self.user,
+            title='Job',
+            filename='job.pdf',
+            content='Job content'
+        )
+        self.client.login(username='testuser', password='pass123')
+        response = self.client.post(reverse('chat-create'), {
+            'create': 'true',
+            'title': 'No Resume Interview',
+            'listing_choice': job.id,
+            'difficulty': 7,
+            'type': 'TEC'
+        })
+        self.assertEqual(response.status_code, 302)
+
+
+class UploadFileViewTest(TestCase):
+    """Test upload_file view"""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username='testuser', password='pass123')
+
+    def test_upload_file_get(self):
+        """Test upload file GET"""
+        self.client.login(username='testuser', password='pass123')
+        response = self.client.get(reverse('upload'))
+        self.assertEqual(response.status_code, 200)
+
+
+class ExportViewsTest(TestCase):
+    """Test export views"""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username='testuser', password='pass123')
+        self.chat = Chat.objects.create(
+            owner=self.user,
+            title='Test',
+            difficulty=5,
+            messages=[],
+            type='GEN'
+        )
+        self.report = ExportableReport.objects.create(
+            chat=self.chat,
+            overall_score=80,
+            total_questions_asked=10,
+            total_responses_given=10
+        )
+
+    def test_export_report_view(self):
+        """Test ExportReportView"""
+        self.client.login(username='testuser', password='pass123')
+        url = reverse('export_report', kwargs={'chat_id': self.chat.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_download_pdf_report_view(self):
+        """Test DownloadPDFReportView"""
+        self.client.login(username='testuser', password='pass123')
+        url = reverse('download_pdf_report', kwargs={'chat_id': self.chat.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+
+    def test_download_pdf_no_report(self):
+        """Test downloading PDF when no report exists"""
+        chat2 = Chat.objects.create(
+            owner=self.user,
+            title='No Report',
+            difficulty=5,
+            messages=[],
+            type='GEN'
+        )
+        self.client.login(username='testuser', password='pass123')
+        url = reverse('download_pdf_report', kwargs={'chat_id': chat2.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 302)
+
+
+class APIViewsTest(TestCase):
+    """Test API views"""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username='testuser', password='pass123')
+
+    def test_job_listing_list_get(self):
+        """Test JobListingList GET"""
+        self.client.login(username='testuser', password='pass123')
+        response = self.client.get(reverse('job-listing-list'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_job_listing_list_post(self):
+        """Test JobListingList POST"""
+        self.client.login(username='testuser', password='pass123')
+        response = self.client.post(reverse('job-listing-list'), {
+            'title': 'API Job',
+            'content': 'API Job Content'
+        }, content_type='application/json')
+        self.assertEqual(response.status_code, 201)

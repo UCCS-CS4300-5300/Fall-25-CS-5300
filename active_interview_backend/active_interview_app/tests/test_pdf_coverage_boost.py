@@ -5,11 +5,18 @@ Focuses on untested helper functions
 
 from django.test import TestCase
 from django.contrib.auth.models import User
-from active_interview_app.models import Chat, ExportableReport
+from active_interview_app.models import Chat, ExportableReport, UploadedJobListing, UploadedResume
 from active_interview_app.pdf_export import (
     _create_score_rationales_section,
     _create_recommended_exercises_section,
-    _create_styles
+    _create_styles,
+    generate_pdf_report,
+    get_score_rating,
+    _create_metadata_section,
+    _create_performance_scores_section,
+    _create_feedback_section,
+    _create_statistics_section,
+    _create_footer
 )
 
 
@@ -204,19 +211,6 @@ class PDFRecommendedExercisesTest(TestCase):
 
         self.assertIsInstance(result, list)
         self.assertGreater(len(result), 0)
-
-
-# Import additional functions for comprehensive testing
-from active_interview_app.pdf_export import (
-    generate_pdf_report,
-    get_score_rating,
-    _create_metadata_section,
-    _create_performance_scores_section,
-    _create_feedback_section,
-    _create_statistics_section,
-    _create_footer
-)
-from active_interview_app.models import UploadedJobListing, UploadedResume
 
 
 class PDFGenerationTest(TestCase):
