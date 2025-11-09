@@ -1,9 +1,15 @@
 name: Continuous Integration
 
+# Workflow Strategy:
+# - Runs on ALL branch pushes for fast feedback to developers
+# - Core jobs (lint, security, test) run on every commit
+# - Expensive jobs (ai-review, loc-metrics) only run on main or PRs to main
+# - This gives developers immediate test/lint feedback on feature branches
+#   while reserving costly operations for main branch and PR review
+
 on:
   push:
-    branches:
-      - main
+    # Run on all branches
     paths:
       - 'active_interview_backend/**'
       - 'scripts/**'
@@ -28,6 +34,9 @@ env:
   RETENTION_DAYS: 14
 
 jobs:
+  # ============================================================================
+  # CORE JOBS - Run on ALL branches for immediate developer feedback
+  # ============================================================================
   lint:
     name: Run Linting
     runs-on: ubuntu-latest
@@ -296,10 +305,15 @@ jobs:
           exit 1
         fi
 
+  # ============================================================================
+  # CONDITIONAL JOBS - Run only on main branch or PRs to main
+  # ============================================================================
   ai-review:
     name: AI Code Review
     runs-on: ubuntu-latest
     needs: [test]
+    # Only run on main branch pushes or pull requests to main
+    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
 
     steps:
     - name: Checkout Code
@@ -386,6 +400,7 @@ jobs:
   loc-metrics:
     name: Lines of Code Metrics
     runs-on: ubuntu-latest
+    # Only run on main branch pushes (not PRs, not feature branches)
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
@@ -462,10 +477,14 @@ jobs:
         path: ${{ runner.temp }}/loc_metrics.txt
         retention-days: ${{ env.RETENTION_DAYS }}
 
+  # ============================================================================
+  # CLEANUP - Always runs to archive artifacts
+  # ============================================================================
   cleanup:
     name: Cleanup & Archive
     runs-on: ubuntu-latest
-    needs: [lint, security, test, ai-review, loc-metrics]
+    # Run after all jobs that actually executed (some may be skipped on feature branches)
+    needs: [lint, security, test]
     if: always()
 
     steps:
