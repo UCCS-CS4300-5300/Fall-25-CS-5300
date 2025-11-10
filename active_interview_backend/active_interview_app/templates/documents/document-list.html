@@ -211,54 +211,6 @@
         justify-content: center;
       }
     }
-
-    /* Template List Section */
-    .template-list-section {
-      margin-top: 2rem;
-      padding-top: 2rem;
-      border-top: 1px solid var(--border-light);
-    }
-
-    .template-list-heading {
-      color: var(--text-primary);
-      font-size: 1.1rem;
-      margin-bottom: 1rem;
-    }
-
-    .template-item-info {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .template-link {
-      color: var(--primary);
-      font-weight: 500;
-      text-decoration: none;
-      display: block;
-      margin-bottom: 0.25rem;
-    }
-
-    .template-link:hover {
-      color: var(--primary-light);
-      text-decoration: underline;
-    }
-
-    .template-item-info p {
-      margin: 0.25rem 0 0 0;
-    }
-
-    .template-list-footer {
-      margin-top: 1rem;
-      text-align: center;
-    }
-
-    .template-list-footer a {
-      text-decoration: none;
-    }
-
-    .template-list-footer a:hover {
-      text-decoration: underline;
-    }
   </style>
 
   <div class="document-page">
@@ -269,9 +221,6 @@
       <h1>Document Management</h1>
       <p>
         Upload your resume and add job listings to create personalized interview experiences
-        {% if user.profile.role == 'admin' or user.profile.role == 'interviewer' %}
-          <br>Create interview templates to organize and structure your interviews
-        {% endif %}
       </p>
     </div>
 
@@ -288,6 +237,7 @@
             name="title"
             id="resume-title"
             placeholder="e.g., Software Engineer Resume 2025"
+            maxlength="32"
             required
           >
         </div>
@@ -340,6 +290,7 @@
             name="title"
             id="title"
             placeholder="e.g., Senior Software Engineer at Company XYZ"
+            maxlength="32"
             required
           >
         </div>
@@ -363,59 +314,6 @@
         </button>
       </form>
     </div>
-
-    {% if user.profile.role == 'admin' or user.profile.role == 'interviewer' %}
-      <hr class="section-divider">
-
-      <!-- Interview Templates Section -->
-      <div class="upload-section">
-        <h2>Interview Templates</h2>
-        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
-          Create and manage reusable interview templates to organize your interviews.
-        </p>
-
-        <!-- Create Template Form -->
-        <form method="post" action="{% url 'create_template' %}">
-          {% csrf_token %}
-
-          <div class="form-group">
-            <label for="template-name">Template Name</label>
-            <input
-              type="text"
-              name="name"
-              id="template-name"
-              placeholder="e.g., Technical Interview - Software Engineer"
-              required
-            >
-          </div>
-
-          <div class="form-group">
-            <label for="template-description">Description (Optional)</label>
-            <textarea
-              name="description"
-              id="template-description"
-              placeholder="Describe the purpose of this template...&#10;&#10;e.g., Template for conducting technical interviews with senior software engineers."
-              style="min-height: 100px;"
-            ></textarea>
-          </div>
-
-          <button type="submit" class="btn-upload" name="submit">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-              <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 13A6 6 0 1 1 8 2a6 6 0 0 1 0 12z"/>
-              <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
-            </svg>
-            Create Template
-          </button>
-        </form>
-
-        <!-- View Templates Link -->
-        <div class="template-list-footer">
-          <a href="{% url 'profile' %}" class="text-brand text-bold">
-            View Your Templates →
-          </a>
-        </div>
-      </div>
-    {% endif %}
 
     <!-- Markdown Preview (if available) -->
     {% if markdown_text %}

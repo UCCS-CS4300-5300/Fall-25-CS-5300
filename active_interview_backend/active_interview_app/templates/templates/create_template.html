@@ -6,6 +6,10 @@
 
 {% block content %}
   <style>
+    .centered-container {
+      padding: 2rem 1.5rem;
+    }
+
     .create-template-page {
       display: flex;
       flex-direction: column;
@@ -16,11 +20,12 @@
     .create-template-page h1 {
       font-size: 40px;
       text-align: center;
+      color: var(--text-primary);
     }
 
-    .create-template-page .card {
+    .centered-container .card {
       background-color: var(--surface) !important;
-      border: 1px solid var(--border) !important;
+      border: 2px solid var(--border) !important;
       border-radius: 2rem;
     }
 
@@ -28,15 +33,55 @@
       font-size: 20px;
       font-weight: bold;
       margin-bottom: 0.5rem;
+      color: var(--text-primary);
     }
 
     .form-control {
       font-size: 18px;
+      background-color: var(--surface) !important;
+      color: var(--text-primary) !important;
+      border: 1px solid var(--border) !important;
+    }
+
+    .form-control:focus {
+      background-color: var(--surface) !important;
+      color: var(--text-primary) !important;
+      border-color: var(--primary) !important;
+      box-shadow: 0 0 0 0.2rem rgba(31, 123, 166, 0.25);
+    }
+
+    .form-text {
+      color: var(--text-secondary) !important;
+    }
+
+    .alert {
+      background-color: var(--surface) !important;
+      border: 2px solid var(--error) !important;
+      color: var(--error) !important;
+    }
+
+    .text-danger {
+      color: var(--error) !important;
+    }
+
+    .text-muted {
+      color: var(--text-secondary) !important;
     }
 
     .btn-lg {
       font-size: 20px;
       padding: 0.75rem 2rem;
+    }
+
+    .btn-secondary {
+      background-color: var(--text-secondary) !important;
+      border-color: var(--text-secondary) !important;
+      color: var(--text-white) !important;
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--text-light) !important;
+      border-color: var(--text-light) !important;
     }
   </style>
 
