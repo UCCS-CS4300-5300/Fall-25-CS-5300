@@ -2,8 +2,10 @@
 #
 # Post-Commit Hook: Track Claude Code Token Usage
 #
-# This hook prompts you to track token usage from Claude Code sessions
+# This hook automatically tracks token usage from Claude Code sessions
 # after each commit. Token data is stored for aggregation on merge to main.
+#
+# It tries automatic extraction first, then falls back to manual entry.
 #
 
 # Colors for output
@@ -22,18 +24,44 @@ if [ ! -t 0 ]; then
     exit 0
 fi
 
-# Display prompt
+# Try automatic extraction first
 echo ""
 echo -e "${CYAN}╔══════════════════════════════════════════════════════════╗${NC}"
-echo -e "${CYAN}║         🤖 Claude Code Token Usage Tracker              ║${NC}"
+echo -e "${CYAN}║    🤖 Claude Code Token Usage Tracker (AUTO MODE)       ║${NC}"
 echo -e "${CYAN}╚══════════════════════════════════════════════════════════╝${NC}"
 echo ""
+echo -e "${BLUE}🔍 Attempting automatic token extraction...${NC}"
+
+# Try to run the auto-extraction script
+PYTHON_CMD=""
+if command -v python3 >/dev/null 2>&1; then
+    PYTHON_CMD="python3"
+elif command -v python >/dev/null 2>&1; then
+    PYTHON_CMD="python"
+else
+    echo -e "${YELLOW}⚠  Python not found${NC}"
+    exit 0
+fi
+
+# Run auto-extraction with --auto-track flag
+$PYTHON_CMD "$REPO_ROOT/token_metrics/scripts/extract-claude-tokens.py" --auto-track --notes "Auto-tracked from commit" 2>/dev/null
+
+# Check if auto-extraction succeeded
+if [ $? -eq 0 ]; then
+    echo -e "${GREEN}✅ Tokens tracked automatically!${NC}"
+    echo ""
+    exit 0
+fi
+
+# Auto-extraction failed, fall back to manual prompt
+echo ""
+echo -e "${YELLOW}⚠  Auto-extraction failed, switching to manual mode${NC}"
 echo -e "${BLUE}Did you use Claude Code for this commit?${NC}"
 echo -e "${YELLOW}Check the Claude Code UI for token counts (bottom right)${NC}"
 echo ""
 
 # Prompt user
-read -p "Track tokens? (y/N): " -n 1 -r TRACK_TOKENS
+read -p "Track tokens manually? (y/N): " -n 1 -r TRACK_TOKENS
 echo ""
 
 if [[ ! $TRACK_TOKENS =~ ^[Yy]$ ]]; then
@@ -56,17 +84,9 @@ if ! [[ "$INPUT_TOKENS" =~ ^[0-9]+$ ]] || ! [[ "$OUTPUT_TOKENS" =~ ^[0-9]+$ ]]; 
 fi
 
 # Call the Python script to save the record
-if command -v python3 >/dev/null 2>&1; then
-    python3 "$REPO_ROOT/scripts/track-claude-tokens.py" \
-        --input-tokens "$INPUT_TOKENS" \
-        --output-tokens "$OUTPUT_TOKENS" 2>/dev/null
-elif command -v python >/dev/null 2>&1; then
-    python "$REPO_ROOT/scripts/track-claude-tokens.py" \
-        --input-tokens "$INPUT_TOKENS" \
-        --output-tokens "$OUTPUT_TOKENS" 2>/dev/null
-else
-    echo -e "${YELLOW}⚠  Python not found, cannot save token record${NC}"
-fi
+$PYTHON_CMD "$REPO_ROOT/token_metrics/scripts/track-claude-tokens.py" \
+    --input-tokens "$INPUT_TOKENS" \
+    --output-tokens "$OUTPUT_TOKENS" 2>/dev/null
 
 echo ""
 exit 0

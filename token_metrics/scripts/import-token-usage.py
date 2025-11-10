@@ -117,8 +117,13 @@ def import_token_usage_from_json_files():
                 skipped_count += 1
                 continue
 
-            # Create the record with proper branch tracking
-            TokenUsage.objects.create(
+            # Extract additional metadata if available
+            commit_sha = record.get('commit_sha', 'unknown')
+            source = record.get('source', 'unknown')
+            notes = record.get('notes', '')
+
+            # Create the record with all available metadata
+            usage_record = TokenUsage.objects.create(
                 git_branch=git_branch,
                 model_name=model_name,
                 endpoint=endpoint,
@@ -128,10 +133,26 @@ def import_token_usage_from_json_files():
                 created_at=timestamp
             )
 
+            # Calculate cost for reporting
+            if 'claude-sonnet-4-5' in model_name.lower():
+                cost = (prompt_tokens / 1_000_000) * 3.00 + (completion_tokens / 1_000_000) * 15.00
+            elif 'gpt-4' in model_name.lower():
+                cost = (prompt_tokens / 1_000_000) * 2.50 + (completion_tokens / 1_000_000) * 10.00
+            else:
+                cost = (prompt_tokens / 1_000_000) * 3.00 + (completion_tokens / 1_000_000) * 15.00
+
             print(f"✅ Imported: {os.path.basename(json_file)}")
-            print(f"   Branch: {git_branch}")
-            print(f"   Model: {model_name}")
-            print(f"   Tokens: {total_tokens:,}\n")
+            print(f"   Branch:    {git_branch}")
+            print(f"   Model:     {model_name}")
+            print(f"   Endpoint:  {endpoint}")
+            print(f"   Tokens:    {total_tokens:,} ({prompt_tokens:,} input + {completion_tokens:,} output)")
+            print(f"   Cost:      ${cost:.4f}")
+            print(f"   Timestamp: {timestamp}")
+            if source:
+                print(f"   Source:    {source}")
+            if notes:
+                print(f"   Notes:     {notes}")
+            print()
 
             imported_count += 1
 
