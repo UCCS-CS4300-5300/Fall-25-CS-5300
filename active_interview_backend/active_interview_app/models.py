@@ -214,6 +214,65 @@ class ExportableReport(models.Model):
         ordering = ['-generated_at']
 
 
+class InterviewTemplate(models.Model):
+    """
+    Named interview templates created by interviewers.
+    Allows interviewers to organize and structure their interviews.
+
+    Templates can be empty initially and later populated with questions,
+    criteria, and other interview structure.
+    """
+    name = models.CharField(
+        max_length=255,
+        help_text='Name of the interview template (e.g., "Technical Interview")'
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='interview_templates',
+        help_text='User who created this template'
+    )
+    description = models.TextField(
+        blank=True,
+        help_text='Optional description of the template purpose'
+    )
+
+    # Template sections - allows owners to add/delete sections
+    sections = models.JSONField(
+        default=list,
+        blank=True,
+        help_text='List of sections in the template. Each section has: title, content, order, weight'
+    )
+    # Structure: [{"id": "uuid", "title": "...", "content": "...", "order": 0, "weight": 0}, ...]
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+        ]
+        verbose_name = 'Interview Template'
+        verbose_name_plural = 'Interview Templates'
+
+    def __str__(self):
+        return f"{self.name} (by {self.user.username})"
+
+    def get_total_weight(self):
+        """Calculate the total weight of all sections in the template."""
+        sections = self.sections if self.sections else []
+        return sum(s.get('weight', 0) for s in sections)
+
+    def is_complete(self):
+        """Check if the template weight totals 100%."""
+        return self.get_total_weight() == 100
+
+    def get_status_display(self):
+        """Return 'WIP' if not complete, otherwise return 'Complete'."""
+        return "Complete" if self.is_complete() else "WIP"
+
+
 class RoleChangeRequest(models.Model):
     """
     Track requests from users to change their role.

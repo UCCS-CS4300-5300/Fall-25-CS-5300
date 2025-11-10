@@ -18,21 +18,21 @@ class DocumentEditForm(forms.ModelForm):
         model = UploadedResume
         fields = ['title', 'content']
         widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'title': forms.TextInput(attrs={'class': 'form-control', 'maxlength': '32'}),
             'content': forms.Textarea(attrs={'class': 'form-control',
                                              'rows': 15}),
         }
 
 
 class JobPostingEditForm(forms.ModelForm):
-    title = forms.CharField(required=True)
+    title = forms.CharField(required=True, max_length=32)
     content = forms.CharField(required=True, widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 15}))
 
     class Meta:
         model = UploadedJobListing
         fields = ['title', 'content']
         widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'title': forms.TextInput(attrs={'class': 'form-control', 'maxlength': '32'}),
         }
 
 
@@ -75,12 +75,41 @@ class EditChatForm(ModelForm):
         fields = ["title"]
 
 
+class InterviewTemplateForm(ModelForm):
+    """
+    Form for creating and editing interview templates.
+    """
+    name = forms.CharField(
+        required=True,
+        max_length=32,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'e.g., Technical Interview, Behavioral Interview'
+        })
+    )
+    description = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 4,
+            'placeholder': 'Optional: Describe the purpose of this template'
+        })
+    )
+
+    class Meta:
+        model = InterviewTemplate
+        fields = ['name', 'description']
+
+
 # Defines a Django form for handling file uploads.
 class UploadFileForm(ModelForm):
 
     class Meta:
         model = UploadedResume
         fields = ["file", "title"]
+        widgets = {
+            'title': forms.TextInput(attrs={'maxlength': '32'}),
+        }
 
     def clean_file(self):
         # allowed_types = ['txt', 'pdf', 'jpg', 'png']
