@@ -104,6 +104,24 @@ urlpatterns = [
     path('candidates/search/', views.candidate_search,
          name='candidate_search'),
 
+    # Interview Template urls
+    path('templates/', views.template_list, name='template_list'),
+    path('templates/create/', views.create_template, name='create_template'),
+    path('templates/<int:template_id>/', views.template_detail,
+         name='template_detail'),
+    path('templates/<int:template_id>/edit/', views.edit_template,
+         name='edit_template'),
+    path('templates/<int:template_id>/delete/', views.delete_template,
+         name='delete_template'),
+
+    # Template Section Management urls
+    path('templates/<int:template_id>/sections/add/',
+         views.add_section, name='add_section'),
+    path('templates/<int:template_id>/sections/<str:section_id>/edit/',
+         views.edit_section, name='edit_section'),
+    path('templates/<int:template_id>/sections/<str:section_id>/delete/',
+         views.delete_section, name='delete_section'),
+
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # if settings.PROD:
