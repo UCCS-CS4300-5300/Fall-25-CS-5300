@@ -8,7 +8,16 @@ from django.urls import reverse
 from rest_framework.test import APITestCase
 from rest_framework import status
 
-from active_interview_app.models import QuestionBank, Question, Tag, InterviewTemplate
+from active_interview_app.models import QuestionBank, Question, Tag, InterviewTemplate, UserProfile
+
+
+def create_interviewer_user(username='testuser', password='testpass123'):
+    """Helper function to create a user with interviewer role."""
+    user = User.objects.create_user(username=username, password=password)
+    # Update the auto-created profile to interviewer role
+    user.profile.role = UserProfile.INTERVIEWER
+    user.profile.save()
+    return user
 
 
 class TagModelTest(TestCase):
@@ -102,10 +111,7 @@ class QuestionBankAPITest(APITestCase):
     """Tests for QuestionBank API endpoints (Issue #38)"""
 
     def setUp(self):
-        self.user = User.objects.create_user(
-            username='testuser',
-            password='testpass123'
-        )
+        self.user = create_interviewer_user()
         self.client.force_authenticate(user=self.user)
 
     def test_create_question_bank_via_api(self):
@@ -165,10 +171,7 @@ class QuestionAPITest(APITestCase):
     """Tests for Question API endpoints (Issue #39)"""
 
     def setUp(self):
-        self.user = User.objects.create_user(
-            username='testuser',
-            password='testpass123'
-        )
+        self.user = create_interviewer_user()
         self.client.force_authenticate(user=self.user)
         self.bank = QuestionBank.objects.create(
             name="Test Bank",
@@ -218,10 +221,7 @@ class TagFilteringTest(APITestCase):
     """Tests for tag filtering (Issue #41)"""
 
     def setUp(self):
-        self.user = User.objects.create_user(
-            username='testuser',
-            password='testpass123'
-        )
+        self.user = create_interviewer_user()
         self.client.force_authenticate(user=self.user)
         self.bank = QuestionBank.objects.create(
             name="Test Bank",
@@ -287,10 +287,7 @@ class AutoAssembleInterviewTest(APITestCase):
     """Tests for auto-interview assembly (Issue #42)"""
 
     def setUp(self):
-        self.user = User.objects.create_user(
-            username='testuser',
-            password='testpass123'
-        )
+        self.user = create_interviewer_user()
         self.client.force_authenticate(user=self.user)
         self.bank = QuestionBank.objects.create(
             name="Test Bank",
@@ -384,10 +381,7 @@ class TagManagementTest(APITestCase):
     """Tests for tag management (Issue #40)"""
 
     def setUp(self):
-        self.user = User.objects.create_user(
-            username='testuser',
-            password='testpass123'
-        )
+        self.user = create_interviewer_user()
         self.client.force_authenticate(user=self.user)
 
     def test_rename_tag(self):
@@ -443,10 +437,7 @@ class SaveAsTemplateTest(APITestCase):
     """Tests for SaveAsTemplateView - each question as separate section"""
 
     def setUp(self):
-        self.user = User.objects.create_user(
-            username='testuser',
-            password='testpass123'
-        )
+        self.user = create_interviewer_user()
         self.client.force_authenticate(user=self.user)
         self.bank = QuestionBank.objects.create(
             name="Test Bank",
