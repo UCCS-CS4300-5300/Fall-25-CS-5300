@@ -155,20 +155,45 @@ class QuestionAdmin(admin.ModelAdmin):
 
 @admin.register(InterviewTemplate)
 class InterviewTemplateAdmin(admin.ModelAdmin):
-    list_display = ('name', 'owner', 'question_count', 'tag_list',
-                   'difficulty_distribution', 'created_at')
-    list_filter = ('created_at', 'updated_at')
-    search_fields = ('name', 'owner__username')
+    list_display = ('name', 'user', 'use_auto_assembly', 'question_count',
+                   'tag_list', 'difficulty_distribution', 'status', 'created_at')
+    list_filter = ('use_auto_assembly', 'created_at', 'updated_at')
+    search_fields = ('name', 'user__username', 'description')
     readonly_fields = ('created_at', 'updated_at')
-    filter_horizontal = ('tags',)
+    filter_horizontal = ('tags', 'question_banks')
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('name', 'user', 'description')
+        }),
+        ('Template Sections', {
+            'fields': ('sections',),
+            'description': 'JSON structure for template sections'
+        }),
+        ('Auto-Assembly Configuration', {
+            'fields': ('use_auto_assembly', 'question_banks', 'tags',
+                      'question_count', 'easy_percentage', 'medium_percentage',
+                      'hard_percentage'),
+            'description': 'Settings for automatically assembling interviews from question banks'
+        }),
+        ('Metadata', {
+            'fields': ('created_at', 'updated_at')
+        }),
+    )
 
     def tag_list(self, obj):
-        return ', '.join([tag.name for tag in obj.tags.all()])
+        return ', '.join([tag.name for tag in obj.tags.all()][:5]) + \
+               ('...' if obj.tags.count() > 5 else '')
     tag_list.short_description = 'Tags'
 
     def difficulty_distribution(self, obj):
-        return f"E:{obj.easy_percentage}% M:{obj.medium_percentage}% H:{obj.hard_percentage}%"
+        if obj.use_auto_assembly:
+            return f"E:{obj.easy_percentage}% M:{obj.medium_percentage}% H:{obj.hard_percentage}%"
+        return "N/A"
     difficulty_distribution.short_description = 'Difficulty'
+
+    def status(self, obj):
+        return obj.get_status_display()
+    status.short_description = 'Status'
 
 # Token Tracking Admin
 @admin.register(TokenUsage)

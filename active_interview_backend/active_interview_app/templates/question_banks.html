@@ -28,6 +28,29 @@
     color: var(--text-primary);
   }
 
+  /* Warning modal styling with custom colors for dark mode */
+  .warning-header {
+    background-color: var(--warning) !important;
+    color: var(--text-primary) !important;
+  }
+
+  .warning-btn {
+    background-color: var(--warning) !important;
+    border-color: var(--warning) !important;
+    color: var(--text-primary) !important;
+  }
+
+  .warning-btn:hover {
+    background-color: var(--accent) !important;
+    border-color: var(--accent) !important;
+  }
+
+  /* Confirmation modal styling */
+  .confirmation-header {
+    background-color: var(--warning) !important;
+    color: var(--text-primary) !important;
+  }
+
   .question-bank-card:hover {
     box-shadow: var(--shadow-md);
   }
@@ -462,6 +485,103 @@
   </div>
 </div>
 
+<!-- Validation Error Modal -->
+<div class="modal fade" id="validationErrorModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>
+          Unable to Assemble Interview
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-danger mb-3">
+          <h6 class="alert-heading" id="errorMainMessage">Error Message</h6>
+          <p class="mb-0" id="errorDescription"></p>
+        </div>
+
+        <div id="errorBreakdownSection" style="display: none;">
+          <h6 class="mb-3">Question Availability Breakdown:</h6>
+          <div class="table-responsive">
+            <table class="table table-bordered">
+              <thead class="table-light">
+                <tr>
+                  <th>Difficulty</th>
+                  <th>Requested</th>
+                  <th>Available</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="errorBreakdownTable">
+                <!-- Breakdown rows will be added here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="alert alert-info mt-3" id="errorHelpMessage">
+          <strong>What can you do?</strong>
+          <ul class="mb-0 mt-2" id="errorSuggestions">
+            <!-- Suggestions will be added here -->
+          </ul>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal" onclick="reopenAutoAssembleModal()">
+          <i class="bi bi-arrow-left me-1"></i>
+          Adjust Settings
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Generic Notification Modal -->
+<div class="modal fade" id="notificationModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header" id="notificationModalHeader">
+        <h5 class="modal-title" id="notificationModalTitle">
+          <i id="notificationModalIcon" class="me-2"></i>
+          <span id="notificationModalTitleText">Notification</span>
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" id="notificationModalCloseBtn"></button>
+      </div>
+      <div class="modal-body">
+        <p id="notificationModalMessage"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn" id="notificationModalOkBtn" data-bs-dismiss="modal">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmationModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header confirmation-header">
+        <h5 class="modal-title">
+          <i class="bi bi-question-circle-fill me-2"></i>
+          Confirm Action
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p id="confirmationModalMessage"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirmationModalConfirmBtn">Confirm</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
@@ -543,7 +663,7 @@
     })
     .catch(error => {
       console.error('Error creating question bank:', error);
-      alert('Error creating question bank');
+      showNotification('Failed to create question bank. Please try again.', 'error');
     });
   }
 
@@ -607,7 +727,7 @@
     })
     .catch(error => {
       console.error('Error deleting question bank:', error);
-      alert('Error deleting question bank');
+      showNotification('Failed to delete question bank. Please try again.', 'error');
     });
   }
 
@@ -706,7 +826,7 @@
     const tagName = document.getElementById('newTagName').value.trim();
 
     if (!tagName) {
-      alert('Please enter a tag name');
+      showNotification('Please enter a tag name', 'warning');
       return;
     }
 
@@ -731,7 +851,7 @@
     })
     .catch(error => {
       console.error('Error creating tag:', error);
-      alert('Error creating tag. It may already exist.');
+      showNotification('Failed to create tag. It may already exist.', 'error');
     });
   }
 
@@ -741,12 +861,12 @@
     const difficulty = document.getElementById('questionDifficulty').value;
 
     if (!text) {
-      alert('Please enter a question');
+      showNotification('Please enter a question', 'warning');
       return;
     }
 
     if (!currentBankId) {
-      alert('No question bank selected');
+      showNotification('No question bank selected', 'warning');
       return;
     }
 
@@ -775,7 +895,7 @@
     })
     .catch(error => {
       console.error('Error saving question:', error);
-      alert('Error saving question');
+      showNotification('Failed to save question. Please try again.', 'error');
     });
   }
 
@@ -795,7 +915,7 @@
     })
     .catch(error => {
       console.error('Error deleting question:', error);
-      alert('Error deleting question');
+      showNotification('Failed to delete question. Please try again.', 'error');
     });
   }
 
@@ -898,18 +1018,18 @@
 
     // Validation
     if (!title) {
-      alert('Please enter an interview title');
+      showNotification('Please enter an interview title', 'warning');
       return;
     }
 
     if (autoAssembleSelectedTagIds.length === 0) {
-      alert('Please select at least one tag');
+      showNotification('Please select at least one tag', 'warning');
       return;
     }
 
     const totalPercentage = easyPercentage + mediumPercentage + hardPercentage;
     if (totalPercentage !== 100) {
-      alert(`Difficulty percentages must total 100% (currently ${totalPercentage}%)`);
+      showNotification(`Difficulty percentages must total 100% (currently ${totalPercentage}%)`, 'warning');
       return;
     }
 
@@ -945,7 +1065,16 @@
       },
       body: JSON.stringify(requestData)
     })
-    .then(response => response.json())
+    .then(response => {
+      // Check if response is OK (status 200-299)
+      if (!response.ok) {
+        // Handle error responses
+        return response.json().then(errorData => {
+          throw { status: response.status, data: errorData };
+        });
+      }
+      return response.json();
+    })
     .then(data => {
       // Reset button
       button.innerHTML = originalText;
@@ -953,6 +1082,9 @@
 
       // Store the assembled data
       assembledInterviewData = data;
+
+      // Clear the form fields
+      clearAutoAssembleForm();
 
       // Close the auto-assemble modal
       bootstrap.Modal.getInstance(document.getElementById('autoAssembleModal')).hide();
@@ -962,10 +1094,206 @@
     })
     .catch(error => {
       console.error('Error assembling interview:', error);
-      alert('Error assembling interview. Please try again.');
+
+      // Reset button
       button.innerHTML = originalText;
       button.disabled = false;
+
+      // Handle validation errors (400 Bad Request)
+      if (error.status === 400 && error.data) {
+        showValidationErrorModal(error.data);
+      } else {
+        showValidationErrorModal({
+          error: 'Error assembling interview',
+          message: 'An unexpected error occurred. Please try again.'
+        });
+      }
     });
+  }
+
+  // Show validation error modal
+  function showValidationErrorModal(errorData) {
+    // Set main error message
+    document.getElementById('errorMainMessage').textContent = errorData.error || 'Validation Error';
+
+    // Set description if available
+    const descriptionEl = document.getElementById('errorDescription');
+    if (errorData.available_count !== undefined && errorData.requested_count !== undefined) {
+      descriptionEl.textContent = `You requested ${errorData.requested_count} questions, but only ${errorData.available_count} are available with the selected tags and difficulty distribution.`;
+    } else {
+      descriptionEl.textContent = errorData.message || 'Please review the details below and adjust your settings.';
+    }
+
+    // Show breakdown table if available
+    const breakdownSection = document.getElementById('errorBreakdownSection');
+    const breakdownTable = document.getElementById('errorBreakdownTable');
+
+    if (errorData.breakdown) {
+      breakdownSection.style.display = 'block';
+      breakdownTable.innerHTML = '';
+
+      // Add rows for each difficulty level
+      ['easy', 'medium', 'hard'].forEach(difficulty => {
+        if (errorData.breakdown[difficulty]) {
+          const data = errorData.breakdown[difficulty];
+          const isInsufficient = data.available < data.requested;
+          const statusIcon = isInsufficient ?
+            '<i class="bi bi-x-circle-fill text-danger"></i>' :
+            '<i class="bi bi-check-circle-fill text-success"></i>';
+          const statusText = isInsufficient ? 'Insufficient' : 'OK';
+          const rowClass = isInsufficient ? 'table-danger' : '';
+
+          breakdownTable.innerHTML += `
+            <tr class="${rowClass}">
+              <td class="text-capitalize">${difficulty}</td>
+              <td><strong>${data.requested}</strong></td>
+              <td><strong>${data.available}</strong></td>
+              <td>${statusIcon} ${statusText}</td>
+            </tr>
+          `;
+        }
+      });
+    } else {
+      breakdownSection.style.display = 'none';
+    }
+
+    // Set suggestions
+    const suggestionsEl = document.getElementById('errorSuggestions');
+    suggestionsEl.innerHTML = '';
+
+    const suggestions = [
+      'Reduce the total number of questions',
+      'Adjust the difficulty distribution percentages',
+      'Change tag selection to include more questions',
+      'Add more questions to your question bank'
+    ];
+
+    suggestions.forEach(suggestion => {
+      suggestionsEl.innerHTML += `<li>${suggestion}</li>`;
+    });
+
+    // Close auto-assemble modal and show error modal
+    const autoAssembleModal = bootstrap.Modal.getInstance(document.getElementById('autoAssembleModal'));
+    if (autoAssembleModal) {
+      autoAssembleModal.hide();
+    }
+
+    // Show error modal
+    const errorModal = new bootstrap.Modal(document.getElementById('validationErrorModal'));
+    errorModal.show();
+  }
+
+  // Reopen auto-assemble modal to adjust settings
+  function reopenAutoAssembleModal() {
+    const autoAssembleModal = new bootstrap.Modal(document.getElementById('autoAssembleModal'));
+    autoAssembleModal.show();
+  }
+
+  // Clear auto-assemble form fields
+  function clearAutoAssembleForm() {
+    // Clear title
+    document.getElementById('interviewTitle').value = '';
+
+    // Reset question count to default
+    document.getElementById('questionCount').value = '5';
+
+    // Reset difficulty percentages to defaults
+    document.getElementById('easyPercentage').value = '30';
+    document.getElementById('mediumPercentage').value = '50';
+    document.getElementById('hardPercentage').value = '20';
+
+    // Reset question bank selection
+    const questionBankSelect = document.getElementById('questionBankSelect');
+    if (questionBankSelect) {
+      questionBankSelect.value = '';
+    }
+
+    // Reset randomize checkbox
+    document.getElementById('randomizeQuestions').checked = true;
+
+    // Clear selected tags
+    autoAssembleSelectedTagIds = [];
+    displayAutoAssembleSelectedTags();
+  }
+
+  // Show notification modal
+  function showNotification(message, type = 'info', title = null) {
+    const modal = document.getElementById('notificationModal');
+    const header = document.getElementById('notificationModalHeader');
+    const icon = document.getElementById('notificationModalIcon');
+    const titleText = document.getElementById('notificationModalTitleText');
+    const messageEl = document.getElementById('notificationModalMessage');
+    const okBtn = document.getElementById('notificationModalOkBtn');
+    const closeBtn = document.getElementById('notificationModalCloseBtn');
+
+    // Set message
+    messageEl.textContent = message;
+
+    // Configure based on type
+    let iconClass = '';
+    let headerClass = '';
+    let btnClass = 'btn';
+
+    switch(type) {
+      case 'success':
+        iconClass = 'bi bi-check-circle-fill text-white';
+        headerClass = 'bg-success text-white';
+        btnClass = 'btn btn-success';
+        titleText.textContent = title || 'Success';
+        closeBtn.classList.add('btn-close-white');
+        break;
+      case 'error':
+        iconClass = 'bi bi-x-circle-fill text-white';
+        headerClass = 'bg-danger text-white';
+        btnClass = 'btn btn-danger';
+        titleText.textContent = title || 'Error';
+        closeBtn.classList.add('btn-close-white');
+        break;
+      case 'warning':
+        iconClass = 'bi bi-exclamation-triangle-fill';
+        headerClass = 'warning-header';
+        btnClass = 'btn warning-btn';
+        titleText.textContent = title || 'Warning';
+        closeBtn.classList.add('btn-close-white');
+        break;
+      default: // info
+        iconClass = 'bi bi-info-circle-fill text-white';
+        headerClass = 'bg-info text-white';
+        btnClass = 'btn btn-info';
+        titleText.textContent = title || 'Information';
+        closeBtn.classList.add('btn-close-white');
+    }
+
+    icon.className = iconClass + ' me-2';
+    header.className = 'modal-header ' + headerClass;
+    okBtn.className = btnClass;
+
+    // Show modal
+    const notificationModal = new bootstrap.Modal(modal);
+    notificationModal.show();
+  }
+
+  // Show confirmation modal
+  function showConfirmation(message, onConfirm, title = 'Confirm Action') {
+    const messageEl = document.getElementById('confirmationModalMessage');
+    const confirmBtn = document.getElementById('confirmationModalConfirmBtn');
+
+    messageEl.textContent = message;
+
+    // Remove old event listeners by cloning the button
+    const newConfirmBtn = confirmBtn.cloneNode(true);
+    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+
+    // Add new event listener
+    newConfirmBtn.addEventListener('click', function() {
+      const modal = bootstrap.Modal.getInstance(document.getElementById('confirmationModal'));
+      modal.hide();
+      onConfirm();
+    });
+
+    // Show modal
+    const confirmModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
+    confirmModal.show();
   }
 
   // Display assembly results
@@ -1036,15 +1364,77 @@
     new bootstrap.Modal(document.getElementById('assemblyResultsModal')).show();
   }
 
-  // Save assembled interview (placeholder - can be extended)
+  // Save assembled interview as a template
   function saveAssembledInterview() {
     if (!assembledInterviewData) {
-      alert('No interview data to save');
+      showNotification('No interview data to save', 'warning');
       return;
     }
 
-    alert('Save as Interview Template functionality coming soon! For now, you can use this preview to create interviews manually.');
-    // TODO: Implement saving to InterviewTemplate model
+    // Use the interview title as the template name
+    const templateName = assembledInterviewData.title;
+
+    // Get the current form values to get the question bank ID
+    const questionBankId = document.getElementById('questionBankSelect').value;
+    const questionCount = parseInt(document.getElementById('questionCount').value);
+    const easyPercentage = parseInt(document.getElementById('easyPercentage').value);
+    const mediumPercentage = parseInt(document.getElementById('mediumPercentage').value);
+    const hardPercentage = parseInt(document.getElementById('hardPercentage').value);
+
+    // Prepare the request data
+    const requestData = {
+      name: templateName,
+      description: `Auto-assembled interview with ${assembledInterviewData.total_questions} questions`,
+      tag_ids: autoAssembleSelectedTagIds,
+      question_count: questionCount,
+      easy_percentage: easyPercentage,
+      medium_percentage: mediumPercentage,
+      hard_percentage: hardPercentage,
+      questions: assembledInterviewData.questions  // Include the actual questions
+    };
+
+    if (questionBankId) {
+      requestData.question_bank_id = parseInt(questionBankId);
+    }
+
+    // Show loading state
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+    button.disabled = true;
+
+    // Make API request to save template
+    fetch('/api/save-as-template/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify(requestData)
+    })
+    .then(response => {
+      if (!response.ok) {
+        return response.json().then(err => Promise.reject(err));
+      }
+      return response.json();
+    })
+    .then(data => {
+      // Reset button
+      button.innerHTML = originalText;
+      button.disabled = false;
+
+      // Show success message
+      showNotification(`Template "${templateName}" saved successfully! You can view it in the Templates page.`, 'success', 'Template Saved');
+
+      // Close the modal
+      bootstrap.Modal.getInstance(document.getElementById('assemblyResultsModal')).hide();
+    })
+    .catch(error => {
+      console.error('Error saving template:', error);
+      showNotification('Error saving template: ' + (error.error || 'Please try again'), 'error');
+      button.innerHTML = originalText;
+      button.disabled = false;
+    });
   }
 </script>
 {% endblock %}

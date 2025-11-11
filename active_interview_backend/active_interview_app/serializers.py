@@ -126,30 +126,53 @@ class QuestionBankListSerializer(serializers.ModelSerializer):
 
 
 class InterviewTemplateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the comprehensive InterviewTemplate model.
+    Handles both section-based templates and auto-assembly configuration.
+    """
     tags = TagSerializer(many=True, read_only=True)
     tag_ids = serializers.PrimaryKeyRelatedField(
         many=True, queryset=Tag.objects.all(), write_only=True, required=False
     )
-    owner_username = serializers.CharField(source='owner.username', read_only=True)
+    question_banks = serializers.PrimaryKeyRelatedField(
+        many=True, read_only=True
+    )
+    question_bank_ids = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=QuestionBank.objects.all(), write_only=True, required=False
+    )
+    user_username = serializers.CharField(source='user.username', read_only=True)
+    status = serializers.CharField(source='get_status_display', read_only=True)
 
     class Meta:
         model = InterviewTemplate
-        fields = ['id', 'name', 'owner', 'owner_username', 'tags', 'tag_ids',
-                 'question_count', 'easy_percentage', 'medium_percentage',
-                 'hard_percentage', 'created_at', 'updated_at']
-        read_only_fields = ['id', 'owner', 'created_at', 'updated_at']
+        fields = [
+            'id', 'name', 'user', 'user_username', 'description',
+            'sections', 'status',
+            # Question bank integration fields
+            'question_banks', 'question_bank_ids', 'tags', 'tag_ids',
+            # Auto-assembly configuration
+            'use_auto_assembly', 'question_count',
+            'easy_percentage', 'medium_percentage', 'hard_percentage',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'user', 'created_at', 'updated_at']
 
     def create(self, validated_data):
         tag_ids = validated_data.pop('tag_ids', [])
+        question_bank_ids = validated_data.pop('question_bank_ids', [])
         template = InterviewTemplate.objects.create(**validated_data)
         template.tags.set(tag_ids)
+        template.question_banks.set(question_bank_ids)
         return template
 
     def update(self, instance, validated_data):
         tag_ids = validated_data.pop('tag_ids', None)
+        question_bank_ids = validated_data.pop('question_bank_ids', None)
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
         if tag_ids is not None:
             instance.tags.set(tag_ids)
+        if question_bank_ids is not None:
+            instance.question_banks.set(question_bank_ids)
         return instance

@@ -343,16 +343,41 @@ class AutoAssembleInterviewTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['total_questions'], 10)
 
-    def test_insufficient_questions_warning(self):
-        """Test warning when insufficient questions available"""
+    def test_insufficient_questions_error(self):
+        """Test error when insufficient total questions available"""
         url = reverse('auto_assemble_interview')
         data = {
             'tag_ids': [self.tag.id],
-            'question_count': 20  # More than available
+            'question_count': 20  # More than available (only 10 total)
         }
         response = self.client.post(url, data, format='json')
-        # Should return partial content with warning
+        # Should return 400 BAD REQUEST with error
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('error', response.data)
         self.assertIn('available_count', response.data)
+        self.assertEqual(response.data['available_count'], 10)
+        self.assertEqual(response.data['requested_count'], 20)
+
+    def test_insufficient_questions_by_difficulty(self):
+        """Test error when insufficient questions for specific difficulty"""
+        url = reverse('auto_assemble_interview')
+        data = {
+            'tag_ids': [self.tag.id],
+            'question_count': 10,
+            'difficulty_distribution': {
+                'easy': 50,   # Need 5 easy, but only 3 available
+                'medium': 30,  # Need 3 medium, have 5 available
+                'hard': 20     # Need 2 hard, have 2 available
+            }
+        }
+        response = self.client.post(url, data, format='json')
+        # Should return 400 BAD REQUEST with detailed breakdown
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('error', response.data)
+        self.assertIn('breakdown', response.data)
+        self.assertIn('easy', response.data['breakdown'])
+        self.assertEqual(response.data['breakdown']['easy']['available'], 3)
+        self.assertEqual(response.data['breakdown']['easy']['requested'], 5)
 
 
 class TagManagementTest(APITestCase):
@@ -412,3 +437,105 @@ class TagManagementTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('total_tags', response.data)
         self.assertEqual(response.data['total_tags'], 2)
+
+
+class SaveAsTemplateTest(APITestCase):
+    """Tests for SaveAsTemplateView - each question as separate section"""
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='testpass123'
+        )
+        self.client.force_authenticate(user=self.user)
+        self.bank = QuestionBank.objects.create(
+            name="Test Bank",
+            owner=self.user
+        )
+        self.tag = Tag.objects.create(name="#python")
+
+    def test_save_questions_as_template_separate_sections(self):
+        """Test that each question is saved as its own section"""
+        # Create some questions
+        questions_data = []
+        for i in range(3):
+            question_data = {
+                'text': f'What is Python concept {i}?',
+                'difficulty': 'medium',
+                'tags': [{'name': self.tag.name}]
+            }
+            questions_data.append(question_data)
+
+        url = reverse('save_as_template')
+        data = {
+            'name': 'Test Template',
+            'description': 'Template with separate sections per question',
+            'tag_ids': [self.tag.id],
+            'question_count': 3,
+            'easy_percentage': 30,
+            'medium_percentage': 50,
+            'hard_percentage': 20,
+            'questions': questions_data
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # Verify template was created
+        template = InterviewTemplate.objects.get(name='Test Template')
+        self.assertIsNotNone(template)
+
+        # Verify each question got its own section
+        sections = template.sections
+        self.assertEqual(len(sections), 3, "Should have 3 separate sections")
+
+        # Verify section structure
+        for i, section in enumerate(sections):
+            self.assertIn('id', section)
+            self.assertIn('title', section)
+            self.assertIn('content', section)
+            self.assertIn('order', section)
+            self.assertIn('weight', section)
+            self.assertEqual(section['order'], i, f"Section {i} should have order {i}")
+            self.assertIn(f'Question {i+1}:', section['title'])
+            self.assertIn(questions_data[i]['text'], section['title'])
+
+        # Verify weights sum to 100
+        total_weight = sum(s['weight'] for s in sections)
+        self.assertEqual(total_weight, 100, "Total weight should be 100")
+
+    def test_save_questions_weight_distribution(self):
+        """Test that weights are distributed evenly across sections"""
+        # Create 5 questions to test weight distribution with remainder
+        questions_data = []
+        for i in range(5):
+            question_data = {
+                'text': f'Question {i}?',
+                'difficulty': 'easy',
+                'tags': [{'name': self.tag.name}]
+            }
+            questions_data.append(question_data)
+
+        url = reverse('save_as_template')
+        data = {
+            'name': 'Weight Test Template',
+            'tag_ids': [self.tag.id],
+            'question_count': 5,
+            'easy_percentage': 100,
+            'medium_percentage': 0,
+            'hard_percentage': 0,
+            'questions': questions_data
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        template = InterviewTemplate.objects.get(name='Weight Test Template')
+        sections = template.sections
+
+        # 100 / 5 = 20 per section
+        # All sections should have weight 20
+        for section in sections:
+            self.assertEqual(section['weight'], 20)
+
+        # Verify total is exactly 100
+        total_weight = sum(s['weight'] for s in sections)
+        self.assertEqual(total_weight, 100)

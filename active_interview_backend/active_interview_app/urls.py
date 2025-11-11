@@ -105,6 +105,9 @@ urlpatterns = [
     path('api/auto-assemble-interview/',
          question_bank_views.AutoAssembleInterviewView.as_view(),
          name='auto_assemble_interview'),
+    path('api/save-as-template/',
+         question_bank_views.SaveAsTemplateView.as_view(),
+         name='save_as_template'),
 
     # User Profile View (Issue #69)
     path('user/<int:user_id>/profile/', views.view_user_profile,

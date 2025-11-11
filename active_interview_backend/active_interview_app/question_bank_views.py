@@ -281,11 +281,121 @@ class InterviewTemplateViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Return templates owned by the current user"""
-        return InterviewTemplate.objects.filter(owner=self.request.user)
+        return InterviewTemplate.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
-        """Set the owner to the current user"""
-        serializer.save(owner=self.request.user)
+        """Set the user to the current user"""
+        serializer.save(user=self.request.user)
+
+
+class SaveAsTemplateView(APIView):
+    """
+    Save an auto-assembled interview configuration as an InterviewTemplate.
+    Restricted to Interviewers and Admins only.
+    """
+    permission_classes = [IsAdminOrInterviewer]
+
+    def post(self, request):
+        """
+        Save interview assembly configuration as a template.
+
+        Request body:
+        {
+            "name": "Template name",
+            "description": "Optional description",
+            "tag_ids": [1, 2, 3],
+            "question_count": 10,
+            "easy_percentage": 30,
+            "medium_percentage": 50,
+            "hard_percentage": 20,
+            "question_bank_id": 1,  # Optional
+            "questions": [...]  # Optional: assembled questions to save as section
+        }
+        """
+        import uuid
+
+        name = request.data.get('name')
+        description = request.data.get('description', '')
+        tag_ids = request.data.get('tag_ids', [])
+        question_count = request.data.get('question_count', 5)
+        easy_percentage = request.data.get('easy_percentage', 30)
+        medium_percentage = request.data.get('medium_percentage', 50)
+        hard_percentage = request.data.get('hard_percentage', 20)
+        question_bank_id = request.data.get('question_bank_id')
+        questions = request.data.get('questions', [])
+
+        # Validation
+        if not name:
+            return Response(
+                {'error': 'Template name is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        total = easy_percentage + medium_percentage + hard_percentage
+        if total != 100:
+            return Response(
+                {'error': f'Difficulty percentages must total 100% (currently {total}%)'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Create section from questions if provided
+        # Each question gets its own section
+        sections = []
+        if questions:
+            # Calculate weight per question (distributed evenly)
+            weight_per_question = 100 // len(questions) if questions else 0
+            remaining_weight = 100 - (weight_per_question * len(questions))
+
+            for i, q in enumerate(questions):
+                # Format individual question as section content
+                question_content = f"{q['text']}\n\nDifficulty: {q['difficulty']}\nTags: {', '.join([tag['name'] for tag in q.get('tags', [])])}"
+
+                # Truncate question text for title (max 50 chars)
+                title = q['text'][:50] + '...' if len(q['text']) > 50 else q['text']
+
+                # Add extra weight to first section if there's a remainder
+                weight = weight_per_question + (remaining_weight if i == 0 else 0)
+
+                sections.append({
+                    'id': str(uuid.uuid4()),
+                    'title': f"Question {i+1}: {title}",
+                    'content': question_content,
+                    'order': i,
+                    'weight': weight
+                })
+
+        # Create the template
+        template = InterviewTemplate.objects.create(
+            name=name,
+            user=request.user,
+            description=description,
+            use_auto_assembly=True,
+            question_count=question_count,
+            easy_percentage=easy_percentage,
+            medium_percentage=medium_percentage,
+            hard_percentage=hard_percentage,
+            sections=sections
+        )
+
+        # Set tags
+        if tag_ids:
+            template.tags.set(tag_ids)
+
+        # Set question bank if provided
+        if question_bank_id:
+            try:
+                question_bank = QuestionBank.objects.get(
+                    id=question_bank_id,
+                    owner=request.user
+                )
+                template.question_banks.add(question_bank)
+            except QuestionBank.DoesNotExist:
+                pass  # Skip if question bank not found
+
+        return Response({
+            'message': 'Template saved successfully',
+            'template': InterviewTemplateSerializer(template).data
+        }, status=status.HTTP_201_CREATED)
 
 
 class AutoAssembleInterviewView(APIView):
@@ -333,15 +443,22 @@ class AutoAssembleInterviewView(APIView):
             try:
                 template = InterviewTemplate.objects.get(
                     id=template_id,
-                    owner=request.user
+                    user=request.user
                 )
-                tag_ids = list(template.tags.values_list('id', flat=True))
-                question_count = template.question_count
-                difficulty_dist = {
-                    'easy': template.easy_percentage,
-                    'medium': template.medium_percentage,
-                    'hard': template.hard_percentage
-                }
+                # Only use auto-assembly settings if enabled
+                if template.use_auto_assembly:
+                    tag_ids = list(template.tags.values_list('id', flat=True))
+                    question_count = template.question_count
+                    difficulty_dist = {
+                        'easy': template.easy_percentage,
+                        'medium': template.medium_percentage,
+                        'hard': template.hard_percentage
+                    }
+                else:
+                    return Response(
+                        {'error': 'Template does not have auto-assembly enabled'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
             except InterviewTemplate.DoesNotExist:
                 return Response(
                     {'error': 'Template not found'},
@@ -371,29 +488,75 @@ class AutoAssembleInterviewView(APIView):
         medium_count = int(question_count * difficulty_dist.get('medium', 0) / 100)
         hard_count = question_count - easy_count - medium_count
 
+        # Early validation: Check if enough questions are available
+        # Count available questions for each difficulty level
+        available_easy = questions_query.filter(difficulty='easy').count()
+        available_medium = questions_query.filter(difficulty='medium').count()
+        available_hard = questions_query.filter(difficulty='hard').count()
+        total_available = available_easy + available_medium + available_hard
+
+        # Check if total available is less than requested
+        if total_available < question_count:
+            return Response({
+                'error': f'Not enough questions available. Requested: {question_count}, Available: {total_available}',
+                'available_count': total_available,
+                'requested_count': question_count,
+                'breakdown': {
+                    'easy': {
+                        'requested': easy_count,
+                        'available': available_easy
+                    },
+                    'medium': {
+                        'requested': medium_count,
+                        'available': available_medium
+                    },
+                    'hard': {
+                        'requested': hard_count,
+                        'available': available_hard
+                    }
+                },
+                'message': 'Please reduce the number of questions or adjust the difficulty distribution.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if enough questions available for each difficulty level
+        if available_easy < easy_count or available_medium < medium_count or available_hard < hard_count:
+            insufficient_difficulties = []
+            if available_easy < easy_count:
+                insufficient_difficulties.append(f'easy (need {easy_count}, have {available_easy})')
+            if available_medium < medium_count:
+                insufficient_difficulties.append(f'medium (need {medium_count}, have {available_medium})')
+            if available_hard < hard_count:
+                insufficient_difficulties.append(f'hard (need {hard_count}, have {available_hard})')
+
+            return Response({
+                'error': f'Not enough questions for difficulty levels: {", ".join(insufficient_difficulties)}',
+                'breakdown': {
+                    'easy': {
+                        'requested': easy_count,
+                        'available': available_easy
+                    },
+                    'medium': {
+                        'requested': medium_count,
+                        'available': available_medium
+                    },
+                    'hard': {
+                        'requested': hard_count,
+                        'available': available_hard
+                    }
+                },
+                'message': 'Please adjust the difficulty distribution or add more questions to your question bank.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         # Get questions for each difficulty level
         selected_questions = []
 
         for difficulty, count in [('easy', easy_count), ('medium', medium_count), ('hard', hard_count)]:
             available = list(questions_query.filter(difficulty=difficulty))
 
-            if len(available) < count:
-                # Not enough questions of this difficulty
-                selected_questions.extend(available)
+            if randomize:
+                selected_questions.extend(random.sample(available, count))
             else:
-                if randomize:
-                    selected_questions.extend(random.sample(available, count))
-                else:
-                    selected_questions.extend(available[:count])
-
-        # Check if we have enough questions
-        if len(selected_questions) < question_count:
-            return Response({
-                'warning': f'Only {len(selected_questions)} questions available with selected tags',
-                'available_count': len(selected_questions),
-                'requested_count': question_count,
-                'questions': QuestionSerializer(selected_questions, many=True).data
-            }, status=status.HTTP_206_PARTIAL_CONTENT)
+                selected_questions.extend(available[:count])
 
         # Return the assembled interview preview
         return Response({

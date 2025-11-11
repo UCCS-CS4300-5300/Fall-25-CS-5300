@@ -78,10 +78,11 @@ class EditChatForm(ModelForm):
 class InterviewTemplateForm(ModelForm):
     """
     Form for creating and editing interview templates.
+    Supports both section-based templates and question bank integration.
     """
     name = forms.CharField(
         required=True,
-        max_length=32,
+        max_length=255,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
             'placeholder': 'e.g., Technical Interview, Behavioral Interview'
@@ -96,9 +97,119 @@ class InterviewTemplateForm(ModelForm):
         })
     )
 
+    # Question bank integration fields
+    use_auto_assembly = forms.BooleanField(
+        required=False,
+        initial=False,
+        widget=forms.CheckboxInput(attrs={
+            'class': 'form-check-input'
+        }),
+        label='Enable Auto-Assembly',
+        help_text='Automatically generate interview questions from question banks'
+    )
+
+    question_banks = forms.ModelMultipleChoiceField(
+        queryset=QuestionBank.objects.none(),
+        required=False,
+        widget=forms.SelectMultiple(attrs={
+            'class': 'form-control',
+            'size': '5'
+        }),
+        help_text='Select question banks to use for auto-assembly'
+    )
+
+    tags = forms.ModelMultipleChoiceField(
+        queryset=Tag.objects.all(),
+        required=False,
+        widget=forms.SelectMultiple(attrs={
+            'class': 'form-control',
+            'size': '5'
+        }),
+        help_text='Select tags to filter questions'
+    )
+
+    question_count = forms.IntegerField(
+        required=False,
+        initial=5,
+        min_value=1,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'min': '1'
+        }),
+        help_text='Number of questions for auto-assembly'
+    )
+
+    easy_percentage = forms.IntegerField(
+        required=False,
+        initial=30,
+        min_value=0,
+        max_value=100,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'min': '0',
+            'max': '100'
+        }),
+        help_text='Percentage of easy questions (0-100)'
+    )
+
+    medium_percentage = forms.IntegerField(
+        required=False,
+        initial=50,
+        min_value=0,
+        max_value=100,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'min': '0',
+            'max': '100'
+        }),
+        help_text='Percentage of medium questions (0-100)'
+    )
+
+    hard_percentage = forms.IntegerField(
+        required=False,
+        initial=20,
+        min_value=0,
+        max_value=100,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'min': '0',
+            'max': '100'
+        }),
+        help_text='Percentage of hard questions (0-100)'
+    )
+
     class Meta:
         model = InterviewTemplate
-        fields = ['name', 'description']
+        fields = [
+            'name', 'description', 'use_auto_assembly',
+            'question_banks', 'tags', 'question_count',
+            'easy_percentage', 'medium_percentage', 'hard_percentage'
+        ]
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+
+        if user is not None:
+            # Filter question banks to show only those owned by the user
+            self.fields['question_banks'].queryset = QuestionBank.objects.filter(owner=user)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        use_auto_assembly = cleaned_data.get('use_auto_assembly')
+
+        # Validate difficulty percentages sum to 100 if auto-assembly is enabled
+        if use_auto_assembly:
+            easy = cleaned_data.get('easy_percentage', 0) or 0
+            medium = cleaned_data.get('medium_percentage', 0) or 0
+            hard = cleaned_data.get('hard_percentage', 0) or 0
+
+            if easy + medium + hard != 100:
+                raise forms.ValidationError(
+                    'Difficulty percentages must sum to 100% when auto-assembly is enabled'
+                )
+
+        return cleaned_data
 
 
 # Defines a Django form for handling file uploads.
