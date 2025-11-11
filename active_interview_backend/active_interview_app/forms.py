@@ -4,6 +4,22 @@ from .models import *
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 
+# Form field constants
+TITLE_MAX_LENGTH_SHORT = 32
+TITLE_MAX_LENGTH = 255
+TEXTAREA_ROWS_DEFAULT = 15
+TEXTAREA_ROWS_SMALL = 4
+DIFFICULTY_INITIAL = 5
+DIFFICULTY_MIN = 1
+DIFFICULTY_MAX = 10
+QUESTION_COUNT_INITIAL = 5
+QUESTION_COUNT_MIN = 1
+PERCENTAGE_MIN = 0
+PERCENTAGE_MAX = 100
+PERCENTAGE_DEFAULT_EASY = 30
+PERCENTAGE_DEFAULT_MEDIUM = 50
+PERCENTAGE_DEFAULT_HARD = 20
+
 
 class CreateUserForm(UserCreationForm):
     email = forms.EmailField(required=True)
@@ -18,26 +34,26 @@ class DocumentEditForm(forms.ModelForm):
         model = UploadedResume
         fields = ['title', 'content']
         widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control', 'maxlength': '32'}),
+            'title': forms.TextInput(attrs={'class': 'form-control', 'maxlength': str(TITLE_MAX_LENGTH_SHORT)}),
             'content': forms.Textarea(attrs={'class': 'form-control',
-                                             'rows': 15}),
+                                             'rows': TEXTAREA_ROWS_DEFAULT}),
         }
 
 
 class JobPostingEditForm(forms.ModelForm):
-    title = forms.CharField(required=True, max_length=32)
-    content = forms.CharField(required=True, widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 15}))
+    title = forms.CharField(required=True, max_length=TITLE_MAX_LENGTH_SHORT)
+    content = forms.CharField(required=True, widget=forms.Textarea(attrs={'class': 'form-control', 'rows': TEXTAREA_ROWS_DEFAULT}))
 
     class Meta:
         model = UploadedJobListing
         fields = ['title', 'content']
         widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control', 'maxlength': '32'}),
+            'title': forms.TextInput(attrs={'class': 'form-control', 'maxlength': str(TITLE_MAX_LENGTH_SHORT)}),
         }
 
 
 class CreateChatForm(ModelForm):
-    difficulty = IntegerField(initial=5, min_value=1, max_value=10)
+    difficulty = IntegerField(initial=DIFFICULTY_INITIAL, min_value=DIFFICULTY_MIN, max_value=DIFFICULTY_MAX)
     title = forms.CharField(required=False, initial="Interview Chat")
 
     listing_choice = ModelChoiceField(
@@ -67,7 +83,7 @@ class CreateChatForm(ModelForm):
 
 
 class EditChatForm(ModelForm):
-    difficulty = IntegerField(min_value=1, max_value=10, required=False)
+    difficulty = IntegerField(min_value=DIFFICULTY_MIN, max_value=DIFFICULTY_MAX, required=False)
     title = forms.CharField(required=False)
 
     class Meta:
@@ -82,7 +98,7 @@ class InterviewTemplateForm(ModelForm):
     """
     name = forms.CharField(
         required=True,
-        max_length=255,
+        max_length=TITLE_MAX_LENGTH,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
             'placeholder': 'e.g., Technical Interview, Behavioral Interview'
@@ -92,7 +108,7 @@ class InterviewTemplateForm(ModelForm):
         required=False,
         widget=forms.Textarea(attrs={
             'class': 'form-control',
-            'rows': 4,
+            'rows': TEXTAREA_ROWS_SMALL,
             'placeholder': 'Optional: Describe the purpose of this template'
         })
     )
@@ -130,50 +146,50 @@ class InterviewTemplateForm(ModelForm):
 
     question_count = forms.IntegerField(
         required=False,
-        initial=5,
-        min_value=1,
+        initial=QUESTION_COUNT_INITIAL,
+        min_value=QUESTION_COUNT_MIN,
         widget=forms.NumberInput(attrs={
             'class': 'form-control',
-            'min': '1'
+            'min': str(QUESTION_COUNT_MIN)
         }),
         help_text='Number of questions for auto-assembly'
     )
 
     easy_percentage = forms.IntegerField(
         required=False,
-        initial=30,
-        min_value=0,
-        max_value=100,
+        initial=PERCENTAGE_DEFAULT_EASY,
+        min_value=PERCENTAGE_MIN,
+        max_value=PERCENTAGE_MAX,
         widget=forms.NumberInput(attrs={
             'class': 'form-control',
-            'min': '0',
-            'max': '100'
+            'min': str(PERCENTAGE_MIN),
+            'max': str(PERCENTAGE_MAX)
         }),
         help_text='Percentage of easy questions (0-100)'
     )
 
     medium_percentage = forms.IntegerField(
         required=False,
-        initial=50,
-        min_value=0,
-        max_value=100,
+        initial=PERCENTAGE_DEFAULT_MEDIUM,
+        min_value=PERCENTAGE_MIN,
+        max_value=PERCENTAGE_MAX,
         widget=forms.NumberInput(attrs={
             'class': 'form-control',
-            'min': '0',
-            'max': '100'
+            'min': str(PERCENTAGE_MIN),
+            'max': str(PERCENTAGE_MAX)
         }),
         help_text='Percentage of medium questions (0-100)'
     )
 
     hard_percentage = forms.IntegerField(
         required=False,
-        initial=20,
-        min_value=0,
-        max_value=100,
+        initial=PERCENTAGE_DEFAULT_HARD,
+        min_value=PERCENTAGE_MIN,
+        max_value=PERCENTAGE_MAX,
         widget=forms.NumberInput(attrs={
             'class': 'form-control',
-            'min': '0',
-            'max': '100'
+            'min': str(PERCENTAGE_MIN),
+            'max': str(PERCENTAGE_MAX)
         }),
         help_text='Percentage of hard questions (0-100)'
     )
@@ -219,7 +235,7 @@ class UploadFileForm(ModelForm):
         model = UploadedResume
         fields = ["file", "title"]
         widgets = {
-            'title': forms.TextInput(attrs={'maxlength': '32'}),
+            'title': forms.TextInput(attrs={'maxlength': str(TITLE_MAX_LENGTH_SHORT)}),
         }
 
     def clean_file(self):
