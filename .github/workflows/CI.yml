@@ -3,9 +3,10 @@ name: Continuous Integration
 # Workflow Strategy:
 # - Runs on ALL branch pushes for fast feedback to developers
 # - Core jobs (lint, security, test) run on every commit
-# - Expensive jobs (ai-review, loc-metrics) only run on main or PRs to main
+# - AI code review runs on main branch pushes and ALL pull requests
+# - LOC metrics only run on main branch pushes
 # - This gives developers immediate test/lint feedback on feature branches
-#   while reserving costly operations for main branch and PR review
+#   and comprehensive AI review on all pull requests
 
 on:
   push:
@@ -17,8 +18,7 @@ on:
       - 'railway.toml'
       - '.github/workflows/CI.yml'
   pull_request:
-    branches:
-      - main
+    # Run on pull requests to any branch
     paths:
       - 'active_interview_backend/**'
       - 'scripts/**'
@@ -306,15 +306,15 @@ jobs:
         fi
 
   # ============================================================================
-  # CONDITIONAL JOBS - Run only on main branch or PRs to main
+  # CONDITIONAL JOBS - Run on main branch pushes or any pull request
   # ============================================================================
   ai-review:
     name: AI Code Review
     runs-on: ubuntu-latest
     needs: [test]
-    # Run on main branch pushes OR any pull request (merge request)
-    # This ensures code review happens before merging
-    if: github.ref == 'refs/heads/main' || (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main')
+    # Run on main branch pushes OR any pull request (merge request) to any branch
+    # This ensures code review happens on all PRs before merging
+    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
 
     steps:
     - name: Checkout Code
