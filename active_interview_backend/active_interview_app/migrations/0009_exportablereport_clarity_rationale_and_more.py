@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('active_interview_app', '0007_alter_chat_type_userprofile_rolechangerequest'),
+        ('active_interview_app', '0008_interviewtemplate'),
     ]
 
     operations = [

@@ -1,0 +1,23 @@
+Name                                         Stmts   Miss  Cover   Missing
+--------------------------------------------------------------------------
+active_interview_app\adapters.py                34      0   100%
+active_interview_app\admin.py                   52      8    85%   57-58, 101-102, 114-116, 129
+active_interview_app\apps.py                     6      0   100%
+active_interview_app\decorators.py              59      0   100%
+active_interview_app\forms.py                   61      0   100%
+active_interview_app\merge_stats_models.py      70      0   100%
+active_interview_app\models.py                 140      2    99%   280, 363
+active_interview_app\openai_utils.py            19      0   100%
+active_interview_app\pdf_export.py             165      0   100%
+active_interview_app\resume_parser.py           66      8    88%   154, 167, 169, 171, 176, 186, 224, 226
+active_interview_app\serializers.py             23      0   100%
+active_interview_app\signals.py                  6      0   100%
+active_interview_app\token_tracking.py          28      0   100%
+active_interview_app\token_usage_models.py      44      0   100%
+active_interview_app\urls.py                     9      0   100%
+active_interview_app\utils.py                   19      0   100%
+active_interview_app\views.py                  869     80    91%   724-726, 729-755, 1028, 1041, 1060-1063, 1229-1232, 1425, 1712-1713, 1739, 1770, 1797, 1846-1853, 1863-1880, 1889-1907, 1917-1939, 1948-1964, 2041, 2063-2064, 2069-2073, 2087-2088, 2123, 2146-2147, 2160
+active_interview_project\settings.py            57      4    93%   66-68, 140, 260
+active_interview_project\urls.py                 7      1    86%   35
+--------------------------------------------------------------------------
+TOTAL                                         1734    103    94%
