@@ -269,6 +269,7 @@ jobs:
     name: Security Scan
     runs-on: ubuntu-latest
     needs: [lint]
+    if: always()
 
     steps:
     - name: Checkout code
@@ -316,6 +317,7 @@ jobs:
     name: Run Tests & Coverage Validation
     runs-on: ubuntu-latest
     needs: [security]
+    if: always()
 
     steps:
     - name: Checkout code
@@ -504,6 +506,7 @@ jobs:
     name: AI Code Review
     runs-on: ubuntu-latest
     needs: [test]
+    if: always()
     permissions:
       contents: read
       pull-requests: write
