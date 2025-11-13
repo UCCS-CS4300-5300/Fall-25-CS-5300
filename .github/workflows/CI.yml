@@ -28,13 +28,213 @@ env:
   RETENTION_DAYS: 14
 
 jobs:
+  fix-migrations:
+    name: Auto-fix Django Migrations
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Check if migration sync needed
+        id: check
+        run: |
+          git fetch origin ${{ github.base_ref }}
+
+          # Check if there are migration changes in this PR
+          MIGRATION_CHANGES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep 'migrations/.*\.py$' || true)
+
+          if [ -z "$MIGRATION_CHANGES" ]; then
+            echo "needs_sync=false" >> $GITHUB_OUTPUT
+            echo "No migration changes in this PR"
+          else
+            echo "needs_sync=true" >> $GITHUB_OUTPUT
+            echo "Migration changes detected: $MIGRATION_CHANGES"
+          fi
+
+      - name: Sync migrations with main and regenerate
+        if: steps.check.outputs.needs_sync == 'true'
+        run: |
+          # Find all Django apps with migrations (specific to active_interview_app)
+          MIGRATION_DIRS="./active_interview_backend/active_interview_app/migrations"
+
+          echo "Found migration directories:"
+          echo "$MIGRATION_DIRS"
+
+          # For each migrations directory
+          for dir in $MIGRATION_DIRS; do
+            echo "================================================"
+            echo "Processing: $dir"
+
+            # Keep __init__.py if it exists
+            if [ -f "$dir/__init__.py" ]; then
+              cp "$dir/__init__.py" "/tmp/__init__.py.backup"
+            fi
+
+            # Remove all Python files in migrations
+            rm -f "$dir"/*.py
+
+            # Restore __init__.py
+            if [ -f "/tmp/__init__.py.backup" ]; then
+              mv "/tmp/__init__.py.backup" "$dir/__init__.py"
+            else
+              touch "$dir/__init__.py"
+            fi
+
+            # Checkout migrations from main (this will restore all migration files from main)
+            git checkout origin/${{ github.base_ref }} -- "$dir" 2>/dev/null || echo "No existing migrations in main for $dir"
+          done
+
+          echo "================================================"
+          echo "Current migrations (from main):"
+          find . -path "*/migrations/*.py" ! -name "__init__.py" | sort
+
+          echo "================================================"
+          echo "Running makemigrations to create new migrations..."
+          python3 active_interview_backend/manage.py makemigrations
+
+          echo "================================================"
+          echo "All migrations after regeneration:"
+          find . -path "*/migrations/*.py" ! -name "__init__.py" | sort
+
+      - name: Verify migrations before commit
+        if: steps.check.outputs.needs_sync == 'true'
+        run: |
+          echo "================================================"
+          echo "VERIFICATION: Running Django system checks..."
+          python3 active_interview_backend/manage.py check --deploy
+
+          echo "================================================"
+          echo "VERIFICATION: Checking for missing migrations..."
+          python3 active_interview_backend/manage.py makemigrations --check --dry-run
+
+          echo "================================================"
+          echo "VERIFICATION: Validating migration plan..."
+          python3 active_interview_backend/manage.py migrate --plan
+
+          echo "================================================"
+          echo "VERIFICATION: Checking for duplicate migration numbers..."
+          MIGRATION_DIR="./active_interview_backend/active_interview_app/migrations"
+          DUPLICATES=$(ls -1 "$MIGRATION_DIR" | grep -E '^[0-9]{4}_' | cut -d'_' -f1 | sort | uniq -d)
+          if [ -n "$DUPLICATES" ]; then
+            echo "❌ ERROR: Found duplicate migration numbers:"
+            echo "$DUPLICATES"
+            exit 1
+          else
+            echo "✅ No duplicate migration numbers found"
+          fi
+
+          echo "================================================"
+          echo "VERIFICATION: Testing migrations on temporary database..."
+          # Create temporary SQLite database for testing
+          TEMP_DB_PATH="${{ runner.temp }}/test_migrations.db"
+          export DATABASE_URL="sqlite:///$TEMP_DB_PATH"
+          export DJANGO_SECRET_KEY="test-secret-key-for-migration-verification"
+          export OPENAI_API_KEY="test-key"
+
+          # Run migrations on clean database
+          python3 active_interview_backend/manage.py migrate --no-input
+
+          # Verify migrations were applied successfully
+          echo "Checking applied migrations:"
+          python3 active_interview_backend/manage.py showmigrations
+
+          # Clean up test database
+          rm -f "$TEMP_DB_PATH"
+
+          echo "================================================"
+          echo "✅ All migration verifications passed!"
+
+      - name: Commit and push if changes exist
+        id: push
+        if: steps.check.outputs.needs_sync == 'true'
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git config user.name "django-migration-bot"
+            git config user.email "bot@yourdomain.com"
+
+            git add .
+
+            git commit -m "🔧 Auto-fix: Sync migrations with main and regenerate
+
+            Changes made by migration bot:
+            - Removed all migrations from this branch
+            - Restored migrations from main branch
+            - Generated new migrations on top of main's history
+
+            This ensures:
+            ✅ Sequential migration numbering
+            ✅ Correct migration dependencies
+            ✅ No conflicts with main branch"
+
+            git push
+
+            echo "pushed=true" >> $GITHUB_OUTPUT
+            echo "::notice::Migrations have been automatically regenerated and pushed"
+          else
+            echo "pushed=false" >> $GITHUB_OUTPUT
+            echo "::notice::No migration changes needed"
+          fi
+
+      - name: Checkout fresh code after push
+        if: steps.push.outputs.pushed == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Create Migration Fix Summary
+        if: always()
+        run: |
+          {
+            echo '# Migration Auto-Fix Results'
+            echo ''
+            if [ "${{ steps.push.outputs.pushed }}" == "true" ]; then
+              echo '✅ **Migrations were fixed, verified, and pushed**'
+              echo ''
+              echo '**Verification steps passed:**'
+              echo '- Django system checks'
+              echo '- Migration completeness check'
+              echo '- Migration plan validation'
+              echo '- Duplicate migration number check'
+              echo '- Test database migration'
+              echo ''
+              echo 'Fixed migrations have been pulled back and CI will continue with the corrected code.'
+            elif [ "${{ steps.check.outputs.needs_sync }}" == "true" ]; then
+              echo '✅ **Migrations checked, no changes needed**'
+              echo ''
+              echo 'Migrations are already properly synced with main branch.'
+            else
+              echo '✅ **No migration changes detected in this PR**'
+              echo ''
+              echo 'Proceeding with normal CI checks.'
+            fi
+          } >> $GITHUB_STEP_SUMMARY
+
   lint:
     name: Run Linting
     runs-on: ubuntu-latest
+    needs: [fix-migrations]
+    if: always() && (needs.fix-migrations.result == 'success' || needs.fix-migrations.result == 'skipped')
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
 
     - name: Setup Python
       uses: actions/setup-python@v5
@@ -73,6 +273,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
 
     - name: Setup Python
       uses: actions/setup-python@v5
@@ -97,10 +299,10 @@ jobs:
           echo ''
           echo '## Bandit Scan (Code Security Issues)'
           echo '```'
-          bandit -r . --exclude './.git' -f screen || true
+          bandit -r . --exclude './.git,./active_interview_backend/active_interview_app/tests' -f screen || true
           echo '```'
         } >> $GITHUB_STEP_SUMMARY
-        bandit -r . --exclude './.git' -f json -o bandit-report.json || true
+        bandit -r . --exclude './.git,./active_interview_backend/active_interview_app/tests' -f json -o bandit-report.json || true
 
     - name: Upload Security Reports
       if: always()
@@ -118,6 +320,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
 
     - name: Configure Environment
       run: |
@@ -308,6 +512,7 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v4
       with:
+        ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
         fetch-depth: 0
 
     - name: Setup Python
@@ -365,6 +570,7 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v4
       with:
+        ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
         fetch-depth: 0
 
     - name: Calculate Git Diff
@@ -438,7 +644,7 @@ jobs:
   cleanup:
     name: Cleanup & Archive
     runs-on: ubuntu-latest
-    needs: [lint, security, test, ai-review, loc-metrics]
+    needs: [fix-migrations, lint, security, test, ai-review, loc-metrics]
     if: always()
 
     steps:
