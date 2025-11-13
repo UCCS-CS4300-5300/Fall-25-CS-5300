@@ -27,11 +27,10 @@ Session_Analysis/
 ├── research_metrics.json        # Structured data for analysis
 ├── analyze_sessions.py          # Reusable analysis script
 ├── README.md                    # This file
-├── results/                     # Analysis output
-│   ├── analysis_results_corrected.json
-│   ├── analysis_report_corrected.txt
-│   └── session_summary_corrected.csv
-└── archive/                     # Old/incorrect analyses (for reference)
+└── results/                     # Analysis output
+    ├── analysis_results_corrected.json
+    ├── analysis_report_corrected.txt
+    └── session_summary_corrected.csv
 ```
 
 ---
@@ -274,10 +273,6 @@ Refactoring  | 6     | 21.4%
 3. **Time data missing** - Cannot measure actual time-to-completion
 4. **No human baseline** - Cannot compare to human-only development
 5. **Reprompts include system messages** - Actual user prompts are subset
-
-### Archive Note
-
-The `archive/` directory contains earlier analysis attempts with methodology issues. Those files are preserved for transparency and learning purposes. All current findings use the corrected methodology in `analyze_sessions.py`.
 
 ---
 
