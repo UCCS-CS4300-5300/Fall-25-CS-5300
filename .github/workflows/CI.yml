@@ -314,7 +314,8 @@ jobs:
     needs: [test]
     # Run on main branch pushes OR any pull request (merge request) to any branch
     # This ensures code review happens on all PRs before merging
-    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
+    # Run regardless of test outcome using always() to ensure PR reviews always happen
+    if: always() && (github.ref == 'refs/heads/main' || github.event_name == 'pull_request')
 
     steps:
     - name: Checkout Code
