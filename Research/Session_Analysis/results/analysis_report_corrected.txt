@@ -1,0 +1,52 @@
+======================================================================
+CLAUDE CODE SESSION ANALYSIS REPORT (CORRECTED)
+======================================================================
+
+Generated: 2025-11-12 16:14:21
+
+Total Sessions: 28
+Meaningful Work Sessions: 15
+Total Code Edits: 381
+Total Test Runs: 30
+
+----------------------------------------------------------------------
+SESSION CATEGORIZATION
+----------------------------------------------------------------------
+Exploratory: 13 (46.4%)
+New: 9 (32.1%)
+Refactor: 6 (21.4%)
+
+----------------------------------------------------------------------
+Q1.2: TEST FAILURE ANALYSIS (CORRECTED)
+----------------------------------------------------------------------
+Sessions with Tests: 9
+Total Test Runs: 30
+
+FIRST RUN ANALYSIS (after test file edits):
+  Sessions with First Runs: 6
+  Total First Runs: 14
+  Failed First Runs: 8
+  First Run Failure Rate (by session): 83.33%
+  First Run Failure Rate (by run): 57.14%
+
+ITERATION ANALYSIS:
+  Average Test Iterations: 3.33
+  Regression Detection Rate: 55.56%
+
+Note: First run = first test execution after editing a test file
+
+----------------------------------------------------------------------
+Q2.1/Q2.2: REPROMPT ANALYSIS
+----------------------------------------------------------------------
+Meaningful Sessions: 15
+Avg Reprompts/Session: 96.33
+Total Reprompts: 1445
+Success Rate: 100.0%
+
+Reason Distribution:
+  Errors: 16.82%
+  Refinements: 10.03%
+  Incomplete: 2.15%
+  Other: 71.0%
+
+======================================================================
