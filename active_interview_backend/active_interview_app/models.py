@@ -346,6 +346,191 @@ class RoleChangeRequest(models.Model):
         )
 
 
+class DataExportRequest(models.Model):
+    """
+    Track user data export requests for GDPR/CCPA compliance.
+    Stores the export file and metadata about the request.
+
+    Related to Issue #63, #64 (GDPR/CCPA Data Export).
+    """
+    PENDING = 'pending'
+    PROCESSING = 'processing'
+    COMPLETED = 'completed'
+    FAILED = 'failed'
+    EXPIRED = 'expired'
+
+    STATUS_CHOICES = [
+        (PENDING, 'Pending'),
+        (PROCESSING, 'Processing'),
+        (COMPLETED, 'Completed'),
+        (FAILED, 'Failed'),
+        (EXPIRED, 'Expired'),
+    ]
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='data_export_requests',
+        help_text='User requesting data export'
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=PENDING,
+        help_text='Current status of the export request'
+    )
+
+    # Export file storage
+    export_file = models.FileField(
+        upload_to='exports/user_data/',
+        null=True,
+        blank=True,
+        help_text='ZIP file containing exported user data'
+    )
+
+    # Timestamps
+    requested_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    expires_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='Export download link expires after 7 days'
+    )
+
+    # Error tracking
+    error_message = models.TextField(
+        blank=True,
+        help_text='Error details if export failed'
+    )
+
+    # Export metadata
+    file_size_bytes = models.BigIntegerField(
+        null=True,
+        blank=True,
+        help_text='Size of the export file in bytes'
+    )
+
+    download_count = models.IntegerField(
+        default=0,
+        help_text='Number of times the export has been downloaded'
+    )
+
+    last_downloaded_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='Last download timestamp'
+    )
+
+    class Meta:
+        ordering = ['-requested_at']
+        indexes = [
+            models.Index(fields=['user', '-requested_at']),
+            models.Index(fields=['status', '-requested_at']),
+        ]
+        verbose_name = 'Data Export Request'
+        verbose_name_plural = 'Data Export Requests'
+
+    def __str__(self):
+        return (
+            f"Export request by {self.user.username} - "
+            f"{self.status} ({self.requested_at.strftime('%Y-%m-%d %H:%M')})"
+        )
+
+    def is_expired(self):
+        """Check if the export download link has expired."""
+        if not self.expires_at:
+            return False
+        from django.utils import timezone
+        return timezone.now() > self.expires_at
+
+    def mark_downloaded(self):
+        """Increment download count and update last download timestamp."""
+        from django.utils import timezone
+        self.download_count += 1
+        self.last_downloaded_at = timezone.now()
+        self.save()
+
+
+class DeletionRequest(models.Model):
+    """
+    Audit trail for account deletion requests.
+    Stores anonymized user identifier and deletion timestamp for legal compliance.
+
+    Related to Issue #63, #65 (GDPR/CCPA Data Deletion).
+    """
+    PENDING = 'pending'
+    COMPLETED = 'completed'
+    FAILED = 'failed'
+
+    STATUS_CHOICES = [
+        (PENDING, 'Pending'),
+        (COMPLETED, 'Completed'),
+        (FAILED, 'Failed'),
+    ]
+
+    # Anonymized user identifier (stored before deletion)
+    anonymized_user_id = models.CharField(
+        max_length=255,
+        help_text='Anonymized identifier for audit purposes'
+    )
+
+    username = models.CharField(
+        max_length=150,
+        help_text='Username at time of deletion (for audit trail)'
+    )
+
+    email = models.EmailField(
+        blank=True,
+        help_text='Email at time of deletion (for audit trail)'
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=PENDING
+    )
+
+    # Timestamps
+    requested_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    # Deletion metadata
+    error_message = models.TextField(
+        blank=True,
+        help_text='Error details if deletion failed'
+    )
+
+    # Statistics (anonymized counts for analytics)
+    total_interviews_deleted = models.IntegerField(
+        default=0,
+        help_text='Number of interviews anonymized'
+    )
+    total_resumes_deleted = models.IntegerField(
+        default=0,
+        help_text='Number of resumes deleted'
+    )
+    total_job_listings_deleted = models.IntegerField(
+        default=0,
+        help_text='Number of job listings deleted'
+    )
+
+    class Meta:
+        ordering = ['-requested_at']
+        indexes = [
+            models.Index(fields=['status', '-requested_at']),
+            models.Index(fields=['requested_at']),
+        ]
+        verbose_name = 'Deletion Request'
+        verbose_name_plural = 'Deletion Requests'
+
+    def __str__(self):
+        return (
+            f"Deletion: {self.anonymized_user_id} - "
+            f"{self.status} ({self.requested_at.strftime('%Y-%m-%d %H:%M')})"
+        )
+
+
 # Import token tracking models (must be at end to avoid circular imports)
 from .token_usage_models import TokenUsage  # noqa: E402, F401
 from .merge_stats_models import MergeTokenStats  # noqa: E402, F401

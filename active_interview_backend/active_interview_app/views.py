@@ -11,7 +11,7 @@ from docx import Document
 from .models import (
     UploadedResume, UploadedJobListing, Chat,
     ExportableReport, UserProfile, RoleChangeRequest,
-    InterviewTemplate
+    InterviewTemplate, DataExportRequest, DeletionRequest
 )
 from .forms import (
     CreateUserForm,
@@ -29,6 +29,11 @@ from .serializers import (
 )
 from .pdf_export import generate_pdf_report
 from .resume_parser import parse_resume_with_ai
+from .user_data_utils import (
+    process_export_request,
+    delete_user_account,
+    generate_anonymized_id
+)
 
 
 from django.conf import settings
@@ -1928,3 +1933,236 @@ def delete_section(request, template_id, section_id):
 
     # If GET, redirect to template detail
     return redirect('template_detail', template_id=template.id)
+
+
+# ============================================================================
+# USER DATA EXPORT & DELETION VIEWS (Issues #63, #64, #65)
+# ============================================================================
+
+@login_required
+def request_data_export(request):
+    """
+    Request a data export (GDPR/CCPA compliance).
+    Creates a DataExportRequest and processes it asynchronously.
+
+    GET: Show confirmation page
+    POST: Create export request and redirect to status page
+
+    Related to Issue #64 (Data Export Functionality).
+    """
+    if request.method == 'POST':
+        # Check for existing pending/processing requests
+        existing = DataExportRequest.objects.filter(
+            user=request.user,
+            status__in=[DataExportRequest.PENDING, DataExportRequest.PROCESSING]
+        ).first()
+
+        if existing:
+            messages.info(
+                request,
+                'You already have a pending data export request. '
+                'Please wait for it to complete.'
+            )
+            return redirect('data_export_status', request_id=existing.id)
+
+        # Create new export request
+        export_request = DataExportRequest.objects.create(user=request.user)
+
+        # Process the request (in production, this would be async with Celery)
+        # For now, process synchronously
+        process_export_request(export_request)
+
+        messages.success(
+            request,
+            'Your data export request has been submitted. '
+            'You will receive an email when it is ready.'
+        )
+
+        return redirect('data_export_status', request_id=export_request.id)
+
+    # GET request - show confirmation page
+    context = {
+        'recent_exports': DataExportRequest.objects.filter(
+            user=request.user
+        ).order_by('-requested_at')[:5]
+    }
+
+    return render(request, 'user_data/request_export.html', context)
+
+
+@login_required
+def data_export_status(request, request_id):
+    """
+    View status of a data export request.
+
+    Args:
+        request_id: DataExportRequest ID
+
+    Related to Issue #64 (Data Export Functionality).
+    """
+    export_request = get_object_or_404(
+        DataExportRequest,
+        id=request_id,
+        user=request.user
+    )
+
+    # Check if expired
+    is_expired = export_request.is_expired()
+    if is_expired and export_request.status == DataExportRequest.COMPLETED:
+        export_request.status = DataExportRequest.EXPIRED
+        export_request.save()
+
+    context = {
+        'export_request': export_request,
+        'is_expired': is_expired,
+    }
+
+    return render(request, 'user_data/export_status.html', context)
+
+
+@login_required
+def download_data_export(request, request_id):
+    """
+    Download a completed data export file.
+
+    Args:
+        request_id: DataExportRequest ID
+
+    Returns:
+        FileResponse with ZIP file
+
+    Related to Issue #64 (Data Export Functionality).
+    """
+    export_request = get_object_or_404(
+        DataExportRequest,
+        id=request_id,
+        user=request.user
+    )
+
+    # Check if export is completed
+    if export_request.status != DataExportRequest.COMPLETED:
+        messages.error(request, 'Export is not ready yet.')
+        return redirect('data_export_status', request_id=request_id)
+
+    # Check if expired
+    if export_request.is_expired():
+        export_request.status = DataExportRequest.EXPIRED
+        export_request.save()
+        messages.error(
+            request,
+            'This export link has expired. Please request a new export.'
+        )
+        return redirect('data_export_status', request_id=request_id)
+
+    # Check if file exists
+    if not export_request.export_file:
+        messages.error(request, 'Export file not found.')
+        return redirect('data_export_status', request_id=request_id)
+
+    # Mark as downloaded
+    export_request.mark_downloaded()
+
+    # Serve file
+    response = FileResponse(
+        export_request.export_file.open('rb'),
+        as_attachment=True,
+        filename=os.path.basename(export_request.export_file.name)
+    )
+
+    return response
+
+
+@login_required
+def request_account_deletion(request):
+    """
+    Request account deletion (GDPR/CCPA Right to be Forgotten).
+
+    GET: Show confirmation page with warnings
+    POST: Show password confirmation
+
+    Related to Issue #65 (Data Deletion & Anonymization).
+    """
+    if request.method == 'POST':
+        # This just shows the confirmation dialog
+        # Actual deletion happens in confirm_account_deletion
+        return render(request, 'user_data/confirm_deletion.html', {
+            'user': request.user,
+        })
+
+    # GET request - show information page
+    context = {
+        'user': request.user,
+        'resume_count': UploadedResume.objects.filter(user=request.user).count(),
+        'job_count': UploadedJobListing.objects.filter(user=request.user).count(),
+        'interview_count': Chat.objects.filter(owner=request.user).count(),
+    }
+
+    return render(request, 'user_data/request_deletion.html', context)
+
+
+@login_required
+def confirm_account_deletion(request):
+    """
+    Confirm and execute account deletion.
+    Requires password verification for security.
+
+    POST only: Verify password and delete account
+
+    Related to Issue #65 (Data Deletion & Anonymization).
+    """
+    if request.method != 'POST':
+        return redirect('request_account_deletion')
+
+    # Verify password
+    password = request.POST.get('password', '')
+    if not request.user.check_password(password):
+        messages.error(request, 'Incorrect password. Account deletion cancelled.')
+        return redirect('request_account_deletion')
+
+    # Create deletion audit record
+    anonymized_id = generate_anonymized_id(request.user)
+    deletion_request = DeletionRequest.objects.create(
+        anonymized_user_id=anonymized_id,
+        username=request.user.username,
+        email=request.user.email,
+        status=DeletionRequest.PENDING,
+    )
+
+    # Perform deletion
+    success, error = delete_user_account(request.user, deletion_request)
+
+    if success:
+        # User is deleted, so we can't redirect to a logged-in page
+        # Render a static success page
+        return render(request, 'user_data/deletion_complete.html', {
+            'username': deletion_request.username,
+        })
+    else:
+        messages.error(
+            request,
+            f'An error occurred during account deletion: {error}. '
+            'Please contact support.'
+        )
+        return redirect('profile')
+
+
+@login_required
+def user_data_settings(request):
+    """
+    Main page for user data management settings.
+    Shows options for data export and account deletion.
+
+    Related to Issue #63 (GDPR/CCPA Data Export & Delete).
+    """
+    context = {
+        'user': request.user,
+        'recent_exports': DataExportRequest.objects.filter(
+            user=request.user
+        ).order_by('-requested_at')[:3],
+        'has_pending_export': DataExportRequest.objects.filter(
+            user=request.user,
+            status__in=[DataExportRequest.PENDING, DataExportRequest.PROCESSING]
+        ).exists(),
+    }
+
+    return render(request, 'user_data/settings.html', context)

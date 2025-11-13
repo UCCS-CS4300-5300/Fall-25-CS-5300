@@ -1,7 +1,8 @@
 from django.contrib import admin
 from .models import (
     Chat, UploadedJobListing, UploadedResume,
-    ExportableReport, UserProfile, RoleChangeRequest
+    ExportableReport, UserProfile, RoleChangeRequest,
+    DataExportRequest, DeletionRequest
 )
 from .token_usage_models import TokenUsage
 from .merge_stats_models import MergeTokenStats
@@ -145,3 +146,117 @@ class MergeTokenStatsAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         })
     )
+
+
+# Data Export Request Admin - Issue #63, #64
+@admin.register(DataExportRequest)
+class DataExportRequestAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'user',
+        'status',
+        'requested_at',
+        'completed_at',
+        'expires_at',
+        'file_size_display',
+        'download_count'
+    )
+    list_filter = ('status', 'requested_at', 'completed_at')
+    search_fields = ('user__username', 'user__email')
+    readonly_fields = (
+        'requested_at',
+        'completed_at',
+        'last_downloaded_at',
+        'file_size_bytes'
+    )
+    date_hierarchy = 'requested_at'
+
+    fieldsets = (
+        ('User & Status', {
+            'fields': ('user', 'status')
+        }),
+        ('Export File', {
+            'fields': ('export_file', 'file_size_bytes', 'download_count')
+        }),
+        ('Timestamps', {
+            'fields': (
+                'requested_at',
+                'completed_at',
+                'expires_at',
+                'last_downloaded_at'
+            )
+        }),
+        ('Error Information', {
+            'fields': ('error_message',),
+            'classes': ('collapse',)
+        })
+    )
+
+    def file_size_display(self, obj):
+        if obj.file_size_bytes:
+            # Convert bytes to human-readable format
+            size = obj.file_size_bytes
+            for unit in ['B', 'KB', 'MB', 'GB']:
+                if size < 1024.0:
+                    return f"{size:.1f} {unit}"
+                size /= 1024.0
+            return f"{size:.1f} TB"
+        return "N/A"
+    file_size_display.short_description = 'File Size'
+
+    def get_queryset(self, request):
+        """Optimize query with select_related"""
+        qs = super().get_queryset(request)
+        return qs.select_related('user')
+
+
+# Deletion Request Admin - Issue #63, #65
+@admin.register(DeletionRequest)
+class DeletionRequestAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'anonymized_user_id',
+        'username',
+        'status',
+        'requested_at',
+        'completed_at',
+        'total_data_deleted'
+    )
+    list_filter = ('status', 'requested_at', 'completed_at')
+    search_fields = ('anonymized_user_id', 'username', 'email')
+    readonly_fields = ('requested_at', 'completed_at')
+    date_hierarchy = 'requested_at'
+
+    fieldsets = (
+        ('User Information', {
+            'fields': (
+                'anonymized_user_id',
+                'username',
+                'email',
+                'status'
+            )
+        }),
+        ('Deletion Statistics', {
+            'fields': (
+                'total_interviews_deleted',
+                'total_resumes_deleted',
+                'total_job_listings_deleted'
+            )
+        }),
+        ('Timestamps', {
+            'fields': ('requested_at', 'completed_at')
+        }),
+        ('Error Information', {
+            'fields': ('error_message',),
+            'classes': ('collapse',)
+        })
+    )
+
+    def total_data_deleted(self, obj):
+        total = (
+            obj.total_interviews_deleted +
+            obj.total_resumes_deleted +
+            obj.total_job_listings_deleted
+        )
+        return f"{total} items"
+    total_data_deleted.short_description = 'Total Deleted'
