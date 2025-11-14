@@ -1,13 +1,13 @@
 {
   "statistics": {
-    "total_sessions": 28,
-    "meaningful_sessions": 15,
+    "total_sessions": 29,
+    "meaningful_sessions": 16,
     "sessions_by_type": {
       "exploratory": 13,
-      "new": 9,
+      "new": 10,
       "refactor": 6
     },
-    "total_edits": 381,
+    "total_edits": 457,
     "total_test_runs": 30,
     "test_metrics": {
       "sessions_with_tests": 9,
@@ -22,14 +22,14 @@
       "note": "First run = first test execution after editing a test file"
     },
     "reprompt_metrics": {
-      "meaningful_sessions": 15,
-      "avg_reprompts_per_session": 96.33,
-      "total_reprompts": 1445,
+      "meaningful_sessions": 16,
+      "avg_reprompts_per_session": 105.44,
+      "total_reprompts": 1687,
       "reason_distribution": {
-        "errors": 16.82,
-        "refinements": 10.03,
-        "incomplete": 2.15,
-        "other": 71.0
+        "errors": 17.72,
+        "refinements": 9.37,
+        "incomplete": 2.61,
+        "other": 70.3
       },
       "success_rate": 100.0
     }
@@ -447,6 +447,29 @@
           "refinements": 1,
           "incomplete": 0,
           "other": 2
+        }
+      }
+    },
+    {
+      "session_id": "354054c8-f25e-428f-ac14-e90949b09de6",
+      "message_count": 287,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 15,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 82,
+        "assistant_message_count": 189,
+        "reprompt_count": 81,
+        "reasons": {
+          "errors": 19,
+          "refinements": 2,
+          "incomplete": 3,
+          "other": 57
         }
       }
     },
@@ -1288,12 +1311,43 @@
     },
     {
       "session_id": "8a1485b4-2bf1-4d97-9ac9-308cb90df3fa",
-      "message_count": 200,
+      "message_count": 699,
       "category": "new",
       "is_meaningful": true,
-      "edit_count": 15,
-      "test_edit_count": 0,
-      "test_file_edits": [],
+      "edit_count": 76,
+      "test_edit_count": 5,
+      "test_file_edits": [
+        {
+          "message_index": 428,
+          "tool": "Write",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\Research\\logs\\EXAMPLE_test_run_20251112_194500.md",
+          "is_test_file": true
+        },
+        {
+          "message_index": 466,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\Research\\logs\\EXAMPLE_test_run_20251112_194500.md",
+          "is_test_file": true
+        },
+        {
+          "message_index": 470,
+          "tool": "Write",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\Research\\logs\\EXAMPLE_test_run_20251112_201200.md",
+          "is_test_file": true
+        },
+        {
+          "message_index": 474,
+          "tool": "Write",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\Research\\logs\\EXAMPLE_test_run_20251112_203000.md",
+          "is_test_file": true
+        },
+        {
+          "message_index": 499,
+          "tool": "Write",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\Research\\logs\\test_sequence_20251112_194500_rbac_permissions.md",
+          "is_test_file": true
+        }
+      ],
       "test_runs": [
         {
           "test_count": 44,
@@ -1345,14 +1399,14 @@
       "first_run_tests": [],
       "test_run_count": 2,
       "reprompt_analysis": {
-        "user_message_count": 62,
-        "assistant_message_count": 125,
-        "reprompt_count": 61,
+        "user_message_count": 223,
+        "assistant_message_count": 425,
+        "reprompt_count": 222,
         "reasons": {
-          "errors": 22,
-          "refinements": 1,
-          "incomplete": 1,
-          "other": 37
+          "errors": 59,
+          "refinements": 12,
+          "incomplete": 11,
+          "other": 140
         }
       }
     },

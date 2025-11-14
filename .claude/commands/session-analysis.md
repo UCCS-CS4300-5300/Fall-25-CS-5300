@@ -50,19 +50,27 @@ The script automatically:
 - Merges new data with existing results
 - Recalculates all metrics with combined dataset
 - Updates all output files in `results/` directory
+- **NEW:** Generates test sequence logs in `Research/logs/` directory
 
-Review and manually update if needed:
-- `session_analysis_results.md` - Main research findings
-- `research_metrics.json` - Key metrics in JSON format
+**Test sequence logs (NEW in V3):**
+- Automatically generated from historical session data
+- Saved to `Research/logs/test_sequence_*_historical.md`
+- Format matches AGENTS.md standard for consistency
+- Contains YAML frontmatter + markdown narrative
+- Enables detailed test iteration analysis
 
-## Existing Results
+## Output Files
 
-All analysis results are in `Research/Session_Analysis/`:
-- `session_analysis_results.md` - Complete research findings (ready for paper)
-- `research_metrics.json` - Structured metrics
-- `results/analysis_results_corrected.json` - Raw session data
-- `results/analysis_report_corrected.txt` - Text report
-- `results/session_summary_corrected.csv` - CSV for charts
-- `README.md` - Full usage guide
+**Analysis results** (in `Research/Session_Analysis/results/`):
+- `analysis_results_corrected.json` - Raw session data (for merging)
+- `analysis_report_corrected.txt` - Text report with all metrics
+- `session_summary_corrected.csv` - CSV for spreadsheet/charts
+
+**Test sequence logs** (in `Research/logs/`):
+- `test_sequence_*_historical.md` - Historical test sequences extracted from sessions
+
+**Documentation:**
+- `Research/Session_Analysis/README.md` - Full usage guide
+- `Research/logs/README.md` - Test logging documentation
 
 The `--merge` flag ensures incremental updates without reprocessing existing sessions.

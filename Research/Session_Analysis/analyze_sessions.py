@@ -1,13 +1,30 @@
 #!/usr/bin/env python3
 """
-Claude Code Session Analysis Tool - Version 2 (Fixed)
-Analyzes JSONL session files with corrected test parsing and first-run detection
+Claude Code Session Analysis Tool - Version 3
+Analyzes JSONL session files and generates test sequence logs from historical data
+
+Features:
+    - Analyzes Claude Code session logs for research metrics (Q1.2, Q2.1, Q2.2)
+    - Automatically generates test sequence logs from historical sessions
+    - Supports incremental analysis with --merge flag
 
 Usage:
     python analyze_sessions.py [--sessions-dir PATH] [--output-dir PATH] [--merge]
 
 Options:
+    --sessions-dir   Path to Claude Code session logs (default: ~/.claude/projects)
+    --output-dir     Path for analysis results (default: ./results)
     --merge          Incremental mode: merge new sessions with existing analysis
+    --project        Project name pattern to filter sessions (default: Fall-25-CS-5300)
+
+Output:
+    Analysis Results:
+        - results/analysis_results_corrected.json  (detailed session data)
+        - results/analysis_report_corrected.txt    (human-readable report)
+        - results/session_summary_corrected.csv    (spreadsheet for charts)
+
+    Test Sequence Logs:
+        - Research/logs/test_sequence_*_historical.md  (one per test sequence)
 
 Requirements:
     - Python 3.7+
@@ -44,6 +61,17 @@ class SessionAnalyzer:
             'test_metrics': {},
             'reprompt_metrics': {}
         }
+
+        # Test sequence log storage
+        self.test_sequences = []
+
+        # Logs output directory (relative to repo root)
+        # Find repo root by looking for .git directory
+        repo_root = Path.cwd()
+        while not (repo_root / '.git').exists() and repo_root.parent != repo_root:
+            repo_root = repo_root.parent
+        self.logs_dir = repo_root / 'Research' / 'logs'
+        self.logs_dir.mkdir(parents=True, exist_ok=True)
 
         # Load existing results if in merge mode
         if self.merge_mode:
@@ -513,6 +541,340 @@ class SessionAnalyzer:
             'success_rate': round(success_rate, 2)
         }
 
+    def extract_timestamp(self, msg: Dict) -> Optional[str]:
+        """Extract timestamp from message metadata"""
+        # Try different locations for timestamp
+        if 'timestamp' in msg:
+            return msg['timestamp']
+
+        message_data = msg.get('message', {})
+        if 'timestamp' in message_data:
+            return message_data['timestamp']
+
+        # Try metadata
+        metadata = msg.get('metadata', {})
+        if 'timestamp' in metadata:
+            return metadata['timestamp']
+
+        return None
+
+    def group_test_sequences(self, session_data: Dict, messages: List[Dict]) -> List[Dict]:
+        """
+        Group test runs into sequences based on test file edits
+
+        Returns list of test sequence dictionaries with iterations
+        """
+        test_runs = session_data['test_runs']
+        test_file_edits = session_data['test_file_edits']
+        first_run_tests = session_data['first_run_tests']
+
+        if not test_runs:
+            return []
+
+        sequences = []
+
+        # Group test runs by test file
+        test_files = {}
+        for edit in test_file_edits:
+            file_path = edit['file_path']
+            if file_path not in test_files:
+                test_files[file_path] = {
+                    'file_path': file_path,
+                    'edits': [],
+                    'runs': []
+                }
+            test_files[file_path]['edits'].append(edit)
+
+        # Associate test runs with files
+        for run in test_runs:
+            run_index = run['message_index']
+
+            # Find the most recent test file edit before this run
+            most_recent_file = None
+            most_recent_edit_index = -1
+
+            for file_path, data in test_files.items():
+                for edit in data['edits']:
+                    if edit['message_index'] < run_index and edit['message_index'] > most_recent_edit_index:
+                        most_recent_file = file_path
+                        most_recent_edit_index = edit['message_index']
+
+            if most_recent_file:
+                test_files[most_recent_file]['runs'].append(run)
+            else:
+                # If no edit found, might be running existing tests
+                # Create a generic "existing tests" group
+                if 'existing_tests' not in test_files:
+                    test_files['existing_tests'] = {
+                        'file_path': 'tests/*.py',
+                        'edits': [],
+                        'runs': []
+                    }
+                test_files['existing_tests']['runs'].append(run)
+
+        # Create sequences from grouped test runs
+        sequence_counter = 0
+        for file_path, data in test_files.items():
+            if not data['runs']:
+                continue
+
+            sequence_counter += 1
+
+            # Build iteration list with timestamps
+            iterations = []
+            for idx, run in enumerate(data['runs'], 1):
+                msg_index = run['message_index']
+                timestamp = None
+
+                # Extract timestamp from message
+                if msg_index < len(messages):
+                    timestamp = self.extract_timestamp(messages[msg_index])
+
+                # Determine if this is a new test failure or regression
+                is_first_run = any(fr['message_index'] == msg_index for fr in first_run_tests)
+
+                iteration = {
+                    'number': idx,
+                    'timestamp': timestamp or 'unknown',
+                    'total_tests': run['test_count'],
+                    'passed': run['test_count'] - run['failures'] - run['errors'],
+                    'failed': run['failures'],
+                    'errors': run['errors'],
+                    'new_test_failures': run['failures'] + run['errors'] if is_first_run else 0,
+                    'regression_failures': run['failures'] + run['errors'] if not is_first_run else 0,
+                    'execution_time': 0.0,  # Not available in logs
+                    'command': run.get('command', 'python manage.py test'),
+                    'output_excerpt': run.get('output_excerpt', ''),
+                    'failed_tests': run.get('failed_tests', []),
+                    'error_tests': run.get('error_tests', [])
+                }
+                iterations.append(iteration)
+
+            # Determine feature name from file path
+            # Handle both forward slashes and backslashes
+            path_parts = file_path.replace('\\', '/').split('/')
+            feature_name = path_parts[-1].replace('test_', '').replace('.py', '')
+            if feature_name == '*':
+                feature_name = f'session_{session_data["session_id"][:8]}'
+
+            # Clean feature name to be filename-safe (remove any remaining path characters)
+            feature_name = feature_name.replace(':', '').replace('/', '_').replace('\\', '_')
+
+            # Calculate summary statistics
+            final_iteration = iterations[-1]
+            first_iteration = iterations[0]
+
+            summary = {
+                'total_iterations': len(iterations),
+                'iterations_to_success': len(iterations) if final_iteration['failed'] == 0 else 'incomplete',
+                'first_run_failure_rate': round((first_iteration['failed'] + first_iteration['errors']) / first_iteration['total_tests'] * 100, 1) if first_iteration['total_tests'] > 0 else 0,
+                'final_status': 'success' if final_iteration['failed'] == 0 and final_iteration['errors'] == 0 else 'in_progress',
+                'total_time_minutes': 0  # Not available
+            }
+
+            sequences.append({
+                'sequence_id': f"{feature_name}_{session_data['session_id'][:8]}_{sequence_counter}",
+                'feature': feature_name.replace('_', ' ').title(),
+                'test_file': file_path,
+                'branch': 'unknown',  # Not available in logs
+                'user': 'researcher',  # Generic
+                'session_id': session_data['session_id'],
+                'iterations': iterations,
+                'summary': summary,
+                'coverage': {
+                    'initial': 0,  # Not available
+                    'final': 0,
+                    'change': 0
+                }
+            })
+
+        return sequences
+
+    def generate_yaml_frontmatter(self, sequence: Dict) -> str:
+        """Generate YAML frontmatter for test sequence log"""
+        yaml_lines = ['---']
+        yaml_lines.append(f'sequence_id: "{sequence["sequence_id"]}"')
+        yaml_lines.append(f'feature: "{sequence["feature"]}"')
+        # Use forward slashes and escape backslashes for YAML compatibility
+        test_file_normalized = sequence["test_file"].replace('\\', '/')
+        yaml_lines.append(f'test_file: "{test_file_normalized}"')
+        yaml_lines.append(f'branch: "{sequence["branch"]}"')
+        yaml_lines.append(f'user: "{sequence["user"]}"')
+        yaml_lines.append(f'session_id: "{sequence["session_id"]}"')
+        yaml_lines.append('')
+        yaml_lines.append('iterations:')
+
+        for iteration in sequence['iterations']:
+            yaml_lines.append(f'  - number: {iteration["number"]}')
+            yaml_lines.append(f'    timestamp: "{iteration["timestamp"]}"')
+            yaml_lines.append(f'    total_tests: {iteration["total_tests"]}')
+            yaml_lines.append(f'    passed: {iteration["passed"]}')
+            yaml_lines.append(f'    failed: {iteration["failed"]}')
+            yaml_lines.append(f'    errors: {iteration["errors"]}')
+            yaml_lines.append(f'    new_test_failures: {iteration["new_test_failures"]}')
+            yaml_lines.append(f'    regression_failures: {iteration["regression_failures"]}')
+            yaml_lines.append(f'    execution_time: {iteration["execution_time"]}')
+            yaml_lines.append('')
+
+        yaml_lines.append('summary:')
+        yaml_lines.append(f'  total_iterations: {sequence["summary"]["total_iterations"]}')
+        yaml_lines.append(f'  iterations_to_success: {sequence["summary"]["iterations_to_success"]}')
+        yaml_lines.append(f'  first_run_failure_rate: {sequence["summary"]["first_run_failure_rate"]}')
+        yaml_lines.append(f'  final_status: "{sequence["summary"]["final_status"]}"')
+        yaml_lines.append(f'  total_time_minutes: {sequence["summary"]["total_time_minutes"]}')
+        yaml_lines.append('')
+        yaml_lines.append('coverage:')
+        yaml_lines.append(f'  initial: {sequence["coverage"]["initial"]}')
+        yaml_lines.append(f'  final: {sequence["coverage"]["final"]}')
+        yaml_lines.append(f'  change: {sequence["coverage"]["change"]}')
+        yaml_lines.append('---')
+
+        return '\n'.join(yaml_lines)
+
+    def generate_markdown_narrative(self, sequence: Dict) -> str:
+        """Generate markdown narrative for test sequence log"""
+        md_lines = []
+
+        # Header
+        md_lines.append(f'# Test Sequence: {sequence["feature"]}')
+        md_lines.append('')
+        md_lines.append(f'**Feature:** {sequence["feature"]}')
+        md_lines.append(f'**Test File:** `{sequence["test_file"]}`')
+
+        status_icon = '✅' if sequence['summary']['final_status'] == 'success' else '⏳'
+        status_text = f"{status_icon} {sequence['summary']['final_status'].title()}"
+        if sequence['summary']['final_status'] == 'success':
+            status_text += f" after {sequence['summary']['total_iterations']} iterations"
+
+        md_lines.append(f'**Status:** {status_text}')
+        md_lines.append(f'**Session ID:** `{sequence["session_id"]}`')
+        md_lines.append('')
+
+        # Iterations
+        for iteration in sequence['iterations']:
+            iter_num = iteration['number']
+            md_lines.append(f'## Iteration {iter_num}')
+
+            # Status
+            total_failures = iteration['failed'] + iteration['errors']
+            if total_failures == 0:
+                status = f'✅ All passing'
+            else:
+                status = f'❌ {total_failures} failures'
+
+            md_lines.append(f'**Time:** {iteration["timestamp"]} | **Status:** {status}')
+            md_lines.append('')
+
+            # Results
+            md_lines.append(f'**Command:** `{iteration["command"]}`')
+            md_lines.append('')
+            md_lines.append(f'**Results:** {iteration["passed"]} passed, {iteration["failed"]} failed, {iteration["errors"]} errors')
+            md_lines.append('')
+
+            # Failed tests
+            if iteration['failed_tests'] or iteration['error_tests']:
+                md_lines.append('**Failed tests:**')
+                for test in iteration['failed_tests']:
+                    md_lines.append(f'- {test} (FAIL)')
+                for test in iteration['error_tests']:
+                    md_lines.append(f'- {test} (ERROR)')
+                md_lines.append('')
+
+            # Output excerpt
+            if iteration['output_excerpt']:
+                md_lines.append('<details>')
+                md_lines.append('<summary>Test output excerpt</summary>')
+                md_lines.append('')
+                md_lines.append('```')
+                md_lines.append(iteration['output_excerpt'][:500])
+                md_lines.append('```')
+                md_lines.append('</details>')
+                md_lines.append('')
+
+            md_lines.append('---')
+            md_lines.append('')
+
+        # Summary
+        md_lines.append('## Sequence Summary')
+        md_lines.append('')
+        md_lines.append('**Statistics:**')
+        md_lines.append(f'- First-run failure rate: {sequence["summary"]["first_run_failure_rate"]}%')
+        md_lines.append(f'- Iterations to success: {sequence["summary"]["iterations_to_success"]}')
+        md_lines.append(f'- Total iterations: {sequence["summary"]["total_iterations"]}')
+        md_lines.append(f'- Final status: {sequence["summary"]["final_status"]}')
+        md_lines.append('')
+        md_lines.append('**Notes:**')
+        md_lines.append('- This log was auto-generated from historical Claude Code session data')
+        md_lines.append('- Some fields (timestamps, execution times, coverage) may be incomplete')
+        md_lines.append('- For research purposes only')
+        md_lines.append('')
+
+        return '\n'.join(md_lines)
+
+    def write_test_sequence_log(self, sequence: Dict) -> Path:
+        """Write a test sequence log file"""
+        # Generate timestamp for filename
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+
+        # Clean feature name for filename
+        feature_slug = sequence['feature'].lower().replace(' ', '_')
+
+        # Include short session ID to ensure uniqueness
+        session_short = sequence['session_id'][:8]
+
+        # Create filename with session ID for uniqueness
+        filename = f"test_sequence_{timestamp}_{feature_slug}_{session_short}_historical.md"
+        filepath = self.logs_dir / filename
+
+        # Generate content
+        yaml_content = self.generate_yaml_frontmatter(sequence)
+        markdown_content = self.generate_markdown_narrative(sequence)
+
+        full_content = f"{yaml_content}\n\n{markdown_content}"
+
+        # Write file
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(full_content)
+
+        return filepath
+
+    def generate_test_sequence_logs(self):
+        """Generate test sequence logs from all analyzed sessions"""
+        print("\n" + "="*60)
+        print("GENERATING TEST SEQUENCE LOGS FROM HISTORICAL SESSIONS")
+        print("="*60 + "\n")
+
+        log_count = 0
+
+        for session in self.sessions:
+            # Only process sessions with test runs
+            if not session['test_runs']:
+                continue
+
+            # Get the original messages for this session
+            session_file = self.sessions_dir / f"{session['session_id']}.jsonl"
+            if not session_file.exists():
+                continue
+
+            session_data = self.parse_session(session_file)
+            if not session_data:
+                continue
+
+            messages = session_data['messages']
+
+            # Group test runs into sequences
+            sequences = self.group_test_sequences(session, messages)
+
+            # Write log file for each sequence
+            for sequence in sequences:
+                filepath = self.write_test_sequence_log(sequence)
+                log_count += 1
+                print(f"Created: {filepath.name}")
+                self.test_sequences.append(sequence)
+
+        print(f"\nGenerated {log_count} test sequence log files in {self.logs_dir}")
+        print("="*60 + "\n")
+
     def analyze_all_sessions(self, project_pattern: str = "Fall-25-CS-5300"):
         """Main analysis function"""
         print(f"\n{'='*60}")
@@ -615,6 +977,9 @@ class SessionAnalyzer:
         self.statistics['reprompt_metrics'] = self.calculate_reprompt_metrics()
 
         print("Analysis complete!\n")
+
+        # Generate test sequence logs from sessions
+        self.generate_test_sequence_logs()
 
     def generate_report(self) -> str:
         """Generate comprehensive analysis report"""

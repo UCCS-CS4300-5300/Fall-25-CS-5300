@@ -25,13 +25,19 @@
 Session_Analysis/
 ├── session_analysis_results.md  # Complete research findings (ready for paper)
 ├── research_metrics.json        # Structured data for analysis
-├── analyze_sessions.py          # Reusable analysis script
+├── analyze_sessions.py          # Reusable analysis script (Version 3)
 ├── README.md                    # This file
 └── results/                     # Analysis output
     ├── analysis_results_corrected.json
     ├── analysis_report_corrected.txt
     └── session_summary_corrected.csv
+
+../logs/                         # Test sequence logs (auto-generated)
+├── test_sequence_*_historical.md   # Historical test sequences from session analysis
+└── test_sequence_*.md              # Future test sequences (created during sessions)
 ```
+
+**NEW in Version 3:** Automatically generates test sequence logs from historical session data, identical to the format used for future logging (see `AGENTS.md`).
 
 ---
 
@@ -86,6 +92,84 @@ python analyze_sessions.py \
 - **Python 3.7+** (no external dependencies)
 - **Claude Code session logs** in JSONL format
 - **~5 minutes** to analyze 28 sessions (less for incremental updates)
+
+---
+
+## 📝 Test Sequence Logs (NEW)
+
+### What Are Test Sequence Logs?
+
+Test sequence logs capture the complete iteration history of test runs during development. Each log contains:
+- **YAML frontmatter** - Structured data for quick statistics extraction
+- **Markdown narrative** - Human-readable iteration-by-iteration breakdown
+- **Failure patterns** - Detailed tracking of what failed and why
+
+**Format matches the logging standard in `AGENTS.md`** - This ensures consistency between historical data (generated from past sessions) and future data (created during sessions).
+
+### Automatic Generation
+
+**The analysis script now automatically generates test sequence logs from historical sessions:**
+
+```bash
+# Run analysis (generates both metrics AND test sequence logs)
+python analyze_sessions.py --merge
+```
+
+**Output:**
+- Analysis results → `results/`
+- Test sequence logs → `../logs/test_sequence_*_historical.md`
+
+### File Naming Convention
+
+```
+test_sequence_YYYYMMDD_HHMMSS_<feature-name>_historical.md
+```
+
+Example: `test_sequence_20251113_143022_rbac_permissions_historical.md`
+
+The `_historical` suffix indicates logs generated from past session data (vs. real-time logs created during future sessions).
+
+### Log Contents
+
+Each log contains:
+
+**YAML Frontmatter:**
+- `sequence_id` - Unique identifier for this test sequence
+- `feature` - Feature name being tested
+- `test_file` - Path to test file
+- `session_id` - Reference to original Claude Code session
+- `iterations[]` - Array of test runs with:
+  - Timestamp, test counts, pass/fail/error metrics
+  - New test failures vs. regression failures
+  - Execution time (when available)
+- `summary` - Overall statistics (iterations, failure rates, final status)
+- `coverage` - Test coverage changes (when available)
+
+**Markdown Narrative:**
+- Iteration-by-iteration breakdown
+- Failed test names
+- Test output excerpts
+- Sequence summary with learnings
+
+### Using Test Sequence Logs for Research
+
+**Quick Statistics:**
+```bash
+cd ../logs
+python extract_stats.py
+```
+
+**Data Mining:**
+- All logs have structured YAML → easy to parse
+- Extract aggregate metrics across all sequences
+- Compare historical vs. future test patterns
+- Identify common failure types
+
+**Benefits for Your Paper:**
+1. **Reproducible data** - Teammates can generate identical logs from same sessions
+2. **Granular detail** - Beyond just "tests passed/failed", see iteration-by-iteration progress
+3. **Pattern analysis** - Mine common failure types across all test sequences
+4. **Temporal analysis** - Track how test quality changes over time
 
 ---
 
@@ -166,8 +250,10 @@ python analyze_sessions.py \
    ```
 
 3. **Check results:**
-   - Results saved to `results/` directory
+   - Analysis results saved to `results/` directory
+   - Test sequence logs saved to `../logs/` directory
    - Open `analysis_report_corrected.txt` for summary
+   - Review `../logs/test_sequence_*_historical.md` for detailed test iterations
 
 ### Continuing Research (Adding Your Sessions)
 
@@ -342,6 +428,12 @@ Refactoring  | 6     | 21.4%
 
 ---
 
-**Analysis Tool Version:** 2.0 (with incremental analysis support)
-**Last Updated:** November 12, 2025
+**Analysis Tool Version:** 3.0 (with test sequence log generation)
+**Last Updated:** November 13, 2025
 **For:** CS 4300/5300 Fall 2025 SWE Research Study
+
+**Version 3.0 Changes:**
+- Automatically generates test sequence logs from historical session data
+- Logs saved to `Research/logs/` with `_historical` suffix
+- Format matches AGENTS.md logging standard for future sessions
+- Enables comprehensive test iteration analysis for research
