@@ -171,6 +171,14 @@ urlpatterns = [
     path('invitations/<uuid:invitation_id>/confirmation/',
          views.invitation_confirmation, name='invitation_confirmation'),
 
+    # Candidate Invitation Join urls (Issue #135, #136)
+    path('interview/invite/<uuid:invitation_id>/',
+         views.invitation_join, name='invitation_join'),
+    path('interview/invited/<uuid:invitation_id>/',
+         views.invited_interview_detail, name='invited_interview_detail'),
+    path('interview/invited/<uuid:invitation_id>/start/',
+         views.start_invited_interview, name='start_invited_interview'),
+
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # if settings.PROD:
