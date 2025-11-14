@@ -39,6 +39,7 @@ from .user_data_utils import (
     delete_user_account,
     generate_anonymized_id
 )
+from .invitation_utils import send_invitation_email
 
 
 from django.conf import settings
@@ -2601,14 +2602,22 @@ def invitation_create(request, template_id=None):
             # Save invitation
             invitation.save()
 
-            # Mark invitation as sent (email will be sent in next phase)
-            invitation.invitation_sent_at = timezone.now()
-            invitation.save()
+            # Send invitation email with calendar attachment
+            email_sent = send_invitation_email(invitation)
 
-            messages.success(
-                request,
-                f'Invitation created for {invitation.candidate_email}'
-            )
+            # Mark invitation as sent
+            if email_sent:
+                invitation.invitation_sent_at = timezone.now()
+                invitation.save()
+                messages.success(
+                    request,
+                    f'Invitation sent to {invitation.candidate_email}'
+                )
+            else:
+                messages.warning(
+                    request,
+                    f'Invitation created but email failed to send. Join link: {invitation.get_join_url()}'
+                )
 
             # Redirect to confirmation page
             return redirect('invitation_confirmation', invitation_id=invitation.id)
