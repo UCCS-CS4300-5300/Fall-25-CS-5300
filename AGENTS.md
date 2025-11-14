@@ -43,6 +43,103 @@ When making code changes:
 
 **See:** [Testing Guide](docs/setup/testing.md) for detailed testing instructions.
 
+### 4. Test Run Logging for Research
+
+**IMPORTANT:** Log every Django test run after making code changes or adding new tests.
+
+**When to log:**
+- ✅ After adding new test files or test cases
+- ✅ After modifying existing code that has tests
+- ✅ After fixing bugs (to verify regression tests)
+- ✅ When test results show failures or errors
+- ✅ After resolving test failures (to document the fix)
+
+**Where to save:** `Research/logs/test_sequence_YYYYMMDD_HHMMSS_<feature-name>.md`
+
+**Log structure:** One file per test sequence containing all iterations together
+
+### YAML Frontmatter (Required)
+
+```yaml
+---
+sequence_id: "<feature>_<date>"
+feature: "Feature Name"
+test_file: "tests/test_filename.py"
+branch: "feature/branch-name"
+user: "username"
+
+iterations:
+  - number: 1
+    timestamp: "YYYY-MM-DD HH:MM:SS"
+    total_tests: X
+    passed: X
+    failed: X
+    errors: X
+    new_test_failures: X      # Failures in newly added tests
+    regression_failures: X    # Failures in pre-existing tests
+    execution_time: X.XX
+
+  # Add more iterations as you fix and re-run tests
+
+summary:
+  total_iterations: X
+  iterations_to_success: X
+  first_run_failure_rate: XX.X  # (failed/total) * 100 from iteration 1
+  final_status: "success" | "in_progress" | "failed"
+  total_time_minutes: X
+
+coverage:
+  initial: XX
+  final: XX
+  change: +/-X
+---
+```
+
+### Markdown Narrative (After YAML)
+
+After the YAML frontmatter, add detailed narrative sections for each iteration:
+
+```markdown
+# Test Sequence: [Feature Name]
+
+**Feature:** Brief description
+**Test File:** `tests/test_file.py` (X tests)
+**Status:** [✅ Success | ❌ Failed | 🔄 In Progress]
+
+## Iteration 1: Initial Test Run
+**Time:** YYYY-MM-DD HH:MM:SS | **Status:** Result
+
+**What changed:** Bullet list of changes
+**Command:** `python manage.py test ...`
+**Results:** Summary of pass/fail
+**Failed tests:** List with brief error descriptions
+**Root cause:** Why they failed
+
+## Iteration 2: [Fix Description]
+**Time:** ... | **Status:** ...
+[Same structure, show progress]
+
+## Sequence Summary
+**Statistics:** Key metrics
+**Patterns:** Lessons learned
+```
+
+### Workflow
+
+1. **First test run:** Create file with YAML + Iteration 1 narrative
+2. **Subsequent test runs:** Open SAME file, add iteration to YAML array + append narrative section
+3. **Final update:** Mark `final_status: "success"` when all tests pass
+
+**Example log:** `test_sequence_20251112_194500_rbac_permissions.md`
+
+**For complete example:** See [Research/logs/README.md](Research/logs/README.md#example-log-structure)
+
+**Key points:**
+- YAML frontmatter enables quick statistics extraction
+- Markdown narrative provides debugging context
+- All iterations in one file (no linking needed)
+- Clearly distinguish new test failures from regressions
+
 ---
 
 ## Documentation Maintenance

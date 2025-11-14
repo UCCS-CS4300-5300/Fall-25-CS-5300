@@ -23,3 +23,6 @@
 # Code Style
 - Python styling conventions apply.
 - Always save temporary scripts in a /temp file
+
+
+Read the AGENTS.md for guidance on working with this project. 
