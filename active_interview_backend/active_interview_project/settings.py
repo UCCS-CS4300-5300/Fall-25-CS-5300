@@ -259,13 +259,13 @@ if 'test' in sys.argv or 'pytest' in sys.modules:
 else:
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Site URL for emails and exports (Issue #63, #64)
+# Site URL for emails, invitations, and exports (Issue #4, #8, #63, #64, #139)
 if PROD:
     SITE_URL = 'https://app.activeinterviewservice.me'
 else:
     SITE_URL = 'http://localhost:8000'
 
-# Email configuration for user data export notifications (Issue #64)
+# Email configuration for invitation and export notifications (Issue #4, #8, #64, #139)
 if PROD:
     # Production email settings (configure with your email provider)
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
