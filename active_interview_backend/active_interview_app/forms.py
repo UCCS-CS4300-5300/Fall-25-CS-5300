@@ -3,6 +3,8 @@ from django.forms import ModelForm, ModelChoiceField, IntegerField
 from .models import *
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
+from django.utils import timezone
+from datetime import timedelta
 
 # Form field constants
 TITLE_MAX_LENGTH_SHORT = 32
@@ -242,3 +244,134 @@ class UploadFileForm(ModelForm):
         # allowed_types = ['txt', 'pdf', 'jpg', 'png']
         uploaded_file = self.cleaned_data.get("file")
         return uploaded_file
+
+
+class InvitationCreationForm(ModelForm):
+    """
+    Form for creating interview invitations.
+    Allows interviewers to invite candidates to take interviews based on templates.
+
+    Related to Issue #5 (Create Interview Invitation).
+    """
+
+    template = ModelChoiceField(
+        queryset=InterviewTemplate.objects.none(),
+        required=True,
+        widget=forms.Select(attrs={
+            'class': 'form-control'
+        }),
+        help_text='Select the interview template for this invitation'
+    )
+
+    candidate_email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'candidate@example.com'
+        }),
+        help_text='Email address of the candidate'
+    )
+
+    scheduled_date = forms.DateField(
+        required=True,
+        widget=forms.DateInput(attrs={
+            'class': 'form-control',
+            'type': 'date'
+        }),
+        help_text='Date when the interview can be taken'
+    )
+
+    scheduled_time = forms.TimeField(
+        required=True,
+        widget=forms.TimeInput(attrs={
+            'class': 'form-control',
+            'type': 'time'
+        }),
+        help_text='Time when the interview can be taken'
+    )
+
+    duration_minutes = forms.IntegerField(
+        initial=60,
+        min_value=15,
+        max_value=240,
+        widget=forms.Select(
+            choices=[
+                (30, '30 minutes'),
+                (60, '1 hour'),
+                (90, '1.5 hours'),
+                (120, '2 hours'),
+                (180, '3 hours'),
+                (240, '4 hours'),
+            ],
+            attrs={'class': 'form-control'}
+        ),
+        help_text='Duration window for completing the interview'
+    )
+
+    class Meta:
+        model = InvitedInterview
+        fields = ['template', 'candidate_email', 'scheduled_date',
+                  'scheduled_time', 'duration_minutes']
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        template_id = kwargs.pop('template_id', None)
+        super().__init__(*args, **kwargs)
+
+        # Filter templates to only show user's templates
+        if user is not None:
+            self.fields['template'].queryset = \
+                InterviewTemplate.objects.filter(user=user)
+
+        # Pre-select template if template_id provided (from template detail page)
+        if template_id is not None:
+            try:
+                template = InterviewTemplate.objects.get(id=template_id, user=user)
+                self.fields['template'].initial = template
+            except InterviewTemplate.DoesNotExist:
+                pass
+
+    def clean_scheduled_date(self):
+        """Validate that scheduled date is not in the past."""
+        scheduled_date = self.cleaned_data.get('scheduled_date')
+        if scheduled_date:
+            today = timezone.now().date()
+            if scheduled_date < today:
+                raise forms.ValidationError(
+                    'Scheduled date cannot be in the past.'
+                )
+        return scheduled_date
+
+    def clean(self):
+        """Validate that scheduled datetime is in the future."""
+        cleaned_data = super().clean()
+        scheduled_date = cleaned_data.get('scheduled_date')
+        scheduled_time = cleaned_data.get('scheduled_time')
+
+        if scheduled_date and scheduled_time:
+            # Combine date and time
+            from datetime import datetime
+            scheduled_datetime = timezone.make_aware(
+                datetime.combine(scheduled_date, scheduled_time)
+            )
+
+            # Check if in the future (allow 5 minute buffer)
+            now = timezone.now()
+            min_time = now + timedelta(minutes=5)
+
+            if scheduled_datetime < min_time:
+                raise forms.ValidationError(
+                    'Scheduled time must be at least 5 minutes in the future.'
+                )
+
+            # Store combined datetime for easy access
+            cleaned_data['scheduled_datetime'] = scheduled_datetime
+
+        return cleaned_data
+
+    def clean_candidate_email(self):
+        """Validate email format."""
+        email = self.cleaned_data.get('candidate_email')
+        if email:
+            email = email.lower().strip()
+        return email
