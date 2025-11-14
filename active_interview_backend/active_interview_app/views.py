@@ -13,7 +13,8 @@ from docx import Document
 from .models import (
     UploadedResume, UploadedJobListing, Chat,
     ExportableReport, UserProfile, RoleChangeRequest,
-    InterviewTemplate, DataExportRequest, DeletionRequest, Tag
+    InterviewTemplate, DataExportRequest, DeletionRequest, Tag,
+    InvitedInterview
 )
 from .forms import (
     CreateUserForm,
@@ -22,7 +23,8 @@ from .forms import (
     UploadFileForm,
     DocumentEditForm,
     JobPostingEditForm,
-    InterviewTemplateForm
+    InterviewTemplateForm,
+    InvitationCreationForm
 )
 from .serializers import (
     UploadedResumeSerializer,
@@ -2559,3 +2561,140 @@ def user_data_settings(request):
     }
 
     return render(request, 'user_data/settings.html', context)
+
+
+# ============================================================================
+# INVITATION VIEWS (Issue #4: Interview Invitation Workflow)
+# ============================================================================
+
+@login_required
+@admin_or_interviewer_required
+def invitation_create(request, template_id=None):
+    """
+    Create a new interview invitation.
+    Can be accessed from template detail page (with template_id) or
+    from the invitation dashboard (without template_id).
+
+    Related to Issue #5 (Create Interview Invitation).
+    """
+    # Check if user has permission
+    if not check_user_permission(request.user, ['admin', 'interviewer']):
+        messages.error(request, 'Only interviewers can create invitations.')
+        return redirect('index')
+
+    if request.method == 'POST':
+        form = InvitationCreationForm(
+            request.POST,
+            user=request.user,
+            template_id=template_id
+        )
+
+        if form.is_valid():
+            # Create invitation but don't save yet
+            invitation = form.save(commit=False)
+            invitation.interviewer = request.user
+
+            # Get combined datetime from form's clean method
+            scheduled_datetime = form.cleaned_data.get('scheduled_datetime')
+            invitation.scheduled_time = scheduled_datetime
+
+            # Save invitation
+            invitation.save()
+
+            # Mark invitation as sent (email will be sent in next phase)
+            invitation.invitation_sent_at = timezone.now()
+            invitation.save()
+
+            messages.success(
+                request,
+                f'Invitation created for {invitation.candidate_email}'
+            )
+
+            # Redirect to confirmation page
+            return redirect('invitation_confirmation', invitation_id=invitation.id)
+    else:
+        # GET request - show form
+        form = InvitationCreationForm(
+            user=request.user,
+            template_id=template_id
+        )
+
+    # Get template if template_id provided (for context)
+    template = None
+    if template_id:
+        template = get_object_or_404(
+            InterviewTemplate,
+            id=template_id,
+            user=request.user
+        )
+
+    context = {
+        'form': form,
+        'template': template,
+    }
+
+    return render(request, 'invitations/invitation_create.html', context)
+
+
+@login_required
+@admin_or_interviewer_required
+def invitation_confirmation(request, invitation_id):
+    """
+    Show confirmation page after successfully creating an invitation.
+
+    Related to Issue #9 (Interview Confirmation Page).
+    """
+    # Get invitation and verify ownership
+    invitation = get_object_or_404(
+        InvitedInterview,
+        id=invitation_id,
+        interviewer=request.user
+    )
+
+    context = {
+        'invitation': invitation,
+        'join_url': invitation.get_join_url(),
+        'window_end': invitation.get_window_end(),
+    }
+
+    return render(request, 'invitations/invitation_confirmation.html', context)
+
+
+@login_required
+@admin_or_interviewer_required
+def invitation_dashboard(request):
+    """
+    Dashboard for managing all interview invitations sent by the user.
+    Supports filtering by status.
+
+    Related to Issue #134 (Invitation Management Dashboard).
+    """
+    # Get filter parameter from query string
+    status_filter = request.GET.get('status', 'all')
+
+    # Get all invitations for this user
+    invitations = InvitedInterview.objects.filter(
+        interviewer=request.user
+    ).select_related('template', 'chat').order_by('-created_at')
+
+    # Apply status filter
+    if status_filter and status_filter != 'all':
+        invitations = invitations.filter(status=status_filter)
+
+    # Get counts for each status (for filter badges)
+    all_invitations = InvitedInterview.objects.filter(interviewer=request.user)
+    status_counts = {
+        'all': all_invitations.count(),
+        'pending': all_invitations.filter(status=InvitedInterview.PENDING).count(),
+        'completed': all_invitations.filter(status=InvitedInterview.COMPLETED).count(),
+        'reviewed': all_invitations.filter(status=InvitedInterview.REVIEWED).count(),
+        'expired': all_invitations.filter(status=InvitedInterview.EXPIRED).count(),
+    }
+
+    context = {
+        'invitations': invitations,
+        'status_filter': status_filter,
+        'status_counts': status_counts,
+    }
+
+    return render(request, 'invitations/invitation_dashboard.html', context)
