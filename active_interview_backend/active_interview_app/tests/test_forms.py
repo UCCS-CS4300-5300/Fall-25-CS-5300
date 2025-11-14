@@ -9,12 +9,16 @@ from active_interview_app.forms import (
     EditChatForm,
     UploadFileForm,
     DocumentEditForm,
-    JobPostingEditForm
+    JobPostingEditForm,
+    InterviewTemplateForm
 )
 from active_interview_app.models import (
     UploadedResume,
     UploadedJobListing,
-    Chat
+    Chat,
+    QuestionBank,
+    Tag,
+    UserProfile
 )
 from django.core.files.uploadedfile import SimpleUploadedFile
 
@@ -473,3 +477,116 @@ class UploadFileFormTest(TestCase):
         self.assertIn('file', form.fields)
         self.assertIn('title', form.fields)
         self.assertEqual(len(form.fields), 2)
+
+
+class InterviewTemplateFormTest(TestCase):
+    """Test cases for InterviewTemplateForm"""
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='testpass123'
+        )
+        self.user.profile.role = UserProfile.INTERVIEWER
+        self.user.profile.save()
+
+        self.bank1 = QuestionBank.objects.create(
+            name="Test Bank 1",
+            owner=self.user
+        )
+        self.bank2 = QuestionBank.objects.create(
+            name="Test Bank 2",
+            owner=self.user
+        )
+        self.tag1 = Tag.objects.create(name="#python")
+        self.tag2 = Tag.objects.create(name="#sql")
+
+    def test_form_init_filters_question_banks_by_user(self):
+        """Test that form filters question banks by user"""
+        other_user = User.objects.create_user(
+            username='otheruser',
+            password='testpass123'
+        )
+        other_bank = QuestionBank.objects.create(
+            name="Other Bank",
+            owner=other_user
+        )
+
+        form = InterviewTemplateForm(user=self.user)
+        queryset = form.fields['question_banks'].queryset
+
+        self.assertIn(self.bank1, queryset)
+        self.assertIn(self.bank2, queryset)
+        self.assertNotIn(other_bank, queryset)
+
+    def test_form_init_without_user(self):
+        """Test form initialization without user argument"""
+        form = InterviewTemplateForm()
+        # Should not crash and should have empty queryset
+        self.assertEqual(form.fields['question_banks'].queryset.count(), 0)
+
+    def test_clean_valid_percentages(self):
+        """Test clean method with valid difficulty percentages"""
+        form_data = {
+            'name': 'Test Template',
+            'use_auto_assembly': True,
+            'question_count': 10,
+            'easy_percentage': 30,
+            'medium_percentage': 50,
+            'hard_percentage': 20
+        }
+        form = InterviewTemplateForm(data=form_data, user=self.user)
+        self.assertTrue(form.is_valid())
+
+    def test_clean_invalid_percentages(self):
+        """Test clean method with percentages not summing to 100"""
+        form_data = {
+            'name': 'Test Template',
+            'use_auto_assembly': True,
+            'question_count': 10,
+            'easy_percentage': 30,
+            'medium_percentage': 50,
+            'hard_percentage': 30  # Total is 110%
+        }
+        form = InterviewTemplateForm(data=form_data, user=self.user)
+        self.assertFalse(form.is_valid())
+        self.assertIn('Difficulty percentages must sum to 100%', str(form.errors))
+
+    def test_clean_without_auto_assembly(self):
+        """Test clean method when auto_assembly is disabled"""
+        form_data = {
+            'name': 'Test Template',
+            'use_auto_assembly': False,
+            'easy_percentage': 30,
+            'medium_percentage': 50,
+            'hard_percentage': 30  # Total is 110%, but should be ignored
+        }
+        form = InterviewTemplateForm(data=form_data, user=self.user)
+        # Should be valid because auto_assembly is not enabled
+        self.assertTrue(form.is_valid())
+
+    def test_clean_with_none_percentages(self):
+        """Test clean method with None percentages (treated as 0)"""
+        form_data = {
+            'name': 'Test Template',
+            'use_auto_assembly': True,
+            'question_count': 10,
+            'easy_percentage': None,
+            'medium_percentage': 50,
+            'hard_percentage': 50
+        }
+        form = InterviewTemplateForm(data=form_data, user=self.user)
+        self.assertTrue(form.is_valid())
+
+    def test_form_fields(self):
+        """Test that form has correct fields"""
+        form = InterviewTemplateForm()
+        self.assertIn('name', form.fields)
+        self.assertIn('description', form.fields)
+        self.assertIn('use_auto_assembly', form.fields)
+        self.assertIn('question_banks', form.fields)
+        self.assertIn('tags', form.fields)
+        self.assertIn('question_count', form.fields)
+        self.assertIn('easy_percentage', form.fields)
+        self.assertIn('medium_percentage', form.fields)
+        self.assertIn('hard_percentage', form.fields)

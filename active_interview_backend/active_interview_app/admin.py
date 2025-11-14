@@ -2,7 +2,8 @@ from django.contrib import admin
 from .models import (
     Chat, UploadedJobListing, UploadedResume,
     ExportableReport, UserProfile, RoleChangeRequest,
-    DataExportRequest, DeletionRequest
+    DataExportRequest, DeletionRequest,
+    Tag, QuestionBank, Question, InterviewTemplate
 )
 from .token_usage_models import TokenUsage
 from .merge_stats_models import MergeTokenStats
@@ -101,6 +102,99 @@ class RoleChangeRequestAdmin(admin.ModelAdmin):
         """Optimize query with select_related"""
         qs = super().get_queryset(request)
         return qs.select_related('user', 'reviewed_by')
+
+
+# Question Bank Tagging Admin
+@admin.register(Tag)
+class TagAdmin(admin.ModelAdmin):
+    list_display = ('name', 'created_at', 'question_count')
+    search_fields = ('name',)
+    readonly_fields = ('created_at',)
+
+    def question_count(self, obj):
+        return obj.questions.count()
+    question_count.short_description = 'Questions'
+
+
+class QuestionInline(admin.TabularInline):
+    model = Question
+    extra = 0
+    fields = ('text', 'difficulty', 'created_at')
+    readonly_fields = ('created_at',)
+
+
+@admin.register(QuestionBank)
+class QuestionBankAdmin(admin.ModelAdmin):
+    list_display = ('name', 'owner', 'question_count', 'created_at', 'updated_at')
+    list_filter = ('created_at', 'updated_at')
+    search_fields = ('name', 'description', 'owner__username')
+    readonly_fields = ('created_at', 'updated_at')
+    inlines = [QuestionInline]
+
+    def question_count(self, obj):
+        return obj.questions.count()
+    question_count.short_description = 'Questions'
+
+
+@admin.register(Question)
+class QuestionAdmin(admin.ModelAdmin):
+    list_display = ('text_preview', 'question_bank', 'difficulty', 'tag_list',
+                   'owner', 'created_at')
+    list_filter = ('difficulty', 'created_at', 'tags')
+    search_fields = ('text', 'question_bank__name', 'owner__username')
+    readonly_fields = ('created_at', 'updated_at')
+    filter_horizontal = ('tags',)
+
+    def text_preview(self, obj):
+        return obj.text[:100] + '...' if len(obj.text) > 100 else obj.text
+    text_preview.short_description = 'Question'
+
+    def tag_list(self, obj):
+        return ', '.join([tag.name for tag in obj.tags.all()])
+    tag_list.short_description = 'Tags'
+
+
+@admin.register(InterviewTemplate)
+class InterviewTemplateAdmin(admin.ModelAdmin):
+    list_display = ('name', 'user', 'use_auto_assembly', 'question_count',
+                   'tag_list', 'difficulty_distribution', 'status', 'created_at')
+    list_filter = ('use_auto_assembly', 'created_at', 'updated_at')
+    search_fields = ('name', 'user__username', 'description')
+    readonly_fields = ('created_at', 'updated_at')
+    filter_horizontal = ('tags', 'question_banks')
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('name', 'user', 'description')
+        }),
+        ('Template Sections', {
+            'fields': ('sections',),
+            'description': 'JSON structure for template sections'
+        }),
+        ('Auto-Assembly Configuration', {
+            'fields': ('use_auto_assembly', 'question_banks', 'tags',
+                      'question_count', 'easy_percentage', 'medium_percentage',
+                      'hard_percentage'),
+            'description': 'Settings for automatically assembling interviews from question banks'
+        }),
+        ('Metadata', {
+            'fields': ('created_at', 'updated_at')
+        }),
+    )
+
+    def tag_list(self, obj):
+        return ', '.join([tag.name for tag in obj.tags.all()][:5]) + \
+               ('...' if obj.tags.count() > 5 else '')
+    tag_list.short_description = 'Tags'
+
+    def difficulty_distribution(self, obj):
+        if obj.use_auto_assembly:
+            return f"E:{obj.easy_percentage}% M:{obj.medium_percentage}% H:{obj.hard_percentage}%"
+        return "N/A"
+    difficulty_distribution.short_description = 'Difficulty'
+
+    def status(self, obj):
+        return obj.get_status_display()
+    status.short_description = 'Status'
 
 # Token Tracking Admin
 @admin.register(TokenUsage)

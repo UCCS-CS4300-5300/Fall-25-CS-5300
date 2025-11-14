@@ -216,11 +216,14 @@ class ExportableReport(models.Model):
 
 class InterviewTemplate(models.Model):
     """
-    Named interview templates created by interviewers.
-    Allows interviewers to organize and structure their interviews.
+    Comprehensive interview templates created by interviewers.
+    Combines structured sections with question bank integration.
 
-    Templates can be empty initially and later populated with questions,
-    criteria, and other interview structure.
+    Templates can include:
+    - Manual sections with custom content and weighting
+    - Auto-assembly configuration for question banks
+    - Tag-based question selection
+    - Difficulty distribution settings
     """
     name = models.CharField(
         max_length=255,
@@ -244,6 +247,48 @@ class InterviewTemplate(models.Model):
         help_text='List of sections in the template. Each section has: title, content, order, weight'
     )
     # Structure: [{"id": "uuid", "title": "...", "content": "...", "order": 0, "weight": 0}, ...]
+
+    # Question Bank Integration fields
+    question_banks = models.ManyToManyField(
+        'QuestionBank',
+        blank=True,
+        related_name='templates',
+        help_text='Question banks to use for auto-assembly'
+    )
+    tags = models.ManyToManyField(
+        'Tag',
+        blank=True,
+        related_name='templates',
+        help_text='Tags to filter questions for auto-assembly'
+    )
+
+    # Auto-assembly configuration
+    use_auto_assembly = models.BooleanField(
+        default=False,
+        help_text='Enable automatic interview assembly from question banks'
+    )
+    question_count = models.IntegerField(
+        default=5,
+        validators=[MinValueValidator(1)],
+        help_text='Number of questions for auto-assembly'
+    )
+
+    # Difficulty distribution (percentages should sum to 100)
+    easy_percentage = models.IntegerField(
+        default=30,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        help_text='Percentage of easy questions'
+    )
+    medium_percentage = models.IntegerField(
+        default=50,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        help_text='Percentage of medium questions'
+    )
+    hard_percentage = models.IntegerField(
+        default=20,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        help_text='Percentage of hard questions'
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -271,6 +316,19 @@ class InterviewTemplate(models.Model):
     def get_status_display(self):
         """Return 'WIP' if not complete, otherwise return 'Complete'."""
         return "Complete" if self.is_complete() else "WIP"
+
+    def get_difficulty_distribution(self):
+        """Return the difficulty distribution as a dict."""
+        return {
+            'easy': self.easy_percentage,
+            'medium': self.medium_percentage,
+            'hard': self.hard_percentage
+        }
+
+    def validate_difficulty_distribution(self):
+        """Check if difficulty percentages sum to 100."""
+        total = self.easy_percentage + self.medium_percentage + self.hard_percentage
+        return total == 100
 
 
 class RoleChangeRequest(models.Model):
@@ -529,6 +587,74 @@ class DeletionRequest(models.Model):
             f"Deletion: {self.anonymized_user_id} - "
             f"{self.status} ({self.requested_at.strftime('%Y-%m-%d %H:%M')})"
         )
+
+
+class Tag(models.Model):
+    """
+    Tags for categorizing questions (e.g., #python, #sql, #behavioral).
+    Tag names are automatically normalized to lowercase with # prefix.
+    """
+    name = models.CharField(max_length=100, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        # Normalize tag: lowercase and ensure # prefix
+        if self.name and not self.name.startswith('#'):
+            self.name = f"#{self.name.lower()}"
+        else:
+            self.name = self.name.lower()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ['name']
+
+
+class QuestionBank(models.Model):
+    """
+    A collection of questions that can be tagged and used for interview assembly.
+    """
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='question_banks')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ['-updated_at']
+
+
+class Question(models.Model):
+    """
+    Individual question within a question bank.
+    Questions can be tagged for categorization and filtering.
+    """
+    DIFFICULTY_CHOICES = [
+        ('easy', 'Easy'),
+        ('medium', 'Medium'),
+        ('hard', 'Hard'),
+    ]
+
+    question_bank = models.ForeignKey(QuestionBank, on_delete=models.CASCADE,
+                                     related_name='questions')
+    text = models.TextField()
+    difficulty = models.CharField(max_length=10, choices=DIFFICULTY_CHOICES,
+                                 default='medium')
+    tags = models.ManyToManyField(Tag, blank=True, related_name='questions')
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='questions')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.text[:100]
+
+    class Meta:
+        ordering = ['-created_at']
 
 
 # Import token tracking models (must be at end to avoid circular imports)

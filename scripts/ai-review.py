@@ -26,9 +26,9 @@ with open(sys.argv[1], 'r') as diff_file:
 
 # Provide project context here
 project_context = """
-These code changes are for a Django web app. The app is deployed with
-docker-compose and Nginx on DigitalOcean. The app is an active interview
-service which uses the ChatGPT API to create a dynamic interview chat
+These code changes are for a Django web app. The app is deployed
+using a Dockerfile to Railway. The app is an active interview
+service which uses the ChatGPT API to create a dynamic interview chats
 for job-seekers.
 """.strip()
 
