@@ -456,14 +456,56 @@ class ChatView(LoginRequiredMixin, UserPassesTestMixin, View):
         owner_chats = Chat.objects.filter(owner=request.user)\
             .order_by('-modified_date')
 
+        # Check if invited interview time has expired (Issue #138)
+        time_expired = False
+        if chat.interview_type == Chat.INVITED:
+            time_expired = chat.is_time_expired()
+            if time_expired:
+                # Mark invitation as completed if not already
+                try:
+                    invitation = InvitedInterview.objects.get(chat=chat)
+                    if invitation.status != InvitedInterview.COMPLETED:
+                        invitation.status = InvitedInterview.COMPLETED
+                        invitation.completed_at = timezone.now()
+                        invitation.save()
+
+                        # Send completion notification to interviewer
+                        from .invitation_utils import send_completion_notification_email
+                        send_completion_notification_email(invitation)
+                except InvitedInterview.DoesNotExist:
+                    pass
+
         context = {}
         context['chat'] = chat
         context['owner_chats'] = owner_chats
+        context['time_expired'] = time_expired
+        context['time_remaining'] = chat.time_remaining()
 
         return render(request, os.path.join('chat', 'chat-view.html'), context)
 
     def post(self, request, chat_id):
         chat = Chat.objects.get(id=chat_id)
+
+        # Check if invited interview time has expired (Issue #138)
+        if chat.interview_type == Chat.INVITED and chat.is_time_expired():
+            # Mark invitation as completed if not already
+            try:
+                invitation = InvitedInterview.objects.get(chat=chat)
+                if invitation.status != InvitedInterview.COMPLETED:
+                    invitation.status = InvitedInterview.COMPLETED
+                    invitation.completed_at = timezone.now()
+                    invitation.save()
+
+                    # Send completion notification to interviewer
+                    from .invitation_utils import send_interview_completed_email
+                    send_interview_completed_email(invitation)
+            except InvitedInterview.DoesNotExist:
+                pass
+
+            return JsonResponse({
+                'error': 'Interview time has expired',
+                'time_expired': True
+            }, status=403)
 
         user_message = request.POST.get('message', '')
 
@@ -2843,12 +2885,17 @@ def start_invited_interview(request, invitation_id):
             )
         return redirect('invited_interview_detail', invitation_id=invitation.id)
 
-    # Create Chat session
+    # Create Chat session with time tracking (Issue #138)
+    now = timezone.now()
+    scheduled_end = now + timedelta(minutes=invitation.duration_minutes)
+
     chat = Chat.objects.create(
         owner=request.user,
         title=f"{invitation.template.name} - Invited Interview",
         interview_type=Chat.INVITED,
         type=Chat.GENERAL,  # Or inherit from template if available
+        started_at=now,
+        scheduled_end_at=scheduled_end,
     )
 
     # Link chat to invitation

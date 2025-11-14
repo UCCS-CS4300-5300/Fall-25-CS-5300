@@ -243,11 +243,39 @@ class Chat(models.Model):
         help_text='Whether this is a practice or invited interview'
     )
 
+    # Time tracking for invited interviews (Issue #138)
+    # For invited interviews, track when the interview session started
+    # and when it should end based on duration limits
+    started_at = models.DateTimeField(null=True, blank=True,
+                                      help_text='Time when the interview session started')
+    scheduled_end_at = models.DateTimeField(null=True, blank=True,
+                                            help_text='Scheduled time when interview should end')
+
     # create object itself, not the field
     # all templates for documents in /documents/
     # thing that returns all user files is at views
 
     modified_date = models.DateTimeField(auto_now=True)  # date last modified
+
+    def is_time_expired(self):
+        """
+        Check if the interview time has expired.
+        Only applicable for invited interviews with scheduled end times.
+        """
+        if self.interview_type == self.INVITED and self.scheduled_end_at:
+            return timezone.now() > self.scheduled_end_at
+        return False
+
+    def time_remaining(self):
+        """
+        Get the time remaining for this interview.
+        Returns None if not applicable or already expired.
+        """
+        if self.interview_type == self.INVITED and self.scheduled_end_at:
+            now = timezone.now()
+            if now < self.scheduled_end_at:
+                return self.scheduled_end_at - now
+        return None
 
     def __str__(self):
         return self.title
