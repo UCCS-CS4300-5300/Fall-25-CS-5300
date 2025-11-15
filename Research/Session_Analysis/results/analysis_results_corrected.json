@@ -1,35 +1,35 @@
 {
   "statistics": {
-    "total_sessions": 29,
-    "meaningful_sessions": 16,
+    "total_sessions": 62,
+    "meaningful_sessions": 23,
     "sessions_by_type": {
-      "exploratory": 13,
       "new": 10,
-      "refactor": 6
+      "refactor": 13,
+      "exploratory": 10
     },
-    "total_edits": 457,
-    "total_test_runs": 30,
+    "total_edits": 381,
+    "total_test_runs": 62,
     "test_metrics": {
-      "sessions_with_tests": 9,
-      "total_test_runs": 30,
-      "sessions_with_first_runs": 6,
-      "total_first_runs_after_edits": 14,
-      "failed_first_runs": 8,
-      "first_run_failure_rate_by_session": 83.33,
-      "first_run_failure_rate_by_run": 57.14,
-      "average_test_iterations": 3.33,
-      "regression_detection_rate": 55.56,
+      "sessions_with_tests": 21,
+      "total_test_runs": 92,
+      "sessions_with_first_runs": 13,
+      "total_first_runs_after_edits": 34,
+      "failed_first_runs": 20,
+      "first_run_failure_rate_by_session": 84.62,
+      "first_run_failure_rate_by_run": 58.82,
+      "average_test_iterations": 4.38,
+      "regression_detection_rate": 42.86,
       "note": "First run = first test execution after editing a test file"
     },
     "reprompt_metrics": {
-      "meaningful_sessions": 16,
-      "avg_reprompts_per_session": 105.44,
-      "total_reprompts": 1687,
+      "meaningful_sessions": 39,
+      "avg_reprompts_per_session": 107.9,
+      "total_reprompts": 4208,
       "reason_distribution": {
-        "errors": 17.72,
-        "refinements": 9.37,
-        "incomplete": 2.61,
-        "other": 70.3
+        "errors": 17.11,
+        "refinements": 7.82,
+        "incomplete": 2.26,
+        "other": 72.81
       },
       "success_rate": 100.0
     }
@@ -1732,6 +1732,2169 @@
           "refinements": 25,
           "incomplete": 3,
           "other": 72
+        }
+      }
+    },
+    {
+      "session_id": "dd468525-c975-4296-a9a5-90bc886a63b0",
+      "message_count": 614,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 38,
+      "test_edit_count": 23,
+      "test_file_edits": [
+        {
+          "message_index": 89,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_views_comprehensive.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 99,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_views_coverage.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 241,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_serializers.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 242,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_serializers.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 250,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_serializers.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 270,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_models.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 285,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_views_extended.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 292,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_views_extended.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 293,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_views_extended.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 300,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_views_extended.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 398,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_serializers.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 407,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_views_extended.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 462,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_serializers.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 468,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_serializers.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 469,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_serializers.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 476,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_serializers.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 482,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_serializers.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 507,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_complete_coverage_all_files.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 542,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_models.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 573,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_forms.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 574,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_forms.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 583,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_views_coverage.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 590,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_views_complete_coverage.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [
+        {
+          "test_count": 492,
+          "passed": false,
+          "failures": 13,
+          "errors": 21,
+          "output_excerpt": "  -100\u2192AssertionError: 400 != 201\n   -99\u2192\n   -98\u2192======================================================================\n   -97\u2192FAIL: test_missing_email (active_interview_app.tests.test_forms.CreateUserFormTest)\n   -96\u2192Test form fails when email is missing\n   -95\u2192----------------------------------------------------------------------\n   -94\u2192Traceback (most recent call last):\n   -93\u2192  File \"/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_forms.p",
+          "failed_tests": [
+            "test_missing_email",
+            "test_missing_title",
+            "test_cumulative_cost_decimal_conversion",
+            "test_create_chat_key_questions_json_extraction_fails",
+            "test_create_chat_key_questions_with_json",
+            "test_create_chat_ai_unavailable",
+            "test_create_chat_without_resume",
+            "test_create_chat_with_ai",
+            "test_create_chat_without_ai"
+          ],
+          "error_tests": [],
+          "message_index": 42,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 492,
+          "passed": false,
+          "failures": 18,
+          "errors": 6,
+          "output_excerpt": "  File \"/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/mock.py\", line 1337, in patched\n    return func(*newargs, **newkeywargs)\n  File \"/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_coverage_boost.py\", line 250, in test_create_chat_without_ai\n    self.assertEqual(Chat.objects.count(), 1)\nAssertionError: 0 != 1\n\n=====================================================================",
+          "failed_tests": [
+            "test_edit_chat_post"
+          ],
+          "error_tests": [],
+          "message_index": 187,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 1,
+          "passed": false,
+          "failures": 1,
+          "errors": 0,
+          "output_excerpt": "Operations to perform:\n  Synchronize unmigrated apps: bootstrap5, filetype, messages, rest_framework, staticfiles\n  Apply all migrations: active_interview_app, admin, auth, contenttypes, sessions\nSynchronizing apps without migrations:\n  Creating tables...\n    Running deferred SQL...\nRunning migrations:\n  Applying contenttypes.0001_initial... OK\n  Applying auth.0001_initial... OK\n  Applying active_interview_app.0001_initial... OK\n  Applying active_interview_app.0002_alter_chat_type... OK\n  Applyi",
+          "failed_tests": [
+            "test_create_chat_with_resume_ai_available"
+          ],
+          "error_tests": [],
+          "message_index": 332,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 471,
+          "passed": false,
+          "failures": 10,
+          "errors": 3,
+          "output_excerpt": "Traceback (most recent call last):\n  File \"/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_serializers.py\", line 79, in test_deserialize_missing_user\n    self.assertIn('user', serializer.errors)\nAssertionError: 'user' not found in {'title': [ErrorDetail(string='This field is required.', code='required')]}\n\n======================================================================\nFAIL: test_create_chat_key_questions_with_json (active_interview_ap",
+          "failed_tests": [
+            "test_create_chat_key_questions_with_json",
+            "test_register_success"
+          ],
+          "error_tests": [],
+          "message_index": 393,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 471,
+          "passed": false,
+          "failures": 9,
+          "errors": 3,
+          "output_excerpt": "ERROR: active_interview_app.tests.test_views_extended (unittest.loader._FailedTest)\nERROR: test_chat_difficulty_validation_valid (active_interview_app.tests.test_models.ChatModelTest)\nERROR: test_create_job_listing_via_serializer (active_interview_app.tests.test_serializers.UploadedJobListingSerializerTest)\nFAIL: test_create_chat_without_resume_ai_unavailable (active_interview_app.tests.test_complete_coverage_all_files.ViewsCompleteCoverageTest)\nFAIL: test_uploaded_resume_view_post_valid (active",
+          "failed_tests": [
+            "test_create_chat_without_resume_ai_unavailable",
+            "test_uploaded_resume_view_post_valid",
+            "test_missing_title",
+            "test_missing_title",
+            "test_deserialize_missing_filename",
+            "test_deserialize_missing_user",
+            "test_serializer_fields",
+            "test_create_chat_key_questions_with_json",
+            "test_register_success"
+          ],
+          "error_tests": [
+            "test_chat_difficulty_validation_valid",
+            "test_create_job_listing_via_serializer"
+          ],
+          "message_index": 402,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 1,
+          "passed": false,
+          "failures": 0,
+          "errors": 1,
+          "output_excerpt": "Found 1 test(s).\nSystem check identified no issues (0 silenced).\nE\n======================================================================\nERROR: test_views_extended (unittest.loader._FailedTest)\n----------------------------------------------------------------------\nImportError: Failed to import test module: test_views_extended\nTraceback (most recent call last):\n  File \"/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/loader.py\", line 15",
+          "failed_tests": [],
+          "error_tests": [
+            "test_views_extended"
+          ],
+          "message_index": 405,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 492,
+          "passed": false,
+          "failures": 9,
+          "errors": 2,
+          "output_excerpt": "----------------------------------------------------------------------\nRan 492 tests in 121.615s\n\nFAILED (failures=9, errors=2, skipped=3)\nDestroying test database for alias 'default'...",
+          "failed_tests": [],
+          "error_tests": [],
+          "message_index": 425,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 1,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "  Applying auth.0003_alter_user_email_max_length... OK\n  Applying auth.0004_alter_user_username_opts... OK\n  Applying auth.0005_alter_user_last_login_null... OK\n  Applying auth.0006_require_contenttypes_0002... OK\n  Applying auth.0007_alter_validators_add_error_messages... OK\n  Applying auth.0008_alter_user_username_max_length... OK\n  Applying auth.0009_alter_user_last_name_max_length... OK\n  Applying auth.0010_alter_group_name_max_length... OK\n  Applying auth.0011_update_proxy_permissions... OK",
+          "message_index": 494,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 1,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "  Applying auth.0003_alter_user_email_max_length... OK\n  Applying auth.0004_alter_user_username_opts... OK\n  Applying auth.0005_alter_user_last_login_null... OK\n  Applying auth.0006_require_contenttypes_0002... OK\n  Applying auth.0007_alter_validators_add_error_messages... OK\n  Applying auth.0008_alter_user_username_max_length... OK\n  Applying auth.0009_alter_user_last_name_max_length... OK\n  Applying auth.0010_alter_group_name_max_length... OK\n  Applying auth.0011_update_proxy_permissions... OK",
+          "message_index": 497,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 1,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "  Applying active_interview_app.0001_initial... OK\n  Applying active_interview_app.0002_alter_chat_type... OK\n  Applying active_interview_app.0003_alter_chat_type_tokenusage_mergetokenstats... OK\n  Applying active_interview_app.0004_alter_chat_type... OK\n  Applying active_interview_app.0005_alter_chat_type_exportablereport... OK\n  Applying admin.0001_initial... OK\n  Applying admin.0002_logentry_remove_auto_add... OK\n  Applying admin.0003_logentry_add_action_flag_choices... OK\n  Applying contentt",
+          "message_index": 515,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 1,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "  Applying active_interview_app.0001_initial... OK\n  Applying active_interview_app.0002_alter_chat_type... OK\n  Applying active_interview_app.0003_alter_chat_type_tokenusage_mergetokenstats... OK\n  Applying active_interview_app.0004_alter_chat_type... OK\n  Applying active_interview_app.0005_alter_chat_type_exportablereport... OK\n  Applying admin.0001_initial... OK\n  Applying admin.0002_logentry_remove_auto_add... OK\n  Applying admin.0003_logentry_add_action_flag_choices... OK\n  Applying contentt",
+          "message_index": 520,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 492,
+          "passed": false,
+          "failures": 6,
+          "errors": 0,
+          "output_excerpt": "Traceback (most recent call last):\n  File \"/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_views_coverage.py\", line 58, in test_register_success\n    self.assertEqual(response.status_code, 302)\nAssertionError: 200 != 302\n\n----------------------------------------------------------------------\nRan 492 tests in 121.183s\n\nFAILED (failures=6, skipped=3)\nDestroying test database for alias 'default'...",
+          "failed_tests": [],
+          "error_tests": [],
+          "message_index": 528,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 492,
+          "passed": false,
+          "failures": 5,
+          "errors": 0,
+          "output_excerpt": "FAIL: test_uploaded_resume_view_post_valid (active_interview_app.tests.test_complete_coverage_all_files.ViewsCompleteCoverageTest)\nTest UploadedResumeView POST with valid data\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_complete_coverage_all_files.py\", line 977, in test_uploaded_resume_view_post_valid\n    self.assertEqual(resp",
+          "failed_tests": [
+            "test_uploaded_resume_view_post_valid",
+            "test_missing_title",
+            "test_missing_title",
+            "test_create_chat_key_questions_with_json",
+            "test_register_success"
+          ],
+          "error_tests": [],
+          "message_index": 558,
+          "command": "python manage.py test"
+        }
+      ],
+      "first_run_tests": [
+        {
+          "test_count": 492,
+          "passed": false,
+          "failures": 18,
+          "errors": 6,
+          "output_excerpt": "  File \"/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/mock.py\", line 1337, in patched\n    return func(*newargs, **newkeywargs)\n  File \"/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_coverage_boost.py\", line 250, in test_create_chat_without_ai\n    self.assertEqual(Chat.objects.count(), 1)\nAssertionError: 0 != 1\n\n=====================================================================",
+          "failed_tests": [
+            "test_edit_chat_post"
+          ],
+          "error_tests": [],
+          "message_index": 187,
+          "command": "python manage.py test",
+          "is_first_run_after_edit": true,
+          "related_edit": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_views_comprehensive.py"
+        },
+        {
+          "test_count": 1,
+          "passed": false,
+          "failures": 1,
+          "errors": 0,
+          "output_excerpt": "Operations to perform:\n  Synchronize unmigrated apps: bootstrap5, filetype, messages, rest_framework, staticfiles\n  Apply all migrations: active_interview_app, admin, auth, contenttypes, sessions\nSynchronizing apps without migrations:\n  Creating tables...\n    Running deferred SQL...\nRunning migrations:\n  Applying contenttypes.0001_initial... OK\n  Applying auth.0001_initial... OK\n  Applying active_interview_app.0001_initial... OK\n  Applying active_interview_app.0002_alter_chat_type... OK\n  Applyi",
+          "failed_tests": [
+            "test_create_chat_with_resume_ai_available"
+          ],
+          "error_tests": [],
+          "message_index": 332,
+          "command": "python manage.py test",
+          "is_first_run_after_edit": true,
+          "related_edit": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_serializers.py"
+        },
+        {
+          "test_count": 471,
+          "passed": false,
+          "failures": 9,
+          "errors": 3,
+          "output_excerpt": "ERROR: active_interview_app.tests.test_views_extended (unittest.loader._FailedTest)\nERROR: test_chat_difficulty_validation_valid (active_interview_app.tests.test_models.ChatModelTest)\nERROR: test_create_job_listing_via_serializer (active_interview_app.tests.test_serializers.UploadedJobListingSerializerTest)\nFAIL: test_create_chat_without_resume_ai_unavailable (active_interview_app.tests.test_complete_coverage_all_files.ViewsCompleteCoverageTest)\nFAIL: test_uploaded_resume_view_post_valid (active",
+          "failed_tests": [
+            "test_create_chat_without_resume_ai_unavailable",
+            "test_uploaded_resume_view_post_valid",
+            "test_missing_title",
+            "test_missing_title",
+            "test_deserialize_missing_filename",
+            "test_deserialize_missing_user",
+            "test_serializer_fields",
+            "test_create_chat_key_questions_with_json",
+            "test_register_success"
+          ],
+          "error_tests": [
+            "test_chat_difficulty_validation_valid",
+            "test_create_job_listing_via_serializer"
+          ],
+          "message_index": 402,
+          "command": "python manage.py test",
+          "is_first_run_after_edit": true,
+          "related_edit": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_serializers.py"
+        },
+        {
+          "test_count": 492,
+          "passed": false,
+          "failures": 9,
+          "errors": 2,
+          "output_excerpt": "----------------------------------------------------------------------\nRan 492 tests in 121.615s\n\nFAILED (failures=9, errors=2, skipped=3)\nDestroying test database for alias 'default'...",
+          "failed_tests": [],
+          "error_tests": [],
+          "message_index": 425,
+          "command": "python manage.py test",
+          "is_first_run_after_edit": true,
+          "related_edit": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_views_extended.py"
+        },
+        {
+          "test_count": 1,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "  Applying auth.0003_alter_user_email_max_length... OK\n  Applying auth.0004_alter_user_username_opts... OK\n  Applying auth.0005_alter_user_last_login_null... OK\n  Applying auth.0006_require_contenttypes_0002... OK\n  Applying auth.0007_alter_validators_add_error_messages... OK\n  Applying auth.0008_alter_user_username_max_length... OK\n  Applying auth.0009_alter_user_last_name_max_length... OK\n  Applying auth.0010_alter_group_name_max_length... OK\n  Applying auth.0011_update_proxy_permissions... OK",
+          "message_index": 494,
+          "command": "python manage.py test",
+          "is_first_run_after_edit": true,
+          "related_edit": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_serializers.py"
+        },
+        {
+          "test_count": 1,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "  Applying active_interview_app.0001_initial... OK\n  Applying active_interview_app.0002_alter_chat_type... OK\n  Applying active_interview_app.0003_alter_chat_type_tokenusage_mergetokenstats... OK\n  Applying active_interview_app.0004_alter_chat_type... OK\n  Applying active_interview_app.0005_alter_chat_type_exportablereport... OK\n  Applying admin.0001_initial... OK\n  Applying admin.0002_logentry_remove_auto_add... OK\n  Applying admin.0003_logentry_add_action_flag_choices... OK\n  Applying contentt",
+          "message_index": 515,
+          "command": "python manage.py test",
+          "is_first_run_after_edit": true,
+          "related_edit": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_complete_coverage_all_files.py"
+        },
+        {
+          "test_count": 492,
+          "passed": false,
+          "failures": 5,
+          "errors": 0,
+          "output_excerpt": "FAIL: test_uploaded_resume_view_post_valid (active_interview_app.tests.test_complete_coverage_all_files.ViewsCompleteCoverageTest)\nTest UploadedResumeView POST with valid data\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_complete_coverage_all_files.py\", line 977, in test_uploaded_resume_view_post_valid\n    self.assertEqual(resp",
+          "failed_tests": [
+            "test_uploaded_resume_view_post_valid",
+            "test_missing_title",
+            "test_missing_title",
+            "test_create_chat_key_questions_with_json",
+            "test_register_success"
+          ],
+          "error_tests": [],
+          "message_index": 558,
+          "command": "python manage.py test",
+          "is_first_run_after_edit": true,
+          "related_edit": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_models.py"
+        }
+      ],
+      "test_run_count": 13,
+      "reprompt_analysis": {
+        "user_message_count": 203,
+        "assistant_message_count": 390,
+        "reprompt_count": 202,
+        "reasons": {
+          "errors": 40,
+          "refinements": 4,
+          "incomplete": 6,
+          "other": 152
+        }
+      }
+    },
+    {
+      "session_id": "91e6589f-1a6c-4b18-9d42-ebd7ece0746d",
+      "message_count": 1183,
+      "category": "refactor",
+      "is_meaningful": true,
+      "edit_count": 76,
+      "test_edit_count": 25,
+      "test_file_edits": [
+        {
+          "message_index": 87,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_question_banks.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 109,
+          "tool": "Write",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/temp/test_sections_demo.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 175,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_question_banks.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 192,
+          "tool": "Write",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/temp/test_validation_demo.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 707,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_question_banks.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 711,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_question_banks.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 715,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_question_banks.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 719,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_question_banks.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 722,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_question_banks.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 725,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_question_banks.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 728,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_question_banks.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 731,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_question_banks.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 757,
+          "tool": "Write",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_serializers.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 767,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_serializers.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 772,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_serializers.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 780,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_serializers.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 783,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_serializers.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 786,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_serializers.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 789,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_serializers.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 792,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_serializers.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 795,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_serializers.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 842,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_forms.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 846,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_forms.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 914,
+          "tool": "Write",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_permissions.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 922,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_permissions.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [
+        {
+          "test_count": 24,
+          "passed": false,
+          "failures": 17,
+          "errors": 0,
+          "output_excerpt": "Test merging multiple tags\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_question_banks.py\", line 424, in test_merge_tags\n    self.assertEqual(response.status_code, status.HTTP_200_OK)\nAssertionError: 403 != 200\n\n======================================================================\nFAIL: test_rename_tag (active_interview_app.te",
+          "failed_tests": [
+            "test_rename_tag",
+            "test_tag_statistics"
+          ],
+          "error_tests": [],
+          "message_index": 676,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 24,
+          "passed": false,
+          "failures": 17,
+          "errors": 0,
+          "output_excerpt": "Traceback (most recent call last):\n  File \"/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_question_banks.py\", line 437, in test_tag_statistics\n    self.assertEqual(response.status_code, status.HTTP_200_OK)\nAssertionError: 403 != 200\n\n----------------------------------------------------------------------\nRan 24 tests in 4.448s\n\nFAILED (failures=17)\nDestroying test database for alias 'default'...",
+          "failed_tests": [],
+          "error_tests": [],
+          "message_index": 680,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 24,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "  warnings.warn(\nCreating test database for alias 'default'...\nFound 24 test(s).\nSystem check identified no issues (0 silenced).\n........................\n----------------------------------------------------------------------\nRan 24 tests in 3.885s\n\nOK\nDestroying test database for alias 'default'...",
+          "message_index": 736,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 24,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "----------------------------------------------------------------------\nRan 24 tests in 4.224s\n\nOK\nDestroying test database for alias 'default'...",
+          "message_index": 740,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 51,
+          "passed": false,
+          "failures": 0,
+          "errors": 2,
+          "output_excerpt": "    return self.cursor.execute(sql, params)\n  File \"/Users/theaaron730/Library/Python/3.9/lib/python/site-packages/django/db/backends/sqlite3/base.py\", line 328, in execute\n    return super().execute(query, params)\ndjango.db.utils.IntegrityError: NOT NULL constraint failed: active_interview_app_interviewtemplate.user_id\n\n----------------------------------------------------------------------\nRan 51 tests in 8.631s\n\nFAILED (errors=2)\nDestroying test database for alias 'default'...",
+          "failed_tests": [],
+          "error_tests": [],
+          "message_index": 777,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 24,
+          "passed": false,
+          "failures": 1,
+          "errors": 0,
+          "output_excerpt": "Traceback (most recent call last):\n  File \"/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_permissions.py\", line 264, in test_user_without_profile_denied\n    self.assertFalse(self.permission.has_object_permission(request, self.view, obj))\nAssertionError: True is not false\n\n----------------------------------------------------------------------\nRan 24 tests in 3.132s\n\nFAILED (failures=1)\nDestroying test database for alias 'default'...",
+          "failed_tests": [],
+          "error_tests": [],
+          "message_index": 919,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 24,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "----------------------------------------------------------------------\nRan 24 tests in 3.152s\n\nOK\nDestroying test database for alias 'default'...",
+          "message_index": 927,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 43,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "Creating test database for alias 'default'...\nFound 43 test(s).\n  warnings.warn(\nSystem check identified no issues (0 silenced).\n...........................................\n----------------------------------------------------------------------\nRan 43 tests in 5.619s\n\nOK\nDestroying test database for alias 'default'...",
+          "message_index": 1029,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 1,
+          "passed": false,
+          "failures": 0,
+          "errors": 1,
+          "output_excerpt": "Error: Exit code 1\n/Users/theaaron730/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020\n  warnings.warn(\ntest_question_bank_views (unittest.loader._FailedTest) ... ERROR\n\n======================================================================\nERROR: test_question_bank_views (unittest.loader._FailedTest)\n----",
+          "failed_tests": [],
+          "error_tests": [
+            "test_question_bank_views"
+          ],
+          "message_index": 1065,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 24,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "Found 24 test(s).\nOperations to perform:\n  Synchronize unmigrated apps: allauth, bootstrap5, filetype, google, messages, rest_framework, staticfiles\n  Apply all migrations: account, active_interview_app, admin, auth, contenttypes, sessions, sites, socialaccount\nSynchronizing apps without migrations:\n  Creating tables...\n    Running deferred SQL...\nRunning migrations:\n  Applying contenttypes.0001_initial... OK\n  Applying auth.0001_initial... OK\n  Applying account.0001_initial... OK\n  Applying acc",
+          "message_index": 1072,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 24,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "Found 24 test(s).\nOperations to perform:\n  Synchronize unmigrated apps: allauth, bootstrap5, filetype, google, messages, rest_framework, staticfiles\n  Apply all migrations: account, active_interview_app, admin, auth, contenttypes, sessions, sites, socialaccount\nSynchronizing apps without migrations:\n  Creating tables...\n    Running deferred SQL...\nRunning migrations:\n  Applying contenttypes.0001_initial... OK\n  Applying auth.0001_initial... OK\n  Applying account.0001_initial... OK\n  Applying acc",
+          "message_index": 1085,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 24,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "Found 24 test(s).\nOperations to perform:\n  Synchronize unmigrated apps: allauth, bootstrap5, filetype, google, messages, rest_framework, staticfiles\n  Apply all migrations: account, active_interview_app, admin, auth, contenttypes, sessions, sites, socialaccount\nSynchronizing apps without migrations:\n  Creating tables...\n    Running deferred SQL...\nRunning migrations:\n  Applying contenttypes.0001_initial... OK\n  Applying auth.0001_initial... OK\n  Applying account.0001_initial... OK\n  Applying acc",
+          "message_index": 1128,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 24,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "test_filter_by_single_tag (active_interview_app.tests.test_question_banks.TagFilteringTest)\nTest filtering questions by a single tag ... ok\ntest_merge_tags (active_interview_app.tests.test_question_banks.TagManagementTest)\nTest merging multiple tags ... ok\ntest_rename_tag (active_interview_app.tests.test_question_banks.TagManagementTest)\nTest renaming a tag globally ... ok\ntest_tag_statistics (active_interview_app.tests.test_question_banks.TagManagementTest)\nTest getting tag usage statistics ...",
+          "message_index": 1160,
+          "command": "python manage.py test"
+        }
+      ],
+      "first_run_tests": [
+        {
+          "test_count": 24,
+          "passed": false,
+          "failures": 17,
+          "errors": 0,
+          "output_excerpt": "Test merging multiple tags\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_question_banks.py\", line 424, in test_merge_tags\n    self.assertEqual(response.status_code, status.HTTP_200_OK)\nAssertionError: 403 != 200\n\n======================================================================\nFAIL: test_rename_tag (active_interview_app.te",
+          "failed_tests": [
+            "test_rename_tag",
+            "test_tag_statistics"
+          ],
+          "error_tests": [],
+          "message_index": 676,
+          "command": "python manage.py test",
+          "is_first_run_after_edit": true,
+          "related_edit": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_question_banks.py"
+        },
+        {
+          "test_count": 24,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "  warnings.warn(\nCreating test database for alias 'default'...\nFound 24 test(s).\nSystem check identified no issues (0 silenced).\n........................\n----------------------------------------------------------------------\nRan 24 tests in 3.885s\n\nOK\nDestroying test database for alias 'default'...",
+          "message_index": 736,
+          "command": "python manage.py test",
+          "is_first_run_after_edit": true,
+          "related_edit": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_question_banks.py"
+        },
+        {
+          "test_count": 51,
+          "passed": false,
+          "failures": 0,
+          "errors": 2,
+          "output_excerpt": "    return self.cursor.execute(sql, params)\n  File \"/Users/theaaron730/Library/Python/3.9/lib/python/site-packages/django/db/backends/sqlite3/base.py\", line 328, in execute\n    return super().execute(query, params)\ndjango.db.utils.IntegrityError: NOT NULL constraint failed: active_interview_app_interviewtemplate.user_id\n\n----------------------------------------------------------------------\nRan 51 tests in 8.631s\n\nFAILED (errors=2)\nDestroying test database for alias 'default'...",
+          "failed_tests": [],
+          "error_tests": [],
+          "message_index": 777,
+          "command": "python manage.py test",
+          "is_first_run_after_edit": true,
+          "related_edit": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_serializers.py"
+        },
+        {
+          "test_count": 24,
+          "passed": false,
+          "failures": 1,
+          "errors": 0,
+          "output_excerpt": "Traceback (most recent call last):\n  File \"/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_permissions.py\", line 264, in test_user_without_profile_denied\n    self.assertFalse(self.permission.has_object_permission(request, self.view, obj))\nAssertionError: True is not false\n\n----------------------------------------------------------------------\nRan 24 tests in 3.132s\n\nFAILED (failures=1)\nDestroying test database for alias 'default'...",
+          "failed_tests": [],
+          "error_tests": [],
+          "message_index": 919,
+          "command": "python manage.py test",
+          "is_first_run_after_edit": true,
+          "related_edit": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_serializers.py"
+        },
+        {
+          "test_count": 24,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "----------------------------------------------------------------------\nRan 24 tests in 3.152s\n\nOK\nDestroying test database for alias 'default'...",
+          "message_index": 927,
+          "command": "python manage.py test",
+          "is_first_run_after_edit": true,
+          "related_edit": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_permissions.py"
+        }
+      ],
+      "test_run_count": 13,
+      "reprompt_analysis": {
+        "user_message_count": 352,
+        "assistant_message_count": 793,
+        "reprompt_count": 351,
+        "reasons": {
+          "errors": 87,
+          "refinements": 28,
+          "incomplete": 4,
+          "other": 232
+        }
+      }
+    },
+    {
+      "session_id": "9c29fde2-b101-4a06-b587-cae35c79ae2f",
+      "message_count": 284,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 9,
+      "test_edit_count": 5,
+      "test_file_edits": [
+        {
+          "message_index": 80,
+          "tool": "Write",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/features/TEST_INFRASTRUCTURE_FIXES.md",
+          "is_test_file": true
+        },
+        {
+          "message_index": 104,
+          "tool": "Write",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/features/test_infrastructure.feature",
+          "is_test_file": true
+        },
+        {
+          "message_index": 159,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/features/test_infrastructure.feature",
+          "is_test_file": true
+        },
+        {
+          "message_index": 169,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/features/TEST_INFRASTRUCTURE_FIXES.md",
+          "is_test_file": true
+        },
+        {
+          "message_index": 202,
+          "tool": "Write",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/features/test_infrastructure.feature",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [
+        {
+          "test_count": 492,
+          "passed": false,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "/Users/theaaron730/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020\n  warnings.warn(\nCreating test database for alias 'default'...\nFound 492 test(s).\nSystem check identified no issues (0 silenced).\n.............................................................................................................",
+          "message_index": 57,
+          "command": "python manage.py test"
+        }
+      ],
+      "first_run_tests": [],
+      "test_run_count": 1,
+      "reprompt_analysis": {
+        "user_message_count": 96,
+        "assistant_message_count": 176,
+        "reprompt_count": 95,
+        "reasons": {
+          "errors": 15,
+          "refinements": 4,
+          "incomplete": 3,
+          "other": 73
+        }
+      }
+    },
+    {
+      "session_id": "aebf0c21-4328-4d2d-a75a-592e2927dde6",
+      "message_count": 103,
+      "category": "refactor",
+      "is_meaningful": true,
+      "edit_count": 2,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 36,
+        "assistant_message_count": 59,
+        "reprompt_count": 35,
+        "reasons": {
+          "errors": 3,
+          "refinements": 0,
+          "incomplete": 0,
+          "other": 32
+        }
+      }
+    },
+    {
+      "session_id": "100d6903-f743-46e2-9496-486ff9c31182",
+      "message_count": 279,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 21,
+      "test_edit_count": 2,
+      "test_file_edits": [
+        {
+          "message_index": 160,
+          "tool": "Write",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_question_banks.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 169,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_question_banks.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [
+        {
+          "test_count": 21,
+          "passed": false,
+          "failures": 0,
+          "errors": 1,
+          "output_excerpt": "Error: Exit code 1\n/Users/theaaron730/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020\n  warnings.warn(\nCreating test database for alias 'default'...\n...............E.....\n======================================================================\nERROR: test_merge_tags (active_interview_app.tests.test_question",
+          "failed_tests": [],
+          "error_tests": [
+            "test_merge_tags"
+          ],
+          "message_index": 166,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 21,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "Found 21 test(s).\nOperations to perform:\n  Synchronize unmigrated apps: bootstrap5, filetype, messages, rest_framework, staticfiles\n  Apply all migrations: active_interview_app, admin, auth, contenttypes, sessions\nSynchronizing apps without migrations:\n  Creating tables...\n    Running deferred SQL...\nRunning migrations:\n  Applying contenttypes.0001_initial... OK\n  Applying auth.0001_initial... OK\n  Applying active_interview_app.0001_initial... OK\n  Applying active_interview_app.0002_alter_chat_t",
+          "message_index": 173,
+          "command": "python manage.py test"
+        }
+      ],
+      "first_run_tests": [
+        {
+          "test_count": 21,
+          "passed": false,
+          "failures": 0,
+          "errors": 1,
+          "output_excerpt": "Error: Exit code 1\n/Users/theaaron730/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020\n  warnings.warn(\nCreating test database for alias 'default'...\n...............E.....\n======================================================================\nERROR: test_merge_tags (active_interview_app.tests.test_question",
+          "failed_tests": [],
+          "error_tests": [
+            "test_merge_tags"
+          ],
+          "message_index": 166,
+          "command": "python manage.py test",
+          "is_first_run_after_edit": true,
+          "related_edit": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_question_banks.py"
+        },
+        {
+          "test_count": 21,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "Found 21 test(s).\nOperations to perform:\n  Synchronize unmigrated apps: bootstrap5, filetype, messages, rest_framework, staticfiles\n  Apply all migrations: active_interview_app, admin, auth, contenttypes, sessions\nSynchronizing apps without migrations:\n  Creating tables...\n    Running deferred SQL...\nRunning migrations:\n  Applying contenttypes.0001_initial... OK\n  Applying auth.0001_initial... OK\n  Applying active_interview_app.0001_initial... OK\n  Applying active_interview_app.0002_alter_chat_t",
+          "message_index": 173,
+          "command": "python manage.py test",
+          "is_first_run_after_edit": true,
+          "related_edit": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_question_banks.py"
+        }
+      ],
+      "test_run_count": 2,
+      "reprompt_analysis": {
+        "user_message_count": 84,
+        "assistant_message_count": 176,
+        "reprompt_count": 83,
+        "reasons": {
+          "errors": 11,
+          "refinements": 1,
+          "incomplete": 2,
+          "other": 69
+        }
+      }
+    },
+    {
+      "session_id": "2f792150-4ca7-4b27-ad93-78aae7d0d2ba",
+      "message_count": 145,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 2,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [
+        {
+          "test_count": 21,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "/Users/theaaron730/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020\n  warnings.warn(\nCreating test database for alias 'default'...\nFound 21 test(s).\nSystem check identified no issues (0 silenced).\n.....................\n----------------------------------------------------------------------\nRan 21 tests in 3",
+          "message_index": 90,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 21,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "Found 21 test(s).\nSystem check identified no issues (0 silenced).\nName                                                                                                                                           Stmts   Miss  Cover   Missing\nactive_interview_app/question_bank_views.py                                                                                                      174     35    80%   35, 75, 93, 98, 109-120, 125-136, 145, 182, 198, 205, 223, 229, 277, 281, 325-338, 348, 379\nTOTA",
+          "message_index": 94,
+          "command": "python manage.py test"
+        }
+      ],
+      "first_run_tests": [],
+      "test_run_count": 2,
+      "reprompt_analysis": {
+        "user_message_count": 54,
+        "assistant_message_count": 87,
+        "reprompt_count": 53,
+        "reasons": {
+          "errors": 13,
+          "refinements": 3,
+          "incomplete": 0,
+          "other": 37
+        }
+      }
+    },
+    {
+      "session_id": "07101ea7-ca95-4242-a4d8-8891c59705b3",
+      "message_count": 62,
+      "category": "exploratory",
+      "is_meaningful": false,
+      "edit_count": 0,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 20,
+        "assistant_message_count": 40,
+        "reprompt_count": 19,
+        "reasons": {
+          "errors": 5,
+          "refinements": 0,
+          "incomplete": 1,
+          "other": 13
+        }
+      }
+    },
+    {
+      "session_id": "f935efe6-838b-4731-99af-03846f865797",
+      "message_count": 387,
+      "category": "refactor",
+      "is_meaningful": true,
+      "edit_count": 21,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 121,
+        "assistant_message_count": 244,
+        "reprompt_count": 120,
+        "reasons": {
+          "errors": 15,
+          "refinements": 9,
+          "incomplete": 2,
+          "other": 94
+        }
+      }
+    },
+    {
+      "session_id": "5e82cc89-2225-4ef9-b3fd-4db0e59ff6c8",
+      "message_count": 121,
+      "category": "refactor",
+      "is_meaningful": true,
+      "edit_count": 2,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 42,
+        "assistant_message_count": 76,
+        "reprompt_count": 41,
+        "reasons": {
+          "errors": 4,
+          "refinements": 10,
+          "incomplete": 2,
+          "other": 25
+        }
+      }
+    },
+    {
+      "session_id": "5d82c753-ad02-4890-b8dc-5af9ef2abc50",
+      "message_count": 20,
+      "category": "exploratory",
+      "is_meaningful": false,
+      "edit_count": 0,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 8,
+        "assistant_message_count": 11,
+        "reprompt_count": 7,
+        "reasons": {
+          "errors": 5,
+          "refinements": 0,
+          "incomplete": 0,
+          "other": 2
+        }
+      }
+    },
+    {
+      "session_id": "a885e21a-d888-494f-8558-21ee871f7b24",
+      "message_count": 382,
+      "category": "refactor",
+      "is_meaningful": true,
+      "edit_count": 29,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 125,
+        "assistant_message_count": 233,
+        "reprompt_count": 124,
+        "reasons": {
+          "errors": 9,
+          "refinements": 7,
+          "incomplete": 5,
+          "other": 103
+        }
+      }
+    },
+    {
+      "session_id": "90e8aeb7-acbc-417e-a5c8-d5c996b0f61f",
+      "message_count": 76,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 1,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [
+        {
+          "test_count": 861,
+          "passed": false,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "Python is a programming language\nGood answer! 7/10\nMy answer\nMy answer\n<QueryDict: {'paste-text': [''], 'title': ['Test Title']}>\n<QueryDict: {'paste-text': ['Some job description'], 'title': ['']}>\n<QueryDict: {'paste-text': [''], 'title': ['Empty Job']}>\n<QueryDict: {'paste-text': ['Some job content'], 'title': ['']}>\n<QueryDict: {'paste-text': ['Software Engineer position available'], 'title': ['Software Engineer']}>\n<QueryDict: {'paste-text': [''], 'title': ['Empty Job']}>\n<QueryDict: {'past",
+          "message_index": 50,
+          "command": "python manage.py test"
+        }
+      ],
+      "first_run_tests": [],
+      "test_run_count": 1,
+      "reprompt_analysis": {
+        "user_message_count": 30,
+        "assistant_message_count": 43,
+        "reprompt_count": 29,
+        "reasons": {
+          "errors": 9,
+          "refinements": 2,
+          "incomplete": 1,
+          "other": 17
+        }
+      }
+    },
+    {
+      "session_id": "ba564679-3ce7-4be2-a1fd-eaef050138f3",
+      "message_count": 176,
+      "category": "refactor",
+      "is_meaningful": true,
+      "edit_count": 5,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 57,
+        "assistant_message_count": 110,
+        "reprompt_count": 56,
+        "reasons": {
+          "errors": 4,
+          "refinements": 15,
+          "incomplete": 0,
+          "other": 37
+        }
+      }
+    },
+    {
+      "session_id": "03dc7f2d-31a0-457e-9146-d3b1ab932e8c",
+      "message_count": 89,
+      "category": "refactor",
+      "is_meaningful": true,
+      "edit_count": 5,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 25,
+        "assistant_message_count": 57,
+        "reprompt_count": 24,
+        "reasons": {
+          "errors": 7,
+          "refinements": 1,
+          "incomplete": 0,
+          "other": 16
+        }
+      }
+    },
+    {
+      "session_id": "97b09366-7abb-4b9c-b203-7c90b150f25f",
+      "message_count": 303,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 9,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 92,
+        "assistant_message_count": 202,
+        "reprompt_count": 91,
+        "reasons": {
+          "errors": 12,
+          "refinements": 8,
+          "incomplete": 0,
+          "other": 71
+        }
+      }
+    },
+    {
+      "session_id": "c49aeceb-f01c-4d3f-ab2c-28df9ee28e7d",
+      "message_count": 337,
+      "category": "refactor",
+      "is_meaningful": true,
+      "edit_count": 15,
+      "test_edit_count": 6,
+      "test_file_edits": [
+        {
+          "message_index": 51,
+          "tool": "Write",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/pytest.ini",
+          "is_test_file": true
+        },
+        {
+          "message_index": 174,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_pdf_export_comprehensive.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 180,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_pdf_export_comprehensive.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 190,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_pdf_export_comprehensive.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 251,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_pdf_export_comprehensive.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 324,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_exportable_report.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [
+        {
+          "test_count": 54,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "Found 54 test(s).\nOperations to perform:\n  Synchronize unmigrated apps: allauth, bootstrap5, filetype, google, messages, rest_framework, staticfiles\n  Apply all migrations: account, active_interview_app, admin, auth, contenttypes, sessions, sites, socialaccount\nSynchronizing apps without migrations:\n  Creating tables...\n    Running deferred SQL...\nRunning migrations:\n  Applying contenttypes.0001_initial... OK\n  Applying auth.0001_initial... OK\n  Applying account.0001_initial... OK\n  Applying acc",
+          "message_index": 298,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 1,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "Found 1 test(s).\nOperations to perform:\n  Synchronize unmigrated apps: allauth, bootstrap5, filetype, google, messages, rest_framework, staticfiles\n  Apply all migrations: account, active_interview_app, admin, auth, contenttypes, sessions, sites, socialaccount\nSynchronizing apps without migrations:\n  Creating tables...\n    Running deferred SQL...\nRunning migrations:\n  Applying contenttypes.0001_initial... OK\n  Applying auth.0001_initial... OK\n  Applying account.0001_initial... OK\n  Applying acco",
+          "message_index": 330,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 54,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "Found 54 test(s).\nSystem check identified no issues (0 silenced).\nCreating test database for alias 'default'...\n/Users/theaaron730/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020\n  warnings.warn(\n......................................................\n-------------------------------------------------------",
+          "message_index": 334,
+          "command": "python manage.py test"
+        }
+      ],
+      "first_run_tests": [
+        {
+          "test_count": 54,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "Found 54 test(s).\nOperations to perform:\n  Synchronize unmigrated apps: allauth, bootstrap5, filetype, google, messages, rest_framework, staticfiles\n  Apply all migrations: account, active_interview_app, admin, auth, contenttypes, sessions, sites, socialaccount\nSynchronizing apps without migrations:\n  Creating tables...\n    Running deferred SQL...\nRunning migrations:\n  Applying contenttypes.0001_initial... OK\n  Applying auth.0001_initial... OK\n  Applying account.0001_initial... OK\n  Applying acc",
+          "message_index": 298,
+          "command": "python manage.py test",
+          "is_first_run_after_edit": true,
+          "related_edit": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/pytest.ini"
+        },
+        {
+          "test_count": 1,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "Found 1 test(s).\nOperations to perform:\n  Synchronize unmigrated apps: allauth, bootstrap5, filetype, google, messages, rest_framework, staticfiles\n  Apply all migrations: account, active_interview_app, admin, auth, contenttypes, sessions, sites, socialaccount\nSynchronizing apps without migrations:\n  Creating tables...\n    Running deferred SQL...\nRunning migrations:\n  Applying contenttypes.0001_initial... OK\n  Applying auth.0001_initial... OK\n  Applying account.0001_initial... OK\n  Applying acco",
+          "message_index": 330,
+          "command": "python manage.py test",
+          "is_first_run_after_edit": true,
+          "related_edit": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_exportable_report.py"
+        }
+      ],
+      "test_run_count": 3,
+      "reprompt_analysis": {
+        "user_message_count": 104,
+        "assistant_message_count": 217,
+        "reprompt_count": 103,
+        "reasons": {
+          "errors": 18,
+          "refinements": 9,
+          "incomplete": 3,
+          "other": 73
+        }
+      }
+    },
+    {
+      "session_id": "439d3075-2e1d-4361-864f-da4ae8dedbcb",
+      "message_count": 592,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 22,
+      "test_edit_count": 1,
+      "test_file_edits": [
+        {
+          "message_index": 367,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_additional_views.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [
+        {
+          "test_count": 6,
+          "passed": false,
+          "failures": 0,
+          "errors": 1,
+          "output_excerpt": "/Users/theaaron730/Documents/Fall-25-CS-5300/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020\n  warnings.warn(\nFound 492 test(s).\nCreating test database for alias 'default'...\nSystem check identified no issues (0 silenced).\n.....E\n======================================================================\nERROR: test_abo",
+          "failed_tests": [],
+          "error_tests": [
+            "test_aboutus_view_get"
+          ],
+          "message_index": 344,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 1,
+          "passed": false,
+          "failures": 0,
+          "errors": 1,
+          "output_excerpt": "  Applying auth.0006_require_contenttypes_0002... OK\n  Applying auth.0007_alter_validators_add_error_messages... OK\n  Applying auth.0008_alter_user_username_max_length... OK\n  Applying auth.0009_alter_user_last_name_max_length... OK\n  Applying auth.0010_alter_group_name_max_length... OK\n  Applying auth.0011_update_proxy_permissions... OK\n  Applying auth.0012_alter_user_first_name_max_length... OK\n  Applying sessions.0001_initial... OK\nSystem check identified no issues (0 silenced).\ntest_aboutus_",
+          "failed_tests": [],
+          "error_tests": [
+            "test_aboutus_view_get"
+          ],
+          "message_index": 365,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 1,
+          "passed": false,
+          "failures": 0,
+          "errors": 1,
+          "output_excerpt": "    response = wrapped_callback(request, *callback_args, **callback_kwargs)\n  File \"/Users/theaaron730/Documents/Fall-25-CS-5300/.venv/lib/python3.9/site-packages/django/contrib/auth/decorators.py\", line 23, in _wrapper_view\n    return view_func(request, *args, **kwargs)\n  File \"/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/views.py\", line 851, in loggedin\n    return render(request, 'loggedinindex.html')\n  File \"/Users/theaaron730/Documents/Fall-25-CS",
+          "failed_tests": [],
+          "error_tests": [],
+          "message_index": 375,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 33,
+          "passed": false,
+          "failures": 0,
+          "errors": 2,
+          "output_excerpt": "    raise exc_value\n  File \"/Users/theaaron730/Documents/Fall-25-CS-5300/.venv/lib/python3.9/site-packages/django/core/handlers/exception.py\", line 55, in inner\n    response = get_response(request)\n  File \"/Users/theaaron730/Documents/Fall-25-CS-5300/.venv/lib/python3.9/site-packages/django/core/handlers/base.py\", line 197, in _get_response\n    response = wrapped_callback(request, *callback_args, **callback_kwargs)\n  File \"/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/act",
+          "failed_tests": [],
+          "error_tests": [],
+          "message_index": 384,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 492,
+          "passed": false,
+          "failures": 3,
+          "errors": 64,
+          "output_excerpt": "----------------------------------------------------------------------\nRan 492 tests in 121.430s\n\nFAILED (failures=3, errors=64)\nDestroying test database for alias 'default'...",
+          "failed_tests": [],
+          "error_tests": [],
+          "message_index": 397,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 1,
+          "passed": false,
+          "failures": 0,
+          "errors": 1,
+          "output_excerpt": "    return self.generic(\n  File \"/Users/theaaron730/Documents/Fall-25-CS-5300/.venv/lib/python3.9/site-packages/django/test/client.py\", line 609, in generic\n    return self.request(**r)\n  File \"/Users/theaaron730/Documents/Fall-25-CS-5300/.venv/lib/python3.9/site-packages/django/test/client.py\", line 891, in request\n    self.check_exception(response)\n  File \"/Users/theaaron730/Documents/Fall-25-CS-5300/.venv/lib/python3.9/site-packages/django/test/client.py\", line 738, in check_exception\n    rai",
+          "failed_tests": [],
+          "error_tests": [],
+          "message_index": 420,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 33,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "----------------------------------------------------------------------\nRan 33 tests in 8.454s\n\nOK\nDestroying test database for alias 'default'...",
+          "message_index": 439,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 492,
+          "passed": false,
+          "failures": 3,
+          "errors": 61,
+          "output_excerpt": "Traceback (most recent call last):\n  File \"/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_merge_stats_additional.py\", line 102, in test_cumulative_cost_decimal_conversion\n    self.assertIsInstance(merge_stats.cumulative_cost, Decimal)\nAssertionError: 0.058499999999999996 is not an instance of <class 'decimal.Decimal'>\n\n----------------------------------------------------------------------\nRan 492 tests in 122.606s\n\nFAILED (failures=3, errors",
+          "failed_tests": [],
+          "error_tests": [],
+          "message_index": 445,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 1,
+          "passed": false,
+          "failures": 0,
+          "errors": 1,
+          "output_excerpt": "  Applying active_interview_app.0004_alter_chat_type... OK\n  Applying active_interview_app.0005_alter_chat_type_exportablereport... OK\n  Applying admin.0001_initial... OK\n  Applying admin.0002_logentry_remove_auto_add... OK\n  Applying admin.0003_logentry_add_action_flag_choices... OK\n  Applying contenttypes.0002_remove_content_type_name... OK\n  Applying auth.0002_alter_permission_name_max_length... OK\n  Applying auth.0003_alter_user_email_max_length... OK\n  Applying auth.0004_alter_user_username",
+          "failed_tests": [],
+          "error_tests": [
+            "test_register_valid_form"
+          ],
+          "message_index": 451,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 17,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "----------------------------------------------------------------------\nRan 17 tests in 3.770s\n\nOK\nDestroying test database for alias 'default'...",
+          "message_index": 457,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 492,
+          "passed": false,
+          "failures": 3,
+          "errors": 61,
+          "output_excerpt": "----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_forms.py\", line 163, in test_missing_title\n    self.assertFalse(form.is_valid())\nAssertionError: True is not false\n\n======================================================================\nFAIL: test_cumulative_cost_decimal_conversion (active_interview_app.tests.test_merge_stats_additi",
+          "failed_tests": [
+            "test_cumulative_cost_decimal_conversion"
+          ],
+          "error_tests": [],
+          "message_index": 476,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 492,
+          "passed": false,
+          "failures": 5,
+          "errors": 32,
+          "output_excerpt": "Traceback (most recent call last):\n  File \"/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_merge_stats_additional.py\", line 102, in test_cumulative_cost_decimal_conversion\n    self.assertIsInstance(merge_stats.cumulative_cost, Decimal)\nAssertionError: 0.058499999999999996 is not an instance of <class 'decimal.Decimal'>\n\n----------------------------------------------------------------------\nRan 492 tests in 123.827s\n\nFAILED (failures=5, errors",
+          "failed_tests": [],
+          "error_tests": [],
+          "message_index": 519,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 1,
+          "passed": false,
+          "failures": 0,
+          "errors": 1,
+          "output_excerpt": "  Applying auth.0008_alter_user_username_max_length... OK\n  Applying auth.0009_alter_user_last_name_max_length... OK\n  Applying auth.0010_alter_group_name_max_length... OK\n  Applying auth.0011_update_proxy_permissions... OK\n  Applying auth.0012_alter_user_first_name_max_length... OK\n  Applying sessions.0001_initial... OK\nSystem check identified no issues (0 silenced).\ntest_create_chat_missing_required_fields (active_interview_app.tests.test_critical_coverage_gaps.CreateChatFormInvalidTest)\nTest ",
+          "failed_tests": [],
+          "error_tests": [
+            "test_create_chat_missing_required_fields"
+          ],
+          "message_index": 528,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 492,
+          "passed": false,
+          "failures": 13,
+          "errors": 21,
+          "output_excerpt": "    return func(*newargs, **newkeywargs)\n  File \"/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_coverage_boost.py\", line 250, in test_create_chat_without_ai\n    self.assertEqual(Chat.objects.count(), 1)\nAssertionError: 0 != 1\n\n----------------------------------------------------------------------\nRan 492 tests in 123.789s\n\nFAILED (failures=13, errors=21)\nDestroying test database for alias 'default'...",
+          "failed_tests": [],
+          "error_tests": [],
+          "message_index": 546,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 1,
+          "passed": false,
+          "failures": 1,
+          "errors": 0,
+          "output_excerpt": "Found 1 test(s).\nCreating test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...\nOperations to perform:\n  Synchronize unmigrated apps: bootstrap5, filetype, messages, rest_framework, staticfiles\n  Apply all migrations: active_interview_app, admin, auth, contenttypes, sessions\nSynchronizing apps without migrations:\n  Creating tables...\n    Running deferred SQL...\nRunning migrations:\n  Applying contenttypes.0001_initial... OK\n  Applying auth.0001_initial... OK\n  Ap",
+          "failed_tests": [
+            "test_create_chat_with_ai"
+          ],
+          "error_tests": [],
+          "message_index": 564,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 17,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "Found 17 test(s).\nCreating test database for alias 'default'...\nSystem check identified no issues (0 silenced).\n.................\n----------------------------------------------------------------------\nRan 17 tests in 3.636s\n\nOK\nDestroying test database for alias 'default'...",
+          "message_index": 576,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 33,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "Found 33 test(s).\nCreating test database for alias 'default'...\nSystem check identified no issues (0 silenced).\n.................................\n----------------------------------------------------------------------\nRan 33 tests in 8.556s\n\nOK\nDestroying test database for alias 'default'...",
+          "message_index": 579,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 492,
+          "passed": false,
+          "failures": 13,
+          "errors": 21,
+          "output_excerpt": "Ran 492 tests in 123.405s\nFAILED (failures=13, errors=21)",
+          "failed_tests": [],
+          "error_tests": [],
+          "message_index": 582,
+          "command": "python manage.py test"
+        }
+      ],
+      "first_run_tests": [
+        {
+          "test_count": 1,
+          "passed": false,
+          "failures": 0,
+          "errors": 1,
+          "output_excerpt": "    response = wrapped_callback(request, *callback_args, **callback_kwargs)\n  File \"/Users/theaaron730/Documents/Fall-25-CS-5300/.venv/lib/python3.9/site-packages/django/contrib/auth/decorators.py\", line 23, in _wrapper_view\n    return view_func(request, *args, **kwargs)\n  File \"/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/views.py\", line 851, in loggedin\n    return render(request, 'loggedinindex.html')\n  File \"/Users/theaaron730/Documents/Fall-25-CS",
+          "failed_tests": [],
+          "error_tests": [],
+          "message_index": 375,
+          "command": "python manage.py test",
+          "is_first_run_after_edit": true,
+          "related_edit": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_additional_views.py"
+        }
+      ],
+      "test_run_count": 18,
+      "reprompt_analysis": {
+        "user_message_count": 183,
+        "assistant_message_count": 389,
+        "reprompt_count": 182,
+        "reasons": {
+          "errors": 43,
+          "refinements": 15,
+          "incomplete": 2,
+          "other": 122
+        }
+      }
+    },
+    {
+      "session_id": "b244d924-4f92-49ac-96ad-43c03d3c3c79",
+      "message_count": 240,
+      "category": "refactor",
+      "is_meaningful": true,
+      "edit_count": 13,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 72,
+        "assistant_message_count": 156,
+        "reprompt_count": 71,
+        "reasons": {
+          "errors": 10,
+          "refinements": 1,
+          "incomplete": 2,
+          "other": 58
+        }
+      }
+    },
+    {
+      "session_id": "dd2485a4-1b99-4e71-a5e2-e9f7339cbee6",
+      "message_count": 24,
+      "category": "exploratory",
+      "is_meaningful": false,
+      "edit_count": 0,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 7,
+        "assistant_message_count": 14,
+        "reprompt_count": 6,
+        "reasons": {
+          "errors": 1,
+          "refinements": 2,
+          "incomplete": 0,
+          "other": 3
+        }
+      }
+    },
+    {
+      "session_id": "76d0b574-018b-4da0-8fe9-e0677c015625",
+      "message_count": 412,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 10,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 118,
+        "assistant_message_count": 274,
+        "reprompt_count": 117,
+        "reasons": {
+          "errors": 11,
+          "refinements": 5,
+          "incomplete": 3,
+          "other": 98
+        }
+      }
+    },
+    {
+      "session_id": "a8397a0a-ef55-4ceb-9d95-6bc77b0deefb",
+      "message_count": 372,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 25,
+      "test_edit_count": 2,
+      "test_file_edits": [
+        {
+          "message_index": 260,
+          "tool": "Write",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_user_data.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 268,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_user_data.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [
+        {
+          "test_count": 36,
+          "passed": false,
+          "failures": 1,
+          "errors": 0,
+          "output_excerpt": "Error: Exit code 1\n/Users/theaaron730/Documents/Fall-25-CS-5300/myenv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020\n  warnings.warn(\nCreating test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...\nSystem check identified some issues:\n\nWARNINGS:\n?: settings.ACCOUNT_AUTHENTICATION_METHOD ",
+          "failed_tests": [
+            "test_create_export_request"
+          ],
+          "error_tests": [],
+          "message_index": 265,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 36,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "Found 36 test(s).\nOperations to perform:\n  Synchronize unmigrated apps: allauth, bootstrap5, filetype, google, messages, rest_framework, staticfiles\n  Apply all migrations: account, active_interview_app, admin, auth, contenttypes, sessions, sites, socialaccount\nSynchronizing apps without migrations:\n  Creating tables...\n    Running deferred SQL...\nRunning migrations:\n  Applying contenttypes.0001_initial... OK\n  Applying auth.0001_initial... OK\n  Applying account.0001_initial... OK\n  Applying acc",
+          "message_index": 272,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 26,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "/Users/theaaron730/Documents/Fall-25-CS-5300/myenv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020\n  warnings.warn(\nSystem check identified some issues:\n\nWARNINGS:\n?: settings.ACCOUNT_AUTHENTICATION_METHOD is deprecated, use: settings.ACCOUNT_LOGIN_METHODS = {'username', 'email'}\n?: settings.ACCOUNT_EMAIL_REQUIRED is dep",
+          "message_index": 290,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 29,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "Ran 29 tests in 7.873s\nOK",
+          "message_index": 293,
+          "command": "python manage.py test"
+        }
+      ],
+      "first_run_tests": [
+        {
+          "test_count": 36,
+          "passed": false,
+          "failures": 1,
+          "errors": 0,
+          "output_excerpt": "Error: Exit code 1\n/Users/theaaron730/Documents/Fall-25-CS-5300/myenv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020\n  warnings.warn(\nCreating test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...\nSystem check identified some issues:\n\nWARNINGS:\n?: settings.ACCOUNT_AUTHENTICATION_METHOD ",
+          "failed_tests": [
+            "test_create_export_request"
+          ],
+          "error_tests": [],
+          "message_index": 265,
+          "command": "python manage.py test",
+          "is_first_run_after_edit": true,
+          "related_edit": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_user_data.py"
+        },
+        {
+          "test_count": 36,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "Found 36 test(s).\nOperations to perform:\n  Synchronize unmigrated apps: allauth, bootstrap5, filetype, google, messages, rest_framework, staticfiles\n  Apply all migrations: account, active_interview_app, admin, auth, contenttypes, sessions, sites, socialaccount\nSynchronizing apps without migrations:\n  Creating tables...\n    Running deferred SQL...\nRunning migrations:\n  Applying contenttypes.0001_initial... OK\n  Applying auth.0001_initial... OK\n  Applying account.0001_initial... OK\n  Applying acc",
+          "message_index": 272,
+          "command": "python manage.py test",
+          "is_first_run_after_edit": true,
+          "related_edit": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_user_data.py"
+        }
+      ],
+      "test_run_count": 4,
+      "reprompt_analysis": {
+        "user_message_count": 103,
+        "assistant_message_count": 243,
+        "reprompt_count": 102,
+        "reasons": {
+          "errors": 17,
+          "refinements": 8,
+          "incomplete": 5,
+          "other": 72
+        }
+      }
+    },
+    {
+      "session_id": "d810fa66-acc3-41e1-9a08-7bebca6af98b",
+      "message_count": 334,
+      "category": "refactor",
+      "is_meaningful": true,
+      "edit_count": 19,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 105,
+        "assistant_message_count": 214,
+        "reprompt_count": 104,
+        "reasons": {
+          "errors": 17,
+          "refinements": 9,
+          "incomplete": 0,
+          "other": 78
+        }
+      }
+    },
+    {
+      "session_id": "0ef28270-5789-49fd-ba03-417d102756e0",
+      "message_count": 471,
+      "category": "refactor",
+      "is_meaningful": true,
+      "edit_count": 30,
+      "test_edit_count": 1,
+      "test_file_edits": [
+        {
+          "message_index": 203,
+          "tool": "Write",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_exportable_report.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [
+        {
+          "test_count": 17,
+          "passed": false,
+          "failures": 0,
+          "errors": 1,
+          "output_excerpt": "Error: Creating test database for alias 'default'...\n............E....\n======================================================================\nERROR: test_generate_report_view (active_interview_app.tests.test_exportable_report.ExportableReportViewTest)\nTest generating a report via the GenerateReportView\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_inter",
+          "failed_tests": [],
+          "error_tests": [
+            "test_generate_report_view"
+          ],
+          "message_index": 216,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 17,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "Found 17 test(s).\nSystem check identified no issues (0 silenced).\nCreating test database for alias 'default'...\n.................\n----------------------------------------------------------------------\nRan 17 tests in 3.706s\n\nOK\nDestroying test database for alias 'default'...",
+          "message_index": 237,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 83,
+          "passed": false,
+          "failures": 0,
+          "errors": 1,
+          "output_excerpt": "Error: /Users/theaaron730/Documents/Fall-25-CS-5300/myenv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020\n  warnings.warn(\nCreating test database for alias 'default'...\n.............................................................................E.....\n=====================================================================",
+          "failed_tests": [],
+          "error_tests": [
+            "test_register_success"
+          ],
+          "message_index": 240,
+          "command": "python manage.py test"
+        }
+      ],
+      "first_run_tests": [
+        {
+          "test_count": 17,
+          "passed": false,
+          "failures": 0,
+          "errors": 1,
+          "output_excerpt": "Error: Creating test database for alias 'default'...\n............E....\n======================================================================\nERROR: test_generate_report_view (active_interview_app.tests.test_exportable_report.ExportableReportViewTest)\nTest generating a report via the GenerateReportView\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_inter",
+          "failed_tests": [],
+          "error_tests": [
+            "test_generate_report_view"
+          ],
+          "message_index": 216,
+          "command": "python manage.py test",
+          "is_first_run_after_edit": true,
+          "related_edit": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_exportable_report.py"
+        }
+      ],
+      "test_run_count": 3,
+      "reprompt_analysis": {
+        "user_message_count": 177,
+        "assistant_message_count": 256,
+        "reprompt_count": 176,
+        "reasons": {
+          "errors": 19,
+          "refinements": 10,
+          "incomplete": 0,
+          "other": 147
+        }
+      }
+    },
+    {
+      "session_id": "daeedc01-2e6c-4848-b560-034c61456008",
+      "message_count": 336,
+      "category": "exploratory",
+      "is_meaningful": false,
+      "edit_count": 0,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 107,
+        "assistant_message_count": 217,
+        "reprompt_count": 106,
+        "reasons": {
+          "errors": 8,
+          "refinements": 8,
+          "incomplete": 0,
+          "other": 90
+        }
+      }
+    },
+    {
+      "session_id": "6cdd100b-b8d3-4701-a4d2-411180048fae",
+      "message_count": 48,
+      "category": "exploratory",
+      "is_meaningful": false,
+      "edit_count": 0,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [
+        {
+          "test_count": 0,
+          "passed": false,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "     1\u2192---\n     2\u2192sequence_id: \"rbac_0c283fc5_1\"\n     3\u2192feature: \"Rbac\"\n     4\u2192test_file: \"C:/Users/dakot/Documents/Repositories/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_rbac.py\"\n     5\u2192branch: \"unknown\"\n     6\u2192user: \"researcher\"\n     7\u2192session_id: \"0c283fc5-4902-43fc-a170-bf04376ac25b\"\n     8\u2192\n     9\u2192iterations:\n    10\u2192  - number: 1\n    11\u2192    timestamp: \"2025-10-31T20:31:12.381Z\"\n    12\u2192    total_tests: 14\n    13\u2192    passed: 8\n    14\u2192    failed: 6\n    15\u2192    err",
+          "message_index": 39,
+          "command": "python manage.py test`"
+        }
+      ],
+      "first_run_tests": [],
+      "test_run_count": 1,
+      "reprompt_analysis": {
+        "user_message_count": 21,
+        "assistant_message_count": 24,
+        "reprompt_count": 20,
+        "reasons": {
+          "errors": 7,
+          "refinements": 0,
+          "incomplete": 0,
+          "other": 13
+        }
+      }
+    },
+    {
+      "session_id": "41ee7506-29c6-4e21-98fa-6f915b2d0e94",
+      "message_count": 26,
+      "category": "exploratory",
+      "is_meaningful": false,
+      "edit_count": 0,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 7,
+        "assistant_message_count": 16,
+        "reprompt_count": 6,
+        "reasons": {
+          "errors": 1,
+          "refinements": 0,
+          "incomplete": 0,
+          "other": 5
+        }
+      }
+    },
+    {
+      "session_id": "47adc2a9-4f8c-4690-a132-16d4fbe14e44",
+      "message_count": 63,
+      "category": "exploratory",
+      "is_meaningful": false,
+      "edit_count": 0,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 20,
+        "assistant_message_count": 39,
+        "reprompt_count": 19,
+        "reasons": {
+          "errors": 0,
+          "refinements": 1,
+          "incomplete": 0,
+          "other": 18
+        }
+      }
+    },
+    {
+      "session_id": "d6b927b1-2c83-4781-a598-be1706697066",
+      "message_count": 49,
+      "category": "exploratory",
+      "is_meaningful": false,
+      "edit_count": 0,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 14,
+        "assistant_message_count": 33,
+        "reprompt_count": 13,
+        "reasons": {
+          "errors": 2,
+          "refinements": 1,
+          "incomplete": 0,
+          "other": 10
+        }
+      }
+    },
+    {
+      "session_id": "91cc7213-dc6c-492e-8823-08b12e0d5752",
+      "message_count": 13,
+      "category": "exploratory",
+      "is_meaningful": false,
+      "edit_count": 0,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 3,
+        "assistant_message_count": 8,
+        "reprompt_count": 2,
+        "reasons": {
+          "errors": 0,
+          "refinements": 0,
+          "incomplete": 0,
+          "other": 2
+        }
+      }
+    },
+    {
+      "session_id": "8e0ad19b-cf29-4395-a014-699c61ec1e9c",
+      "message_count": 94,
+      "category": "refactor",
+      "is_meaningful": true,
+      "edit_count": 3,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 30,
+        "assistant_message_count": 53,
+        "reprompt_count": 29,
+        "reasons": {
+          "errors": 2,
+          "refinements": 0,
+          "incomplete": 1,
+          "other": 26
+        }
+      }
+    },
+    {
+      "session_id": "2b60158c-d417-4820-ab93-e2474356068b",
+      "message_count": 722,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 12,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [
+        {
+          "test_count": 1128,
+          "passed": false,
+          "failures": 4,
+          "errors": 2,
+          "output_excerpt": "    return redirect_class(resolve_url(to, *args, **kwargs))\n  File \"/Users/theaaron730/Library/Python/3.9/lib/python/site-packages/django/shortcuts.py\", line 145, in resolve_url\n    return reverse(to, args=args, kwargs=kwargs)\n  File \"/Users/theaaron730/Library/Python/3.9/lib/python/site-packages/django/urls/base.py\", line 88, in reverse\n    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)\n  File \"/Users/theaaron730/Library/Python/3.9/lib/python/site-packages/django/urls/resol",
+          "failed_tests": [
+            "test_generate_report_rationale_exception",
+            "test_generate_report_rationale_multiline",
+            "test_generate_report_rationale_parsing",
+            "test_view_user_profile_notfound"
+          ],
+          "error_tests": [],
+          "message_index": 711,
+          "command": "python manage.py test"
+        }
+      ],
+      "first_run_tests": [],
+      "test_run_count": 1,
+      "reprompt_analysis": {
+        "user_message_count": 215,
+        "assistant_message_count": 491,
+        "reprompt_count": 214,
+        "reasons": {
+          "errors": 31,
+          "refinements": 6,
+          "incomplete": 6,
+          "other": 171
+        }
+      }
+    },
+    {
+      "session_id": "48f4ef92-990e-4fdb-b132-8a337254d034",
+      "message_count": 36,
+      "category": "exploratory",
+      "is_meaningful": false,
+      "edit_count": 0,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 10,
+        "assistant_message_count": 22,
+        "reprompt_count": 9,
+        "reasons": {
+          "errors": 0,
+          "refinements": 1,
+          "incomplete": 0,
+          "other": 8
+        }
+      }
+    },
+    {
+      "session_id": "e3692238-0237-453a-a383-12682ef5fba3",
+      "message_count": 381,
+      "category": "refactor",
+      "is_meaningful": true,
+      "edit_count": 12,
+      "test_edit_count": 3,
+      "test_file_edits": [
+        {
+          "message_index": 306,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_user_data.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 349,
+          "tool": "Write",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_admin_user_data.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 359,
+          "tool": "Edit",
+          "file_path": "/Users/theaaron730/Documents/Fall-25-CS-5300/active_interview_backend/active_interview_app/tests/test_admin_user_data.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 120,
+        "assistant_message_count": 247,
+        "reprompt_count": 119,
+        "reasons": {
+          "errors": 24,
+          "refinements": 16,
+          "incomplete": 4,
+          "other": 75
         }
       }
     }
