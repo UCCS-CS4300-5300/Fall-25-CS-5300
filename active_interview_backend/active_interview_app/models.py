@@ -46,6 +46,9 @@ class UserProfile(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    # TEMPORARY FIELD FOR TESTING - WILL BE REMOVED
+    test_dummy_field = models.CharField(max_length=100, null=True, blank=True)
+
     def __str__(self):
         return f"{self.user.username} - {self.role} ({self.auth_provider})"
 
