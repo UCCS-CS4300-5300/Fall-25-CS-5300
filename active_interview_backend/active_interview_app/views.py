@@ -2628,10 +2628,7 @@ def invitation_create(request, template_id=None):
 
     Related to Issue #5 (Create Interview Invitation).
     """
-    # Check if user has permission
-    if not check_user_permission(request.user, ['admin', 'interviewer']):
-        messages.error(request, 'Only interviewers can create invitations.')
-        return redirect('index')
+    # Permission already checked by @admin_or_interviewer_required decorator
 
     if request.method == 'POST':
         form = InvitationCreationForm(
