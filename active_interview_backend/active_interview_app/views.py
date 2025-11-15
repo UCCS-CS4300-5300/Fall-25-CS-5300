@@ -11,7 +11,7 @@ from docx import Document
 from .models import (
     UploadedResume, UploadedJobListing, Chat,
     ExportableReport, UserProfile, RoleChangeRequest,
-    InterviewTemplate
+    InterviewTemplate, InvitedInterview
 )
 from .forms import (
     CreateUserForm,
@@ -20,7 +20,8 @@ from .forms import (
     UploadFileForm,
     DocumentEditForm,
     JobPostingEditForm,
-    InterviewTemplateForm
+    InterviewTemplateForm,
+    InvitationCreationForm
 )
 from .serializers import (
     UploadedResumeSerializer,
@@ -29,6 +30,7 @@ from .serializers import (
 )
 from .pdf_export import generate_pdf_report
 from .resume_parser import parse_resume_with_ai
+from .invitation_utils import send_invitation_email
 
 
 from django.conf import settings
@@ -445,14 +447,56 @@ class ChatView(LoginRequiredMixin, UserPassesTestMixin, View):
         owner_chats = Chat.objects.filter(owner=request.user)\
             .order_by('-modified_date')
 
+        # Check if invited interview time has expired (Issue #138)
+        time_expired = False
+        if chat.interview_type == Chat.INVITED:
+            time_expired = chat.is_time_expired()
+            if time_expired:
+                # Mark invitation as completed if not already
+                try:
+                    invitation = InvitedInterview.objects.get(chat=chat)
+                    if invitation.status != InvitedInterview.COMPLETED:
+                        invitation.status = InvitedInterview.COMPLETED
+                        invitation.completed_at = timezone.now()
+                        invitation.save()
+
+                        # Send completion notification to interviewer
+                        from .invitation_utils import send_completion_notification_email
+                        send_completion_notification_email(invitation)
+                except InvitedInterview.DoesNotExist:
+                    pass
+
         context = {}
         context['chat'] = chat
         context['owner_chats'] = owner_chats
+        context['time_expired'] = time_expired
+        context['time_remaining'] = chat.time_remaining()
 
         return render(request, os.path.join('chat', 'chat-view.html'), context)
 
     def post(self, request, chat_id):
         chat = Chat.objects.get(id=chat_id)
+
+        # Check if invited interview time has expired (Issue #138)
+        if chat.interview_type == Chat.INVITED and chat.is_time_expired():
+            # Mark invitation as completed if not already
+            try:
+                invitation = InvitedInterview.objects.get(chat=chat)
+                if invitation.status != InvitedInterview.COMPLETED:
+                    invitation.status = InvitedInterview.COMPLETED
+                    invitation.completed_at = timezone.now()
+                    invitation.save()
+
+                    # Send completion notification to interviewer
+                    from .invitation_utils import send_interview_completed_email
+                    send_interview_completed_email(invitation)
+            except InvitedInterview.DoesNotExist:
+                pass
+
+            return JsonResponse({
+                'error': 'Interview time has expired',
+                'time_expired': True
+            }, status=403)
 
         user_message = request.POST.get('message', '')
 
@@ -844,6 +888,9 @@ def loggedin(request):
 
 
 def register(request):
+    # Preserve invitation context if coming from invitation link
+    next_url = request.GET.get('next', '/')
+
     if request.method == 'POST':
         form = CreateUserForm(request.POST)
         if form.is_valid():
@@ -853,11 +900,16 @@ def register(request):
             user.groups.add(group)
             user.save()
             messages.success(request, 'Account was created for ' + username)
-            return redirect('/accounts/login/?next=/')
+
+            # Redirect to next URL (invitation link) or login
+            return redirect(f'/accounts/login/?next={next_url}')
     else:
         form = CreateUserForm()
 
-    context = {'form': form}
+    context = {
+        'form': form,
+        'next': next_url
+    }
     return render(request, 'registration/register.html', context)
 
 
@@ -2160,3 +2212,292 @@ def delete_section(request, template_id, section_id):
 
     # If GET, redirect to template detail
     return redirect('template_detail', template_id=template.id)
+
+
+# ============================================================================
+# INVITATION VIEWS (Issue #4: Interview Invitation Workflow)
+# ============================================================================
+
+@login_required
+@admin_or_interviewer_required
+def invitation_create(request, template_id=None):
+    """
+    Create a new interview invitation.
+    Can be accessed from template detail page (with template_id) or
+    from the invitation dashboard (without template_id).
+
+    Related to Issue #5 (Create Interview Invitation).
+    """
+    # Permission already checked by @admin_or_interviewer_required decorator
+
+    if request.method == 'POST':
+        form = InvitationCreationForm(
+            request.POST,
+            user=request.user,
+            template_id=template_id
+        )
+
+        if form.is_valid():
+            # Create invitation but don't save yet
+            invitation = form.save(commit=False)
+            invitation.interviewer = request.user
+
+            # Get combined datetime from form's clean method
+            scheduled_datetime = form.cleaned_data.get('scheduled_datetime')
+            invitation.scheduled_time = scheduled_datetime
+
+            # Save invitation
+            invitation.save()
+
+            # Send invitation email with calendar attachment
+            email_sent = send_invitation_email(invitation)
+
+            # Mark invitation as sent
+            if email_sent:
+                invitation.invitation_sent_at = timezone.now()
+                invitation.save()
+                messages.success(
+                    request,
+                    f'Invitation sent to {invitation.candidate_email}'
+                )
+            else:
+                messages.warning(
+                    request,
+                    f'Invitation created but email failed to send. Join link: {invitation.get_join_url()}'
+                )
+
+            # Redirect to confirmation page
+            return redirect('invitation_confirmation', invitation_id=invitation.id)
+    else:
+        # GET request - show form
+        form = InvitationCreationForm(
+            user=request.user,
+            template_id=template_id
+        )
+
+    # Get template if template_id provided (for context)
+    template = None
+    if template_id:
+        template = get_object_or_404(
+            InterviewTemplate,
+            id=template_id,
+            user=request.user
+        )
+
+    context = {
+        'form': form,
+        'template': template,
+    }
+
+    return render(request, 'invitations/invitation_create.html', context)
+
+
+@login_required
+@admin_or_interviewer_required
+def invitation_confirmation(request, invitation_id):
+    """
+    Show confirmation page after successfully creating an invitation.
+
+    Related to Issue #9 (Interview Confirmation Page).
+    """
+    # Get invitation and verify ownership
+    invitation = get_object_or_404(
+        InvitedInterview,
+        id=invitation_id,
+        interviewer=request.user
+    )
+
+    context = {
+        'invitation': invitation,
+        'join_url': invitation.get_join_url(),
+        'window_end': invitation.get_window_end(),
+    }
+
+    return render(request, 'invitations/invitation_confirmation.html', context)
+
+
+@login_required
+@admin_or_interviewer_required
+def invitation_dashboard(request):
+    """
+    Dashboard for managing all interview invitations sent by the user.
+    Supports filtering by status.
+
+    Related to Issue #134 (Invitation Management Dashboard).
+    """
+    # Get filter parameter from query string
+    status_filter = request.GET.get('status', 'all')
+
+    # Get all invitations for this user
+    invitations = InvitedInterview.objects.filter(
+        interviewer=request.user
+    ).select_related('template', 'chat').order_by('-created_at')
+
+    # Apply status filter
+    if status_filter and status_filter != 'all':
+        invitations = invitations.filter(status=status_filter)
+
+    # Get counts for each status (for filter badges)
+    all_invitations = InvitedInterview.objects.filter(interviewer=request.user)
+    status_counts = {
+        'all': all_invitations.count(),
+        'pending': all_invitations.filter(status=InvitedInterview.PENDING).count(),
+        'completed': all_invitations.filter(status=InvitedInterview.COMPLETED).count(),
+        'reviewed': all_invitations.filter(status=InvitedInterview.REVIEWED).count(),
+        'expired': all_invitations.filter(status=InvitedInterview.EXPIRED).count(),
+    }
+
+    context = {
+        'invitations': invitations,
+        'status_filter': status_filter,
+        'status_counts': status_counts,
+    }
+
+    return render(request, 'invitations/invitation_dashboard.html', context)
+
+
+# ============================================================================
+# CANDIDATE INVITATION VIEWS (Issue #4: Candidate Experience)
+# ============================================================================
+
+def invitation_join(request, invitation_id):
+    """
+    Handle candidate clicking on invitation join link.
+
+    - If not authenticated: redirect to registration with next parameter
+    - If authenticated but not matching email: show error
+    - If authenticated and matching email: show interview detail page
+
+    Related to Issue #135 (Registration Redirect Flow).
+    """
+    # Get invitation or 404
+    invitation = get_object_or_404(InvitedInterview, id=invitation_id)
+
+    # If user not authenticated, redirect to registration
+    if not request.user.is_authenticated:
+        # Build the join URL to redirect back to after registration/login
+        join_url = f'/interview/invite/{invitation_id}/'
+        messages.info(
+            request,
+            'Please register or log in to access your interview invitation.'
+        )
+        return redirect(f'/register/?next={join_url}')
+
+    # User is authenticated - verify they're the invited candidate
+    # Check if user's email matches invitation email
+    if request.user.email.lower() != invitation.candidate_email.lower():
+        messages.error(
+            request,
+            'This invitation was sent to a different email address. '
+            'Please log in with the correct account.'
+        )
+        return redirect('index')
+
+    # User is authenticated and email matches - redirect to interview detail
+    return redirect('invited_interview_detail', invitation_id=invitation.id)
+
+
+@login_required
+def invited_interview_detail(request, invitation_id):
+    """
+    Show interview detail page with time-gated access.
+
+    Candidates can view details but cannot start until scheduled time.
+    Shows different states based on current time and invitation status.
+
+    Related to Issues #136 (Time-Gated Access), #140 (Duration Enforcement).
+    """
+    # Get invitation and verify user
+    invitation = get_object_or_404(InvitedInterview, id=invitation_id)
+
+    # Verify user is the invited candidate
+    if request.user.email.lower() != invitation.candidate_email.lower():
+        messages.error(request, 'You do not have permission to access this interview.')
+        return redirect('index')
+
+    # Calculate time-related info
+    now = timezone.now()
+    window_end = invitation.get_window_end()
+    can_start = invitation.can_start()
+    is_expired = invitation.is_expired()
+    is_accessible = invitation.is_accessible()
+
+    # Calculate time until start (if not started yet)
+    time_until_start = None
+    if now < invitation.scheduled_time:
+        time_until_start = invitation.scheduled_time - now
+
+    # Calculate time remaining (if in window)
+    time_remaining = None
+    if invitation.scheduled_time <= now <= window_end and not invitation.chat:
+        time_remaining = window_end - now
+
+    context = {
+        'invitation': invitation,
+        'window_end': window_end,
+        'can_start': can_start,
+        'is_expired': is_expired,
+        'is_accessible': is_accessible,
+        'time_until_start': time_until_start,
+        'time_remaining': time_remaining,
+        'now': now,
+    }
+
+    return render(request, 'invitations/invited_interview_detail.html', context)
+
+
+@login_required
+def start_invited_interview(request, invitation_id):
+    """
+    Start an invited interview by creating a Chat session.
+
+    Verifies time window and user permissions before creating the chat.
+
+    Related to Issue #136 (Time-Gated Access).
+    """
+    # Get invitation and verify user
+    invitation = get_object_or_404(InvitedInterview, id=invitation_id)
+
+    # Verify user is the invited candidate
+    if request.user.email.lower() != invitation.candidate_email.lower():
+        messages.error(request, 'You do not have permission to start this interview.')
+        return redirect('index')
+
+    # Check if already started
+    if invitation.chat:
+        messages.info(request, 'This interview has already been started.')
+        return redirect('chat-view', chat_id=invitation.chat.id)
+
+    # Check if can start (time window validation)
+    if not invitation.can_start():
+        if invitation.is_expired():
+            messages.error(
+                request,
+                'This interview time has passed and you can no longer take it.'
+            )
+        else:
+            messages.error(
+                request,
+                f'This interview cannot be started until {invitation.scheduled_time.strftime("%B %d, %Y at %I:%M %p")}.'
+            )
+        return redirect('invited_interview_detail', invitation_id=invitation.id)
+
+    # Create Chat session with time tracking (Issue #138)
+    now = timezone.now()
+    scheduled_end = now + timedelta(minutes=invitation.duration_minutes)
+
+    chat = Chat.objects.create(
+        owner=request.user,
+        title=f"{invitation.template.name} - Invited Interview",
+        interview_type=Chat.INVITED,
+        type=Chat.GENERAL,  # Or inherit from template if available
+        started_at=now,
+        scheduled_end_at=scheduled_end,
+    )
+
+    # Link chat to invitation
+    invitation.chat = chat
+    invitation.save()
+
+    messages.success(request, 'Interview started! Good luck!')
+    return redirect('chat-view', chat_id=chat.id)

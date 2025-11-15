@@ -145,6 +145,24 @@ urlpatterns = [
     path('templates/<int:template_id>/sections/<str:section_id>/delete/',
          views.delete_section, name='delete_section'),
 
+    # Interview Invitation urls (Issue #4, #5, #9, #134)
+    path('invitations/', views.invitation_dashboard,
+         name='invitation_dashboard'),
+    path('invitations/create/', views.invitation_create,
+         name='invitation_create'),
+    path('invitations/create/<int:template_id>/', views.invitation_create,
+         name='invitation_create_from_template'),
+    path('invitations/<uuid:invitation_id>/confirmation/',
+         views.invitation_confirmation, name='invitation_confirmation'),
+
+    # Candidate Invitation Join urls (Issue #135, #136)
+    path('interview/invite/<uuid:invitation_id>/',
+         views.invitation_join, name='invitation_join'),
+    path('interview/invited/<uuid:invitation_id>/',
+         views.invited_interview_detail, name='invited_interview_detail'),
+    path('interview/invited/<uuid:invitation_id>/start/',
+         views.start_invited_interview, name='start_invited_interview'),
+
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # if settings.PROD:
