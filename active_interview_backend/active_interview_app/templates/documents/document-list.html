@@ -227,7 +227,11 @@
     <!-- Resume Upload Section -->
     <div class="upload-section">
       <h2>Upload Your Resume</h2>
-      <form action="{% url 'upload_file' %}" method="post" enctype="multipart/form-data">
+      <form action="{% url 'upload_file' %}"
+            method="post"
+            enctype="multipart/form-data"
+            id="uploadForm"
+            onsubmit="return showUploadSpinner()">
         {% csrf_token %}
 
         <div class="form-group">
@@ -265,12 +269,17 @@
           <div class="file-name-display" id="file-name-display"></div>
         </div>
 
-        <button type="submit" class="btn-upload" name="submit">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+        <button type="submit" class="btn-upload" name="submit" id="uploadBtn">
+          <span class="loading-spinner-button"
+                id="uploadSpinner"
+                role="status"
+                aria-hidden="true"
+                style="display:none;"></span>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" id="uploadIcon">
             <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 13A6 6 0 1 1 8 2a6 6 0 0 1 0 12z"/>
             <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
           </svg>
-          Upload Resume
+          <span id="uploadBtnText">Upload Resume</span>
         </button>
       </form>
     </div>
@@ -339,6 +348,41 @@
           fileLabel.textContent = 'Change file';
         }
       });
+    }
+
+    /**
+     * Show loading spinner when upload form is submitted
+     * Prevents double-submission and provides visual feedback
+     */
+    function showUploadSpinner() {
+      const button = document.getElementById('uploadBtn');
+      const spinner = document.getElementById('uploadSpinner');
+      const buttonText = document.getElementById('uploadBtnText');
+      const uploadIcon = document.getElementById('uploadIcon');
+
+      // Validate file is selected
+      const fileInput = document.getElementById('file');
+      if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+        alert('Please select a file to upload.');
+        return false;
+      }
+
+      // Show spinner
+      spinner.style.display = 'inline-block';
+
+      // Hide the upload icon
+      if (uploadIcon) {
+        uploadIcon.style.display = 'none';
+      }
+
+      // Update button text
+      buttonText.textContent = 'Uploading & Parsing Resume...';
+
+      // Disable button to prevent double-submit
+      button.disabled = true;
+
+      // Allow form submission
+      return true;
     }
   </script>
 

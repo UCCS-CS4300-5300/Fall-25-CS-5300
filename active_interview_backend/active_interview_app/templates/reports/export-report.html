@@ -4,6 +4,7 @@
 {% endblock title %}
 {% block content %}
   <!-- Following hierarchical class system from style guide -->
+  {% load static %}
 
   <div class="container-page container-standard">
     <div style="text-align: center; margin: 2rem 0;">
@@ -12,16 +13,42 @@
 
     <!-- Export Actions -->
     <div style="display: flex; gap: 1rem; justify-content: center; margin: 2rem 0; flex-wrap: wrap;">
-      <a href="{% url 'download_pdf_report' chat.id %}" id="download_pdf_report" class="btn btn-danger" style="padding: 1rem 2rem; font-size: 1rem;">
-        Download as PDF
-      </a>
-      <a href="{% url 'download_csv_report' chat.id %}" id="download_csv_report" class="btn btn-success" style="padding: 1rem 2rem; font-size: 1rem;">
-        Download as CSV
-      </a>
-      <a href="{% url 'chat-results' chat.id %}" class="btn btn-secondary" style="padding: 1rem 2rem; font-size: 1rem;">
+      <!-- PDF Download Button with Spinner -->
+      <button onclick="downloadPDFReport({{ chat.id }})"
+              id="download_pdf_report"
+              class="btn btn-danger"
+              style="padding: 1rem 2rem; font-size: 1rem; display: flex; align-items: center; justify-content: center;">
+        <span class="loading-spinner-button"
+              id="pdf-spinner"
+              role="status"
+              aria-hidden="true"
+              style="display:none;"></span>
+        <span id="pdf-text">Download as PDF</span>
+      </button>
+
+      <!-- CSV Download Button with Spinner -->
+      <button onclick="downloadCSVReport({{ chat.id }})"
+              id="download_csv_report"
+              class="btn btn-success"
+              style="padding: 1rem 2rem; font-size: 1rem; display: flex; align-items: center; justify-content: center;">
+        <span class="loading-spinner-button"
+              id="csv-spinner"
+              role="status"
+              aria-hidden="true"
+              style="display:none;"></span>
+        <span id="csv-text">Download as CSV</span>
+      </button>
+
+      <!-- Back Button (no spinner needed) -->
+      <a href="{% url 'chat-results' chat.id %}"
+         class="btn btn-secondary"
+         style="padding: 1rem 2rem; font-size: 1rem;">
         Back to Results
       </a>
     </div>
+
+    <!-- Load reports.js for download functions -->
+    <script src="{% static 'js/reports.js' %}"></script>
 
     <!-- Interview Metadata -->
     <div class="box box-section">
