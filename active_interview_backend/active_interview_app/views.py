@@ -1861,18 +1861,20 @@ def create_template(request):
     POST /templates/create/ - Save template
     """
     if request.method == 'POST':
-        form = InterviewTemplateForm(request.POST)
+        form = InterviewTemplateForm(request.POST, user=request.user)
         if form.is_valid():
             template = form.save(commit=False)
             template.user = request.user
             template.save()
+            # Save many-to-many relationships
+            form.save_m2m()
             messages.success(
                 request,
                 f'Template "{template.name}" created successfully'
             )
             return redirect('template_list')
     else:
-        form = InterviewTemplateForm()
+        form = InterviewTemplateForm(user=request.user)
 
     context = {
         'form': form,
@@ -1921,7 +1923,7 @@ def edit_template(request, template_id):
     )
 
     if request.method == 'POST':
-        form = InterviewTemplateForm(request.POST, instance=template)
+        form = InterviewTemplateForm(request.POST, instance=template, user=request.user)
         if form.is_valid():
             form.save()
             messages.success(
@@ -1930,7 +1932,7 @@ def edit_template(request, template_id):
             )
             return redirect('template_detail', template_id=template.id)
     else:
-        form = InterviewTemplateForm(instance=template)
+        form = InterviewTemplateForm(instance=template, user=request.user)
 
     context = {
         'form': form,
