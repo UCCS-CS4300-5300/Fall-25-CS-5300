@@ -5,6 +5,8 @@ import pymupdf4llm
 import tempfile
 import textwrap
 import re
+import csv
+import io
 from markdownify import markdownify as md
 from docx import Document
 
@@ -1466,6 +1468,63 @@ class DownloadPDFReportView(LoginRequiredMixin, UserPassesTestMixin, View):
         return response
 
 
+class DownloadCSVReportView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """
+    View to download a CSV version of the exportable report.
+    """
+
+    def test_func(self):
+        """Verify that the user owns the chat"""
+        chat = get_object_or_404(Chat, id=self.kwargs['chat_id'])
+        return self.request.user == chat.owner
+
+    def get(self, request, chat_id):
+        """Generate and download CSV report"""
+        chat = get_object_or_404(Chat, id=chat_id)
+
+        try:
+            report = ExportableReport.objects.get(chat=chat)
+        except ExportableReport.DoesNotExist:
+            messages.error(request, 'No report exists. Please generate one first.')
+            return redirect('chat_results', chat_id=chat_id)
+
+        # Create CSV in memory
+        output = io.StringIO()
+        writer = csv.writer(output)
+
+        # Write header
+        writer.writerow(['Interview Report'])
+        writer.writerow([''])
+        writer.writerow(['Interview Title', chat.title])
+        writer.writerow(['Generated At', report.generated_at.strftime('%Y-%m-%d %H:%M:%S')])
+        writer.writerow([''])
+
+        # Write scores
+        writer.writerow(['Scores'])
+        writer.writerow(['Category', 'Score'])
+        writer.writerow(['Professionalism', report.professionalism_score])
+        writer.writerow(['Subject Knowledge', report.subject_knowledge_score])
+        writer.writerow(['Clarity', report.clarity_score])
+        writer.writerow(['Overall', report.overall_score])
+        writer.writerow([''])
+
+        # Write feedback
+        writer.writerow(['Feedback'])
+        writer.writerow([report.feedback_text])
+        writer.writerow([''])
+
+        # Write statistics
+        writer.writerow(['Statistics'])
+        writer.writerow(['Total Questions Asked', report.total_questions_asked])
+        writer.writerow(['Total Responses Given', report.total_responses_given])
+
+        # Create response
+        csv_content = output.getvalue()
+        response = HttpResponse(csv_content, content_type='text/csv')
+        filename = f"interview_report_{slugify(chat.title)}_{report.generated_at.strftime('%Y%m%d')}.csv"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+        return response
 
 
 # =============================================================================
