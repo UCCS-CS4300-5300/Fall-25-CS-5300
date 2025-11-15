@@ -310,8 +310,9 @@ class InvitationCreationForm(ModelForm):
 
     class Meta:
         model = InvitedInterview
-        fields = ['template', 'candidate_email', 'scheduled_date',
-                  'scheduled_time', 'duration_minutes']
+        # Note: scheduled_date and scheduled_time are form-only fields, not model fields
+        # The model has 'scheduled_time' as a DateTimeField, which the view sets manually
+        fields = ['template', 'candidate_email', 'duration_minutes']
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
