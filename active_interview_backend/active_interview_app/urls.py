@@ -98,6 +98,8 @@ urlpatterns = [
          views.ExportReportView.as_view(), name='export_report'),
     path('chat/<int:chat_id>/download-pdf/',
          views.DownloadPDFReportView.as_view(), name='download_pdf_report'),
+    path('chat/<int:chat_id>/download-csv/',
+         views.DownloadCSVReportView.as_view(), name='download_csv_report'),
 
     # Question Bank Tagging urls (Issue #24)
     path('question-banks/', question_bank_views.question_banks_view,

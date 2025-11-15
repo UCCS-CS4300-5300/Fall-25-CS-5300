@@ -138,18 +138,21 @@
       </p>
     </div>
 
-    <!-- Generate Report Button -->
-    <div class="container" style="justify-content: center; margin-top: 3rem; margin-bottom: 2rem;">
-      <form method="post" action="{% url 'generate_report' chat.id %}" aria-label="Generate interview report form">
+    <!-- Generate Detailed Report Button -->
+    <div class="container report-button-container" style="text-align: center;">
+      <form method="POST" action="{% url 'generate_report' chat.id %}" id="generate_report" aria-label="Generate interview report form">
         {% csrf_token %}
         <button
           type="submit"
-          class="btn btn-primary"
+          class="btn btn-primary btn-lg"
           style="padding: 1rem 2rem; font-size: 1rem;"
-          aria-label="Generate and download detailed interview report as PDF">
-          Generate Detailed Report
+          aria-label="Generate and download detailed interview report with section scores">
+          Generate Detailed Report with Section Scores
         </button>
       </form>
+      <p style="color: var(--text-secondary, #777); margin-top: 1rem; font-size: 0.9rem;">
+        Click to generate a comprehensive report with detailed section scores, rationales, and export options (PDF/CSV)
+      </p>
     </div>
   </div>
 {% endblock content %}
