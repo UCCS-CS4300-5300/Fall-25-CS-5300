@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('active_interview_app', '0007_alter_chat_type_userprofile_rolechangerequest'),
+        ('active_interview_app', '0008_tag_questionbank_question_interviewtemplate'),
     ]
 
     operations = [
