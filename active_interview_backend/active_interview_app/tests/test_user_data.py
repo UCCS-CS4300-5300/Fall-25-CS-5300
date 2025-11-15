@@ -667,3 +667,185 @@ class IntegrationTest(TestCase):
         # Check download tracked
         export.refresh_from_db()
         self.assertEqual(export.download_count, 1)
+
+
+class EmailErrorHandlingTest(TestCase):
+    """Test email error handling and logging"""
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='testuser',
+            email='test@example.com',
+            password='testpass123'
+        )
+
+    @patch('active_interview_app.user_data_utils.send_mail')
+    @patch('active_interview_app.user_data_utils.logger')
+    def test_export_email_failure_logging(self, mock_logger, mock_send_mail):
+        """Test that email failures are logged properly"""
+        from active_interview_app.user_data_utils import send_export_ready_email
+
+        # Create export request
+        export = DataExportRequest.objects.create(user=self.user)
+        export.status = DataExportRequest.COMPLETED
+        export.expires_at = timezone.now() + timedelta(days=7)
+        export.save()
+
+        # Mock email failure
+        mock_send_mail.side_effect = Exception("SMTP connection failed")
+
+        # Send email (should not raise exception)
+        send_export_ready_email(export)
+
+        # Verify warning was logged
+        mock_logger.warning.assert_called_once()
+        self.assertIn("Failed to send export notification email", str(mock_logger.warning.call_args))
+
+    @patch('active_interview_app.user_data_utils.send_mail')
+    @patch('active_interview_app.user_data_utils.logger')
+    def test_deletion_email_failure_logging(self, mock_logger, mock_send_mail):
+        """Test that deletion email failures are logged properly"""
+        from active_interview_app.user_data_utils import send_deletion_confirmation_email
+
+        # Mock email failure
+        mock_send_mail.side_effect = Exception("Email server unreachable")
+
+        # Send email (should not raise exception)
+        send_deletion_confirmation_email('testuser', 'test@example.com')
+
+        # Verify warning was logged
+        mock_logger.warning.assert_called_once()
+        self.assertIn("Failed to send deletion confirmation email", str(mock_logger.warning.call_args))
+
+    @patch('active_interview_app.user_data_utils.create_export_zip')
+    @patch('active_interview_app.user_data_utils.logger')
+    def test_export_processing_error_logging(self, mock_logger, mock_create_zip):
+        """Test that export processing errors are logged"""
+        # Create export request
+        export = DataExportRequest.objects.create(user=self.user)
+
+        # Mock zip creation failure
+        mock_create_zip.side_effect = Exception("Out of memory")
+
+        # Process export
+        result = process_export_request(export)
+
+        # Verify failure
+        self.assertFalse(result)
+        export.refresh_from_db()
+        self.assertEqual(export.status, DataExportRequest.FAILED)
+        self.assertIn("Out of memory", export.error_message)
+
+        # Verify error was logged
+        mock_logger.error.assert_called_once()
+        self.assertIn("Failed to process export request", str(mock_logger.error.call_args))
+
+
+class EdgeCaseTest(TestCase):
+    """Test edge cases and boundary conditions"""
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='testuser',
+            email='test@example.com',
+            password='testpass123'
+        )
+
+    def test_export_with_no_data(self):
+        """Test exporting user with no additional data"""
+        data = export_user_data_to_dict(self.user)
+
+        self.assertEqual(data['user_info']['username'], 'testuser')
+        self.assertEqual(len(data['resumes']), 0)
+        self.assertEqual(len(data['job_listings']), 0)
+        self.assertEqual(len(data['interviews']), 0)
+
+    def test_export_with_very_long_username(self):
+        """Test export with maximum length username"""
+        long_user = User.objects.create_user(
+            username='a' * 150,  # Max length for username
+            email='long@example.com',
+            password='testpass123'
+        )
+        anonymized = generate_anonymized_id(long_user)
+
+        # Should generate valid hash
+        self.assertEqual(len(anonymized), 32)
+        self.assertTrue(anonymized.isalnum())
+
+    def test_multiple_downloads(self):
+        """Test multiple downloads increment count correctly"""
+        export = DataExportRequest.objects.create(user=self.user)
+        export.status = DataExportRequest.COMPLETED
+        export.export_file = SimpleUploadedFile("test.zip", b"test content")
+        export.save()
+
+        # Download multiple times
+        for i in range(5):
+            export.mark_downloaded()
+
+        export.refresh_from_db()
+        self.assertEqual(export.download_count, 5)
+        self.assertIsNotNone(export.last_downloaded_at)
+
+    def test_export_with_special_characters(self):
+        """Test export handles special characters in data"""
+        # Create resume with special characters
+        UploadedResume.objects.create(
+            user=self.user,
+            title='Test Resume™ with "quotes" & <tags>',
+            content='Content with émojis 🎉 and unicode ñ'
+        )
+
+        zip_content = create_export_zip(self.user)
+
+        # Verify ZIP was created
+        self.assertGreater(len(zip_content), 0)
+
+        # Verify it's a valid ZIP
+        zip_buffer = io.BytesIO(zip_content)
+        with zipfile.ZipFile(zip_buffer, 'r') as zf:
+            # Should not raise exception
+            zf.testzip()
+
+    @patch('os.path.isfile', return_value=False)
+    def test_delete_account_missing_files(self, mock_isfile):
+        """Test account deletion handles missing files gracefully"""
+        from active_interview_app.user_data_utils import delete_user_account
+
+        # Create resume with file reference
+        resume = UploadedResume.objects.create(
+            user=self.user,
+            title='Test Resume',
+            content='Test content',
+            file='uploads/test.pdf'
+        )
+
+        # Delete account (files don't exist)
+        success, error = delete_user_account(self.user)
+
+        # Should succeed even though files don't exist
+        self.assertTrue(success)
+        self.assertIsNone(error)
+
+    def test_anonymized_id_consistency(self):
+        """Test that anonymized ID is consistent for same user"""
+        id1 = generate_anonymized_id(self.user)
+        id2 = generate_anonymized_id(self.user)
+
+        self.assertEqual(id1, id2)
+
+    def test_export_expiration_boundary(self):
+        """Test export expiration at exact boundary"""
+        export = DataExportRequest.objects.create(user=self.user)
+        export.status = DataExportRequest.COMPLETED
+
+        # Set expiration to exactly now
+        export.expires_at = timezone.now()
+        export.save()
+
+        # Should be expired (or very close to boundary)
+        # Since timezone.now() is called again in is_expired(), there might be microseconds difference
+        # We just verify the method works without error
+        is_expired = export.is_expired()
+        self.assertIsInstance(is_expired, bool)

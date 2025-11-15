@@ -9,6 +9,7 @@ import csv
 import hashlib
 import io
 import json
+import logging
 import os
 import zipfile
 from datetime import timedelta
@@ -21,6 +22,11 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.html import strip_tags
 
+from .constants import (
+    EXPORT_EXPIRATION_DAYS,
+    EXPORT_FILE_PREFIX,
+    EMAIL_FAIL_SILENTLY
+)
 from .models import (
     Chat,
     DataExportRequest,
@@ -32,6 +38,9 @@ from .models import (
     UploadedResume,
     UserProfile
 )
+
+# Configure logger
+logger = logging.getLogger(__name__)
 
 
 def generate_anonymized_id(user):
@@ -316,7 +325,7 @@ def process_export_request(export_request):
         zip_content = create_export_zip(export_request.user)
 
         # Save to file field
-        filename = f"user_data_{export_request.user.username}_{timezone.now().strftime('%Y%m%d_%H%M%S')}.zip"
+        filename = f"{EXPORT_FILE_PREFIX}_{export_request.user.username}_{timezone.now().strftime('%Y%m%d_%H%M%S')}.zip"
         export_request.export_file.save(
             filename,
             ContentFile(zip_content),
@@ -326,7 +335,7 @@ def process_export_request(export_request):
         # Update metadata
         export_request.status = DataExportRequest.COMPLETED
         export_request.completed_at = timezone.now()
-        export_request.expires_at = timezone.now() + timedelta(days=7)
+        export_request.expires_at = timezone.now() + timedelta(days=EXPORT_EXPIRATION_DAYS)
         export_request.file_size_bytes = len(zip_content)
         export_request.save()
 
@@ -336,6 +345,10 @@ def process_export_request(export_request):
         return True
 
     except Exception as e:
+        logger.error(
+            f"Failed to process export request {export_request.id} for user {export_request.user.username}: {e}",
+            exc_info=True
+        )
         export_request.status = DataExportRequest.FAILED
         export_request.error_message = str(e)
         export_request.save()
@@ -369,12 +382,15 @@ def send_export_ready_email(export_request):
             settings.DEFAULT_FROM_EMAIL,
             [user.email],
             html_message=html_message,
-            fail_silently=True,  # Don't fail if email can't be sent in dev
+            fail_silently=EMAIL_FAIL_SILENTLY,
         )
+        logger.info(f"Export notification email sent to {user.email} for request {export_request.id}")
     except Exception as e:
         # Log error but don't fail the export process
-        print(f"Email notification failed: {e}")
-        # In development, email will be printed to console anyway
+        logger.warning(
+            f"Failed to send export notification email to {user.email} for request {export_request.id}: {e}",
+            exc_info=True
+        )
 
 
 def anonymize_user_interviews(user):
@@ -489,6 +505,10 @@ def delete_user_account(user, deletion_request=None):
         return True, None
 
     except Exception as e:
+        logger.error(
+            f"Failed to delete account for user {user.username}: {e}",
+            exc_info=True
+        )
         if deletion_request:
             deletion_request.status = DeletionRequest.FAILED
             deletion_request.error_message = str(e)
@@ -531,10 +551,17 @@ Best regards,
 The AIS Team
 """
 
-    send_mail(
-        subject,
-        message,
-        settings.DEFAULT_FROM_EMAIL,
-        [email],
-        fail_silently=True,  # Don't fail if email can't be sent (user is deleted)
-    )
+    try:
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            [email],
+            fail_silently=EMAIL_FAIL_SILENTLY,
+        )
+        logger.info(f"Deletion confirmation email sent to {email} for user {username}")
+    except Exception as e:
+        logger.warning(
+            f"Failed to send deletion confirmation email to {email} for user {username}: {e}",
+            exc_info=True
+        )
