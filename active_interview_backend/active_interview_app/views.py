@@ -5,13 +5,15 @@ import pymupdf4llm
 import tempfile
 import textwrap
 import re
+import csv
+import io
 from markdownify import markdownify as md
 from docx import Document
 
 from .models import (
     UploadedResume, UploadedJobListing, Chat,
     ExportableReport, UserProfile, RoleChangeRequest,
-    InterviewTemplate
+    InterviewTemplate, DataExportRequest, DeletionRequest
 )
 from .forms import (
     CreateUserForm,
@@ -27,8 +29,13 @@ from .serializers import (
     UploadedJobListingSerializer,
     ExportableReportSerializer
 )
-from .pdf_export import generate_pdf_report
+from .pdf_export import generate_pdf_report, get_score_rating
 from .resume_parser import parse_resume_with_ai
+from .user_data_utils import (
+    process_export_request,
+    delete_user_account,
+    generate_anonymized_id
+)
 
 
 from django.conf import settings
@@ -890,13 +897,13 @@ def view_user_profile(request, user_id):
     from .decorators import check_user_permission
     from django.http import HttpResponseForbidden, Http404
 
-    # Get user first - return 404 if user doesn't exist
+    # Get user first (to return 404 if user doesn't exist)
     try:
         profile_user = User.objects.get(id=user_id)
     except User.DoesNotExist:
         raise Http404("User not found")
 
-    # Check permissions
+    # Check permissions after confirming user exists
     has_permission = check_user_permission(
         request, user_id,
         allow_self=True,
@@ -1270,11 +1277,11 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
         report.feedback_text = self._extract_feedback_from_chat(chat)
 
         # Extract rationales for each score component
-        rationales = self._extract_score_rationales(chat, scores)
-        report.professionalism_rationale = rationales.get('Professionalism', '')
-        report.subject_knowledge_rationale = rationales.get('Subject Knowledge', '')
-        report.clarity_rationale = rationales.get('Clarity', '')
-        report.overall_rationale = rationales.get('Overall', '')
+        rationales = self._extract_rationales_from_chat(chat, scores)
+        report.professionalism_rationale = rationales.get('professionalism', '')
+        report.subject_knowledge_rationale = rationales.get('subject_knowledge', '')
+        report.clarity_rationale = rationales.get('clarity', '')
+        report.overall_rationale = rationales.get('overall', '')
 
         # Calculate statistics
         chat_messages = chat.messages
@@ -1324,7 +1331,7 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
                     messages=input_messages,
                     max_tokens=MAX_TOKENS
                 )
-                ai_message = str(response.choices[0].message.content.strip())
+                ai_message = response.choices[0].message.content.strip()
                 scores = [int(line.strip())
                               for line in ai_message.splitlines() if line.strip()
                                 .isdigit()]
@@ -1363,35 +1370,26 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
                 messages=input_messages,
                 max_tokens=MAX_TOKENS
             )
-            result = response.choices[0].message.content.strip()
-            # Ensure we return a string, not a mock object
-            return str(result) if result else "Unable to generate feedback at this time."
+            return response.choices[0].message.content.strip()
         except Exception:
             return "Unable to generate feedback at this time."
 
-    def _extract_score_rationales(self, chat, scores):
+    def _extract_rationales_from_chat(self, chat, scores):
         """
-        Generate rationales/explanations for each score component.
-        Returns a dictionary with rationales for each scoring category.
+        Generate rationales for each score component using AI.
+        Returns a dict with keys: professionalism, subject_knowledge, clarity, overall
         """
         rationale_prompt = textwrap.dedent(f"""\
-            Based on the interview, provide a brief rationale (2-3 sentences) explaining
-            why each of the following scores was given:
+            Based on the interview, please provide a brief rationale for each of the following scores.
+            Format your response exactly as shown below:
 
-            - Professionalism: {scores.get('Professionalism', 0)}/100
-            - Subject Knowledge: {scores.get('Subject Knowledge', 0)}/100
-            - Clarity: {scores.get('Clarity', 0)}/100
-            - Overall: {scores.get('Overall', 0)}/100
+            Professionalism: [Your explanation for the professionalism score of {scores.get('Professionalism', 0)}]
 
-            Format your response as:
+            Subject Knowledge: [Your explanation for the subject knowledge score of {scores.get('Subject Knowledge', 0)}]
 
-            Professionalism: [explanation]
+            Clarity: [Your explanation for the clarity score of {scores.get('Clarity', 0)}]
 
-            Subject Knowledge: [explanation]
-
-            Clarity: [explanation]
-
-            Overall: [explanation]
+            Overall: [Your explanation for the overall score of {scores.get('Overall', 0)}]
         """)
 
         input_messages = list(chat.messages)
@@ -1399,10 +1397,10 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
 
         if not _ai_available():
             return {
-                'Professionalism': 'AI features are currently unavailable.',
-                'Subject Knowledge': 'AI features are currently unavailable.',
-                'Clarity': 'AI features are currently unavailable.',
-                'Overall': 'AI features are currently unavailable.'
+                'professionalism': 'AI features are currently unavailable.',
+                'subject_knowledge': 'AI features are currently unavailable.',
+                'clarity': 'AI features are currently unavailable.',
+                'overall': 'AI features are currently unavailable.'
             }
 
         try:
@@ -1411,55 +1409,63 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
                 messages=input_messages,
                 max_tokens=MAX_TOKENS
             )
-            rationale_text = str(response.choices[0].message.content.strip())
+            rationale_text = response.choices[0].message.content.strip()
 
-            # Parse the rationales
-            rationales = {}
-            current_category = None
+            # Parse the rationale text to extract each component
+            rationales = {
+                'professionalism': '',
+                'subject_knowledge': '',
+                'clarity': '',
+                'overall': ''
+            }
+
+            # Split by the section headers and extract content
+            sections = rationale_text.split('\n\n')
+            current_section = None
             current_text = []
 
             for line in rationale_text.split('\n'):
                 line = line.strip()
+                if not line:
+                    continue
+
                 if line.startswith('Professionalism:'):
-                    if current_category:
-                        rationales[current_category] = ' '.join(current_text).strip()
-                    current_category = 'Professionalism'
-                    current_text = [line.replace('Professionalism:', '').strip()]
+                    if current_section and current_text:
+                        rationales[current_section] = ' '.join(current_text).strip()
+                    current_section = 'professionalism'
+                    current_text = [line.split(':', 1)[1].strip()]
                 elif line.startswith('Subject Knowledge:'):
-                    if current_category:
-                        rationales[current_category] = ' '.join(current_text).strip()
-                    current_category = 'Subject Knowledge'
-                    current_text = [line.replace('Subject Knowledge:', '').strip()]
+                    if current_section and current_text:
+                        rationales[current_section] = ' '.join(current_text).strip()
+                    current_section = 'subject_knowledge'
+                    current_text = [line.split(':', 1)[1].strip()]
                 elif line.startswith('Clarity:'):
-                    if current_category:
-                        rationales[current_category] = ' '.join(current_text).strip()
-                    current_category = 'Clarity'
-                    current_text = [line.replace('Clarity:', '').strip()]
+                    if current_section and current_text:
+                        rationales[current_section] = ' '.join(current_text).strip()
+                    current_section = 'clarity'
+                    current_text = [line.split(':', 1)[1].strip()]
                 elif line.startswith('Overall:'):
-                    if current_category:
-                        rationales[current_category] = ' '.join(current_text).strip()
-                    current_category = 'Overall'
-                    current_text = [line.replace('Overall:', '').strip()]
-                elif line and current_category:
+                    if current_section and current_text:
+                        rationales[current_section] = ' '.join(current_text).strip()
+                    current_section = 'overall'
+                    current_text = [line.split(':', 1)[1].strip()]
+                elif current_section:
+                    # This is a continuation of the current section
                     current_text.append(line)
 
-            # Don't forget the last category
-            if current_category:
-                rationales[current_category] = ' '.join(current_text).strip()
-
-            # Ensure all categories have values
-            for category in ['Professionalism', 'Subject Knowledge', 'Clarity', 'Overall']:
-                if category not in rationales:
-                    rationales[category] = 'No rationale provided.'
+            # Don't forget the last section
+            if current_section and current_text:
+                rationales[current_section] = ' '.join(current_text).strip()
 
             return rationales
 
-        except Exception:
+        except Exception as e:
+            # If rationale generation fails, provide fallback text
             return {
-                'Professionalism': 'Unable to generate rationale at this time.',
-                'Subject Knowledge': 'Unable to generate rationale at this time.',
-                'Clarity': 'Unable to generate rationale at this time.',
-                'Overall': 'Unable to generate rationale at this time.'
+                'professionalism': 'Unable to generate rationale at this time.',
+                'subject_knowledge': 'Unable to generate rationale at this time.',
+                'clarity': 'Unable to generate rationale at this time.',
+                'overall': 'Unable to generate rationale at this time.'
             }
 
     def _extract_question_responses(self, chat):
@@ -1574,9 +1580,6 @@ class DownloadCSVReportView(LoginRequiredMixin, UserPassesTestMixin, View):
 
     def get(self, request, chat_id):
         """Generate and download CSV report"""
-        import csv
-        from io import StringIO
-
         chat = get_object_or_404(Chat, id=chat_id)
 
         try:
@@ -1586,111 +1589,110 @@ class DownloadCSVReportView(LoginRequiredMixin, UserPassesTestMixin, View):
             return redirect('chat-results', chat_id=chat_id)
 
         # Create CSV in memory
-        csv_buffer = StringIO()
-        writer = csv.writer(csv_buffer)
+        output = io.StringIO()
+        writer = csv.writer(output)
 
         # Write header
         writer.writerow(['Interview Report'])
-        writer.writerow([])
+        writer.writerow([''])
 
-        # Write metadata
+        # Write Interview Details section
         writer.writerow(['Interview Details'])
-        writer.writerow(['Interview Title', chat.title])
-        writer.writerow(['Interview Type', chat.get_type_display()])
-        writer.writerow(['Difficulty Level', f"{chat.difficulty}/10"])
-        writer.writerow(['Date Completed', chat.modified_date.strftime('%B %d, %Y')])
-        writer.writerow(['Report Generated', report.generated_at.strftime('%B %d, %Y at %I:%M %p')])
+        writer.writerow(['Title', chat.title])
+        writer.writerow(['Generated At', report.generated_at.strftime('%Y-%m-%d %H:%M:%S')])
+        writer.writerow(['Difficulty', f'{chat.difficulty}/10'])
 
+        # Add job listing and resume if present
         if chat.job_listing:
-            writer.writerow(['Job Position', chat.job_listing.title])
-
+            writer.writerow(['Job Listing', chat.job_listing.title])
         if chat.resume:
             writer.writerow(['Resume', chat.resume.title])
 
-        writer.writerow([])
+        # Add interview duration if present
+        if report.interview_duration_minutes:
+            writer.writerow(['Duration', f'{report.interview_duration_minutes} minutes'])
 
-        # Write performance scores with weights
-        writer.writerow(['Performance Assessment'])
-        writer.writerow(['Category', 'Score', 'Weight', 'Rating'])
-        writer.writerow([
-            'Professionalism',
-            f"{report.professionalism_score or 0}/100",
-            f"{report.professionalism_weight}%",
-            self._get_score_rating(report.professionalism_score)
-        ])
-        writer.writerow([
-            'Subject Knowledge',
-            f"{report.subject_knowledge_score or 0}/100",
-            f"{report.subject_knowledge_weight}%",
-            self._get_score_rating(report.subject_knowledge_score)
-        ])
-        writer.writerow([
-            'Clarity',
-            f"{report.clarity_score or 0}/100",
-            f"{report.clarity_weight}%",
-            self._get_score_rating(report.clarity_score)
-        ])
-        writer.writerow([
-            'Overall Score',
-            f"{report.overall_score or 0}/100",
-            'N/A',
-            self._get_score_rating(report.overall_score)
-        ])
-        writer.writerow([])
+        writer.writerow([''])
 
-        # Write score rationales
+        # Write scores with ratings and weights
+        writer.writerow(['Scores'])
+        writer.writerow(['Category', 'Score', 'Rating', 'Weight'])
+
+        if report.professionalism_score is not None:
+            writer.writerow([
+                'Professionalism',
+                f'{report.professionalism_score}/100',
+                get_score_rating(report.professionalism_score),
+                f'{report.professionalism_weight}%'
+            ])
+
+        if report.subject_knowledge_score is not None:
+            writer.writerow([
+                'Subject Knowledge',
+                f'{report.subject_knowledge_score}/100',
+                get_score_rating(report.subject_knowledge_score),
+                f'{report.subject_knowledge_weight}%'
+            ])
+
+        if report.clarity_score is not None:
+            writer.writerow([
+                'Clarity',
+                f'{report.clarity_score}/100',
+                get_score_rating(report.clarity_score),
+                f'{report.clarity_weight}%'
+            ])
+
+        if report.overall_score is not None:
+            writer.writerow([
+                'Overall Score',
+                f'{report.overall_score}/100',
+                get_score_rating(report.overall_score),
+                ''
+            ])
+
+        writer.writerow([''])
+
+        # Write Score Breakdown & Rationales section
         writer.writerow(['Score Breakdown & Rationales'])
-        writer.writerow([])
+        writer.writerow([''])
 
-        writer.writerow(['Professionalism Rationale'])
-        writer.writerow([report.professionalism_rationale or 'No rationale available.'])
-        writer.writerow([])
+        if report.professionalism_rationale:
+            writer.writerow(['Professionalism Rationale'])
+            writer.writerow([report.professionalism_rationale])
+            writer.writerow([''])
 
-        writer.writerow(['Subject Knowledge Rationale'])
-        writer.writerow([report.subject_knowledge_rationale or 'No rationale available.'])
-        writer.writerow([])
+        if report.subject_knowledge_rationale:
+            writer.writerow(['Subject Knowledge Rationale'])
+            writer.writerow([report.subject_knowledge_rationale])
+            writer.writerow([''])
 
-        writer.writerow(['Clarity Rationale'])
-        writer.writerow([report.clarity_rationale or 'No rationale available.'])
-        writer.writerow([])
+        if report.clarity_rationale:
+            writer.writerow(['Clarity Rationale'])
+            writer.writerow([report.clarity_rationale])
+            writer.writerow([''])
 
-        writer.writerow(['Overall Rationale'])
-        writer.writerow([report.overall_rationale or 'No rationale available.'])
-        writer.writerow([])
+        if report.overall_rationale:
+            writer.writerow(['Overall Rationale'])
+            writer.writerow([report.overall_rationale])
+            writer.writerow([''])
 
-        # Write AI feedback
-        if report.feedback_text:
-            writer.writerow(['AI Feedback'])
-            writer.writerow([report.feedback_text])
-            writer.writerow([])
+        # Write feedback
+        writer.writerow(['Feedback'])
+        writer.writerow([report.feedback_text])
+        writer.writerow([''])
 
         # Write statistics
-        writer.writerow(['Interview Statistics'])
+        writer.writerow(['Statistics'])
         writer.writerow(['Total Questions Asked', report.total_questions_asked])
         writer.writerow(['Total Responses Given', report.total_responses_given])
 
-        if report.interview_duration_minutes:
-            writer.writerow(['Interview Duration', f"{report.interview_duration_minutes} minutes"])
-
         # Create response
-        response = HttpResponse(csv_buffer.getvalue(), content_type='text/csv')
+        csv_content = output.getvalue()
+        response = HttpResponse(csv_content, content_type='text/csv')
         filename = f"interview_report_{slugify(chat.title)}_{report.generated_at.strftime('%Y%m%d')}.csv"
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
 
         return response
-
-    def _get_score_rating(self, score):
-        """Convert a numeric score to a text rating"""
-        if score is None:
-            return "N/A"
-        if score >= 90:
-            return "Excellent"
-        elif score >= 75:
-            return "Good"
-        elif score >= 60:
-            return "Fair"
-        else:
-            return "Needs Improvement"
 
 
 # =============================================================================
@@ -2160,3 +2162,236 @@ def delete_section(request, template_id, section_id):
 
     # If GET, redirect to template detail
     return redirect('template_detail', template_id=template.id)
+
+
+# ============================================================================
+# USER DATA EXPORT & DELETION VIEWS (Issues #63, #64, #65)
+# ============================================================================
+
+@login_required
+def request_data_export(request):
+    """
+    Request a data export (GDPR/CCPA compliance).
+    Creates a DataExportRequest and processes it asynchronously.
+
+    GET: Show confirmation page
+    POST: Create export request and redirect to status page
+
+    Related to Issue #64 (Data Export Functionality).
+    """
+    if request.method == 'POST':
+        # Check for existing pending/processing requests
+        existing = DataExportRequest.objects.filter(
+            user=request.user,
+            status__in=[DataExportRequest.PENDING, DataExportRequest.PROCESSING]
+        ).first()
+
+        if existing:
+            messages.info(
+                request,
+                'You already have a pending data export request. '
+                'Please wait for it to complete.'
+            )
+            return redirect('data_export_status', request_id=existing.id)
+
+        # Create new export request
+        export_request = DataExportRequest.objects.create(user=request.user)
+
+        # Process the request (in production, this would be async with Celery)
+        # For now, process synchronously
+        process_export_request(export_request)
+
+        messages.success(
+            request,
+            'Your data export request has been submitted. '
+            'You will receive an email when it is ready.'
+        )
+
+        return redirect('data_export_status', request_id=export_request.id)
+
+    # GET request - show confirmation page
+    context = {
+        'recent_exports': DataExportRequest.objects.filter(
+            user=request.user
+        ).order_by('-requested_at')[:5]
+    }
+
+    return render(request, 'user_data/request_export.html', context)
+
+
+@login_required
+def data_export_status(request, request_id):
+    """
+    View status of a data export request.
+
+    Args:
+        request_id: DataExportRequest ID
+
+    Related to Issue #64 (Data Export Functionality).
+    """
+    export_request = get_object_or_404(
+        DataExportRequest,
+        id=request_id,
+        user=request.user
+    )
+
+    # Check if expired
+    is_expired = export_request.is_expired()
+    if is_expired and export_request.status == DataExportRequest.COMPLETED:
+        export_request.status = DataExportRequest.EXPIRED
+        export_request.save()
+
+    context = {
+        'export_request': export_request,
+        'is_expired': is_expired,
+    }
+
+    return render(request, 'user_data/export_status.html', context)
+
+
+@login_required
+def download_data_export(request, request_id):
+    """
+    Download a completed data export file.
+
+    Args:
+        request_id: DataExportRequest ID
+
+    Returns:
+        FileResponse with ZIP file
+
+    Related to Issue #64 (Data Export Functionality).
+    """
+    export_request = get_object_or_404(
+        DataExportRequest,
+        id=request_id,
+        user=request.user
+    )
+
+    # Check if export is completed
+    if export_request.status != DataExportRequest.COMPLETED:
+        messages.error(request, 'Export is not ready yet.')
+        return redirect('data_export_status', request_id=request_id)
+
+    # Check if expired
+    if export_request.is_expired():
+        export_request.status = DataExportRequest.EXPIRED
+        export_request.save()
+        messages.error(
+            request,
+            'This export link has expired. Please request a new export.'
+        )
+        return redirect('data_export_status', request_id=request_id)
+
+    # Check if file exists
+    if not export_request.export_file:
+        messages.error(request, 'Export file not found.')
+        return redirect('data_export_status', request_id=request_id)
+
+    # Mark as downloaded
+    export_request.mark_downloaded()
+
+    # Serve file
+    response = FileResponse(
+        export_request.export_file.open('rb'),
+        as_attachment=True,
+        filename=os.path.basename(export_request.export_file.name)
+    )
+
+    return response
+
+
+@login_required
+def request_account_deletion(request):
+    """
+    Request account deletion (GDPR/CCPA Right to be Forgotten).
+
+    GET: Show confirmation page with warnings
+    POST: Show password confirmation
+
+    Related to Issue #65 (Data Deletion & Anonymization).
+    """
+    if request.method == 'POST':
+        # This just shows the confirmation dialog
+        # Actual deletion happens in confirm_account_deletion
+        return render(request, 'user_data/confirm_deletion.html', {
+            'user': request.user,
+        })
+
+    # GET request - show information page
+    context = {
+        'user': request.user,
+        'resume_count': UploadedResume.objects.filter(user=request.user).count(),
+        'job_count': UploadedJobListing.objects.filter(user=request.user).count(),
+        'interview_count': Chat.objects.filter(owner=request.user).count(),
+    }
+
+    return render(request, 'user_data/request_deletion.html', context)
+
+
+@login_required
+def confirm_account_deletion(request):
+    """
+    Confirm and execute account deletion.
+    Requires password verification for security.
+
+    POST only: Verify password and delete account
+
+    Related to Issue #65 (Data Deletion & Anonymization).
+    """
+    if request.method != 'POST':
+        return redirect('request_account_deletion')
+
+    # Verify password
+    password = request.POST.get('password', '')
+    if not request.user.check_password(password):
+        messages.error(request, 'Incorrect password. Account deletion cancelled.')
+        return redirect('request_account_deletion')
+
+    # Create deletion audit record
+    anonymized_id = generate_anonymized_id(request.user)
+    deletion_request = DeletionRequest.objects.create(
+        anonymized_user_id=anonymized_id,
+        username=request.user.username,
+        email=request.user.email,
+        status=DeletionRequest.PENDING,
+    )
+
+    # Perform deletion
+    success, error = delete_user_account(request.user, deletion_request)
+
+    if success:
+        # User is deleted, so we can't redirect to a logged-in page
+        # Render a static success page
+        return render(request, 'user_data/deletion_complete.html', {
+            'username': deletion_request.username,
+        })
+    else:
+        messages.error(
+            request,
+            f'An error occurred during account deletion: {error}. '
+            'Please contact support.'
+        )
+        return redirect('profile')
+
+
+@login_required
+def user_data_settings(request):
+    """
+    Main page for user data management settings.
+    Shows options for data export and account deletion.
+
+    Related to Issue #63 (GDPR/CCPA Data Export & Delete).
+    """
+    context = {
+        'user': request.user,
+        'recent_exports': DataExportRequest.objects.filter(
+            user=request.user
+        ).order_by('-requested_at')[:3],
+        'has_pending_export': DataExportRequest.objects.filter(
+            user=request.user,
+            status__in=[DataExportRequest.PENDING, DataExportRequest.PROCESSING]
+        ).exists(),
+    }
+
+    return render(request, 'user_data/settings.html', context)
