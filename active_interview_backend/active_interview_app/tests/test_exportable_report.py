@@ -970,6 +970,8 @@ class IntegratedUserStoriesTest(TestCase):
 
     def test_complete_workflow_both_user_stories(self):
         """Test complete workflow covering both user stories"""
+        from unittest.mock import patch, MagicMock
+
         self.client.login(username='candidate', password='testpass123')
 
         # Step 1: View quick results page
@@ -979,8 +981,41 @@ class IntegratedUserStoriesTest(TestCase):
 
         # Step 2: Generate detailed report (triggers score computation)
         generate_url = reverse('generate_report', kwargs={'chat_id': self.chat.id})
-        generate_response = self.client.post(generate_url, follow=True)
-        self.assertEqual(generate_response.status_code, 200)
+
+        # Mock the AI calls to avoid external API dependency
+        with patch('active_interview_app.views._ai_available', return_value=True):
+            with patch('active_interview_app.views.get_openai_client') as mock_client:
+                # Mock scores response
+                mock_scores = MagicMock()
+                mock_scores.choices = [MagicMock()]
+                mock_scores.choices[0].message.content = "85\n78\n82\n81"
+
+                # Mock feedback response
+                mock_feedback = MagicMock()
+                mock_feedback.choices = [MagicMock()]
+                mock_feedback.choices[0].message.content = "Excellent interview performance."
+
+                # Mock rationales response
+                mock_rationales = MagicMock()
+                mock_rationales.choices = [MagicMock()]
+                mock_rationales.choices[0].message.content = """
+Professionalism: Demonstrated excellent professional behavior throughout the interview.
+
+Subject Knowledge: Showed strong technical knowledge and understanding.
+
+Clarity: Communicated clearly and effectively.
+
+Overall: Strong overall performance with good balance across all areas.
+"""
+
+                mock_client.return_value.chat.completions.create.side_effect = [
+                    mock_scores,
+                    mock_feedback,
+                    mock_rationales
+                ]
+
+                generate_response = self.client.post(generate_url, follow=True)
+                self.assertEqual(generate_response.status_code, 200)
 
         # Verify report was created
         self.assertTrue(ExportableReport.objects.filter(chat=self.chat).exists())

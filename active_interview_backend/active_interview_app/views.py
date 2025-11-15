@@ -29,7 +29,7 @@ from .serializers import (
     UploadedJobListingSerializer,
     ExportableReportSerializer
 )
-from .pdf_export import generate_pdf_report
+from .pdf_export import generate_pdf_report, get_score_rating
 from .resume_parser import parse_resume_with_ai
 from .user_data_utils import (
     process_export_request,
@@ -894,10 +894,16 @@ def view_user_profile(request, user_id):
     View another user's profile (read-only).
     Accessible by admins and interviewers.
     """
-    # Check permissions
     from .decorators import check_user_permission
     from django.http import HttpResponseForbidden, Http404
 
+    # Get user first (to return 404 if user doesn't exist)
+    try:
+        profile_user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        raise Http404("User not found")
+
+    # Check permissions after confirming user exists
     has_permission = check_user_permission(
         request, user_id,
         allow_self=True,
@@ -907,12 +913,6 @@ def view_user_profile(request, user_id):
 
     if not has_permission:
         return HttpResponseForbidden("You don't have permission to view this profile.")
-
-    # Get user
-    try:
-        profile_user = User.objects.get(id=user_id)
-    except User.DoesNotExist:
-        raise Http404("User not found")
 
     # Get user's resumes and job listings
     resumes = UploadedResume.objects.filter(user=profile_user)
@@ -1276,6 +1276,12 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
         # Extract feedback text using AI
         report.feedback_text = self._extract_feedback_from_chat(chat)
 
+        # Extract rationales for each score component
+        rationales = self._extract_rationales_from_chat(chat, scores)
+        report.professionalism_rationale = rationales.get('professionalism', '')
+        report.subject_knowledge_rationale = rationales.get('subject_knowledge', '')
+        report.clarity_rationale = rationales.get('clarity', '')
+        report.overall_rationale = rationales.get('overall', '')
 
         # Calculate statistics
         chat_messages = chat.messages
@@ -1368,6 +1374,100 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
         except Exception:
             return "Unable to generate feedback at this time."
 
+    def _extract_rationales_from_chat(self, chat, scores):
+        """
+        Generate rationales for each score component using AI.
+        Returns a dict with keys: professionalism, subject_knowledge, clarity, overall
+        """
+        rationale_prompt = textwrap.dedent(f"""\
+            Based on the interview, please provide a brief rationale for each of the following scores.
+            Format your response exactly as shown below:
+
+            Professionalism: [Your explanation for the professionalism score of {scores.get('Professionalism', 0)}]
+
+            Subject Knowledge: [Your explanation for the subject knowledge score of {scores.get('Subject Knowledge', 0)}]
+
+            Clarity: [Your explanation for the clarity score of {scores.get('Clarity', 0)}]
+
+            Overall: [Your explanation for the overall score of {scores.get('Overall', 0)}]
+        """)
+
+        input_messages = list(chat.messages)
+        input_messages.append({"role": "user", "content": rationale_prompt})
+
+        if not _ai_available():
+            return {
+                'professionalism': 'AI features are currently unavailable.',
+                'subject_knowledge': 'AI features are currently unavailable.',
+                'clarity': 'AI features are currently unavailable.',
+                'overall': 'AI features are currently unavailable.'
+            }
+
+        try:
+            response = get_openai_client().chat.completions.create(
+                model="gpt-4o",
+                messages=input_messages,
+                max_tokens=MAX_TOKENS
+            )
+            rationale_text = response.choices[0].message.content.strip()
+
+            # Parse the rationale text to extract each component
+            rationales = {
+                'professionalism': '',
+                'subject_knowledge': '',
+                'clarity': '',
+                'overall': ''
+            }
+
+            # Split by the section headers and extract content
+            sections = rationale_text.split('\n\n')
+            current_section = None
+            current_text = []
+
+            for line in rationale_text.split('\n'):
+                line = line.strip()
+                if not line:
+                    continue
+
+                if line.startswith('Professionalism:'):
+                    if current_section and current_text:
+                        rationales[current_section] = ' '.join(current_text).strip()
+                    current_section = 'professionalism'
+                    current_text = [line.split(':', 1)[1].strip()]
+                elif line.startswith('Subject Knowledge:'):
+                    if current_section and current_text:
+                        rationales[current_section] = ' '.join(current_text).strip()
+                    current_section = 'subject_knowledge'
+                    current_text = [line.split(':', 1)[1].strip()]
+                elif line.startswith('Clarity:'):
+                    if current_section and current_text:
+                        rationales[current_section] = ' '.join(current_text).strip()
+                    current_section = 'clarity'
+                    current_text = [line.split(':', 1)[1].strip()]
+                elif line.startswith('Overall:'):
+                    if current_section and current_text:
+                        rationales[current_section] = ' '.join(current_text).strip()
+                    current_section = 'overall'
+                    current_text = [line.split(':', 1)[1].strip()]
+                elif current_section:
+                    # This is a continuation of the current section
+                    current_text.append(line)
+
+            # Don't forget the last section
+            if current_section and current_text:
+                rationales[current_section] = ' '.join(current_text).strip()
+
+            return rationales
+
+        except Exception as e:
+            # If rationale generation fails, provide fallback text
+            return {
+                'professionalism': 'Unable to generate rationale at this time.',
+                'subject_knowledge': 'Unable to generate rationale at this time.',
+                'clarity': 'Unable to generate rationale at this time.',
+                'overall': 'Unable to generate rationale at this time.'
+            }
+
     def _extract_question_responses(self, chat):
         """
         Extract question-answer pairs from the chat messages.
@@ -1451,7 +1551,7 @@ class DownloadPDFReportView(LoginRequiredMixin, UserPassesTestMixin, View):
             report = ExportableReport.objects.get(chat=chat)
         except ExportableReport.DoesNotExist:
             messages.error(request, 'No report exists. Please generate one first.')
-            return redirect('chat_results', chat_id=chat_id)
+            return redirect('chat-results', chat_id=chat_id)
 
         # Generate PDF
         pdf_content = generate_pdf_report(report)
@@ -1486,7 +1586,7 @@ class DownloadCSVReportView(LoginRequiredMixin, UserPassesTestMixin, View):
             report = ExportableReport.objects.get(chat=chat)
         except ExportableReport.DoesNotExist:
             messages.error(request, 'No report exists. Please generate one first.')
-            return redirect('chat_results', chat_id=chat_id)
+            return redirect('chat-results', chat_id=chat_id)
 
         # Create CSV in memory
         output = io.StringIO()
@@ -1495,18 +1595,86 @@ class DownloadCSVReportView(LoginRequiredMixin, UserPassesTestMixin, View):
         # Write header
         writer.writerow(['Interview Report'])
         writer.writerow([''])
-        writer.writerow(['Interview Title', chat.title])
+
+        # Write Interview Details section
+        writer.writerow(['Interview Details'])
+        writer.writerow(['Title', chat.title])
         writer.writerow(['Generated At', report.generated_at.strftime('%Y-%m-%d %H:%M:%S')])
+        writer.writerow(['Difficulty', f'{chat.difficulty}/10'])
+
+        # Add job listing and resume if present
+        if chat.job_listing:
+            writer.writerow(['Job Listing', chat.job_listing.title])
+        if chat.resume:
+            writer.writerow(['Resume', chat.resume.title])
+
+        # Add interview duration if present
+        if report.interview_duration_minutes:
+            writer.writerow(['Duration', f'{report.interview_duration_minutes} minutes'])
+
         writer.writerow([''])
 
-        # Write scores
+        # Write scores with ratings and weights
         writer.writerow(['Scores'])
-        writer.writerow(['Category', 'Score'])
-        writer.writerow(['Professionalism', report.professionalism_score])
-        writer.writerow(['Subject Knowledge', report.subject_knowledge_score])
-        writer.writerow(['Clarity', report.clarity_score])
-        writer.writerow(['Overall', report.overall_score])
+        writer.writerow(['Category', 'Score', 'Rating', 'Weight'])
+
+        if report.professionalism_score is not None:
+            writer.writerow([
+                'Professionalism',
+                f'{report.professionalism_score}/100',
+                get_score_rating(report.professionalism_score),
+                f'{report.professionalism_weight}%'
+            ])
+
+        if report.subject_knowledge_score is not None:
+            writer.writerow([
+                'Subject Knowledge',
+                f'{report.subject_knowledge_score}/100',
+                get_score_rating(report.subject_knowledge_score),
+                f'{report.subject_knowledge_weight}%'
+            ])
+
+        if report.clarity_score is not None:
+            writer.writerow([
+                'Clarity',
+                f'{report.clarity_score}/100',
+                get_score_rating(report.clarity_score),
+                f'{report.clarity_weight}%'
+            ])
+
+        if report.overall_score is not None:
+            writer.writerow([
+                'Overall Score',
+                f'{report.overall_score}/100',
+                get_score_rating(report.overall_score),
+                ''
+            ])
+
         writer.writerow([''])
+
+        # Write Score Breakdown & Rationales section
+        writer.writerow(['Score Breakdown & Rationales'])
+        writer.writerow([''])
+
+        if report.professionalism_rationale:
+            writer.writerow(['Professionalism Rationale'])
+            writer.writerow([report.professionalism_rationale])
+            writer.writerow([''])
+
+        if report.subject_knowledge_rationale:
+            writer.writerow(['Subject Knowledge Rationale'])
+            writer.writerow([report.subject_knowledge_rationale])
+            writer.writerow([''])
+
+        if report.clarity_rationale:
+            writer.writerow(['Clarity Rationale'])
+            writer.writerow([report.clarity_rationale])
+            writer.writerow([''])
+
+        if report.overall_rationale:
+            writer.writerow(['Overall Rationale'])
+            writer.writerow([report.overall_rationale])
+            writer.writerow([''])
 
         # Write feedback
         writer.writerow(['Feedback'])
