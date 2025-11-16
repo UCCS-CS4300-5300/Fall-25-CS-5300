@@ -2,25 +2,51 @@
 CLAUDE CODE SESSION ANALYSIS REPORT
 ======================================================================
 
-Generated: 2025-11-15 20:39:29
+Generated: 2025-11-13 20:29:58
 
-Total Sessions: 0
-Meaningful Work Sessions: 0
-Total Code Edits: 0
-Total Test Runs: 0
+Total Sessions: 29
+Meaningful Work Sessions: 16
+Total Code Edits: 457
+Total Test Runs: 30
 
 ----------------------------------------------------------------------
 SESSION CATEGORIZATION
 ----------------------------------------------------------------------
+Exploratory: 13 (44.8%)
+New: 10 (34.5%)
+Refactor: 6 (20.7%)
 
 ----------------------------------------------------------------------
 Q1.2: TEST FAILURE ANALYSIS
 ----------------------------------------------------------------------
-Error: No sessions with test runs found
+Sessions with Tests: 9
+Total Test Runs: 30
+
+FIRST RUN ANALYSIS (after test file edits):
+  Sessions with First Runs: 6
+  Total First Runs: 14
+  Failed First Runs: 8
+  First Run Failure Rate (by session): 83.33%
+  First Run Failure Rate (by run): 57.14%
+
+ITERATION ANALYSIS:
+  Average Test Iterations: 3.33
+  Regression Detection Rate: 55.56%
+
+Note: First run = first test execution after editing a test file
 
 ----------------------------------------------------------------------
 Q2.1/Q2.2: REPROMPT ANALYSIS
 ----------------------------------------------------------------------
-Error: No meaningful sessions found
+Meaningful Sessions: 16
+Avg Reprompts/Session: 105.44
+Total Reprompts: 1687
+Success Rate: 100.0%
+
+Reason Distribution:
+  Errors: 17.72%
+  Refinements: 9.37%
+  Incomplete: 2.61%
+  Other: 70.3%
 
 ======================================================================
