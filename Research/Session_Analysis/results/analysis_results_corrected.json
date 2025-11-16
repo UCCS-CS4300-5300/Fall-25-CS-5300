@@ -1,16 +1,1739 @@
 {
   "statistics": {
-    "total_sessions": 0,
-    "meaningful_sessions": 0,
-    "sessions_by_type": {},
-    "total_edits": 0,
-    "total_test_runs": 0,
+    "total_sessions": 29,
+    "meaningful_sessions": 16,
+    "sessions_by_type": {
+      "exploratory": 13,
+      "new": 10,
+      "refactor": 6
+    },
+    "total_edits": 457,
+    "total_test_runs": 30,
     "test_metrics": {
-      "error": "No sessions with test runs found"
+      "sessions_with_tests": 9,
+      "total_test_runs": 30,
+      "sessions_with_first_runs": 6,
+      "total_first_runs_after_edits": 14,
+      "failed_first_runs": 8,
+      "first_run_failure_rate_by_session": 83.33,
+      "first_run_failure_rate_by_run": 57.14,
+      "average_test_iterations": 3.33,
+      "regression_detection_rate": 55.56,
+      "note": "First run = first test execution after editing a test file"
     },
     "reprompt_metrics": {
-      "error": "No meaningful sessions found"
+      "meaningful_sessions": 16,
+      "avg_reprompts_per_session": 105.44,
+      "total_reprompts": 1687,
+      "reason_distribution": {
+        "errors": 17.72,
+        "refinements": 9.37,
+        "incomplete": 2.61,
+        "other": 70.3
+      },
+      "success_rate": 100.0
     }
   },
-  "sessions": []
+  "sessions": [
+    {
+      "session_id": "019b0943-104e-482c-90a3-2cf411f0210e",
+      "message_count": 4,
+      "category": "exploratory",
+      "is_meaningful": false,
+      "edit_count": 0,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 2,
+        "assistant_message_count": 0,
+        "reprompt_count": 1,
+        "reasons": {
+          "errors": 0,
+          "refinements": 0,
+          "incomplete": 0,
+          "other": 1
+        }
+      }
+    },
+    {
+      "session_id": "0c283fc5-4902-43fc-a170-bf04376ac25b",
+      "message_count": 627,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 47,
+      "test_edit_count": 7,
+      "test_file_edits": [
+        {
+          "message_index": 185,
+          "tool": "Write",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 283,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 475,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 476,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 477,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 478,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 617,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [
+        {
+          "test_count": 14,
+          "passed": false,
+          "failures": 6,
+          "errors": 0,
+          "output_excerpt": "Error: Creating test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...\r\r\ntest_admin_can_access_admin_routes (active_interview_app.tests.test_rbac.AdminRouteProtectionTestCase.test_admin_can_access_admin_routes)\r\n@issue-71 ... FAIL\r\ntest_candidate_cannot_access_admin_routes (active_interview_app.tests.test_rbac.AdminRouteProtectionTestCase.test_candidate_cannot_access_admin_routes)\r\n@issue-71 ... FAIL\r\ntest_interviewer_cannot_access_admin_routes (active_interview_",
+          "failed_tests": [
+            "test_admin_can_access_admin_routes",
+            "test_candidate_cannot_access_admin_routes",
+            "test_interviewer_cannot_access_admin_routes",
+            "test_unauthenticated_user_cannot_access_admin_routes",
+            "test_admin_can_update_user_role_via_patch",
+            "test_non_admin_cannot_update_user_roles"
+          ],
+          "error_tests": [],
+          "message_index": 385,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 14,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "  Applying auth.0003_alter_user_email_max_length... OK\r\n  Applying auth.0004_alter_user_username_opts... OK\r\n  Applying auth.0005_alter_user_last_login_null... OK\r\n  Applying auth.0006_require_contenttypes_0002... OK\r\n  Applying auth.0007_alter_validators_add_error_messages... OK\r\n  Applying auth.0008_alter_user_username_max_length... OK\r\n  Applying auth.0009_alter_user_last_name_max_length... OK\r\n  Applying auth.0010_alter_group_name_max_length... OK\r\n  Applying auth.0011_update_proxy_permissio",
+          "message_index": 414,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 527,
+          "passed": false,
+          "failures": 0,
+          "errors": 453,
+          "output_excerpt": "Test ResultsChat\r\n----------------------------------------------------------------------\r\nTraceback (most recent call last):\r\n  File \"C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_coverage_boost.py\", line 141, in setUp\r\n    self.user = User.objects.create_user(username='viewuser', password='testpass')\r\n                ^^^^^^^^^^^^\r\n  File \"C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\.venv\\Lib\\site-packages\\django\\db\\model",
+          "failed_tests": [],
+          "error_tests": [
+            "test_results_chat_no_ai",
+            "test_static_views",
+            "test_upload_file_docx",
+            "test_upload_file_invalid",
+            "test_upload_file_pdf",
+            "test_uploaded_job_listing_view"
+          ],
+          "message_index": 422,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 0,
+          "passed": false,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "Ran 0 tests in 0.000s\r",
+          "message_index": 442,
+          "command": "python manage.py test"
+        }
+      ],
+      "first_run_tests": [
+        {
+          "test_count": 14,
+          "passed": false,
+          "failures": 6,
+          "errors": 0,
+          "output_excerpt": "Error: Creating test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...\r\r\ntest_admin_can_access_admin_routes (active_interview_app.tests.test_rbac.AdminRouteProtectionTestCase.test_admin_can_access_admin_routes)\r\n@issue-71 ... FAIL\r\ntest_candidate_cannot_access_admin_routes (active_interview_app.tests.test_rbac.AdminRouteProtectionTestCase.test_candidate_cannot_access_admin_routes)\r\n@issue-71 ... FAIL\r\ntest_interviewer_cannot_access_admin_routes (active_interview_",
+          "failed_tests": [
+            "test_admin_can_access_admin_routes",
+            "test_candidate_cannot_access_admin_routes",
+            "test_interviewer_cannot_access_admin_routes",
+            "test_unauthenticated_user_cannot_access_admin_routes",
+            "test_admin_can_update_user_role_via_patch",
+            "test_non_admin_cannot_update_user_roles"
+          ],
+          "error_tests": [],
+          "message_index": 385,
+          "command": "python manage.py test",
+          "is_first_run_after_edit": true,
+          "related_edit": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py"
+        }
+      ],
+      "test_run_count": 4,
+      "reprompt_analysis": {
+        "user_message_count": 189,
+        "assistant_message_count": 401,
+        "reprompt_count": 188,
+        "reasons": {
+          "errors": 34,
+          "refinements": 6,
+          "incomplete": 4,
+          "other": 144
+        }
+      }
+    },
+    {
+      "session_id": "0ea6fbd0-8a28-4952-b794-be74efccf988",
+      "message_count": 132,
+      "category": "refactor",
+      "is_meaningful": true,
+      "edit_count": 9,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 43,
+        "assistant_message_count": 77,
+        "reprompt_count": 42,
+        "reasons": {
+          "errors": 4,
+          "refinements": 4,
+          "incomplete": 0,
+          "other": 34
+        }
+      }
+    },
+    {
+      "session_id": "0f30f8d3-4029-4144-9d11-b4b6e7672de2",
+      "message_count": 157,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 11,
+      "test_edit_count": 3,
+      "test_file_edits": [
+        {
+          "message_index": 95,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 100,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 104,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [
+        {
+          "test_count": 33,
+          "passed": false,
+          "failures": 0,
+          "errors": 2,
+          "output_excerpt": "Error: Exit code 1\nCreating test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...\r\r\ntest_admin_can_access_search (active_interview_app.tests.test_rbac.CandidateSearchTest.test_admin_can_access_search)\r\nTest that admins can access the search page ... ok\r\ntest_candidate_cannot_access_search (active_interview_app.tests.test_rbac.CandidateSearchTest.test_candidate_cannot_access_search)\r\nTest that candidates cannot access the search page ... ok\r\ntest_interviewer_can_",
+          "failed_tests": [],
+          "error_tests": [],
+          "message_index": 111,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 33,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "Found 33 test(s).\r\nOperations to perform:\r\n  Synchronize unmigrated apps: bootstrap5, filetype, messages, rest_framework, staticfiles\r\n  Apply all migrations: active_interview_app, admin, auth, contenttypes, sessions\r\nSynchronizing apps without migrations:\r\n  Creating tables...\r\n    Running deferred SQL...\r\nRunning migrations:\r\n  Applying contenttypes.0001_initial... OK\r\n  Applying auth.0001_initial... OK\r\n  Applying active_interview_app.0001_initial... OK\r\n  Applying active_interview_app.0002_a",
+          "message_index": 125,
+          "command": "python manage.py test"
+        }
+      ],
+      "first_run_tests": [
+        {
+          "test_count": 33,
+          "passed": false,
+          "failures": 0,
+          "errors": 2,
+          "output_excerpt": "Error: Exit code 1\nCreating test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...\r\r\ntest_admin_can_access_search (active_interview_app.tests.test_rbac.CandidateSearchTest.test_admin_can_access_search)\r\nTest that admins can access the search page ... ok\r\ntest_candidate_cannot_access_search (active_interview_app.tests.test_rbac.CandidateSearchTest.test_candidate_cannot_access_search)\r\nTest that candidates cannot access the search page ... ok\r\ntest_interviewer_can_",
+          "failed_tests": [],
+          "error_tests": [],
+          "message_index": 111,
+          "command": "python manage.py test",
+          "is_first_run_after_edit": true,
+          "related_edit": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py"
+        }
+      ],
+      "test_run_count": 2,
+      "reprompt_analysis": {
+        "user_message_count": 47,
+        "assistant_message_count": 103,
+        "reprompt_count": 46,
+        "reasons": {
+          "errors": 12,
+          "refinements": 8,
+          "incomplete": 0,
+          "other": 26
+        }
+      }
+    },
+    {
+      "session_id": "17c9d550-4c45-4b53-84b6-45b8aeacd267",
+      "message_count": 5,
+      "category": "exploratory",
+      "is_meaningful": false,
+      "edit_count": 0,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 2,
+        "assistant_message_count": 2,
+        "reprompt_count": 1,
+        "reasons": {
+          "errors": 0,
+          "refinements": 0,
+          "incomplete": 0,
+          "other": 1
+        }
+      }
+    },
+    {
+      "session_id": "1e519065-50f9-4ee7-8fbd-dd14a0e475d9",
+      "message_count": 1,
+      "category": "exploratory",
+      "is_meaningful": false,
+      "edit_count": 0,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 0,
+        "assistant_message_count": 0,
+        "reprompt_count": 0,
+        "reasons": {
+          "errors": 0,
+          "refinements": 0,
+          "incomplete": 0,
+          "other": 0
+        }
+      }
+    },
+    {
+      "session_id": "210caea2-d067-4781-a92d-178aa574126c",
+      "message_count": 408,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 42,
+      "test_edit_count": 2,
+      "test_file_edits": [
+        {
+          "message_index": 51,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_google_oauth.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 55,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_google_oauth.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [
+        {
+          "test_count": 2,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "Found 2 test(s).\r\nSystem check identified no issues (0 silenced).\r\nCreating test database for alias 'default'...\r\r\n..\r\n----------------------------------------------------------------------\r\nRan 2 tests in 0.317s\r\n\r\nOK\r\nDestroying test database for alias 'default'...\r",
+          "message_index": 63,
+          "command": "python manage.py test"
+        }
+      ],
+      "first_run_tests": [
+        {
+          "test_count": 2,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "Found 2 test(s).\r\nSystem check identified no issues (0 silenced).\r\nCreating test database for alias 'default'...\r\r\n..\r\n----------------------------------------------------------------------\r\nRan 2 tests in 0.317s\r\n\r\nOK\r\nDestroying test database for alias 'default'...\r",
+          "message_index": 63,
+          "command": "python manage.py test",
+          "is_first_run_after_edit": true,
+          "related_edit": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_google_oauth.py"
+        }
+      ],
+      "test_run_count": 1,
+      "reprompt_analysis": {
+        "user_message_count": 127,
+        "assistant_message_count": 258,
+        "reprompt_count": 126,
+        "reasons": {
+          "errors": 12,
+          "refinements": 14,
+          "incomplete": 2,
+          "other": 98
+        }
+      }
+    },
+    {
+      "session_id": "2770fff6-9ce1-4f73-9e27-eb64b4672254",
+      "message_count": 7,
+      "category": "exploratory",
+      "is_meaningful": false,
+      "edit_count": 0,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 2,
+        "assistant_message_count": 2,
+        "reprompt_count": 1,
+        "reasons": {
+          "errors": 0,
+          "refinements": 0,
+          "incomplete": 0,
+          "other": 1
+        }
+      }
+    },
+    {
+      "session_id": "3353db9e-645c-46a8-882e-1ac3bf514487",
+      "message_count": 11,
+      "category": "exploratory",
+      "is_meaningful": false,
+      "edit_count": 0,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 4,
+        "assistant_message_count": 4,
+        "reprompt_count": 3,
+        "reasons": {
+          "errors": 0,
+          "refinements": 1,
+          "incomplete": 0,
+          "other": 2
+        }
+      }
+    },
+    {
+      "session_id": "354054c8-f25e-428f-ac14-e90949b09de6",
+      "message_count": 287,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 15,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 82,
+        "assistant_message_count": 189,
+        "reprompt_count": 81,
+        "reasons": {
+          "errors": 19,
+          "refinements": 2,
+          "incomplete": 3,
+          "other": 57
+        }
+      }
+    },
+    {
+      "session_id": "49be0ca3-f387-43db-8b9b-f17690d79ef3",
+      "message_count": 52,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 4,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 20,
+        "assistant_message_count": 24,
+        "reprompt_count": 19,
+        "reasons": {
+          "errors": 6,
+          "refinements": 3,
+          "incomplete": 1,
+          "other": 9
+        }
+      }
+    },
+    {
+      "session_id": "52370920-d3c9-4832-830f-1b2bab6c5287",
+      "message_count": 2,
+      "category": "exploratory",
+      "is_meaningful": false,
+      "edit_count": 0,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 0,
+        "assistant_message_count": 0,
+        "reprompt_count": 0,
+        "reasons": {
+          "errors": 0,
+          "refinements": 0,
+          "incomplete": 0,
+          "other": 0
+        }
+      }
+    },
+    {
+      "session_id": "5343fb1c-2f6a-4694-8cf7-aa1e5fc77d3a",
+      "message_count": 0,
+      "category": "exploratory",
+      "is_meaningful": false,
+      "edit_count": 0,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 0,
+        "assistant_message_count": 0,
+        "reprompt_count": 0,
+        "reasons": {
+          "errors": 0,
+          "refinements": 0,
+          "incomplete": 0,
+          "other": 0
+        }
+      }
+    },
+    {
+      "session_id": "53bd7295-e2c3-4faf-86f9-659b0ba1b18c",
+      "message_count": 10,
+      "category": "exploratory",
+      "is_meaningful": false,
+      "edit_count": 0,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 2,
+        "assistant_message_count": 5,
+        "reprompt_count": 1,
+        "reasons": {
+          "errors": 0,
+          "refinements": 0,
+          "incomplete": 0,
+          "other": 1
+        }
+      }
+    },
+    {
+      "session_id": "66e6cff2-62e3-43da-bdae-a2a0ce6e179b",
+      "message_count": 148,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 6,
+      "test_edit_count": 3,
+      "test_file_edits": [
+        {
+          "message_index": 98,
+          "tool": "Write",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\test_registration_fix.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 110,
+          "tool": "Write",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_registration.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 119,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_registration.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [
+        {
+          "test_count": 44,
+          "passed": false,
+          "failures": 1,
+          "errors": 18,
+          "output_excerpt": "Error: Creating test database for alias 'default'...\r\r\n....C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\.venv\\Lib\\site-packages\\django\\core\\handlers\\base.py:61: UserWarning: No directory at: C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\staticfiles\\\r\n  mw_instance = middleware(adapted_handler)\r\nEE.E.E..E.E.........EEEEE.EE...EEEEE..F.\r\n======================================================================\r\nERROR: testGETFeaturesPage (active_interview_app",
+          "failed_tests": [],
+          "error_tests": [],
+          "message_index": 90,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 1,
+          "passed": false,
+          "failures": 0,
+          "errors": 1,
+          "output_excerpt": "Error: test_register_without_existing_group (__main__.RegistrationFixTest.test_register_without_existing_group)\r\nTest that registration works even when average_role doesn't exist. ... ERROR\r\n\r\n======================================================================\r\nERROR: test_register_without_existing_group (__main__.RegistrationFixTest.test_register_without_existing_group)\r\nTest that registration works even when average_role doesn't exist.\r\n------------------------------------------------------",
+          "failed_tests": [],
+          "error_tests": [
+            "test_register_without_existing_group"
+          ],
+          "message_index": 102,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 1,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "Found 1 test(s).\r\nOperations to perform:\r\n  Synchronize unmigrated apps: bootstrap5, filetype, messages, rest_framework, staticfiles\r\n  Apply all migrations: active_interview_app, admin, auth, contenttypes, sessions\r\nSynchronizing apps without migrations:\r\n  Creating tables...\r\n    Running deferred SQL...\r\nRunning migrations:\r\n  Applying contenttypes.0001_initial... OK\r\n  Applying auth.0001_initial... OK\r\n  Applying active_interview_app.0001_initial... OK\r\n  Applying active_interview_app.0002_al",
+          "message_index": 105,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 4,
+          "passed": false,
+          "failures": 0,
+          "errors": 4,
+          "output_excerpt": "Error: Creating test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...\r\r\ntest_multiple_registrations_reuse_same_group (active_interview_app.tests.test_registration.UserRegistrationTestCase.test_multiple_registrations_reuse_same_group)\r\nTest that multiple user registrations reuse the same group. ... ERROR\r\ntest_register_user_with_existing_group (active_interview_app.tests.test_registration.UserRegistrationTestCase.test_register_user_with_existing_group)\r\nTest that",
+          "failed_tests": [],
+          "error_tests": [
+            "test_multiple_registrations_reuse_same_group",
+            "test_register_user_with_existing_group",
+            "test_register_user_without_existing_group",
+            "test_signal_creates_average_role_group_on_migrate"
+          ],
+          "message_index": 115,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 4,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "Found 4 test(s).\r\nOperations to perform:\r\n  Synchronize unmigrated apps: bootstrap5, filetype, messages, rest_framework, staticfiles\r\n  Apply all migrations: active_interview_app, admin, auth, contenttypes, sessions\r\nSynchronizing apps without migrations:\r\n  Creating tables...\r\n    Running deferred SQL...\r\nRunning migrations:\r\n  Applying contenttypes.0001_initial... OK\r\n  Applying auth.0001_initial... OK\r\n  Applying active_interview_app.0001_initial... OK\r\n  Applying active_interview_app.0002_al",
+          "message_index": 122,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 48,
+          "passed": false,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "ERROR: testGETFeaturesPage (active_interview_app.tests.test.TestFeaturesPage.testGETFeaturesPage)\nERROR: testChatList (active_interview_app.tests.test_chat.TestChatListView.testChatList)\nERROR: testGETChatView (active_interview_app.tests.test_chat.TestChatView.testGETChatView)\nERROR: testGETCreateChatView (active_interview_app.tests.test_chat.TestCreateChatView.testGETCreateChatView)\nERROR: testGETEditChatView (active_interview_app.tests.test_chat.TestEditChatView.testGETEditChatView)\nERROR: tes",
+          "message_index": 132,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 8,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "Found 8 test(s).\r\nSystem check identified no issues (0 silenced).\r\nCreating test database for alias 'default'...\r\r\nC:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\.venv\\Lib\\site-packages\\django\\core\\handlers\\base.py:61: UserWarning: No directory at: C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\staticfiles\\\r\n  mw_instance = middleware(adapted_handler)\r\n........\r\n----------------------------------------------------------------------\r\nRan 8 tests in 3.903s\r\n\r",
+          "message_index": 135,
+          "command": "python manage.py test"
+        }
+      ],
+      "first_run_tests": [
+        {
+          "test_count": 1,
+          "passed": false,
+          "failures": 0,
+          "errors": 1,
+          "output_excerpt": "Error: test_register_without_existing_group (__main__.RegistrationFixTest.test_register_without_existing_group)\r\nTest that registration works even when average_role doesn't exist. ... ERROR\r\n\r\n======================================================================\r\nERROR: test_register_without_existing_group (__main__.RegistrationFixTest.test_register_without_existing_group)\r\nTest that registration works even when average_role doesn't exist.\r\n------------------------------------------------------",
+          "failed_tests": [],
+          "error_tests": [
+            "test_register_without_existing_group"
+          ],
+          "message_index": 102,
+          "command": "python manage.py test",
+          "is_first_run_after_edit": true,
+          "related_edit": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\test_registration_fix.py"
+        },
+        {
+          "test_count": 4,
+          "passed": false,
+          "failures": 0,
+          "errors": 4,
+          "output_excerpt": "Error: Creating test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...\r\r\ntest_multiple_registrations_reuse_same_group (active_interview_app.tests.test_registration.UserRegistrationTestCase.test_multiple_registrations_reuse_same_group)\r\nTest that multiple user registrations reuse the same group. ... ERROR\r\ntest_register_user_with_existing_group (active_interview_app.tests.test_registration.UserRegistrationTestCase.test_register_user_with_existing_group)\r\nTest that",
+          "failed_tests": [],
+          "error_tests": [
+            "test_multiple_registrations_reuse_same_group",
+            "test_register_user_with_existing_group",
+            "test_register_user_without_existing_group",
+            "test_signal_creates_average_role_group_on_migrate"
+          ],
+          "message_index": 115,
+          "command": "python manage.py test",
+          "is_first_run_after_edit": true,
+          "related_edit": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_registration.py"
+        },
+        {
+          "test_count": 4,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "Found 4 test(s).\r\nOperations to perform:\r\n  Synchronize unmigrated apps: bootstrap5, filetype, messages, rest_framework, staticfiles\r\n  Apply all migrations: active_interview_app, admin, auth, contenttypes, sessions\r\nSynchronizing apps without migrations:\r\n  Creating tables...\r\n    Running deferred SQL...\r\nRunning migrations:\r\n  Applying contenttypes.0001_initial... OK\r\n  Applying auth.0001_initial... OK\r\n  Applying active_interview_app.0001_initial... OK\r\n  Applying active_interview_app.0002_al",
+          "message_index": 122,
+          "command": "python manage.py test",
+          "is_first_run_after_edit": true,
+          "related_edit": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_registration.py"
+        }
+      ],
+      "test_run_count": 7,
+      "reprompt_analysis": {
+        "user_message_count": 57,
+        "assistant_message_count": 78,
+        "reprompt_count": 56,
+        "reasons": {
+          "errors": 13,
+          "refinements": 0,
+          "incomplete": 0,
+          "other": 43
+        }
+      }
+    },
+    {
+      "session_id": "69393b0b-b317-4b8f-96d0-52a2dd7ad0d2",
+      "message_count": 61,
+      "category": "exploratory",
+      "is_meaningful": false,
+      "edit_count": 0,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 26,
+        "assistant_message_count": 29,
+        "reprompt_count": 25,
+        "reasons": {
+          "errors": 3,
+          "refinements": 5,
+          "incomplete": 0,
+          "other": 17
+        }
+      }
+    },
+    {
+      "session_id": "77a3af2e-ab63-42dc-9804-d8b27b1cce2f",
+      "message_count": 385,
+      "category": "refactor",
+      "is_meaningful": true,
+      "edit_count": 22,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 115,
+        "assistant_message_count": 238,
+        "reprompt_count": 114,
+        "reasons": {
+          "errors": 17,
+          "refinements": 11,
+          "incomplete": 3,
+          "other": 83
+        }
+      }
+    },
+    {
+      "session_id": "7a1f34ae-dce2-4e55-a841-de31abe3faf5",
+      "message_count": 0,
+      "category": "exploratory",
+      "is_meaningful": false,
+      "edit_count": 0,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 0,
+        "assistant_message_count": 0,
+        "reprompt_count": 0,
+        "reasons": {
+          "errors": 0,
+          "refinements": 0,
+          "incomplete": 0,
+          "other": 0
+        }
+      }
+    },
+    {
+      "session_id": "7db0ee5d-3087-4b55-9b65-217a51721488",
+      "message_count": 109,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 5,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 41,
+        "assistant_message_count": 51,
+        "reprompt_count": 40,
+        "reasons": {
+          "errors": 7,
+          "refinements": 2,
+          "incomplete": 1,
+          "other": 30
+        }
+      }
+    },
+    {
+      "session_id": "7e0fb41f-af44-4eef-afa7-7c16021480f6",
+      "message_count": 331,
+      "category": "refactor",
+      "is_meaningful": true,
+      "edit_count": 28,
+      "test_edit_count": 2,
+      "test_file_edits": [
+        {
+          "message_index": 104,
+          "tool": "Write",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\docs\\setup\\testing.md",
+          "is_test_file": true
+        },
+        {
+          "message_index": 238,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\docs\\setup\\testing.md",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 100,
+        "assistant_message_count": 199,
+        "reprompt_count": 99,
+        "reasons": {
+          "errors": 14,
+          "refinements": 9,
+          "incomplete": 5,
+          "other": 71
+        }
+      }
+    },
+    {
+      "session_id": "88dfe702-952b-45d3-845f-5c05d9e71c64",
+      "message_count": 653,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 92,
+      "test_edit_count": 39,
+      "test_file_edits": [
+        {
+          "message_index": 168,
+          "tool": "Write",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 198,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 202,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 203,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 204,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 205,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 212,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 213,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 214,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 215,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 216,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 217,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 218,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 219,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 220,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 221,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 222,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 244,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 245,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 246,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 247,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 248,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 249,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 250,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 251,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 252,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 253,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 254,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 255,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 269,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 303,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 304,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 313,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 527,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 556,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 559,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 562,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 565,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 584,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [
+        {
+          "test_count": 25,
+          "passed": false,
+          "failures": 9,
+          "errors": 0,
+          "output_excerpt": "Error: Exit code 1\nCreating test database for alias 'default'...\r\r\nFFFFF...........FFFF.....\r\n======================================================================\r\nFAIL: test_admin_can_access_user_list (active_interview_app.tests.test_rbac.AdminUserManagementTest.test_admin_can_access_user_list)\r\nTest admin can access admin routes.\r\n----------------------------------------------------------------------\r\nTraceback (most recent call last):\r\n  File \"C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-C",
+          "failed_tests": [
+            "test_admin_can_access_user_list",
+            "test_admin_can_update_user_role",
+            "test_candidate_cannot_access_admin_routes",
+            "test_interviewer_cannot_access_admin_routes",
+            "test_non_admin_cannot_update_user_roles",
+            "test_update_profile_with_invalid_method",
+            "test_update_role_nonexistent_user",
+            "test_update_role_with_invalid_json",
+            "test_update_role_with_invalid_role"
+          ],
+          "error_tests": [],
+          "message_index": 176,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 25,
+          "passed": false,
+          "failures": 9,
+          "errors": 0,
+          "output_excerpt": "Error: Exit code 1\nCreating test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...\r\r\ntest_admin_can_access_user_list (active_interview_app.tests.test_rbac.AdminUserManagementTest.test_admin_can_access_user_list)\r\nTest admin can access admin routes. ... FAIL\r\ntest_admin_can_update_user_role (active_interview_app.tests.test_rbac.AdminUserManagementTest.test_admin_can_update_user_role)\r\nTest admin can update user role via PATCH endpoint. ... FAIL\r\ntest_candidate_can",
+          "failed_tests": [
+            "test_update_profile_with_invalid_method",
+            "test_update_role_nonexistent_user",
+            "test_update_role_with_invalid_json",
+            "test_update_role_with_invalid_role"
+          ],
+          "error_tests": [],
+          "message_index": 195,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 25,
+          "passed": false,
+          "failures": 9,
+          "errors": 0,
+          "output_excerpt": "Error: Exit code 1\nCreating test database for alias 'default'...\r\r\nFFFFF...........FFFF.....\r\n======================================================================\r\nFAIL: test_admin_can_access_user_list (active_interview_app.tests.test_rbac.AdminUserManagementTest.test_admin_can_access_user_list)\r\nTest admin can access admin routes.\r\n----------------------------------------------------------------------\r\nTraceback (most recent call last):\r\n  File \"C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-C",
+          "failed_tests": [
+            "test_admin_can_access_user_list",
+            "test_admin_can_update_user_role",
+            "test_candidate_cannot_access_admin_routes",
+            "test_interviewer_cannot_access_admin_routes",
+            "test_non_admin_cannot_update_user_roles",
+            "test_update_profile_with_invalid_method",
+            "test_update_role_nonexistent_user",
+            "test_update_role_with_invalid_json",
+            "test_update_role_with_invalid_role"
+          ],
+          "error_tests": [],
+          "message_index": 237,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 25,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "Found 25 test(s).\r\nSystem check identified no issues (0 silenced).\r\nCreating test database for alias 'default'...\r\r\n.........................\r\n----------------------------------------------------------------------\r\nRan 25 tests in 27.029s\r\n\r\nOK\r\nDestroying test database for alias 'default'...\r",
+          "message_index": 272,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 25,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "System check identified no issues (0 silenced).\r\n----------------------------------------------------------------------\r\nRan 25 tests in 26.175s\r\n\r\nOK\r",
+          "message_index": 323,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 44,
+          "passed": false,
+          "failures": 2,
+          "errors": 4,
+          "output_excerpt": "Error: Exit code 1\nCreating test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...\r\r\ntest_admin_can_access_user_list (active_interview_app.tests.test_rbac.AdminUserManagementTest.test_admin_can_access_user_list)\r\nTest admin can access admin routes. ... ok\r\ntest_admin_can_update_user_role (active_interview_app.tests.test_rbac.AdminUserManagementTest.test_admin_can_update_user_role)\r\nTest admin can update user role via PATCH endpoint. ... ok\r\ntest_candidate_cannot_",
+          "failed_tests": [
+            "test_unauthenticated_cannot_access_search"
+          ],
+          "error_tests": [],
+          "message_index": 570,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 44,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "Found 44 test(s).\r\nOperations to perform:\r\n  Synchronize unmigrated apps: bootstrap5, filetype, messages, rest_framework, staticfiles\r\n  Apply all migrations: active_interview_app, admin, auth, contenttypes, sessions\r\nSynchronizing apps without migrations:\r\n  Creating tables...\r\n    Running deferred SQL...\r\nRunning migrations:\r\n  Applying contenttypes.0001_initial... OK\r\n  Applying auth.0001_initial... OK\r\n  Applying active_interview_app.0001_initial... OK\r\n  Applying active_interview_app.0002_a",
+          "message_index": 589,
+          "command": "python manage.py test"
+        }
+      ],
+      "first_run_tests": [
+        {
+          "test_count": 25,
+          "passed": false,
+          "failures": 9,
+          "errors": 0,
+          "output_excerpt": "Error: Exit code 1\nCreating test database for alias 'default'...\r\r\nFFFFF...........FFFF.....\r\n======================================================================\r\nFAIL: test_admin_can_access_user_list (active_interview_app.tests.test_rbac.AdminUserManagementTest.test_admin_can_access_user_list)\r\nTest admin can access admin routes.\r\n----------------------------------------------------------------------\r\nTraceback (most recent call last):\r\n  File \"C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-C",
+          "failed_tests": [
+            "test_admin_can_access_user_list",
+            "test_admin_can_update_user_role",
+            "test_candidate_cannot_access_admin_routes",
+            "test_interviewer_cannot_access_admin_routes",
+            "test_non_admin_cannot_update_user_roles",
+            "test_update_profile_with_invalid_method",
+            "test_update_role_nonexistent_user",
+            "test_update_role_with_invalid_json",
+            "test_update_role_with_invalid_role"
+          ],
+          "error_tests": [],
+          "message_index": 176,
+          "command": "python manage.py test",
+          "is_first_run_after_edit": true,
+          "related_edit": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py"
+        },
+        {
+          "test_count": 25,
+          "passed": false,
+          "failures": 9,
+          "errors": 0,
+          "output_excerpt": "Error: Exit code 1\nCreating test database for alias 'default'...\r\r\nFFFFF...........FFFF.....\r\n======================================================================\r\nFAIL: test_admin_can_access_user_list (active_interview_app.tests.test_rbac.AdminUserManagementTest.test_admin_can_access_user_list)\r\nTest admin can access admin routes.\r\n----------------------------------------------------------------------\r\nTraceback (most recent call last):\r\n  File \"C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-C",
+          "failed_tests": [
+            "test_admin_can_access_user_list",
+            "test_admin_can_update_user_role",
+            "test_candidate_cannot_access_admin_routes",
+            "test_interviewer_cannot_access_admin_routes",
+            "test_non_admin_cannot_update_user_roles",
+            "test_update_profile_with_invalid_method",
+            "test_update_role_nonexistent_user",
+            "test_update_role_with_invalid_json",
+            "test_update_role_with_invalid_role"
+          ],
+          "error_tests": [],
+          "message_index": 237,
+          "command": "python manage.py test",
+          "is_first_run_after_edit": true,
+          "related_edit": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py"
+        },
+        {
+          "test_count": 25,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "Found 25 test(s).\r\nSystem check identified no issues (0 silenced).\r\nCreating test database for alias 'default'...\r\r\n.........................\r\n----------------------------------------------------------------------\r\nRan 25 tests in 27.029s\r\n\r\nOK\r\nDestroying test database for alias 'default'...\r",
+          "message_index": 272,
+          "command": "python manage.py test",
+          "is_first_run_after_edit": true,
+          "related_edit": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py"
+        },
+        {
+          "test_count": 25,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "System check identified no issues (0 silenced).\r\n----------------------------------------------------------------------\r\nRan 25 tests in 26.175s\r\n\r\nOK\r",
+          "message_index": 323,
+          "command": "python manage.py test",
+          "is_first_run_after_edit": true,
+          "related_edit": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py"
+        },
+        {
+          "test_count": 44,
+          "passed": false,
+          "failures": 2,
+          "errors": 4,
+          "output_excerpt": "Error: Exit code 1\nCreating test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...\r\r\ntest_admin_can_access_user_list (active_interview_app.tests.test_rbac.AdminUserManagementTest.test_admin_can_access_user_list)\r\nTest admin can access admin routes. ... ok\r\ntest_admin_can_update_user_role (active_interview_app.tests.test_rbac.AdminUserManagementTest.test_admin_can_update_user_role)\r\nTest admin can update user role via PATCH endpoint. ... ok\r\ntest_candidate_cannot_",
+          "failed_tests": [
+            "test_unauthenticated_cannot_access_search"
+          ],
+          "error_tests": [],
+          "message_index": 570,
+          "command": "python manage.py test",
+          "is_first_run_after_edit": true,
+          "related_edit": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py"
+        },
+        {
+          "test_count": 44,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "Found 44 test(s).\r\nOperations to perform:\r\n  Synchronize unmigrated apps: bootstrap5, filetype, messages, rest_framework, staticfiles\r\n  Apply all migrations: active_interview_app, admin, auth, contenttypes, sessions\r\nSynchronizing apps without migrations:\r\n  Creating tables...\r\n    Running deferred SQL...\r\nRunning migrations:\r\n  Applying contenttypes.0001_initial... OK\r\n  Applying auth.0001_initial... OK\r\n  Applying active_interview_app.0001_initial... OK\r\n  Applying active_interview_app.0002_a",
+          "message_index": 589,
+          "command": "python manage.py test",
+          "is_first_run_after_edit": true,
+          "related_edit": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py"
+        }
+      ],
+      "test_run_count": 7,
+      "reprompt_analysis": {
+        "user_message_count": 212,
+        "assistant_message_count": 405,
+        "reprompt_count": 211,
+        "reasons": {
+          "errors": 37,
+          "refinements": 30,
+          "incomplete": 4,
+          "other": 140
+        }
+      }
+    },
+    {
+      "session_id": "8a1485b4-2bf1-4d97-9ac9-308cb90df3fa",
+      "message_count": 699,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 76,
+      "test_edit_count": 5,
+      "test_file_edits": [
+        {
+          "message_index": 428,
+          "tool": "Write",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\Research\\logs\\EXAMPLE_test_run_20251112_194500.md",
+          "is_test_file": true
+        },
+        {
+          "message_index": 466,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\Research\\logs\\EXAMPLE_test_run_20251112_194500.md",
+          "is_test_file": true
+        },
+        {
+          "message_index": 470,
+          "tool": "Write",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\Research\\logs\\EXAMPLE_test_run_20251112_201200.md",
+          "is_test_file": true
+        },
+        {
+          "message_index": 474,
+          "tool": "Write",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\Research\\logs\\EXAMPLE_test_run_20251112_203000.md",
+          "is_test_file": true
+        },
+        {
+          "message_index": 499,
+          "tool": "Write",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\Research\\logs\\test_sequence_20251112_194500_rbac_permissions.md",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [
+        {
+          "test_count": 44,
+          "passed": false,
+          "failures": 1,
+          "errors": 18,
+          "output_excerpt": "Perfect! The analysis is complete. Let me create a final summary of all the output locations:\n\n## Django Test Analysis Report - Q1.2 Metrics for Fall-25-CS-5300\n\n### Analysis Complete\n\nI have successfully analyzed Django test runs from the Fall-25-CS-5300 project session files. Here's what was found:\n\n---\n\n## Q1.2 Metrics Results\n\n### 1. First Run Failure Rate: **0.00%**\n- **0 out of 13 sessions** had test failures on the first test run\n- This suggests tests were well-validated before execution ",
+          "failed_tests": [],
+          "error_tests": [],
+          "message_index": 25,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 25,
+          "passed": false,
+          "failures": 9,
+          "errors": 0,
+          "output_excerpt": "177:{\"parentUuid\":\"909e1fc6-bad0-45c9-9f17-987f6f16f6d4\",\"isSidechain\":false,\"userType\":\"external\",\"cwd\":\"C:\\\\Users\\\\dakot\\\\Documents\\\\Repositories\\\\Fall-25-CS-5300\",\"sessionId\":\"88dfe702-952b-45d3-845f-5c05d9e71c64\",\"version\":\"2.0.30\",\"gitBranch\":\"RBAC-2\",\"type\":\"user\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"tool_result\",\"content\":\"Exit code 1\\nCreating test database for alias 'default'...\\r\\r\\nFFFFF...........FFFF.....\\r\\n===================================================================",
+          "failed_tests": [
+            "test_admin_can_access_user_list",
+            "test_admin_can_update_user_role",
+            "test_candidate_cannot_access_admin_routes",
+            "test_interviewer_cannot_access_admin_routes",
+            "test_non_admin_cannot_update_user_roles",
+            "test_update_profile_with_invalid_method",
+            "test_update_role_nonexistent_user",
+            "test_update_role_with_invalid_json",
+            "test_update_role_with_invalid_role",
+            "test_admin_can_access_user_list",
+            "test_admin_can_update_user_role",
+            "test_candidate_cannot_access_admin_routes",
+            "test_interviewer_cannot_access_admin_routes",
+            "test_non_admin_cannot_update_user_roles",
+            "test_update_profile_with_invalid_method",
+            "test_update_role_nonexistent_user",
+            "test_update_role_with_invalid_json",
+            "test_update_role_with_invalid_role",
+            "test_update_profile_with_invalid_method",
+            "test_update_role_nonexistent_user",
+            "test_update_role_with_invalid_json",
+            "test_update_role_with_invalid_role",
+            "test_update_profile_with_invalid_method"
+          ],
+          "error_tests": [],
+          "message_index": 192,
+          "command": "python manage.py test"
+        }
+      ],
+      "first_run_tests": [],
+      "test_run_count": 2,
+      "reprompt_analysis": {
+        "user_message_count": 223,
+        "assistant_message_count": 425,
+        "reprompt_count": 222,
+        "reasons": {
+          "errors": 59,
+          "refinements": 12,
+          "incomplete": 11,
+          "other": 140
+        }
+      }
+    },
+    {
+      "session_id": "98b8c44c-394a-4020-82e9-dc7a9cc1c35d",
+      "message_count": 650,
+      "category": "refactor",
+      "is_meaningful": true,
+      "edit_count": 43,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [
+        {
+          "test_count": 475,
+          "passed": false,
+          "failures": 4,
+          "errors": 244,
+          "output_excerpt": "Run Tests & Coverage Validation\tRun Django Tests\t2025-10-26T21:42:42.5557560Z Ran 475 tests in 108.591s\nRun Tests & Coverage Validation\tRun Django Tests\t2025-10-26T21:42:42.5557568Z \nRun Tests & Coverage Validation\tRun Django Tests\t2025-10-26T21:42:42.5557649Z FAILED (failures=4, errors=244)\nRun Tests & Coverage Validation\tRun Django Tests\t2025-10-26T21:42:42.5557887Z Destroying test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...\nRun Tests & Coverage Validatio",
+          "failed_tests": [],
+          "error_tests": [],
+          "message_index": 453,
+          "command": "python manage.py test"
+        }
+      ],
+      "first_run_tests": [],
+      "test_run_count": 1,
+      "reprompt_analysis": {
+        "user_message_count": 194,
+        "assistant_message_count": 400,
+        "reprompt_count": 193,
+        "reasons": {
+          "errors": 31,
+          "refinements": 14,
+          "incomplete": 6,
+          "other": 142
+        }
+      }
+    },
+    {
+      "session_id": "991a674d-1c5b-4462-a032-a42a3ec6f2f5",
+      "message_count": 175,
+      "category": "refactor",
+      "is_meaningful": true,
+      "edit_count": 2,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [
+        {
+          "test_count": 44,
+          "passed": false,
+          "failures": 1,
+          "errors": 18,
+          "output_excerpt": "Error: Creating test database for alias 'default'...\r\r\n....C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\.venv\\Lib\\site-packages\\django\\core\\handlers\\base.py:61: UserWarning: No directory at: C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\staticfiles\\\r\n  mw_instance = middleware(adapted_handler)\r\nEE.E.E..E.E.........EEEEE.EE...EEEEE..F.\r\n======================================================================\r\nERROR: testGETFeaturesPage (active_interview_app",
+          "failed_tests": [],
+          "error_tests": [],
+          "message_index": 145,
+          "command": "python manage.py test"
+        }
+      ],
+      "first_run_tests": [],
+      "test_run_count": 1,
+      "reprompt_analysis": {
+        "user_message_count": 74,
+        "assistant_message_count": 93,
+        "reprompt_count": 73,
+        "reasons": {
+          "errors": 10,
+          "refinements": 7,
+          "incomplete": 0,
+          "other": 56
+        }
+      }
+    },
+    {
+      "session_id": "a1b75b0b-3a3b-445e-80c7-528a64671f84",
+      "message_count": 214,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 12,
+      "test_edit_count": 5,
+      "test_file_edits": [
+        {
+          "message_index": 109,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 118,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 147,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 150,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 153,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [
+        {
+          "test_count": 19,
+          "passed": false,
+          "failures": 2,
+          "errors": 0,
+          "output_excerpt": "Error: Exit code 1\nCreating test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...\r\r\ntest_admin_or_interviewer_required_decorator (active_interview_app.tests.test_rbac.RBACDecoratorTest.test_admin_or_interviewer_required_decorator)\r\nTest admin_or_interviewer_required allows both roles ... ok\r\ntest_admin_required_decorator (active_interview_app.tests.test_rbac.RBACDecoratorTest.test_admin_required_decorator)\r\nTest admin_required decorator allows admin access ... o",
+          "failed_tests": [
+            "test_owner_or_privileged_required_no_profile",
+            "test_role_required_decorator_no_profile"
+          ],
+          "error_tests": [],
+          "message_index": 122,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 19,
+          "passed": false,
+          "failures": 2,
+          "errors": 0,
+          "output_excerpt": "Error: Exit code 1\nCreating test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...\r\r\ntest_admin_or_interviewer_required_decorator (active_interview_app.tests.test_rbac.RBACDecoratorTest.test_admin_or_interviewer_required_decorator)\r\nTest admin_or_interviewer_required allows both roles ... ok\r\ntest_admin_required_decorator (active_interview_app.tests.test_rbac.RBACDecoratorTest.test_admin_required_decorator)\r\nTest admin_required decorator allows admin access ... o",
+          "failed_tests": [
+            "test_owner_or_privileged_required_no_profile",
+            "test_role_required_decorator_no_profile"
+          ],
+          "error_tests": [],
+          "message_index": 139,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 19,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "Found 19 test(s).\r\nOperations to perform:\r\n  Synchronize unmigrated apps: bootstrap5, filetype, messages, rest_framework, staticfiles\r\n  Apply all migrations: active_interview_app, admin, auth, contenttypes, sessions\r\nSynchronizing apps without migrations:\r\n  Creating tables...\r\n    Running deferred SQL...\r\nRunning migrations:\r\n  Applying contenttypes.0001_initial... OK\r\n  Applying auth.0001_initial... OK\r\n  Applying active_interview_app.0001_initial... OK\r\n  Applying active_interview_app.0002_a",
+          "message_index": 157,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 19,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "Found 19 test(s).\r\nSystem check identified no issues (0 silenced).\r\nName                                 Stmts   Miss  Cover\r\n--------------------------------------------------------\r\nactive_interview_app\\decorators.py      59      0   100%\r\n--------------------------------------------------------\r\nTOTAL                                   59      0   100%\r\nCreating test database for alias 'default'...\r\r\n...................\r\n----------------------------------------------------------------------\r\nR",
+          "message_index": 162,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 48,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "Found 48 test(s).\r\nSystem check identified no issues (0 silenced).\r\nCreating test database for alias 'default'...\r\r\n................................................\r\n----------------------------------------------------------------------\r\nRan 48 tests in 60.503s\r\n\r\nOK\r\nDestroying test database for alias 'default'...\r",
+          "message_index": 166,
+          "command": "python manage.py test"
+        }
+      ],
+      "first_run_tests": [
+        {
+          "test_count": 19,
+          "passed": false,
+          "failures": 2,
+          "errors": 0,
+          "output_excerpt": "Error: Exit code 1\nCreating test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...\r\r\ntest_admin_or_interviewer_required_decorator (active_interview_app.tests.test_rbac.RBACDecoratorTest.test_admin_or_interviewer_required_decorator)\r\nTest admin_or_interviewer_required allows both roles ... ok\r\ntest_admin_required_decorator (active_interview_app.tests.test_rbac.RBACDecoratorTest.test_admin_required_decorator)\r\nTest admin_required decorator allows admin access ... o",
+          "failed_tests": [
+            "test_owner_or_privileged_required_no_profile",
+            "test_role_required_decorator_no_profile"
+          ],
+          "error_tests": [],
+          "message_index": 122,
+          "command": "python manage.py test",
+          "is_first_run_after_edit": true,
+          "related_edit": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py"
+        },
+        {
+          "test_count": 19,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "Found 19 test(s).\r\nOperations to perform:\r\n  Synchronize unmigrated apps: bootstrap5, filetype, messages, rest_framework, staticfiles\r\n  Apply all migrations: active_interview_app, admin, auth, contenttypes, sessions\r\nSynchronizing apps without migrations:\r\n  Creating tables...\r\n    Running deferred SQL...\r\nRunning migrations:\r\n  Applying contenttypes.0001_initial... OK\r\n  Applying auth.0001_initial... OK\r\n  Applying active_interview_app.0001_initial... OK\r\n  Applying active_interview_app.0002_a",
+          "message_index": 157,
+          "command": "python manage.py test",
+          "is_first_run_after_edit": true,
+          "related_edit": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_rbac.py"
+        }
+      ],
+      "test_run_count": 5,
+      "reprompt_analysis": {
+        "user_message_count": 72,
+        "assistant_message_count": 130,
+        "reprompt_count": 71,
+        "reasons": {
+          "errors": 18,
+          "refinements": 11,
+          "incomplete": 1,
+          "other": 41
+        }
+      }
+    },
+    {
+      "session_id": "ae89023d-e5ab-41e5-a5a7-ffc72aebc196",
+      "message_count": 8,
+      "category": "exploratory",
+      "is_meaningful": false,
+      "edit_count": 0,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 3,
+        "assistant_message_count": 2,
+        "reprompt_count": 2,
+        "reasons": {
+          "errors": 0,
+          "refinements": 0,
+          "incomplete": 0,
+          "other": 2
+        }
+      }
+    },
+    {
+      "session_id": "b9301b35-475c-4ba3-8398-eb02c5fdbc7a",
+      "message_count": 19,
+      "category": "exploratory",
+      "is_meaningful": false,
+      "edit_count": 0,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 9,
+        "assistant_message_count": 9,
+        "reprompt_count": 8,
+        "reasons": {
+          "errors": 2,
+          "refinements": 1,
+          "incomplete": 0,
+          "other": 5
+        }
+      }
+    },
+    {
+      "session_id": "c59b9fc9-40b1-4225-b1d6-dafd3dba40ec",
+      "message_count": 16,
+      "category": "exploratory",
+      "is_meaningful": false,
+      "edit_count": 0,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 4,
+        "assistant_message_count": 9,
+        "reprompt_count": 3,
+        "reasons": {
+          "errors": 0,
+          "refinements": 1,
+          "incomplete": 0,
+          "other": 2
+        }
+      }
+    },
+    {
+      "session_id": "e5cd2046-72b3-4bf1-be7c-4b3e8021a5b2",
+      "message_count": 359,
+      "category": "refactor",
+      "is_meaningful": true,
+      "edit_count": 43,
+      "test_edit_count": 4,
+      "test_file_edits": [
+        {
+          "message_index": 81,
+          "tool": "Write",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\migrations\\0009_testdummymodel.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 85,
+          "tool": "Write",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\migrations\\0010_anothertestmodel_bad_dependency.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 257,
+          "tool": "Write",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\migrations\\0009_testdummymodel.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 260,
+          "tool": "Write",
+          "file_path": "C:\\Users\\dakot\\Documents\\Repositories\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\migrations\\0010_anothertestmodel_bad_dependency.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 107,
+        "assistant_message_count": 227,
+        "reprompt_count": 106,
+        "reasons": {
+          "errors": 6,
+          "refinements": 25,
+          "incomplete": 3,
+          "other": 72
+        }
+      }
+    }
+  ]
 }
