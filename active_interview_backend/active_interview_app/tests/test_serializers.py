@@ -174,7 +174,13 @@ class UploadedJobListingSerializerTest(TestCase):
     def test_serializer_fields(self):
         """Test that serializer has correct fields"""
         serializer = UploadedJobListingSerializer(instance=self.job_listing)
-        expected_fields = {'id', 'user', 'filename', 'content', 'created_at', 'title', 'file'}
+        expected_fields = {
+            'id', 'user', 'filename', 'content', 'created_at', 'title', 'file',
+            # NEW: Parsed data fields (Issues #21, #51, #52, #53)
+            'required_skills', 'seniority_level', 'requirements',
+            'recommended_template', 'recommended_template_name',
+            'parsing_status', 'parsing_error', 'parsed_at'
+        }
         self.assertEqual(set(serializer.data.keys()), expected_fields)
 
     def test_deserialize_valid_data(self):

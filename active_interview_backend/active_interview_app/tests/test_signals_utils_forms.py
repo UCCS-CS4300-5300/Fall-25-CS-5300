@@ -427,7 +427,13 @@ class UploadedJobListingSerializerTest(TestCase):
         data = serializer.data
         self.assertEqual(
             set(data.keys()),
-            {'id', 'user', 'filename', 'content', 'created_at', 'title', 'file'}
+            {
+                'id', 'user', 'filename', 'content', 'created_at', 'title', 'file',
+                # NEW: Parsed data fields (Issues #21, #51, #52, #53)
+                'required_skills', 'seniority_level', 'requirements',
+                'recommended_template', 'recommended_template_name',
+                'parsing_status', 'parsing_error', 'parsed_at'
+            }
         )
 
     def test_serializer_data(self):
