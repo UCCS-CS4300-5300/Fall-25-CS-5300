@@ -3145,7 +3145,7 @@ def start_invited_interview(request, invitation_id):
     ]
 
     # Get AI's initial greeting
-    if not _ai_available():
+    if not ai_available():
         messages.error(request, "AI features are disabled on this server.")
         ai_message = "Hello! I'm your interviewer today. Unfortunately, AI features are currently disabled. Please contact support."
     else:
