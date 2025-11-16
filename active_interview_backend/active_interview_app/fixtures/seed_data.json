@@ -1,0 +1,534 @@
+[
+  {
+    "model": "auth.user",
+    "pk": 1,
+    "fields": {
+      "username": "admin_user",
+      "first_name": "Admin",
+      "last_name": "User",
+      "email": "admin@example.com",
+      "password": "pbkdf2_sha256$720000$testadminpassword123$",
+      "is_staff": true,
+      "is_superuser": true,
+      "is_active": true,
+      "date_joined": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 2,
+    "fields": {
+      "username": "interviewer_jane",
+      "first_name": "Jane",
+      "last_name": "Smith",
+      "email": "jane.interviewer@example.com",
+      "password": "pbkdf2_sha256$720000$testinterviewerpass$",
+      "is_staff": false,
+      "is_superuser": false,
+      "is_active": true,
+      "date_joined": "2024-01-15T00:00:00Z"
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 3,
+    "fields": {
+      "username": "candidate_john",
+      "first_name": "John",
+      "last_name": "Doe",
+      "email": "john.candidate@example.com",
+      "password": "pbkdf2_sha256$720000$testcandidatepass$",
+      "is_staff": false,
+      "is_superuser": false,
+      "is_active": true,
+      "date_joined": "2024-02-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "active_interview_app.userprofile",
+    "pk": 1,
+    "fields": {
+      "user": 1,
+      "auth_provider": "local",
+      "role": "admin",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "active_interview_app.userprofile",
+    "pk": 2,
+    "fields": {
+      "user": 2,
+      "auth_provider": "local",
+      "role": "interviewer",
+      "created_at": "2024-01-15T00:00:00Z",
+      "updated_at": "2024-01-15T00:00:00Z"
+    }
+  },
+  {
+    "model": "active_interview_app.userprofile",
+    "pk": 3,
+    "fields": {
+      "user": 3,
+      "auth_provider": "local",
+      "role": "candidate",
+      "created_at": "2024-02-01T00:00:00Z",
+      "updated_at": "2024-02-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "active_interview_app.tag",
+    "pk": 1,
+    "fields": {
+      "name": "#python",
+      "created_at": "2024-01-15T12:00:00Z"
+    }
+  },
+  {
+    "model": "active_interview_app.tag",
+    "pk": 2,
+    "fields": {
+      "name": "#django",
+      "created_at": "2024-01-15T12:00:00Z"
+    }
+  },
+  {
+    "model": "active_interview_app.tag",
+    "pk": 3,
+    "fields": {
+      "name": "#sql",
+      "created_at": "2024-01-15T12:00:00Z"
+    }
+  },
+  {
+    "model": "active_interview_app.tag",
+    "pk": 4,
+    "fields": {
+      "name": "#behavioral",
+      "created_at": "2024-01-15T12:00:00Z"
+    }
+  },
+  {
+    "model": "active_interview_app.tag",
+    "pk": 5,
+    "fields": {
+      "name": "#algorithms",
+      "created_at": "2024-01-15T12:00:00Z"
+    }
+  },
+  {
+    "model": "active_interview_app.questionbank",
+    "pk": 1,
+    "fields": {
+      "name": "Software Engineering Technical Questions",
+      "description": "A comprehensive collection of technical questions for software engineering interviews covering Python, Django, algorithms, and databases.",
+      "owner": 2,
+      "created_at": "2024-01-15T12:00:00Z",
+      "updated_at": "2024-01-15T12:00:00Z"
+    }
+  },
+  {
+    "model": "active_interview_app.question",
+    "pk": 1,
+    "fields": {
+      "question_bank": 1,
+      "text": "Explain the difference between lists and tuples in Python. When would you use each?",
+      "difficulty": "easy",
+      "owner": 2,
+      "created_at": "2024-01-15T12:10:00Z",
+      "updated_at": "2024-01-15T12:10:00Z"
+    }
+  },
+  {
+    "model": "active_interview_app.question",
+    "pk": 2,
+    "fields": {
+      "question_bank": 1,
+      "text": "What is the purpose of Django middleware? Can you give an example of when you would create custom middleware?",
+      "difficulty": "medium",
+      "owner": 2,
+      "created_at": "2024-01-15T12:15:00Z",
+      "updated_at": "2024-01-15T12:15:00Z"
+    }
+  },
+  {
+    "model": "active_interview_app.question",
+    "pk": 3,
+    "fields": {
+      "question_bank": 1,
+      "text": "Explain the N+1 query problem in Django ORM and how you would solve it.",
+      "difficulty": "hard",
+      "owner": 2,
+      "created_at": "2024-01-15T12:20:00Z",
+      "updated_at": "2024-01-15T12:20:00Z"
+    }
+  },
+  {
+    "model": "active_interview_app.question",
+    "pk": 4,
+    "fields": {
+      "question_bank": 1,
+      "text": "What is the difference between INNER JOIN and LEFT JOIN in SQL? Provide an example scenario for each.",
+      "difficulty": "medium",
+      "owner": 2,
+      "created_at": "2024-01-15T12:25:00Z",
+      "updated_at": "2024-01-15T12:25:00Z"
+    }
+  },
+  {
+    "model": "active_interview_app.question",
+    "pk": 5,
+    "fields": {
+      "question_bank": 1,
+      "text": "Implement a function to reverse a linked list. Explain the time and space complexity.",
+      "difficulty": "medium",
+      "owner": 2,
+      "created_at": "2024-01-15T12:30:00Z",
+      "updated_at": "2024-01-15T12:30:00Z"
+    }
+  },
+  {
+    "model": "active_interview_app.question",
+    "pk": 6,
+    "fields": {
+      "question_bank": 1,
+      "text": "Describe a challenging technical problem you faced in a recent project. How did you approach solving it?",
+      "difficulty": "easy",
+      "owner": 2,
+      "created_at": "2024-01-15T12:35:00Z",
+      "updated_at": "2024-01-15T12:35:00Z"
+    }
+  },
+  {
+    "model": "active_interview_app.question",
+    "pk": 7,
+    "fields": {
+      "question_bank": 1,
+      "text": "What are Python decorators and how do they work? Provide a practical example.",
+      "difficulty": "medium",
+      "owner": 2,
+      "created_at": "2024-01-15T12:40:00Z",
+      "updated_at": "2024-01-15T12:40:00Z"
+    }
+  },
+  {
+    "model": "active_interview_app.question",
+    "pk": 8,
+    "fields": {
+      "question_bank": 1,
+      "text": "Explain database indexing. When should you add an index and what are the trade-offs?",
+      "difficulty": "hard",
+      "owner": 2,
+      "created_at": "2024-01-15T12:45:00Z",
+      "updated_at": "2024-01-15T12:45:00Z"
+    }
+  },
+  {
+    "model": "active_interview_app.question_tags",
+    "fields": {
+      "question": 1,
+      "tag": 1
+    }
+  },
+  {
+    "model": "active_interview_app.question_tags",
+    "fields": {
+      "question": 2,
+      "tag": 2
+    }
+  },
+  {
+    "model": "active_interview_app.question_tags",
+    "fields": {
+      "question": 3,
+      "tag": 2
+    }
+  },
+  {
+    "model": "active_interview_app.question_tags",
+    "fields": {
+      "question": 3,
+      "tag": 3
+    }
+  },
+  {
+    "model": "active_interview_app.question_tags",
+    "fields": {
+      "question": 4,
+      "tag": 3
+    }
+  },
+  {
+    "model": "active_interview_app.question_tags",
+    "fields": {
+      "question": 5,
+      "tag": 5
+    }
+  },
+  {
+    "model": "active_interview_app.question_tags",
+    "fields": {
+      "question": 6,
+      "tag": 4
+    }
+  },
+  {
+    "model": "active_interview_app.question_tags",
+    "fields": {
+      "question": 7,
+      "tag": 1
+    }
+  },
+  {
+    "model": "active_interview_app.question_tags",
+    "fields": {
+      "question": 8,
+      "tag": 3
+    }
+  },
+  {
+    "model": "active_interview_app.interviewtemplate",
+    "pk": 1,
+    "fields": {
+      "name": "Full-Stack Developer Interview",
+      "user": 2,
+      "description": "Comprehensive technical interview for full-stack developer positions covering backend, frontend, and system design.",
+      "sections": [
+        {
+          "id": "section-1",
+          "title": "Introduction",
+          "content": "Welcome! This interview will assess your full-stack development skills. We'll cover Python/Django, databases, algorithms, and problem-solving abilities.",
+          "order": 0,
+          "weight": 10
+        },
+        {
+          "id": "section-2",
+          "title": "Technical Assessment",
+          "content": "We'll now dive into technical questions covering your programming knowledge and experience.",
+          "order": 1,
+          "weight": 60
+        },
+        {
+          "id": "section-3",
+          "title": "Closing Discussion",
+          "content": "Let's discuss your career goals, team collaboration experiences, and any questions you have for us.",
+          "order": 2,
+          "weight": 30
+        }
+      ],
+      "use_auto_assembly": true,
+      "question_count": 5,
+      "easy_percentage": 20,
+      "medium_percentage": 60,
+      "hard_percentage": 20,
+      "created_at": "2024-01-15T13:00:00Z",
+      "updated_at": "2024-01-15T13:00:00Z"
+    }
+  },
+  {
+    "model": "active_interview_app.interviewtemplate_question_banks",
+    "fields": {
+      "interviewtemplate": 1,
+      "questionbank": 1
+    }
+  },
+  {
+    "model": "active_interview_app.interviewtemplate_tags",
+    "fields": {
+      "interviewtemplate": 1,
+      "tag": 1
+    }
+  },
+  {
+    "model": "active_interview_app.interviewtemplate_tags",
+    "fields": {
+      "interviewtemplate": 1,
+      "tag": 2
+    }
+  },
+  {
+    "model": "active_interview_app.interviewtemplate_tags",
+    "fields": {
+      "interviewtemplate": 1,
+      "tag": 3
+    }
+  },
+  {
+    "model": "active_interview_app.uploadedresume",
+    "pk": 1,
+    "fields": {
+      "file": "uploads/john_doe_resume.pdf",
+      "content": "John Doe\\nSoftware Engineer\\n\\nEXPERIENCE\\nJunior Developer at TechCorp (2022-2024)\\n- Developed web applications using Django and React\\n- Implemented REST APIs and database optimizations\\n- Collaborated with cross-functional teams\\n\\nSKILLS\\nPython, Django, JavaScript, React, PostgreSQL, Git\\n\\nEDUCATION\\nB.S. Computer Science, State University, 2022",
+      "user": 3,
+      "uploaded_at": "2024-02-01T10:00:00Z",
+      "filesize": 45678,
+      "original_filename": "john_doe_resume.pdf",
+      "title": "John Doe - Software Engineer Resume",
+      "skills": ["Python", "Django", "JavaScript", "React", "PostgreSQL", "Git"],
+      "experience": [
+        {
+          "company": "TechCorp",
+          "title": "Junior Developer",
+          "duration": "2022-2024",
+          "description": "Developed web applications using Django and React"
+        }
+      ],
+      "education": [
+        {
+          "institution": "State University",
+          "degree": "B.S.",
+          "field": "Computer Science",
+          "year": "2022"
+        }
+      ],
+      "parsing_status": "success",
+      "parsing_error": null,
+      "parsed_at": "2024-02-01T10:01:00Z"
+    }
+  },
+  {
+    "model": "active_interview_app.uploadedjoblisting",
+    "pk": 1,
+    "fields": {
+      "file": "uploads/software_engineer_job.txt",
+      "user": 3,
+      "filename": "software_engineer_job.txt",
+      "content": "Software Engineer Position\\n\\nWe are seeking a talented Software Engineer to join our growing team.\\n\\nResponsibilities:\\n- Design and develop web applications using modern frameworks\\n- Write clean, maintainable code\\n- Participate in code reviews\\n- Collaborate with product team\\n\\nRequirements:\\n- 2+ years experience with Python/Django\\n- Strong understanding of databases and SQL\\n- Experience with REST APIs\\n- Excellent problem-solving skills\\n\\nBonus:\\n- Experience with React or Vue.js\\n- Knowledge of AWS or cloud platforms\\n- Contributions to open source projects",
+      "created_at": "2024-02-01T10:05:00Z",
+      "filepath": "uploads/software_engineer_job.txt",
+      "title": "Software Engineer - Web Development"
+    }
+  },
+  {
+    "model": "active_interview_app.chat",
+    "pk": 1,
+    "fields": {
+      "owner": 3,
+      "title": "Practice Interview - Software Engineer Position",
+      "difficulty": 6,
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are an experienced technical interviewer conducting a software engineering interview."
+        },
+        {
+          "role": "assistant",
+          "content": "Hello John! Welcome to your practice interview for the Software Engineer position. I've reviewed your resume and the job listing. Let's start with some questions about your experience. Can you tell me about a challenging technical problem you solved at TechCorp?"
+        },
+        {
+          "role": "user",
+          "content": "Sure! One of the biggest challenges I faced was optimizing our database queries. We had a dashboard that was taking 8-10 seconds to load because of multiple N+1 query issues. I used Django's select_related and prefetch_related to reduce the query count from over 100 to just 5 queries, bringing the load time down to under 1 second."
+        },
+        {
+          "role": "assistant",
+          "content": "Excellent work on identifying and solving that performance issue! That's a common problem in Django applications. Can you explain the difference between select_related and prefetch_related, and when you would use each?"
+        },
+        {
+          "role": "user",
+          "content": "select_related is used for foreign key and one-to-one relationships. It creates a SQL join and retrieves related objects in a single query. prefetch_related is for many-to-many and reverse foreign key relationships. It does a separate query for each relationship and joins them in Python. I used select_related for our User foreign keys and prefetch_related for the many-to-many tags relationship."
+        },
+        {
+          "role": "assistant",
+          "content": "Perfect explanation! Now let's talk about your experience with REST APIs. Can you describe the difference between PUT and PATCH HTTP methods?"
+        },
+        {
+          "role": "user",
+          "content": "PUT is used to replace an entire resource - you send all the fields even if you're only updating one. PATCH is for partial updates where you only send the fields you want to change. At TechCorp, we used PATCH for most updates since it's more efficient and user-friendly."
+        },
+        {
+          "role": "assistant",
+          "content": "Great! Let me ask you about testing. How do you approach writing tests for Django applications?"
+        },
+        {
+          "role": "user",
+          "content": "I follow the arrange-act-assert pattern. I typically write unit tests for models and utility functions, integration tests for views and APIs, and use Django's TestCase or pytest. I aim for at least 80% code coverage and make sure to test both success and failure cases, especially edge cases and validation errors."
+        },
+        {
+          "role": "assistant",
+          "content": "Excellent testing practices! One final question: You mentioned Git in your skills. Can you explain the difference between git merge and git rebase, and when you would use each?"
+        },
+        {
+          "role": "user",
+          "content": "git merge creates a merge commit that combines two branches, preserving the complete history. git rebase moves your commits to the tip of another branch, creating a linear history. I use merge for integrating feature branches into main to preserve the feature context, and rebase when updating my feature branch with the latest main changes to keep the history clean before merging."
+        },
+        {
+          "role": "assistant",
+          "content": "Outstanding answers throughout the interview, John! You've demonstrated strong technical knowledge and practical experience. That concludes our interview. Good luck with your job search!"
+        }
+      ],
+      "key_questions": [
+        "Tell me about a challenging technical problem you solved",
+        "Explain select_related vs prefetch_related in Django",
+        "What's the difference between PUT and PATCH?",
+        "How do you approach testing Django applications?",
+        "Explain git merge vs git rebase"
+      ],
+      "job_listing": 1,
+      "resume": 1,
+      "type": "ISK",
+      "interview_type": "PRACTICE",
+      "started_at": null,
+      "scheduled_end_at": null,
+      "modified_date": "2024-02-01T11:30:00Z"
+    }
+  },
+  {
+    "model": "active_interview_app.exportablereport",
+    "pk": 1,
+    "fields": {
+      "chat": 1,
+      "generated_at": "2024-02-01T11:30:00Z",
+      "last_updated": "2024-02-01T11:30:00Z",
+      "professionalism_score": 92,
+      "subject_knowledge_score": 88,
+      "clarity_score": 90,
+      "overall_score": 89,
+      "feedback_text": "John demonstrated excellent technical knowledge and communication skills throughout the interview. His answers were clear, detailed, and showed practical experience. He effectively explained complex concepts like Django ORM optimization and version control strategies. His problem-solving approach is methodical and he shows awareness of best practices including testing and code quality.",
+      "professionalism_rationale": "Candidate maintained professional demeanor, provided structured responses, and demonstrated good communication skills. Responses were respectful and well-articulated.",
+      "subject_knowledge_rationale": "Strong understanding of Django, Python, databases, and software engineering practices. Successfully explained N+1 query optimization, ORM methods, REST API concepts, testing strategies, and version control. Minor room for improvement in discussing advanced architectural patterns.",
+      "clarity_rationale": "Explanations were clear and concise with good use of concrete examples from real experience. Technical concepts were broken down effectively for understanding.",
+      "overall_rationale": "Overall excellent performance demonstrating both theoretical knowledge and practical application. Candidate would be a strong fit for mid-level software engineering positions.",
+      "professionalism_weight": 30,
+      "subject_knowledge_weight": 40,
+      "clarity_weight": 30,
+      "question_responses": [
+        {
+          "question": "Tell me about a challenging technical problem you solved",
+          "answer": "Optimized database queries from 100+ to 5 queries, reducing load time from 8-10s to under 1s",
+          "score": 95,
+          "feedback": "Excellent real-world example with specific metrics showing impact"
+        },
+        {
+          "question": "Explain select_related vs prefetch_related in Django",
+          "answer": "select_related for FK/O2O with SQL joins, prefetch_related for M2M with separate queries",
+          "score": 90,
+          "feedback": "Accurate technical explanation with practical application context"
+        },
+        {
+          "question": "What's the difference between PUT and PATCH?",
+          "answer": "PUT replaces entire resource, PATCH does partial updates",
+          "score": 85,
+          "feedback": "Correct understanding with practical usage example"
+        },
+        {
+          "question": "How do you approach testing Django applications?",
+          "answer": "Arrange-act-assert pattern, unit and integration tests, 80% coverage target, test success and failure cases",
+          "score": 90,
+          "feedback": "Comprehensive testing strategy showing best practices awareness"
+        },
+        {
+          "question": "Explain git merge vs git rebase",
+          "answer": "merge preserves history with merge commit, rebase creates linear history",
+          "score": 85,
+          "feedback": "Good explanation with appropriate use cases for each"
+        }
+      ],
+      "total_questions_asked": 5,
+      "total_responses_given": 5,
+      "interview_duration_minutes": 25,
+      "pdf_generated": false,
+      "pdf_file": null
+    }
+  }
+]

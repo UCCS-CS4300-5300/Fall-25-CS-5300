@@ -7,6 +7,7 @@ import textwrap
 import re
 import csv
 import io
+from datetime import timedelta
 from markdownify import markdownify as md
 from docx import Document
 
@@ -497,8 +498,8 @@ class ChatView(LoginRequiredMixin, UserPassesTestMixin, View):
                     invitation.save()
 
                     # Send completion notification to interviewer
-                    from .invitation_utils import send_interview_completed_email
-                    send_interview_completed_email(invitation)
+                    from .invitation_utils import send_completion_notification_email
+                    send_completion_notification_email(invitation)
             except InvitedInterview.DoesNotExist:
                 pass
 
@@ -800,10 +801,19 @@ class ResultsChat(LoginRequiredMixin, UserPassesTestMixin, View):
             )
             ai_message = response.choices[0].message.content
 
+        # Check if this is an invited interview and get invitation details
+        invitation = None
+        if chat.interview_type == Chat.INVITED:
+            try:
+                invitation = InvitedInterview.objects.get(chat=chat)
+            except InvitedInterview.DoesNotExist:
+                pass
+
         context = {}
         context['chat'] = chat
         context['owner_chats'] = owner_chats
         context['feedback'] = ai_message
+        context['invitation'] = invitation
 
         return render(request, os.path.join('chat', 'chat-results.html'),
                       context)
@@ -886,6 +896,15 @@ class ResultCharts(LoginRequiredMixin, UserPassesTestMixin, View):
             )
             ai_message = response.choices[0].message.content
         context['feedback'] = ai_message
+
+        # Check if this is an invited interview and get invitation details
+        invitation = None
+        if chat.interview_type == Chat.INVITED:
+            try:
+                invitation = InvitedInterview.objects.get(chat=chat)
+            except InvitedInterview.DoesNotExist:
+                pass
+        context['invitation'] = invitation
 
         return render(request, os.path.join('chat', 'chat-results.html'),
                       context)
@@ -2754,6 +2773,73 @@ def invitation_dashboard(request):
     }
 
     return render(request, 'invitations/invitation_dashboard.html', context)
+
+
+@login_required
+@admin_or_interviewer_required
+def invitation_review(request, invitation_id):
+    """
+    Interviewer review page for a completed invited interview.
+
+    Shows:
+    - Interview metadata
+    - Candidate responses (from Chat messages)
+    - AI feedback and scores
+    - Form for interviewer to add feedback
+    - Button to mark as reviewed
+
+    Only accessible by the interviewer who created the invitation.
+
+    Related to Issue #138 (Interviewer Review & Feedback).
+    """
+    # Get invitation and verify ownership
+    invitation = get_object_or_404(
+        InvitedInterview,
+        id=invitation_id,
+        interviewer=request.user
+    )
+
+    # Check if interview has been completed
+    if not invitation.chat:
+        messages.error(request, 'This interview has not been started yet.')
+        return redirect('invitation_dashboard')
+
+    # Get the chat/interview session
+    chat = invitation.chat
+
+    # Handle POST request (submitting feedback)
+    if request.method == 'POST':
+        feedback = request.POST.get('interviewer_feedback', '').strip()
+        mark_reviewed = request.POST.get('mark_reviewed') == 'true'
+
+        # Save feedback
+        if feedback:
+            invitation.interviewer_feedback = feedback
+
+        # Mark as reviewed if requested
+        if mark_reviewed:
+            invitation.interviewer_review_status = InvitedInterview.REVIEW_COMPLETED
+            invitation.status = InvitedInterview.REVIEWED
+            invitation.reviewed_at = timezone.now()
+
+            # Send notification email to candidate
+            from .invitation_utils import send_review_notification_email
+            send_review_notification_email(invitation)
+
+            messages.success(request, 'Review completed! Notification sent to candidate.')
+        else:
+            messages.success(request, 'Feedback saved.')
+
+        invitation.save()
+        return redirect('invitation_dashboard')
+
+    # GET request - show review page
+    context = {
+        'invitation': invitation,
+        'chat': chat,
+    }
+
+    return render(request, 'invitations/invitation_review.html', context)
 
 
 # ============================================================================

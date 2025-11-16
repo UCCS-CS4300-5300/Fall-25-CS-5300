@@ -237,6 +237,7 @@
                             <div class="document-actions">
                                 <a href="{% url 'template_detail' template_id=template.id %}">View</a>
                                 <a href="{% url 'edit_template' template.id %}">Edit</a>
+                                <a href="{% url 'invitation_create_from_template' template_id=template.id %}">Invite Candidate</a>
                                 <button type="button"
                                         class="delete-btn"
                                         data-bs-toggle="modal"
