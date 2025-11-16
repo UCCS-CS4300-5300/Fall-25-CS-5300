@@ -197,6 +197,85 @@
       display: block;
     }
 
+    /* Job Analysis Results (Issues #21, #51, #52, #53) */
+    .analysis-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .seniority-badge {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius);
+      font-weight: 600;
+      font-size: 0.95rem;
+      text-transform: capitalize;
+    }
+
+    .seniority-badge.entry {
+      background: var(--surface-hover);
+      color: var(--text-primary);
+      border: 2px solid var(--primary);
+    }
+
+    .seniority-badge.mid {
+      background: var(--info);
+      color: var(--text-white);
+    }
+
+    .seniority-badge.senior {
+      background: var(--primary);
+      color: var(--text-white);
+    }
+
+    .seniority-badge.lead {
+      background: var(--accent);
+      color: var(--text-white);
+    }
+
+    .seniority-badge.executive {
+      background: var(--error);
+      color: var(--text-white);
+    }
+
+    .skill-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .skill-tag {
+      display: inline-block;
+      padding: 0.4rem 0.8rem;
+      background: var(--primary-light);
+      color: var(--text-primary);
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      font-weight: 500;
+      border: 1px solid var(--border);
+    }
+
+    .template-preview {
+      padding: 1rem;
+      background: var(--surface-hover);
+      border-radius: var(--radius);
+      border-left: 4px solid var(--primary);
+    }
+
+    .template-preview h5 {
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .template-preview p {
+      color: var(--text-secondary);
+      margin: 0.25rem 0;
+      font-size: 0.9rem;
+    }
+
     @media (max-width: 768px) {
       .document-page {
         padding: 0 1rem;
@@ -208,6 +287,10 @@
 
       .btn-upload {
         width: 100%;
+        justify-content: center;
+      }
+
+      .skill-tags {
         justify-content: center;
       }
     }
@@ -277,42 +360,79 @@
 
     <hr class="section-divider">
 
-    <!-- Job Listing Section -->
+    <!-- Job Listing Section (Issues #21, #51, #52, #53) -->
     <div class="upload-section">
       <h2>Add Job Listing</h2>
-      <form method="post" action="{% url 'save_pasted_text' %}">
+      <form method="post" id="jobListingForm" onsubmit="return analyzeJobListing(event)">
         {% csrf_token %}
 
         <div class="form-group">
-          <label for="title">Job Listing Title</label>
+          <label for="job-title">Job Listing Title</label>
           <input
             type="text"
             name="title"
-            id="title"
+            id="job-title"
             placeholder="e.g., Senior Software Engineer at Company XYZ"
-            maxlength="32"
+            maxlength="255"
             required
           >
         </div>
 
         <div class="form-group">
-          <label for="paste-text">Job Description</label>
+          <label for="job-description">Job Description</label>
           <textarea
             name="paste-text"
-            id="paste-text"
-            placeholder="Paste the job listing details here...&#10;&#10;Include:&#10;• Job requirements&#10;• Responsibilities&#10;• Qualifications&#10;• Company information"
+            id="job-description"
+            placeholder="Paste the job listing details here...&#10;&#10;Include:&#10;• Job requirements&#10;• Responsibilities&#10;• Qualifications&#10;• Company information&#10;&#10;Click 'Analyze Job Description' to extract skills and get interview template recommendations."
             required
           ></textarea>
         </div>
 
-        <button type="submit" class="btn-upload" name="submit">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+        <button type="submit" class="btn-upload" id="analyzeJobBtn" name="submit">
+          <span class="loading-spinner-button"
+                id="jobSpinner"
+                role="status"
+                aria-hidden="true"
+                style="display:none;"></span>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" id="analyzeIcon">
             <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 13A6 6 0 1 1 8 2a6 6 0 0 1 0 12z"/>
             <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
           </svg>
-          Save Job Listing
+          <span id="analyzeBtnText">Analyze Job Description</span>
         </button>
       </form>
+
+      <!-- Analysis Results Section (hidden by default) -->
+      <div id="job-analysis-results" style="display:none; margin-top: 2rem;">
+        <div class="analysis-card">
+          <h3 style="color: var(--text-primary); margin-bottom: 1.5rem;">Analysis Results</h3>
+
+          <!-- Seniority Level -->
+          <div style="margin-bottom: 1.5rem;">
+            <h4 style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem;">Seniority Level</h4>
+            <div id="seniority-display">
+              <span class="seniority-badge" id="seniority-badge"></span>
+            </div>
+          </div>
+
+          <!-- Required Skills -->
+          <div style="margin-bottom: 1.5rem;">
+            <h4 style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem;">Required Skills</h4>
+            <div class="skill-tags" id="skills-display"></div>
+          </div>
+
+          <!-- Recommended Template -->
+          <div id="template-recommendation" style="display:none;">
+            <h4 style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem;">Recommended Interview Template</h4>
+            <div class="template-preview" id="template-preview"></div>
+          </div>
+
+          <!-- No Template Message -->
+          <div id="no-template-message" style="display:none; padding: 1rem; background: var(--surface); border-radius: var(--radius); color: var(--text-secondary);">
+            <p>No matching interview template found. You can create a custom template for this role.</p>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Markdown Preview (if available) -->
@@ -339,6 +459,168 @@
           fileLabel.textContent = 'Change file';
         }
       });
+    }
+
+    /**
+     * Show loading spinner when upload form is submitted
+     * Prevents double-submission and provides visual feedback
+     */
+    function showUploadSpinner() {
+      const button = document.getElementById('uploadBtn');
+      const spinner = document.getElementById('uploadSpinner');
+      const buttonText = document.getElementById('uploadBtnText');
+      const uploadIcon = document.getElementById('uploadIcon');
+
+      // Validate file is selected
+      const fileInput = document.getElementById('file');
+      if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+        alert('Please select a file to upload.');
+        return false;
+      }
+
+      // Show spinner
+      spinner.style.display = 'inline-block';
+
+      // Hide the upload icon
+      if (uploadIcon) {
+        uploadIcon.style.display = 'none';
+      }
+
+      // Update button text
+      buttonText.textContent = 'Uploading & Parsing Resume...';
+
+      // Disable button to prevent double-submit
+      button.disabled = true;
+
+      // Allow form submission
+      return true;
+    }
+
+    /**
+     * Analyze job listing and extract structured data
+     * Issues: #21, #51, #52, #53
+     */
+    function analyzeJobListing(event) {
+      event.preventDefault();
+
+      const title = document.getElementById('job-title').value.trim();
+      const description = document.getElementById('job-description').value.trim();
+
+      // Validation
+      if (!title || !description) {
+        alert('Please fill in both title and job description');
+        return false;
+      }
+
+      // Get UI elements
+      const button = document.getElementById('analyzeJobBtn');
+      const spinner = document.getElementById('jobSpinner');
+      const buttonText = document.getElementById('analyzeBtnText');
+      const analyzeIcon = document.getElementById('analyzeIcon');
+
+      // Show spinner
+      spinner.style.display = 'inline-block';
+      analyzeIcon.style.display = 'none';
+      buttonText.textContent = 'Analyzing...';
+      button.disabled = true;
+
+      // Get CSRF token
+      const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+      // Make API call
+      fetch('/api/job-listing/analyze/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({
+          title: title,
+          description: description
+        })
+      })
+      .then(response => {
+        if (!response.ok) {
+          return response.json().then(err => { throw err; });
+        }
+        return response.json();
+      })
+      .then(data => {
+        // Hide spinner
+        spinner.style.display = 'none';
+        analyzeIcon.style.display = 'inline';
+        buttonText.textContent = 'Analyze Job Description';
+        button.disabled = false;
+
+        // Display results
+        displayJobAnalysis(data);
+
+        // Clear form
+        document.getElementById('jobListingForm').reset();
+      })
+      .catch(error => {
+        // Error handling
+        spinner.style.display = 'none';
+        analyzeIcon.style.display = 'inline';
+        buttonText.textContent = 'Analyze Job Description';
+        button.disabled = false;
+
+        console.error('Analysis failed:', error);
+        alert('Failed to analyze job description: ' + (error.detail || error.error || 'Unknown error'));
+      });
+
+      return false;
+    }
+
+    /**
+     * Display job analysis results in the UI
+     */
+    function displayJobAnalysis(data) {
+      // Show results section
+      const resultsSection = document.getElementById('job-analysis-results');
+      resultsSection.style.display = 'block';
+
+      // Scroll to results
+      resultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+      // Display seniority level
+      const seniorityBadge = document.getElementById('seniority-badge');
+      const seniorityLevel = data.seniority_level || 'Not specified';
+      seniorityBadge.textContent = seniorityLevel;
+      seniorityBadge.className = 'seniority-badge ' + seniorityLevel;
+
+      // Display required skills
+      const skillsDisplay = document.getElementById('skills-display');
+      skillsDisplay.innerHTML = '';
+      if (data.required_skills && data.required_skills.length > 0) {
+        data.required_skills.forEach(skill => {
+          const skillTag = document.createElement('span');
+          skillTag.className = 'skill-tag';
+          skillTag.textContent = skill;
+          skillsDisplay.appendChild(skillTag);
+        });
+      } else {
+        skillsDisplay.innerHTML = '<p style="color: var(--text-secondary);">No skills extracted</p>';
+      }
+
+      // Display recommended template
+      const templateRecommendation = document.getElementById('template-recommendation');
+      const noTemplateMessage = document.getElementById('no-template-message');
+      const templatePreview = document.getElementById('template-preview');
+
+      if (data.recommended_template) {
+        templateRecommendation.style.display = 'block';
+        noTemplateMessage.style.display = 'none';
+
+        templatePreview.innerHTML = `
+          <h5>${data.recommended_template_name || 'Interview Template'}</h5>
+          <p><strong>Template ID:</strong> ${data.recommended_template}</p>
+          <p style="margin-top: 0.5rem; font-style: italic;">This template has been automatically recommended based on the job requirements.</p>
+        `;
+      } else {
+        templateRecommendation.style.display = 'none';
+        noTemplateMessage.style.display = 'block';
+      }
     }
   </script>
 
