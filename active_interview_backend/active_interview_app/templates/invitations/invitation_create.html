@@ -217,11 +217,15 @@
                 <div class="form-group">
                     <label for="{{ form.scheduled_time.id_for_label }}">Scheduled Time *</label>
                     {{ form.scheduled_time }}
-                    {% if form.scheduled_time.help_text %}
-                        <div class="form-text">{{ form.scheduled_time.help_text }}</div>
-                    {% endif %}
+                    <div class="form-text">
+                        <i class="bi bi-clock"></i> <span id="current-time-display">Enter time in your local timezone</span>
+                        <br>Times must be at least 2 minutes in the future
+                    </div>
                     {{ form.scheduled_time.errors }}
                 </div>
+
+                <!-- Hidden timezone offset field -->
+                {{ form.timezone_offset }}
 
                 <!-- Duration Field -->
                 <div class="form-group">
@@ -240,4 +244,75 @@
             </form>
         </div>
     </div>
+
+    <script>
+    // Timezone handling for invitation scheduling
+    (function() {
+        // Get user's timezone offset in minutes
+        const timezoneOffset = new Date().getTimezoneOffset();
+
+        // Set the hidden timezone offset field
+        const offsetField = document.getElementById('id_timezone_offset');
+        if (offsetField) {
+            offsetField.value = timezoneOffset;
+        }
+
+        // Display current time in user's local timezone
+        function updateCurrentTime() {
+            const now = new Date();
+            const timeString = now.toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                timeZoneName: 'short'
+            });
+
+            const display = document.getElementById('current-time-display');
+            if (display) {
+                display.textContent = `Current time: ${timeString}`;
+            }
+        }
+
+        // Update time display on page load and every minute
+        updateCurrentTime();
+        setInterval(updateCurrentTime, 60000);
+
+        // Set minimum date/time to now + 2 minutes
+        const dateInput = document.getElementById('{{ form.scheduled_date.id_for_label }}');
+        const timeInput = document.getElementById('{{ form.scheduled_time.id_for_label }}');
+
+        if (dateInput) {
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.setAttribute('min', today);
+        }
+
+        // Optional: Provide helpful validation when user selects a time
+        if (timeInput && dateInput) {
+            function validateSelectedTime() {
+                const selectedDate = dateInput.value;
+                const selectedTime = timeInput.value;
+
+                if (selectedDate && selectedTime) {
+                    const selected = new Date(selectedDate + 'T' + selectedTime);
+                    const now = new Date();
+                    const minTime = new Date(now.getTime() + 2 * 60000); // 2 minutes from now
+
+                    if (selected < minTime) {
+                        const diff = Math.round((minTime - selected) / 60000);
+                        timeInput.setCustomValidity(
+                            `Please select a time at least 2 minutes in the future (${diff} more minutes needed)`
+                        );
+                    } else {
+                        timeInput.setCustomValidity('');
+                    }
+                }
+            }
+
+            dateInput.addEventListener('change', validateSelectedTime);
+            timeInput.addEventListener('change', validateSelectedTime);
+        }
+    })();
+    </script>
 {% endblock content %}

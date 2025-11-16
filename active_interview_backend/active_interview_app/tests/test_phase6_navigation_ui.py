@@ -18,6 +18,7 @@ from active_interview_app.models import (
 )
 from django.utils import timezone
 from datetime import timedelta
+import uuid
 
 User = get_user_model()
 
@@ -104,11 +105,18 @@ class TemplateInviteButtonTests(TestCase):
         self.interviewer_profile.role = 'interviewer'
         self.interviewer_profile.save()
 
-        # Create a template
+        # Create a complete template (with 100% weight)
         self.template = InterviewTemplate.objects.create(
             user=self.interviewer,
             name='Software Engineer Template',
-            description='Technical interview template'
+            description='Technical interview template',
+            sections=[{
+                'id': str(uuid.uuid4()),
+                'title': 'Technical Skills',
+                'content': 'Python, Django',
+                'order': 0,
+                'weight': 100
+            }]
         )
 
     def test_template_list_has_invite_button(self):

@@ -4,6 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Interview Invitation</title>
+  <style>
+    .local-time {
+      font-weight: bold;
+    }
+    .utc-fallback {
+      font-size: 0.9em;
+      color: #6c757d;
+    }
+  </style>
 </head>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
   <div style="background-color: #1F7BA6; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
@@ -19,10 +28,19 @@
       <p style="margin: 0; font-weight: bold; color: #0c5460;">Interview Details</p>
       <ul style="margin: 10px 0 0 0; padding-left: 20px; color: #0c5460;">
         <li><strong>Position:</strong> {{ invitation.template.name }}</li>
-        <li><strong>Scheduled Date:</strong> {{ invitation.scheduled_time|date:"F j, Y" }}</li>
-        <li><strong>Scheduled Time:</strong> {{ invitation.scheduled_time|date:"g:i A" }} ({{ invitation.scheduled_time|date:"T" }})</li>
+        <li>
+          <strong>Scheduled Time:</strong>
+          <span class="local-time" data-utc="{{ invitation.scheduled_time|date:'c' }}">
+            {{ invitation.scheduled_time|date:"F j, Y \a\\t g:i A" }} UTC
+          </span>
+        </li>
         <li><strong>Duration:</strong> {{ invitation.duration_minutes }} minutes</li>
-        <li><strong>Window Closes:</strong> {{ window_end|date:"F j, Y \a\\t g:i A" }}</li>
+        <li>
+          <strong>Window Closes:</strong>
+          <span class="local-time" data-utc="{{ window_end|date:'c' }}">
+            {{ window_end|date:"F j, Y \a\\t g:i A" }} UTC
+          </span>
+        </li>
       </ul>
     </div>
 
@@ -38,7 +56,7 @@
     <div style="background-color: #fff3cd; border-left: 4px solid #856404; padding: 15px; margin: 20px 0; border-radius: 4px;">
       <p style="margin: 0; font-weight: bold; color: #856404;">Important Information</p>
       <ul style="margin: 10px 0 0 0; padding-left: 20px; color: #856404;">
-        <li><strong>You can start the interview any time between {{ invitation.scheduled_time|date:"g:i A" }} and {{ window_end|date:"g:i A" }} on {{ invitation.scheduled_time|date:"F j, Y" }}</strong></li>
+        <li><strong>You can start the interview any time within the window shown above</strong></li>
         <li>If you're not registered, you'll need to create an account first (it's quick!)</li>
         <li>Make sure you have a stable internet connection</li>
         <li>Find a quiet place where you won't be interrupted</li>
@@ -58,8 +76,6 @@
       <p style="margin: 5px 0 0 0; font-size: 14px;">A calendar event has been attached to this email. You can add it to your calendar to receive reminders.</p>
     </div>
 
-    <p style="margin-top: 30px;">If you have any questions, please reply to this email.</p>
-
     <p>Good luck!</p>
 
     <p style="margin-top: 30px;"><strong>{{ interviewer.get_full_name|default:interviewer.username }}</strong><br>
@@ -72,5 +88,37 @@
       Active Interview Service | Professional Interview Practice
     </p>
   </div>
+
+  <script>
+    // Convert UTC times to user's local timezone
+    // Note: Some email clients block JavaScript, so we show UTC as fallback
+    (function() {
+      var timeElements = document.querySelectorAll('[data-utc]');
+
+      timeElements.forEach(function(element) {
+        var utcTime = element.getAttribute('data-utc');
+        if (utcTime) {
+          try {
+            var date = new Date(utcTime);
+
+            // Format to local time
+            var options = {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+              timeZoneName: 'short'
+            };
+
+            var localTimeString = date.toLocaleString('en-US', options);
+            element.textContent = localTimeString;
+          } catch (e) {
+            // If conversion fails, keep the UTC time displayed
+          }
+        }
+      });
+    })();
+  </script>
 </body>
 </html>

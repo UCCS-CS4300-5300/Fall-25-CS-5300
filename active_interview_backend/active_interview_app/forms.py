@@ -278,7 +278,7 @@ class InvitationCreationForm(ModelForm):
             'class': 'form-control',
             'type': 'date'
         }),
-        help_text='Date when the interview can be taken'
+        help_text='Date when the interview can be taken (in your local timezone)'
     )
 
     scheduled_time = forms.TimeField(
@@ -287,7 +287,15 @@ class InvitationCreationForm(ModelForm):
             'class': 'form-control',
             'type': 'time'
         }),
-        help_text='Time when the interview can be taken'
+        help_text='Time when the interview can be taken (in your local timezone)'
+    )
+
+    # Hidden field to capture user's timezone offset
+    timezone_offset = forms.IntegerField(
+        required=False,
+        widget=forms.HiddenInput(attrs={
+            'id': 'id_timezone_offset'
+        })
     )
 
     duration_minutes = forms.IntegerField(
@@ -319,16 +327,25 @@ class InvitationCreationForm(ModelForm):
         template_id = kwargs.pop('template_id', None)
         super().__init__(*args, **kwargs)
 
-        # Filter templates to only show user's templates
+        # Filter templates to only show user's complete templates
         if user is not None:
+            # Get all templates for this user
+            all_templates = InterviewTemplate.objects.filter(user=user)
+            # Filter to only complete templates (weight = 100%)
+            complete_templates = [t for t in all_templates if t.is_complete()]
+            # Set queryset to only complete templates
             self.fields['template'].queryset = \
-                InterviewTemplate.objects.filter(user=user)
+                InterviewTemplate.objects.filter(
+                    id__in=[t.id for t in complete_templates]
+                )
 
         # Pre-select template if template_id provided (from template detail page)
         if template_id is not None:
             try:
                 template = InterviewTemplate.objects.get(id=template_id, user=user)
-                self.fields['template'].initial = template
+                # Only set initial if template is complete
+                if template.is_complete():
+                    self.fields['template'].initial = template
             except InterviewTemplate.DoesNotExist:
                 pass
 
@@ -348,25 +365,57 @@ class InvitationCreationForm(ModelForm):
         cleaned_data = super().clean()
         scheduled_date = cleaned_data.get('scheduled_date')
         scheduled_time = cleaned_data.get('scheduled_time')
+        timezone_offset = cleaned_data.get('timezone_offset')
 
         if scheduled_date and scheduled_time:
             # Combine date and time
             from datetime import datetime
-            scheduled_datetime = timezone.make_aware(
-                datetime.combine(scheduled_date, scheduled_time)
-            )
 
-            # Check if in the future (allow 5 minute buffer)
+            # Create naive datetime from user input
+            naive_datetime = datetime.combine(scheduled_date, scheduled_time)
+
+            # If we have timezone offset from JavaScript, use it to convert to UTC
+            if timezone_offset is not None:
+                # timezone_offset from getTimezoneOffset() is in minutes
+                # IMPORTANT: getTimezoneOffset() returns POSITIVE for timezones
+                # behind UTC (e.g., EST returns +300, not -300)
+                # It represents "minutes to ADD to local time to get UTC"
+                # So we ADD the offset to convert local time to UTC
+                utc_datetime = naive_datetime + timedelta(minutes=timezone_offset)
+                scheduled_datetime = timezone.make_aware(utc_datetime)
+            else:
+                # Fallback: treat as UTC if no timezone info provided
+                scheduled_datetime = timezone.make_aware(naive_datetime)
+
+            # Check if in the future with a small buffer
+            # Require at least 2 minutes in the future
             now = timezone.now()
-            min_time = now + timedelta(minutes=5)
+            min_time = now + timedelta(minutes=2)
 
             if scheduled_datetime < min_time:
-                raise forms.ValidationError(
-                    'Scheduled time must be at least 5 minutes in the future.'
-                )
+                # Calculate how far in the past/future for helpful message
+                diff_minutes = (scheduled_datetime - now).total_seconds() / 60
+                if diff_minutes < 0:
+                    raise forms.ValidationError(
+                        f'Scheduled time is in the past ({abs(int(diff_minutes))} '
+                        f'minutes ago). Please select a future time.'
+                    )
+                else:
+                    raise forms.ValidationError(
+                        f'Scheduled time must be at least 2 minutes in the future. '
+                        f'Selected time is only {int(diff_minutes)} minute(s) away.'
+                    )
 
             # Store combined datetime for easy access
             cleaned_data['scheduled_datetime'] = scheduled_datetime
+
+        # Validate that template is complete
+        template = cleaned_data.get('template')
+        if template and not template.is_complete():
+            raise forms.ValidationError(
+                'Cannot create invitation with incomplete template. '
+                'Template must have sections totaling 100% weight.'
+            )
 
         return cleaned_data
 

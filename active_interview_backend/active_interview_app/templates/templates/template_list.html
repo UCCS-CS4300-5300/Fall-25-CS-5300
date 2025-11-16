@@ -119,6 +119,16 @@
       color: var(--text-white);
     }
 
+    .document-actions .disabled-link {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.9rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: var(--radius-sm);
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
     .empty-state {
       text-align: center;
       padding: 2rem;
@@ -237,7 +247,11 @@
                             <div class="document-actions">
                                 <a href="{% url 'template_detail' template_id=template.id %}">View</a>
                                 <a href="{% url 'edit_template' template.id %}">Edit</a>
-                                <a href="{% url 'invitation_create_from_template' template_id=template.id %}">Invite Candidate</a>
+                                {% if template.is_complete %}
+                                    <a href="{% url 'invitation_create_from_template' template_id=template.id %}">Invite Candidate</a>
+                                {% else %}
+                                    <span class="disabled-link" title="Template must be complete (100% weight) before inviting candidates">Invite Candidate</span>
+                                {% endif %}
                                 <button type="button"
                                         class="delete-btn"
                                         data-bs-toggle="modal"

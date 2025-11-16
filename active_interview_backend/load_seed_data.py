@@ -8,13 +8,19 @@ Usage:
 """
 import os
 import sys
-import django
 
-# Setup Django environment
+# Add the parent directory to Python path so we can import active_interview_backend
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+sys.path.insert(0, parent_dir)
+sys.path.insert(0, current_dir)
+
+# Setup Django environment BEFORE importing django
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'active_interview_project.settings')
 os.environ.setdefault('DJANGO_SECRET_KEY', 'temporary-key-for-seed-data')
 os.environ.setdefault('PROD', 'false')
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import django
 django.setup()
 
 from django.core.management import call_command
@@ -27,7 +33,7 @@ style = color_style()
 
 def reset_database():
     """Delete and recreate the database."""
-    print(style.WARNING("⚠️  Resetting database..."))
+    print(style.WARNING("Resetting database..."))
 
     # Close all connections
     connection.close()
@@ -36,12 +42,12 @@ def reset_database():
     db_path = 'db.sqlite3'
     if os.path.exists(db_path):
         os.remove(db_path)
-        print(style.SUCCESS(f"✓ Deleted {db_path}"))
+        print(style.SUCCESS(f"[OK] Deleted {db_path}"))
 
     # Run migrations
     print(style.WARNING("Running migrations..."))
     call_command('migrate', verbosity=0)
-    print(style.SUCCESS("✓ Migrations complete"))
+    print(style.SUCCESS("[OK] Migrations complete"))
 
 
 def load_fixtures():
@@ -49,10 +55,10 @@ def load_fixtures():
     print(style.WARNING("Loading seed data fixtures..."))
     try:
         call_command('loaddata', 'seed_data.json', verbosity=0)
-        print(style.SUCCESS("✓ Fixtures loaded successfully"))
+        print(style.SUCCESS("[OK] Fixtures loaded successfully"))
         return True
     except Exception as e:
-        print(style.ERROR(f"✗ Failed to load fixtures: {e}"))
+        print(style.ERROR(f"[FAIL] Failed to load fixtures: {e}"))
         return False
 
 
@@ -71,11 +77,11 @@ def set_passwords():
             user = User.objects.get(username=username)
             user.set_password(password)
             user.save()
-            print(style.SUCCESS(f"✓ Password set for {username}"))
+            print(style.SUCCESS(f"[OK] Password set for {username}"))
         except User.DoesNotExist:
-            print(style.ERROR(f"✗ User {username} not found"))
+            print(style.ERROR(f"[FAIL] User {username} not found"))
         except Exception as e:
-            print(style.ERROR(f"✗ Failed to set password for {username}: {e}"))
+            print(style.ERROR(f"[FAIL] Failed to set password for {username}: {e}"))
 
 
 def display_summary():
@@ -85,14 +91,14 @@ def display_summary():
     )
 
     print("\n" + "="*60)
-    print(style.SUCCESS("🎉 Seed Data Loaded Successfully!"))
+    print(style.SUCCESS("*** Seed Data Loaded Successfully! ***"))
     print("="*60)
 
     print("\n" + style.HTTP_INFO("Users Created:"))
     users = User.objects.all().order_by('id')
     for user in users:
         role = user.profile.role if hasattr(user, 'profile') else 'unknown'
-        print(f"  • {user.username} ({role})")
+        print(f"  - {user.username} ({role})")
         print(f"    Email: {user.email}")
         if user.username == 'admin_user':
             print(f"    Password: admin123")
@@ -104,7 +110,7 @@ def display_summary():
     print("\n" + style.HTTP_INFO("Question Banks:"))
     for qb in QuestionBank.objects.all():
         question_count = qb.questions.count()
-        print(f"  • {qb.name} ({question_count} questions)")
+        print(f"  - {qb.name} ({question_count} questions)")
 
     print("\n" + style.HTTP_INFO("Tags:"))
     tags = Tag.objects.all()
@@ -113,12 +119,12 @@ def display_summary():
     print("\n" + style.HTTP_INFO("Interview Templates:"))
     for template in InterviewTemplate.objects.all():
         section_count = len(template.sections) if template.sections else 0
-        print(f"  • {template.name} ({section_count} sections)")
+        print(f"  - {template.name} ({section_count} sections)")
 
     print("\n" + style.HTTP_INFO("Completed Interviews:"))
     from active_interview_app.models import Chat
     for chat in Chat.objects.filter(owner__username='candidate_john'):
-        print(f"  • {chat.title} ({chat.type})")
+        print(f"  - {chat.title} ({chat.type})")
 
     print("\n" + style.WARNING("Next Steps:"))
     print("  1. Run the development server:")
@@ -143,13 +149,13 @@ def main():
 
     args = parser.parse_args()
 
-    print(style.SUCCESS("\n🌱 Active Interview Seed Data Loader\n"))
+    print(style.SUCCESS("\n*** Active Interview Seed Data Loader ***\n"))
 
     # Reset database if requested
     if args.reset:
         confirm = input(
             style.WARNING(
-                "⚠️  This will DELETE all existing data. Continue? (yes/no): "
+                "WARNING: This will DELETE all existing data. Continue? (yes/no): "
             )
         )
         if confirm.lower() != 'yes':
@@ -159,7 +165,7 @@ def main():
 
     # Load fixtures
     if not load_fixtures():
-        print(style.ERROR("\n❌ Failed to load seed data"))
+        print(style.ERROR("\n[ERROR] Failed to load seed data"))
         return
 
     # Set passwords

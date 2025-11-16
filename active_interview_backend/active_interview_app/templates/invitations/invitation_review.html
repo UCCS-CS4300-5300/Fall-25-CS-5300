@@ -333,10 +333,12 @@
             {% if chat.messages %}
             <div class="chat-messages">
                 {% for message in chat.messages %}
+                {% if message.role != 'system' %}
                 <div class="message message-{{ message.role }}">
                     <div class="message-role">{{ message.role|title }}</div>
                     <div class="message-content">{{ message.content }}</div>
                 </div>
+                {% endif %}
                 {% endfor %}
             </div>
             {% else %}

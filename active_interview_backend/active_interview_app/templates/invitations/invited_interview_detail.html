@@ -4,11 +4,67 @@
 {% block title %}Interview Details{% endblock %}
 
 {% block content %}
+<style>
+  /* Override Bootstrap card styles to use theme variables */
+  .card {
+    background-color: var(--surface) !important;
+    border: 1px solid var(--border) !important;
+    color: var(--text-primary) !important;
+  }
+
+  .card-title {
+    color: var(--text-primary) !important;
+  }
+
+  .card-body {
+    color: var(--text-primary) !important;
+  }
+
+  .card-body strong {
+    color: var(--text-primary) !important;
+  }
+
+  .card-body p {
+    color: var(--text-primary) !important;
+  }
+
+  .card-body li {
+    color: var(--text-primary) !important;
+  }
+
+  .text-muted {
+    color: var(--text-secondary) !important;
+  }
+
+  /* Button styles */
+  .btn-primary {
+    background-color: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: var(--text-white) !important;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--primary-dark) !important;
+    border-color: var(--primary-dark) !important;
+  }
+
+  .btn-secondary {
+    background-color: var(--surface-hover) !important;
+    border-color: var(--border) !important;
+    color: var(--text-primary) !important;
+  }
+
+  .btn-success {
+    background-color: var(--success) !important;
+    border-color: var(--success) !important;
+    color: var(--text-white) !important;
+  }
+</style>
 <div class="container mt-5">
   <div class="row justify-content-center">
     <div class="col-md-10 col-lg-8">
       <!-- Header Card -->
-      <div class="card shadow-sm mb-4" style="border-left: 4px solid var(--bs-primary);">
+      <div class="card shadow-sm mb-4" style="border-left: 4px solid var(--primary); background-color: var(--surface); border: 1px solid var(--border);">
         <div class="card-body">
           <h2 class="card-title mb-3">
             <i class="bi bi-calendar-check"></i> {{ invitation.template.name }}
@@ -26,7 +82,7 @@
       {% if invitation.chat and invitation.status == 'COMPLETED' %}
         <div class="alert alert-success" role="alert">
           <h4 class="alert-heading"><i class="bi bi-check-circle-fill"></i> Interview Completed!</h4>
-          <p>You completed this interview on {{ invitation.completed_at|date:"F j, Y \a\t g:i A" }}.</p>
+          <p>You completed this interview on <span data-utc-time="{{ invitation.completed_at|date:'c' }}">{{ invitation.completed_at|date:"F j, Y \a\t g:i A" }} UTC</span>.</p>
           <hr>
           <p class="mb-0">
             {% if invitation.interviewer_review_status == 'REVIEW_COMPLETE' %}
@@ -48,7 +104,7 @@
       {% elif invitation.chat %}
         <div class="alert alert-info" role="alert">
           <h4 class="alert-heading"><i class="bi bi-play-circle-fill"></i> Interview In Progress</h4>
-          <p class="mb-0">You started this interview on {{ invitation.chat.date_created|date:"F j, Y \a\t g:i A" }}.</p>
+          <p class="mb-0">You started this interview on <span data-utc-time="{{ invitation.chat.date_created|date:'c' }}">{{ invitation.chat.date_created|date:"F j, Y \a\t g:i A" }} UTC</span>.</p>
         </div>
 
         <div class="text-center mt-4">
@@ -62,9 +118,9 @@
         <div class="alert alert-danger" role="alert">
           <h4 class="alert-heading"><i class="bi bi-exclamation-triangle-fill"></i> Interview Time Has Passed</h4>
           <p>This interview was scheduled for:</p>
-          <p class="mb-2"><strong>{{ invitation.scheduled_time|date:"F j, Y \a\t g:i A" }}</strong></p>
+          <p class="mb-2"><strong data-utc-time="{{ invitation.scheduled_time|date:'c' }}">{{ invitation.scheduled_time|date:"F j, Y \a\t g:i A" }} UTC</strong></p>
           <p>The available time window ended at:</p>
-          <p class="mb-2"><strong>{{ window_end|date:"F j, Y \a\t g:i A" }}</strong></p>
+          <p class="mb-2"><strong data-utc-time="{{ window_end|date:'c' }}">{{ window_end|date:"F j, Y \a\t g:i A" }} UTC</strong></p>
           <hr>
           <p class="mb-0">Unfortunately, you can no longer take this interview. Please contact {{ invitation.interviewer.get_full_name|default:invitation.interviewer.username }} if you need to reschedule.</p>
         </div>
@@ -80,38 +136,33 @@
         <div class="alert alert-warning" role="alert">
           <h4 class="alert-heading"><i class="bi bi-clock-fill"></i> Interview Not Yet Available</h4>
           <p>Your interview is scheduled to begin at:</p>
-          <p class="mb-0"><strong>{{ invitation.scheduled_time|date:"F j, Y \a\t g:i A" }}</strong></p>
+          <p class="mb-0"><strong data-utc-time="{{ invitation.scheduled_time|date:'c' }}">{{ invitation.scheduled_time|date:"F j, Y \a\t g:i A" }} UTC</strong></p>
         </div>
 
-        <div class="card shadow-sm mb-4">
+        <div class="card shadow-sm mb-4" style="background-color: var(--surface); border: 1px solid var(--border);">
           <div class="card-body text-center">
             <h5 class="card-title">Time Until Interview</h5>
-            <div class="display-6 mb-3" style="color: var(--bs-warning);">
+            <div class="display-6 mb-3" style="color: var(--warning);">
               <i class="bi bi-hourglass-split"></i>
-              <span id="countdown-timer">
-                {% if time_until_start.days > 0 %}
-                  {{ time_until_start.days }} day{{ time_until_start.days|pluralize }},
-                {% endif %}
-                {{ time_until_start.seconds|floatformat:0|divisibleby:3600 }} hour{{ time_until_start.seconds|floatformat:0|divisibleby:3600|pluralize }}
-              </span>
+              <span id="countdown-timer">Calculating...</span>
             </div>
             <p class="text-muted">Please return at the scheduled time to begin your interview.</p>
           </div>
         </div>
 
         <!-- Interview Window Information -->
-        <div class="card shadow-sm mb-4">
+        <div class="card shadow-sm mb-4" style="background-color: var(--surface); border: 1px solid var(--border);">
           <div class="card-body">
             <h5 class="card-title"><i class="bi bi-info-circle"></i> Interview Window</h5>
             <ul class="list-unstyled mb-0">
               <li class="mb-2">
-                <strong>Start Time:</strong> {{ invitation.scheduled_time|date:"F j, Y \a\t g:i A" }}
+                <strong>Start Time:</strong> <span data-utc-time="{{ invitation.scheduled_time|date:'c' }}">{{ invitation.scheduled_time|date:"F j, Y \a\t g:i A" }} UTC</span>
               </li>
               <li class="mb-2">
                 <strong>Duration:</strong> {{ invitation.duration_minutes }} minutes
               </li>
               <li class="mb-0">
-                <strong>Window Closes:</strong> {{ window_end|date:"F j, Y \a\t g:i A" }}
+                <strong>Window Closes:</strong> <span data-utc-time="{{ window_end|date:'c' }}">{{ window_end|date:"F j, Y \a\t g:i A" }} UTC</span>
               </li>
             </ul>
             <hr>
@@ -138,33 +189,22 @@
 
         <!-- Time Remaining Card -->
         {% if time_remaining %}
-        <div class="card shadow-sm mb-4" style="border-left: 4px solid var(--bs-success);">
+        <div class="card shadow-sm mb-4" style="border-left: 4px solid var(--success); background-color: var(--surface); border: 1px solid var(--border);">
           <div class="card-body text-center">
             <h5 class="card-title">Time Remaining to Start</h5>
-            <div class="display-6 mb-2" style="color: var(--bs-success);">
+            <div class="display-6 mb-2" style="color: var(--success);">
               <i class="bi bi-hourglass-bottom"></i>
-              <span id="time-remaining-display">
-                {% if time_remaining.days > 0 %}
-                  {{ time_remaining.days }} day{{ time_remaining.days|pluralize }},
-                {% endif %}
-                {% with hours=time_remaining.seconds|floatformat:0 %}
-                  {% with hours_int=hours|add:"0"|floatformat:0 %}
-                    {% with hours_final=hours_int|divisibleby:3600 %}
-                      {{ hours_final }} hour{{ hours_final|pluralize }}
-                    {% endwith %}
-                  {% endwith %}
-                {% endwith %}
-              </span>
+              <span id="time-remaining-display">Calculating...</span>
             </div>
             <p class="text-muted small mb-0">
-              You must start the interview before {{ window_end|date:"F j, Y \a\t g:i A" }}
+              You must start the interview before <span data-utc-time="{{ window_end|date:'c' }}">{{ window_end|date:"F j, Y \a\t g:i A" }} UTC</span>
             </p>
           </div>
         </div>
         {% endif %}
 
         <!-- Interview Instructions -->
-        <div class="card shadow-sm mb-4">
+        <div class="card shadow-sm mb-4" style="background-color: var(--surface); border: 1px solid var(--border);">
           <div class="card-body">
             <h5 class="card-title"><i class="bi bi-list-check"></i> Before You Begin</h5>
             <ul class="mb-0">
@@ -178,7 +218,7 @@
         </div>
 
         <!-- Interview Window Information -->
-        <div class="card shadow-sm mb-4" style="background-color: var(--bs-light);">
+        <div class="card shadow-sm mb-4" style="background-color: var(--surface-hover); border: 1px solid var(--border);">
           <div class="card-body">
             <h5 class="card-title"><i class="bi bi-info-circle"></i> Interview Details</h5>
             <ul class="list-unstyled mb-0">
@@ -186,13 +226,13 @@
                 <strong>Template:</strong> {{ invitation.template.name }}
               </li>
               <li class="mb-2">
-                <strong>Scheduled Time:</strong> {{ invitation.scheduled_time|date:"F j, Y \a\t g:i A" }}
+                <strong>Scheduled Time:</strong> <span data-utc-time="{{ invitation.scheduled_time|date:'c' }}">{{ invitation.scheduled_time|date:"F j, Y \a\t g:i A" }} UTC</span>
               </li>
               <li class="mb-2">
                 <strong>Duration:</strong> {{ invitation.duration_minutes }} minutes
               </li>
               <li class="mb-0">
-                <strong>Window Closes:</strong> {{ window_end|date:"F j, Y \a\t g:i A" }}
+                <strong>Window Closes:</strong> <span data-utc-time="{{ window_end|date:'c' }}">{{ window_end|date:"F j, Y \a\t g:i A" }} UTC</span>
               </li>
             </ul>
           </div>
@@ -231,31 +271,136 @@
 </div>
 
 <script>
-// Auto-refresh page when interview becomes available
+// Countdown timer update function
 {% if not can_start and time_until_start and not is_expired %}
-  // Refresh page when interview should become available
+function updateCountdown() {
   const scheduledTime = new Date("{{ invitation.scheduled_time|date:'c' }}");
   const now = new Date();
   const msUntilStart = scheduledTime - now;
 
-  if (msUntilStart > 0 && msUntilStart < 3600000) { // If within 1 hour
-    setTimeout(function() {
-      location.reload();
-    }, msUntilStart + 1000); // Reload 1 second after scheduled time
+  if (msUntilStart <= 0) {
+    document.getElementById('countdown-timer').textContent = 'Interview is ready to start!';
+    // Reload page to show start button
+    setTimeout(() => location.reload(), 2000);
+    return;
   }
+
+  // Calculate time components
+  const days = Math.floor(msUntilStart / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((msUntilStart % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((msUntilStart % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((msUntilStart % (1000 * 60)) / 1000);
+
+  // Build countdown string
+  let countdownText = '';
+  if (days > 0) {
+    countdownText += `${days} day${days !== 1 ? 's' : ''}, `;
+  }
+  if (hours > 0 || days > 0) {
+    countdownText += `${hours} hour${hours !== 1 ? 's' : ''}, `;
+  }
+  countdownText += `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+
+  // Show seconds if less than 5 minutes away
+  if (days === 0 && hours === 0 && minutes < 5) {
+    countdownText += `, ${seconds} second${seconds !== 1 ? 's' : ''}`;
+  }
+
+  document.getElementById('countdown-timer').textContent = countdownText;
+}
+
+// Update countdown immediately and every second
+updateCountdown();
+setInterval(updateCountdown, 1000);
+
+// Auto-refresh page when interview becomes available
+const scheduledTime = new Date("{{ invitation.scheduled_time|date:'c' }}");
+const now = new Date();
+const msUntilStart = scheduledTime - now;
+
+if (msUntilStart > 0 && msUntilStart < 3600000) { // If within 1 hour
+  setTimeout(function() {
+    location.reload();
+  }, msUntilStart + 1000); // Reload 1 second after scheduled time
+}
 {% endif %}
+
+// Time remaining countdown (when interview can be started but not started yet)
+{% if can_start and time_remaining %}
+function updateTimeRemaining() {
+  const windowEnd = new Date("{{ window_end|date:'c' }}");
+  const now = new Date();
+  const msRemaining = windowEnd - now;
+
+  if (msRemaining <= 0) {
+    const display = document.getElementById('time-remaining-display');
+    if (display) {
+      display.textContent = 'Window has expired';
+    }
+    setTimeout(() => location.reload(), 2000);
+    return;
+  }
+
+  // Calculate time components
+  const days = Math.floor(msRemaining / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((msRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((msRemaining % (1000 * 60 * 60)) / (1000 * 60));
+
+  // Build display string
+  let displayText = '';
+  if (days > 0) {
+    displayText += `${days} day${days !== 1 ? 's' : ''}, `;
+  }
+  if (hours > 0 || days > 0) {
+    displayText += `${hours} hour${hours !== 1 ? 's' : ''}, `;
+  }
+  displayText += `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+
+  const display = document.getElementById('time-remaining-display');
+  if (display) {
+    display.textContent = displayText;
+  }
+}
+
+// Update time remaining immediately and every minute
+updateTimeRemaining();
+setInterval(updateTimeRemaining, 60000);
 
 // Auto-refresh when window is about to expire
-{% if can_start and time_remaining %}
-  const windowEnd = new Date("{{ window_end|date:'c' }}");
-  const nowCheck = new Date();
-  const msUntilEnd = windowEnd - nowCheck;
+const windowEnd = new Date("{{ window_end|date:'c' }}");
+const nowCheck = new Date();
+const msUntilEnd = windowEnd - nowCheck;
 
-  if (msUntilEnd > 0 && msUntilEnd < 3600000) { // If within 1 hour of expiry
-    setTimeout(function() {
-      location.reload();
-    }, msUntilEnd + 1000); // Reload 1 second after window closes
-  }
+if (msUntilEnd > 0 && msUntilEnd < 3600000) { // If within 1 hour of expiry
+  setTimeout(function() {
+    location.reload();
+  }, msUntilEnd + 1000); // Reload 1 second after window closes
+}
 {% endif %}
+
+// Convert UTC times to user's local timezone
+(function() {
+  const timeElements = document.querySelectorAll('[data-utc-time]');
+
+  timeElements.forEach(element => {
+    const utcTime = element.getAttribute('data-utc-time');
+    if (utcTime) {
+      const date = new Date(utcTime);
+
+      // Format to local time
+      const options = {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZoneName: 'short'
+      };
+
+      const localTimeString = date.toLocaleString('en-US', options);
+      element.textContent = localTimeString;
+    }
+  });
+})();
 </script>
 {% endblock %}

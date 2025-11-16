@@ -2933,6 +2933,107 @@ def invited_interview_detail(request, invitation_id):
 
 
 @login_required
+def candidate_invitations(request):
+    """
+    Show all invitations for the current user (as candidate).
+
+    Displays invitations sent to the user's email address with status filtering.
+
+    Sorting order (when status_filter='all'):
+    1. Pending (sorted by soonest scheduled_time)
+    2. Completed (sorted by most recent completed_at)
+    3. Reviewed (sorted by most recent completed_at)
+    4. Expired (sorted by most recent scheduled_time)
+
+    When filtering by specific status, applies appropriate sorting for that status.
+    """
+    # Get filter parameter from query string
+    status_filter = request.GET.get('status', 'all')
+
+    # Get all invitations for this user's email
+    invitations = InvitedInterview.objects.filter(
+        candidate_email__iexact=request.user.email
+    ).select_related('template', 'chat', 'interviewer')
+
+    # Apply status filter
+    if status_filter and status_filter != 'all':
+        invitations = invitations.filter(status=status_filter)
+
+    # Apply custom sorting
+    invitations_list = list(invitations)
+
+    if status_filter == 'all':
+        # Custom sorting for 'all' view:
+        # Group by status with specific order, then sort within each group
+        def sort_key(invitation):
+            # Status priority order: pending=1, completed=2, reviewed=3, expired=4
+            status_priority = {
+                InvitedInterview.PENDING: 1,
+                InvitedInterview.COMPLETED: 2,
+                InvitedInterview.REVIEWED: 3,
+                InvitedInterview.EXPIRED: 4,
+            }
+
+            priority = status_priority.get(invitation.status, 5)
+
+            # Within-status sorting
+            if invitation.status == InvitedInterview.PENDING:
+                # Sort by soonest scheduled_time (ascending)
+                return (priority, invitation.scheduled_time)
+            elif invitation.status in [InvitedInterview.COMPLETED, InvitedInterview.REVIEWED]:
+                # Sort by most recent completed_at (descending)
+                # Use negative timestamp for descending order
+                completed_time = invitation.completed_at or invitation.created_at
+                return (priority, -completed_time.timestamp())
+            elif invitation.status == InvitedInterview.EXPIRED:
+                # Sort by most recent scheduled_time (descending)
+                return (priority, -invitation.scheduled_time.timestamp())
+            else:
+                # Fallback
+                return (priority, -invitation.created_at.timestamp())
+
+        invitations_list.sort(key=sort_key)
+
+    elif status_filter == 'pending':
+        # Sort pending by soonest scheduled_time
+        invitations_list.sort(key=lambda inv: inv.scheduled_time)
+
+    elif status_filter in ['completed', 'reviewed']:
+        # Sort completed/reviewed by most recent completed_at
+        invitations_list.sort(
+            key=lambda inv: inv.completed_at or inv.created_at,
+            reverse=True
+        )
+
+    elif status_filter == 'expired':
+        # Sort expired by most recent scheduled_time
+        invitations_list.sort(key=lambda inv: inv.scheduled_time, reverse=True)
+
+    # Get counts for each status (for filter badges)
+    all_invitations = InvitedInterview.objects.filter(
+        candidate_email__iexact=request.user.email
+    )
+    status_counts = {
+        'all': all_invitations.count(),
+        'pending': all_invitations.filter(status=InvitedInterview.PENDING).count(),
+        'completed': all_invitations.filter(
+            status=InvitedInterview.COMPLETED
+        ).count(),
+        'reviewed': all_invitations.filter(status=InvitedInterview.REVIEWED).count(),
+        'expired': all_invitations.filter(status=InvitedInterview.EXPIRED).count(),
+    }
+
+    context = {
+        'invitations': invitations_list,
+        'status_filter': status_filter,
+        'status_counts': status_counts,
+        'is_candidate_view': True,  # Flag to differentiate from interviewer view
+    }
+
+    return render(request, 'invitations/candidate_invitations.html', context)
+
+
+@login_required
 def start_invited_interview(request, invitation_id):
     """
     Start an invited interview by creating a Chat session.
@@ -2980,6 +3081,89 @@ def start_invited_interview(request, invitation_id):
         started_at=now,
         scheduled_end_at=scheduled_end,
     )
+
+    # Initialize interview with system prompt based on template sections
+    template = invitation.template
+    sections = template.sections if template.sections else []
+
+    # Build system prompt from template sections
+    sections_content = ""
+    if sections:
+        # Sort sections by order
+        sorted_sections = sorted(sections, key=lambda s: s.get('order', 0))
+        for section in sorted_sections:
+            title = section.get('title', 'Untitled Section')
+            content = section.get('content', '')
+            weight = section.get('weight', 0)
+            sections_content += f"\n## {title} (Weight: {weight}%)\n{content}\n"
+
+    system_prompt = textwrap.dedent("""\
+        You are a professional interviewer conducting a structured interview.
+
+        # Interview Template: {template_name}
+        {template_description}
+
+        # Interview Duration
+        This interview has a time limit of {duration} minutes.
+
+        # Interview Structure
+        The interview is organized into the following sections:
+        {sections_content}
+
+        # CRITICAL INSTRUCTIONS - READ CAREFULLY
+        - ONLY greet the candidate briefly and ask ONE question at a time
+        - DO NOT list all the sections or questions upfront
+        - DO NOT provide an agenda or overview of the interview
+        - Start with a brief greeting, then immediately ask your first question from the first section
+        - Wait for the candidate's response before asking the next question
+        - Ask questions one at a time, conversationally
+        - Progress through sections naturally based on their order and weight
+        - Keep your responses concise - this is an interview, not a lecture
+        - Be professional and encouraging in your tone
+        - At the very end (after all sections), thank the candidate briefly
+
+        IMPORTANT: This is a conversational interview. Ask questions one by one,
+        listen to responses, and follow up naturally. Do NOT dump all questions
+        at once or provide a roadmap of the interview.
+
+        Respond critically to any responses that are off-topic or ignore
+        the fact that the user is in an interview. The candidate should
+        focus on answering interview questions, not asking for general
+        AI assistance.
+    """).format(
+        template_name=template.name,
+        template_description=f"\n{template.description}" if template.description else "",
+        duration=invitation.duration_minutes,
+        sections_content=sections_content if sections_content else "\n(No specific sections defined)"
+    )
+
+    chat.messages = [
+        {
+            "role": "system",
+            "content": system_prompt
+        },
+    ]
+
+    # Get AI's initial greeting
+    if not _ai_available():
+        messages.error(request, "AI features are disabled on this server.")
+        ai_message = "Hello! I'm your interviewer today. Unfortunately, AI features are currently disabled. Please contact support."
+    else:
+        response = get_openai_client().chat.completions.create(
+            model="gpt-4o",
+            messages=chat.messages,
+            max_tokens=MAX_TOKENS
+        )
+        ai_message = response.choices[0].message.content
+
+    chat.messages.append(
+        {
+            "role": "assistant",
+            "content": ai_message
+        }
+    )
+
+    chat.save()
 
     # Link chat to invitation
     invitation.chat = chat

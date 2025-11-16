@@ -180,6 +180,8 @@ urlpatterns = [
          views.invited_interview_detail, name='invited_interview_detail'),
     path('interview/invited/<uuid:invitation_id>/start/',
          views.start_invited_interview, name='start_invited_interview'),
+    path('my-invitations/', views.candidate_invitations,
+         name='candidate_invitations'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

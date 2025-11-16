@@ -155,7 +155,14 @@ class InvitationFormTests(TestCase):
         self.template = InterviewTemplate.objects.create(
             user=self.interviewer,
             name='Test Template',
-            description='Software Engineer position'
+            description='Software Engineer position',
+            sections=[{
+                'id': str(uuid.uuid4()),
+                'title': 'Technical Skills',
+                'content': 'Python, Django',
+                'order': 0,
+                'weight': 100
+            }]
         )
 
     def test_form_valid_data(self):
@@ -209,7 +216,14 @@ class InvitationFormTests(TestCase):
         other_template = InterviewTemplate.objects.create(
             user=other_user,
             name='Other Template',
-            description='Manager position'
+            description='Manager position',
+            sections=[{
+                'id': str(uuid.uuid4()),
+                'title': 'Management Skills',
+                'content': 'Leadership',
+                'order': 0,
+                'weight': 100
+            }]
         )
 
         future_time = timezone.now() + timedelta(hours=2)
@@ -224,6 +238,50 @@ class InvitationFormTests(TestCase):
         self.assertFalse(form.is_valid())
         # Should have a validation error for template field
         self.assertIn('template', form.errors)
+
+    def test_form_rejects_incomplete_template(self):
+        """Test form rejects incomplete template (weight < 100%)"""
+        # Create incomplete template (only 50% weight)
+        incomplete_template = InterviewTemplate.objects.create(
+            user=self.interviewer,
+            name='Incomplete Template',
+            description='Incomplete template for testing',
+            sections=[{
+                'id': str(uuid.uuid4()),
+                'title': 'Partial Section',
+                'content': 'Only 50%',
+                'order': 0,
+                'weight': 50
+            }]
+        )
+
+        future_time = timezone.now() + timedelta(hours=2)
+        form_data = {
+            'template': str(incomplete_template.id),
+            'candidate_email': 'candidate@example.com',
+            'scheduled_date': future_time.strftime('%Y-%m-%d'),
+            'scheduled_time': future_time.strftime('%H:%M'),
+            'duration_minutes': '60'
+        }
+        form = InvitationCreationForm(data=form_data, user=self.interviewer)
+        self.assertFalse(form.is_valid())
+        # Should have validation error for incomplete template
+        # The template won't be in the queryset, so it will fail template validation
+        self.assertIn('template', form.errors)
+
+    def test_form_accepts_complete_template(self):
+        """Test form accepts complete template (weight = 100%)"""
+        # Template already created in setUp has weight=100
+        future_time = timezone.now() + timedelta(hours=2)
+        form_data = {
+            'template': str(self.template.id),
+            'candidate_email': 'candidate@example.com',
+            'scheduled_date': future_time.strftime('%Y-%m-%d'),
+            'scheduled_time': future_time.strftime('%H:%M'),
+            'duration_minutes': '60'
+        }
+        form = InvitationCreationForm(data=form_data, user=self.interviewer)
+        self.assertTrue(form.is_valid())
 
 
 class InvitationCreateViewTests(TestCase):
@@ -368,8 +426,13 @@ class InvitationCreateViewTests(TestCase):
         # Should show form with errors (200 OK with form errors)
         self.assertEqual(response.status_code, 200)
         # The form's clean() method raises a validation error
-        self.assertFormError(response.context['form'], None,
-                           'Scheduled time must be at least 5 minutes in the future.')
+        # Check that the error message contains the key phrase
+        form_errors = response.context['form'].non_field_errors()
+        self.assertTrue(
+            any('Scheduled time must be at least 2 minutes in the future' in str(error)
+                for error in form_errors),
+            f"Expected scheduling error not found. Errors: {form_errors}"
+        )
 
 
 class InvitationConfirmationViewTests(TestCase):
@@ -388,7 +451,14 @@ class InvitationConfirmationViewTests(TestCase):
         self.template = InterviewTemplate.objects.create(
             user=self.interviewer,
             name='Test Template',
-            description='Software Engineer position'
+            description='Software Engineer position',
+            sections=[{
+                'id': str(uuid.uuid4()),
+                'title': 'Technical Skills',
+                'content': 'Python, Django',
+                'order': 0,
+                'weight': 100
+            }]
         )
 
         self.invitation = InvitedInterview.objects.create(
@@ -453,7 +523,14 @@ class InvitationDashboardViewTests(TestCase):
         self.template = InterviewTemplate.objects.create(
             user=self.interviewer,
             name='Test Template',
-            description='Software Engineer position'
+            description='Software Engineer position',
+            sections=[{
+                'id': str(uuid.uuid4()),
+                'title': 'Technical Skills',
+                'content': 'Python, Django',
+                'order': 0,
+                'weight': 100
+            }]
         )
 
         # Create multiple invitations with different statuses
@@ -522,7 +599,14 @@ class InvitationDashboardViewTests(TestCase):
         other_template = InterviewTemplate.objects.create(
             user=other_interviewer,
             name='Other Template',
-            description='Manager position'
+            description='Manager position',
+            sections=[{
+                'id': str(uuid.uuid4()),
+                'title': 'Management Skills',
+                'content': 'Leadership',
+                'order': 0,
+                'weight': 100
+            }]
         )
 
         InvitedInterview.objects.create(
@@ -539,3 +623,126 @@ class InvitationDashboardViewTests(TestCase):
         # Should only see own invitations (2, not 3)
         self.assertEqual(len(response.context['invitations']), 2)
         self.assertNotContains(response, 'other@example.com')
+
+
+class CandidateInvitationsViewTests(TestCase):
+    """Test candidate_invitations view"""
+
+    def setUp(self):
+        """Set up test data"""
+        self.client = Client()
+
+        # Create interviewer
+        self.interviewer = create_user_with_role(
+            'interviewer',
+            'interviewer@example.com',
+            'pass123',
+            UserProfile.INTERVIEWER
+        )
+
+        # Create candidate
+        self.candidate = create_user_with_role(
+            'candidate',
+            'candidate@example.com',
+            'pass123',
+            UserProfile.CANDIDATE
+        )
+
+        # Create template
+        self.template = InterviewTemplate.objects.create(
+            user=self.interviewer,
+            name='Test Template',
+            description='Software Engineer position',
+            sections=[{
+                'id': str(uuid.uuid4()),
+                'title': 'Technical Skills',
+                'content': 'Python, Django',
+                'order': 0,
+                'weight': 100
+            }]
+        )
+
+        # Create invitations for candidate
+        self.invitation1 = InvitedInterview.objects.create(
+            interviewer=self.interviewer,
+            candidate_email='candidate@example.com',
+            template=self.template,
+            scheduled_time=timezone.now() + timedelta(hours=2),
+            duration_minutes=60,
+            status=InvitedInterview.PENDING
+        )
+
+        self.invitation2 = InvitedInterview.objects.create(
+            interviewer=self.interviewer,
+            candidate_email='candidate@example.com',
+            template=self.template,
+            scheduled_time=timezone.now() + timedelta(days=2),
+            duration_minutes=90,
+            status=InvitedInterview.COMPLETED
+        )
+
+    def test_get_shows_candidate_invitations(self):
+        """Test GET shows all candidate's invitations"""
+        self.client.force_login(self.candidate)
+        response = self.client.get(reverse('candidate_invitations'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context['invitations']), 2)
+        self.assertContains(response, 'My Interview Invitations')
+
+    def test_get_requires_login(self):
+        """Test GET requires authentication"""
+        response = self.client.get(reverse('candidate_invitations'))
+        self.assertEqual(response.status_code, 302)  # Redirect to login
+
+    def test_only_shows_candidate_own_invitations(self):
+        """Test view only shows invitations for candidate's email"""
+        # Create another candidate
+        other_candidate = create_user_with_role(
+            'other_cand',
+            'other@example.com',
+            'pass',
+            UserProfile.CANDIDATE
+        )
+
+        # Create invitation for other candidate
+        InvitedInterview.objects.create(
+            interviewer=self.interviewer,
+            candidate_email='other@example.com',
+            template=self.template,
+            scheduled_time=timezone.now() + timedelta(hours=3),
+            duration_minutes=60
+        )
+
+        # Login as first candidate
+        self.client.force_login(self.candidate)
+        response = self.client.get(reverse('candidate_invitations'))
+
+        # Should only see own invitations (2, not 3)
+        self.assertEqual(len(response.context['invitations']), 2)
+        self.assertNotContains(response, 'other@example.com')
+
+    def test_status_filter_works(self):
+        """Test status filtering works correctly"""
+        self.client.force_login(self.candidate)
+
+        # Filter by pending
+        response = self.client.get(reverse('candidate_invitations') + '?status=pending')
+        self.assertEqual(len(response.context['invitations']), 1)
+        self.assertEqual(response.context['invitations'][0].status, 'pending')
+
+        # Filter by completed
+        response = self.client.get(reverse('candidate_invitations') + '?status=completed')
+        self.assertEqual(len(response.context['invitations']), 1)
+        self.assertEqual(response.context['invitations'][0].status, 'completed')
+
+    def test_status_counts_correct(self):
+        """Test status counts are calculated correctly"""
+        self.client.force_login(self.candidate)
+        response = self.client.get(reverse('candidate_invitations'))
+
+        self.assertEqual(response.context['status_counts']['all'], 2)
+        self.assertEqual(response.context['status_counts']['pending'], 1)
+        self.assertEqual(response.context['status_counts']['completed'], 1)
+        self.assertEqual(response.context['status_counts']['reviewed'], 0)
+        self.assertEqual(response.context['status_counts']['expired'], 0)
