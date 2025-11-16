@@ -548,6 +548,128 @@ class MetricsMiddlewareTests(TransactionTestCase):
         # Overhead should be less than 50ms (generous threshold for CI)
         self.assertLess(overhead_ms, 50)
 
+    def test_middleware_handles_4xx_response(self):
+        """Test middleware handles 4xx responses (HTTP errors without exceptions)."""
+        def view_404(request):
+            from django.http import HttpResponseNotFound
+            return HttpResponseNotFound("Not found")
+
+        middleware = MetricsMiddleware(view_404)
+        request = self.factory.get('/api/notfound/')
+        request.user = self.user
+
+        response = middleware(request)
+
+        # Check metric recorded with 404 status
+        metric = RequestMetric.objects.get(endpoint='/api/notfound/')
+        self.assertEqual(metric.status_code, 404)
+
+        # Check error log created for 4xx without exception
+        error_log = ErrorLog.objects.get(endpoint='/api/notfound/')
+        self.assertEqual(error_log.status_code, 404)
+        self.assertEqual(error_log.error_type, 'HTTP 404')
+        self.assertIn('404 status', error_log.error_message)
+        self.assertEqual(error_log.stack_trace, '')
+
+    def test_middleware_handles_post_request(self):
+        """Test middleware handles POST requests with data."""
+        def post_view(request):
+            from django.http import HttpResponse
+            return HttpResponse("Created", status=201)
+
+        middleware = MetricsMiddleware(post_view)
+        request = self.factory.post('/api/create/', {'key': 'value'})
+        request.user = self.user
+
+        response = middleware(request)
+
+        metric = RequestMetric.objects.get(endpoint='/api/create/')
+        self.assertEqual(metric.method, 'POST')
+        self.assertEqual(metric.status_code, 201)
+
+    def test_middleware_handles_database_error_gracefully(self):
+        """Test middleware handles database errors without breaking the app."""
+        from unittest.mock import patch
+
+        def dummy_view(request):
+            from django.http import HttpResponse
+            return HttpResponse("OK")
+
+        middleware = MetricsMiddleware(dummy_view)
+        request = self.factory.get('/api/test-db-error/')
+        request.user = self.user
+
+        # Mock RequestMetric.objects.create to raise an exception
+        with patch('active_interview_app.observability_models.RequestMetric.objects.create',
+                   side_effect=Exception('Database error')):
+            # Should not raise exception - middleware should handle it gracefully
+            response = middleware(request)
+            self.assertEqual(response.status_code, 200)
+
+    def test_middleware_handles_error_log_failure(self):
+        """Test middleware handles ErrorLog creation failure gracefully."""
+        from unittest.mock import patch
+
+        def error_view(request):
+            raise RuntimeError("Test error")
+
+        middleware = MetricsMiddleware(error_view)
+        request = self.factory.get('/api/error-log-failure/')
+        request.user = self.user
+
+        # Mock ErrorLog.objects.create to fail
+        with patch('active_interview_app.observability_models.ErrorLog.objects.create',
+                   side_effect=Exception('ErrorLog creation failed')):
+            # Should still raise the original exception, not the ErrorLog failure
+            with self.assertRaises(RuntimeError):
+                middleware(request)
+
+
+class PerformanceMonitorMiddlewareTests(TestCase):
+    """Test PerformanceMonitorMiddleware functionality."""
+
+    def setUp(self):
+        """Set up test request factory."""
+        self.factory = RequestFactory()
+
+    def test_performance_monitor_tracks_fast_requests(self):
+        """Test that fast requests don't trigger warnings."""
+        from active_interview_app.middleware import PerformanceMonitorMiddleware
+
+        def fast_view(request):
+            from django.http import HttpResponse
+            return HttpResponse("OK")
+
+        middleware = PerformanceMonitorMiddleware(fast_view)
+        request = self.factory.get('/api/fast/')
+
+        # Should complete without warnings
+        response = middleware(request)
+        self.assertEqual(response.status_code, 200)
+
+    def test_performance_monitor_logs_slow_requests(self):
+        """Test that slow requests trigger warnings."""
+        from active_interview_app.middleware import PerformanceMonitorMiddleware
+        import logging
+
+        def slow_view(request):
+            import time
+            time.sleep(1.1)  # Sleep longer than 1 second threshold
+            from django.http import HttpResponse
+            return HttpResponse("OK")
+
+        middleware = PerformanceMonitorMiddleware(slow_view)
+        request = self.factory.get('/api/slow/')
+
+        # Capture log output
+        with self.assertLogs('active_interview_app.middleware', level='WARNING') as log:
+            response = middleware(request)
+            self.assertEqual(response.status_code, 200)
+
+            # Verify slow request was logged
+            self.assertTrue(any('Slow request detected' in message for message in log.output))
+            self.assertTrue(any('/api/slow/' in message for message in log.output))
+
 
 class CleanupOldMetricsCommandTests(TransactionTestCase):
     """Test cleanup_old_metrics management command."""
