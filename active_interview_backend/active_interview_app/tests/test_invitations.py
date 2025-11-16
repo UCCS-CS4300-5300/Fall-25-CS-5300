@@ -344,13 +344,14 @@ class InvitationCreateViewTests(TestCase):
         """Test POST with invalid data shows form errors"""
         self.client.force_login(self.interviewer)
 
-        # Past datetime - use 2 hours ago to be clearly in the past
-        past_time = timezone.now() - timedelta(hours=2)
+        # Use a time 2 minutes in the future (less than 5 minute requirement)
+        # This will pass clean_scheduled_date() but fail clean()
+        near_future_time = timezone.now() + timedelta(minutes=2)
         post_data = {
             'template': self.template.id,
             'candidate_email': 'candidate@example.com',
-            'scheduled_date': past_time.strftime('%Y-%m-%d'),
-            'scheduled_time': past_time.strftime('%H:%M'),
+            'scheduled_date': near_future_time.strftime('%Y-%m-%d'),
+            'scheduled_time': near_future_time.strftime('%H:%M'),
             'duration_minutes': 60
         }
 

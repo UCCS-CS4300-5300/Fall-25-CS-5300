@@ -342,8 +342,12 @@
 
                     <div class="invitation-actions">
                         <a href="{% url 'invitation_confirmation' invitation.id %}" class="btn-sm btn-view">View Details</a>
-                        {% if invitation.status == 'completed' %}
-                            <a href="#" class="btn-sm btn-review">Review Results</a>
+                        {% if invitation.status == 'completed' or invitation.status == 'reviewed' %}
+                            {% if invitation.chat %}
+                                <a href="{% url 'invitation_review' invitation.id %}" class="btn-sm btn-review">
+                                    {% if invitation.interviewer_review_status == 'completed' %}View Review{% else %}Review Results{% endif %}
+                                </a>
+                            {% endif %}
                         {% endif %}
                     </div>
                 </li>

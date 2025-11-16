@@ -145,7 +145,7 @@ urlpatterns = [
     path('templates/<int:template_id>/sections/<str:section_id>/delete/',
          views.delete_section, name='delete_section'),
 
-    # Interview Invitation urls (Issue #4, #5, #9, #134)
+    # Interview Invitation urls (Issue #4, #5, #9, #134, #138)
     path('invitations/', views.invitation_dashboard,
          name='invitation_dashboard'),
     path('invitations/create/', views.invitation_create,
@@ -154,6 +154,8 @@ urlpatterns = [
          name='invitation_create_from_template'),
     path('invitations/<uuid:invitation_id>/confirmation/',
          views.invitation_confirmation, name='invitation_confirmation'),
+    path('invitations/<uuid:invitation_id>/review/',
+         views.invitation_review, name='invitation_review'),
 
     # Candidate Invitation Join urls (Issue #135, #136)
     path('interview/invite/<uuid:invitation_id>/',

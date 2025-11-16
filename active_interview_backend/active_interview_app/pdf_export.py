@@ -308,6 +308,108 @@ def _create_feedback_section(exportable_report, heading_style, normal_style):
     return elements
 
 
+def _create_interviewer_feedback_section(exportable_report, heading_style, normal_style):
+    """
+    Create the interviewer feedback section for invited interviews.
+
+    Args:
+        exportable_report: An ExportableReport model instance
+        heading_style: The heading style to use
+        normal_style: The normal text style to use
+
+    Returns:
+        list: List of flowable elements for the interviewer feedback section
+    """
+    elements = []
+    chat = exportable_report.chat
+
+    # Only show for invited interviews
+    if chat.interview_type != 'INVITED':
+        return elements
+
+    try:
+        from .models import InvitedInterview
+        invitation = InvitedInterview.objects.get(chat=chat)
+    except InvitedInterview.DoesNotExist:
+        return elements
+
+    # Create section header
+    elements.append(Paragraph("Interviewer Feedback", heading_style))
+    elements.append(HRFlowable(width="100%", thickness=1,
+                              color=colors.HexColor('#28a745')))  # Green color for interviewer section
+    elements.append(Spacer(1, 0.1 * inch))
+
+    # Check review status
+    if invitation.interviewer_review_status == 'pending':
+        # Show pending message
+        pending_style = ParagraphStyle(
+            'PendingText',
+            parent=normal_style,
+            fontSize=11,
+            leading=14,
+            textColor=colors.HexColor('#856404'),
+            fontName='Helvetica-Oblique',
+        )
+        elements.append(Paragraph(
+            "Your interviewer is currently reviewing your interview. " +
+            "You will be notified when feedback is available.",
+            pending_style
+        ))
+    else:
+        # Show interviewer feedback
+        if invitation.interviewer_feedback:
+            feedback_style = ParagraphStyle(
+                'InterviewerFeedbackText',
+                parent=normal_style,
+                fontSize=11,
+                leading=14,
+                wordWrap='CJK',
+                rightIndent=0,
+                leftIndent=0,
+            )
+
+            feedback_lines = invitation.interviewer_feedback.split('\n')
+            for line in feedback_lines:
+                if line.strip():
+                    elements.append(Paragraph(line, feedback_style))
+                    elements.append(Spacer(1, 0.05 * inch))
+
+            # Add reviewer info and date
+            if invitation.reviewed_at:
+                meta_style = ParagraphStyle(
+                    'MetaText',
+                    parent=normal_style,
+                    fontSize=9,
+                    leading=12,
+                    textColor=colors.HexColor('#666666'),
+                    fontName='Helvetica-Oblique',
+                )
+                reviewer_name = invitation.interviewer.get_full_name() or invitation.interviewer.username
+                review_date = invitation.reviewed_at.strftime('%B %d, %Y at %I:%M %p')
+                elements.append(Spacer(1, 0.1 * inch))
+                elements.append(Paragraph(
+                    f"— Reviewed by {reviewer_name} on {review_date}",
+                    meta_style
+                ))
+        else:
+            # Reviewed but no feedback provided
+            no_feedback_style = ParagraphStyle(
+                'NoFeedbackText',
+                parent=normal_style,
+                fontSize=11,
+                leading=14,
+                textColor=colors.HexColor('#666666'),
+                fontName='Helvetica-Oblique',
+            )
+            elements.append(Paragraph(
+                "No additional feedback provided by interviewer.",
+                no_feedback_style
+            ))
+
+    elements.append(Spacer(1, 0.2 * inch))
+    return elements
+
+
 def _create_recommended_exercises_section(exportable_report, heading_style, normal_style):
     """
     Create the recommended exercises section based on performance scores.
@@ -518,6 +620,7 @@ def generate_pdf_report(exportable_report):
     elements.extend(_create_performance_scores_section(exportable_report, heading_style, normal_style))
     elements.extend(_create_score_rationales_section(exportable_report, heading_style, normal_style))
     elements.extend(_create_feedback_section(exportable_report, heading_style, normal_style))
+    elements.extend(_create_interviewer_feedback_section(exportable_report, heading_style, normal_style))
     elements.extend(_create_recommended_exercises_section(exportable_report, heading_style, normal_style))
     elements.extend(_create_statistics_section(exportable_report, heading_style))
     elements.extend(_create_footer())
