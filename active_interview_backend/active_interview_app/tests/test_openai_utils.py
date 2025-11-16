@@ -7,7 +7,7 @@ This module tests the centralized OpenAI client management and graceful degradat
 import pytest
 from django.test import TestCase, override_settings
 from unittest.mock import patch, MagicMock
-from active_interview_app.openai_utils import get_openai_client, _ai_available
+from active_interview_app.openai_utils import get_openai_client, ai_available
 
 
 class OpenAIUtilsTest(TestCase):
@@ -80,34 +80,34 @@ class OpenAIUtilsTest(TestCase):
 
     @override_settings(OPENAI_API_KEY='test-key-123')
     @patch('active_interview_app.openai_utils.OpenAI')
-    def test_ai_available_when_client_initializes(self, mock_openai):
-        """Test _ai_available returns True when client can be initialized"""
+    def testai_available_when_client_initializes(self, mock_openai):
+        """Test ai_available returns True when client can be initialized"""
         mock_client = MagicMock()
         mock_openai.return_value = mock_client
 
-        self.assertTrue(_ai_available())
+        self.assertTrue(ai_available())
 
     @override_settings(OPENAI_API_KEY='')
-    def test_ai_available_when_api_key_missing(self):
-        """Test _ai_available returns False when API key is missing"""
-        self.assertFalse(_ai_available())
+    def testai_available_when_api_key_missing(self):
+        """Test ai_available returns False when API key is missing"""
+        self.assertFalse(ai_available())
 
     @override_settings(OPENAI_API_KEY='test-key-123')
     @patch('active_interview_app.openai_utils.OpenAI')
-    def test_ai_available_when_initialization_fails(self, mock_openai):
-        """Test _ai_available returns False when initialization fails"""
+    def testai_available_when_initialization_fails(self, mock_openai):
+        """Test ai_available returns False when initialization fails"""
         mock_openai.side_effect = Exception('Connection failed')
 
-        self.assertFalse(_ai_available())
+        self.assertFalse(ai_available())
 
     @override_settings(OPENAI_API_KEY='test-key-123')
     @patch('active_interview_app.openai_utils.OpenAI')
-    def test_ai_available_does_not_raise_exception(self, mock_openai):
-        """Test that _ai_available never raises exceptions"""
+    def testai_available_does_not_raise_exception(self, mock_openai):
+        """Test that ai_available never raises exceptions"""
         mock_openai.side_effect = RuntimeError('Unexpected error')
 
         # Should not raise, just return False
-        result = _ai_available()
+        result = ai_available()
         self.assertFalse(result)
 
     @override_settings(OPENAI_API_KEY='sk-test123')
@@ -142,15 +142,15 @@ class OpenAIUtilsTest(TestCase):
 
     @override_settings(OPENAI_API_KEY='test-key')
     @patch('active_interview_app.openai_utils.OpenAI')
-    def test_multiple_ai_available_calls(self, mock_openai):
-        """Test multiple calls to _ai_available use singleton pattern"""
+    def test_multipleai_available_calls(self, mock_openai):
+        """Test multiple calls to ai_available use singleton pattern"""
         mock_client = MagicMock()
         mock_openai.return_value = mock_client
 
         # Call multiple times
-        result1 = _ai_available()
-        result2 = _ai_available()
-        result3 = _ai_available()
+        result1 = ai_available()
+        result2 = ai_available()
+        result3 = ai_available()
 
         # All should be True
         self.assertTrue(result1)
@@ -182,7 +182,7 @@ class OpenAIUtilsPytestTest:
         # Cleanup
         openai_utils._openai_client = None
 
-    def test_ai_available_graceful_degradation(self, settings):
+    def testai_available_graceful_degradation(self, settings):
         """Test graceful degradation when OpenAI is not available"""
         import active_interview_app.openai_utils as openai_utils
         openai_utils._openai_client = None
@@ -190,7 +190,7 @@ class OpenAIUtilsPytestTest:
         settings.OPENAI_API_KEY = ''
 
         # Should not raise, just return False
-        result = _ai_available()
+        result = ai_available()
         assert result is False
 
         # Cleanup

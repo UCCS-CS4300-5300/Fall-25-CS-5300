@@ -139,10 +139,10 @@ class KeyQuestionsViewTest(TestCase):
         self.assertEqual(response.context['question']['content'], "What is Python?")
 
     @patch('active_interview_app.views.get_openai_client')
-    @patch('active_interview_app.views._ai_available')
-    def test_key_questions_post_with_resume(self, mock_ai_available, mock_get_client):
+    @patch('active_interview_app.views.ai_available')
+    def test_key_questions_post_with_resume(self, mockai_available, mock_get_client):
         """Test POST to key questions with resume"""
-        mock_ai_available.return_value = True
+        mockai_available.return_value = True
 
         # Mock OpenAI response
         mock_client = Mock()
@@ -166,10 +166,10 @@ class KeyQuestionsViewTest(TestCase):
         response_data = json.loads(response.content)
         self.assertEqual(response_data['message'], "Great answer! 8/10")
 
-    @patch('active_interview_app.views._ai_available')
-    def test_key_questions_post_ai_unavailable(self, mock_ai_available):
+    @patch('active_interview_app.views.ai_available')
+    def test_key_questions_post_ai_unavailable(self, mockai_available):
         """Test POST to key questions when AI unavailable"""
-        mock_ai_available.return_value = False
+        mockai_available.return_value = False
 
         data = {'message': 'Python is a programming language'}
 
@@ -183,8 +183,8 @@ class KeyQuestionsViewTest(TestCase):
         self.assertIn('error', response_data)
 
     @patch('active_interview_app.views.get_openai_client')
-    @patch('active_interview_app.views._ai_available')
-    def test_key_questions_post_without_resume(self, mock_ai_available, mock_get_client):
+    @patch('active_interview_app.views.ai_available')
+    def test_key_questions_post_without_resume(self, mockai_available, mock_get_client):
         """Test POST to key questions without resume"""
         # Create chat without resume
         chat_no_resume = Chat.objects.create(
@@ -203,7 +203,7 @@ class KeyQuestionsViewTest(TestCase):
             ]
         )
 
-        mock_ai_available.return_value = True
+        mockai_available.return_value = True
 
         # Mock OpenAI response
         mock_client = Mock()
@@ -311,10 +311,10 @@ class ChatViewPostTest(TestCase):
         self.client.login(username='testuser', password='testpass123')
 
     @patch('active_interview_app.views.get_openai_client')
-    @patch('active_interview_app.views._ai_available')
-    def test_chat_view_post(self, mock_ai_available, mock_get_client):
+    @patch('active_interview_app.views.ai_available')
+    def test_chat_view_post(self, mockai_available, mock_get_client):
         """Test posting a message to chat"""
-        mock_ai_available.return_value = True
+        mockai_available.return_value = True
 
         # Mock OpenAI response
         mock_client = Mock()
@@ -372,10 +372,10 @@ class CreateChatViewComprehensiveTest(TestCase):
         self.client.login(username='testuser', password='testpass123')
 
     @patch('active_interview_app.views.get_openai_client')
-    @patch('active_interview_app.views._ai_available')
-    def test_create_chat_with_resume_all_types(self, mock_ai_available, mock_get_client):
+    @patch('active_interview_app.views.ai_available')
+    def test_create_chat_with_resume_all_types(self, mockai_available, mock_get_client):
         """Test creating chat with all interview types"""
-        mock_ai_available.return_value = True
+        mockai_available.return_value = True
 
         # Mock OpenAI responses
         mock_client = Mock()
@@ -416,10 +416,10 @@ class CreateChatViewComprehensiveTest(TestCase):
             self.assertEqual(len(chat.key_questions), 1)
 
     @patch('active_interview_app.views.get_openai_client')
-    @patch('active_interview_app.views._ai_available')
-    def test_create_chat_key_questions_no_json_match(self, mock_ai_available, mock_get_client):
+    @patch('active_interview_app.views.ai_available')
+    def test_create_chat_key_questions_no_json_match(self, mockai_available, mock_get_client):
         """Test when key questions response doesn't match JSON pattern"""
-        mock_ai_available.return_value = True
+        mockai_available.return_value = True
 
         # Mock OpenAI responses
         mock_client = Mock()

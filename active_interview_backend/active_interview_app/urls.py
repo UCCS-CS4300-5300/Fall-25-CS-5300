@@ -80,6 +80,8 @@ urlpatterns = [
     path('pasted-text/', views.UploadedJobListingView.as_view(),
          name='save_pasted_text'),
     path('api/job-listings/', views.JobListingList.as_view(), name='pasted_text_list'),
+    path('api/job-listing/analyze/', views.JobListingAnalyzeView.as_view(),
+         name='analyze_job_listing'),  # Issues #21, #51, #52, #53
     path('resume/<int:resume_id>/', views.resume_detail, name='resume_detail'),
     path('job-posting/<int:job_id>/',
          views.job_posting_detail, name='job_posting_detail'),
@@ -144,6 +146,20 @@ urlpatterns = [
          views.edit_section, name='edit_section'),
     path('templates/<int:template_id>/sections/<str:section_id>/delete/',
          views.delete_section, name='delete_section'),
+
+    # User Data Export & Deletion URLs (Issues #63, #64, #65)
+    path('profile/data-settings/', views.user_data_settings,
+         name='user_data_settings'),
+    path('profile/data-export/request/', views.request_data_export,
+         name='request_data_export'),
+    path('profile/data-export/<int:request_id>/status/',
+         views.data_export_status, name='data_export_status'),
+    path('profile/data-export/<int:request_id>/download/',
+         views.download_data_export, name='download_data_export'),
+    path('profile/delete-account/', views.request_account_deletion,
+         name='request_account_deletion'),
+    path('profile/delete-account/confirm/', views.confirm_account_deletion,
+         name='confirm_account_deletion'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

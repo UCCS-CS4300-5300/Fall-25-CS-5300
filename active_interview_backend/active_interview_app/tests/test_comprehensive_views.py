@@ -20,23 +20,23 @@ class ViewsHelperFunctionsTest(TestCase):
     """Test helper functions in views"""
 
     @patch('active_interview_app.openai_utils.settings.OPENAI_API_KEY', '')
-    def test_ai_available_no_api_key(self):
-        """Test _ai_available returns False when no API key"""
+    def testai_available_no_api_key(self):
+        """Test ai_available returns False when no API key"""
         from active_interview_app import openai_utils
         # Reset the cached client
         openai_utils._openai_client = None
-        result = openai_utils._ai_available()
+        result = openai_utils.ai_available()
         self.assertFalse(result)
 
     @patch('active_interview_app.openai_utils.settings.OPENAI_API_KEY', 'test-key')
     @patch('active_interview_app.openai_utils.OpenAI')
-    def test_ai_available_with_api_key(self, mock_openai):
-        """Test _ai_available returns True with valid API key"""
+    def testai_available_with_api_key(self, mock_openai):
+        """Test ai_available returns True with valid API key"""
         from active_interview_app import openai_utils
         # Reset the global client
         openai_utils._openai_client = None
 
-        result = openai_utils._ai_available()
+        result = openai_utils.ai_available()
         self.assertTrue(result)
 
     def test_ai_unavailable_json(self):
@@ -327,8 +327,8 @@ class CreateChatViewTest(TestCase):
         self.assertIn('form', response.context)
         self.assertIn('owner_chats', response.context)
 
-    @patch('active_interview_app.views._ai_available', return_value=False)
-    def test_create_chat_post_ai_disabled(self, mock_ai_available):
+    @patch('active_interview_app.views.ai_available', return_value=False)
+    def test_create_chat_post_ai_disabled(self, mockai_available):
         """Test CreateChat POST when AI is disabled"""
         response = self.client.post(reverse('chat-create'), {
             'create': 'true',

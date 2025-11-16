@@ -2107,3 +2107,138 @@ a:hover {
    Usage: <div class="box box-warning">Warning message</div>
 
    =================================== */
+
+/* ===================================
+<<<<<<< Updated upstream
+   LOADING INDICATORS
+   Issue #130: Add loading spinners for long-running operations
+   =================================== */
+
+/* Loading Spinner - Base Class
+   ---
+   Animated circular spinner using CSS variables for theming.
+   Works in both light and dark modes.
+*/
+=======
+   LOADING INDICATORS (Issue #130)
+   =================================== */
+
+/* Loading Spinner - Base Class */
+>>>>>>> Stashed changes
+.loading-spinner {
+    border: 3px solid var(--surface);
+    border-top: 3px solid var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+}
+
+<<<<<<< Updated upstream
+/* Keyframe animation for spinner rotation */
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Loading Spinner Modifiers
+   ---
+   Different sizes for different contexts
+*/
+
+/* Small spinner for buttons */
+=======
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Size modifiers */
+>>>>>>> Stashed changes
+.loading-spinner-sm {
+    width: 1rem;
+    height: 1rem;
+    border-width: 2px;
+}
+
+<<<<<<< Updated upstream
+/* Medium spinner for inline content */
+=======
+>>>>>>> Stashed changes
+.loading-spinner-md {
+    width: 2rem;
+    height: 2rem;
+    border-width: 3px;
+}
+
+<<<<<<< Updated upstream
+/* Large spinner for modals/full-page loading */
+=======
+>>>>>>> Stashed changes
+.loading-spinner-lg {
+    width: 3rem;
+    height: 3rem;
+    border-width: 4px;
+}
+
+<<<<<<< Updated upstream
+/* Button Spinner
+   ---
+   Spinner specifically for use inside buttons.
+   Uses white border-top for visibility on colored buttons.
+*/
+=======
+/* Button spinner (white, for colored buttons) */
+>>>>>>> Stashed changes
+.loading-spinner-button {
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top: 2px solid var(--text-white);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+    margin-right: 0.5rem;
+    vertical-align: middle;
+}
+
+<<<<<<< Updated upstream
+/* Loading State for Buttons
+   ---
+   Styles for buttons in loading state
+*/
+=======
+/* Disabled state for buttons with spinners */
+>>>>>>> Stashed changes
+.btn-loading {
+    opacity: 0.7;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+<<<<<<< Updated upstream
+
+/* Usage Examples:
+
+   1. Button with spinner:
+   <button class="btn btn-primary" id="uploadBtn">
+     <span class="loading-spinner-button" id="spinner" style="display:none;"></span>
+     <span id="btnText">Upload</span>
+   </button>
+
+   2. Inline spinner:
+   <div>
+     <span class="loading-spinner loading-spinner-md"></span>
+     Processing...
+   </div>
+
+   3. Modal spinner:
+   <div class="modal-body text-center">
+     <div class="loading-spinner loading-spinner-lg"></div>
+     <p>Generating report...</p>
+   </div>
+*/
+=======
+>>>>>>> Stashed changes

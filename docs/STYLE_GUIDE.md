@@ -761,6 +761,79 @@ Before creating or updating a page, ensure:
 }
 ```
 
+### Loading Indicators
+
+**Issue #130:** Visual feedback for long-running operations.
+
+#### Button Spinner Pattern
+
+For operations that take 2+ seconds (file uploads, report generation, etc.):
+
+```html
+<button type="submit" class="btn btn-primary" id="uploadBtn">
+  <span class="loading-spinner-button"
+        id="uploadSpinner"
+        role="status"
+        aria-hidden="true"
+        style="display:none;"></span>
+  <span id="uploadBtnText">Upload</span>
+</button>
+
+<script>
+function showSpinner() {
+  const button = document.getElementById('uploadBtn');
+  const spinner = document.getElementById('uploadSpinner');
+  const buttonText = document.getElementById('uploadBtnText');
+
+  // Show spinner
+  spinner.style.display = 'inline-block';
+
+  // Update button text
+  buttonText.textContent = 'Uploading...';
+
+  // Disable button to prevent double-submit
+  button.disabled = true;
+
+  return true; // Allow form submission
+}
+</script>
+```
+
+**CSS Classes Available:**
+```css
+/* Button spinner (white, for colored buttons) */
+.loading-spinner-button
+
+/* General spinners (uses --primary color) */
+.loading-spinner           /* Base class */
+.loading-spinner-sm        /* 1rem - for buttons */
+.loading-spinner-md        /* 2rem - for inline content */
+.loading-spinner-lg        /* 3rem - for modals */
+
+/* Button loading state */
+.btn-loading               /* Disabled appearance */
+```
+
+**Implementation Examples:**
+
+1. **Form Submit (Synchronous)** - Resume upload
+   - Location: `templates/upload.html`
+   - Pattern: Show spinner on form submit, disable button
+   - See: [upload.html:150-199](../active_interview_backend/active_interview_app/templates/upload.html#L150-L199)
+
+2. **AJAX Download (Asynchronous)** - PDF/CSV reports
+   - Location: `templates/reports/export-report.html` + `static/js/reports.js`
+   - Pattern: Fetch API download with spinner, button re-enabled after
+   - See: [reports.js](../active_interview_backend/active_interview_app/static/js/reports.js)
+
+**Best Practices:**
+- ✅ Always disable button when showing spinner
+- ✅ Update button text to describe action ("Uploading...", "Generating...")
+- ✅ Hide spinner and re-enable button on success/error
+- ✅ Use `aria-hidden="true"` on spinner elements
+- ✅ Use `role="status"` for accessibility
+- ❌ Don't use spinners for instant operations (< 1 second)
+
 ---
 
 ## Support

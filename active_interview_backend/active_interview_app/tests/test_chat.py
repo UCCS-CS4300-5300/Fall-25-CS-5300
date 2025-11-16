@@ -447,26 +447,26 @@ class TestOpenAIClient(TestCase):
         self.assertIn("Failed to initialize OpenAI client", str(context.exception))
 
     @patch('active_interview_app.openai_utils.get_openai_client')
-    def test_ai_available_returns_true_when_client_works(self, mock_get_client):
-        """Test that _ai_available returns True when client is available"""
-        from active_interview_app.openai_utils import _ai_available
+    def testai_available_returns_true_when_client_works(self, mock_get_client):
+        """Test that ai_available returns True when client is available"""
+        from active_interview_app.openai_utils import ai_available
 
         # Setup mock to return successfully
         mock_get_client.return_value = MagicMock()
 
         # Should return True
-        self.assertTrue(_ai_available())
+        self.assertTrue(ai_available())
 
     @patch('active_interview_app.openai_utils.get_openai_client')
-    def test_ai_available_returns_false_on_error(self, mock_get_client):
-        """Test that _ai_available returns False when client fails"""
-        from active_interview_app.openai_utils import _ai_available
+    def testai_available_returns_false_on_error(self, mock_get_client):
+        """Test that ai_available returns False when client fails"""
+        from active_interview_app.openai_utils import ai_available
 
         # Setup mock to raise error
         mock_get_client.side_effect = ValueError("API key missing")
 
         # Should return False
-        self.assertFalse(_ai_available())
+        self.assertFalse(ai_available())
 
     def test_ai_unavailable_json(self):
         """Test that _ai_unavailable_json returns proper error response"""

@@ -361,7 +361,7 @@ class ChatViewTest(TestCase):
 
         self.assertEqual(response.status_code, 403)
 
-    @patch('active_interview_app.views._ai_available', return_value=False)
+    @patch('active_interview_app.views.ai_available', return_value=False)
     def test_chat_view_post_ai_disabled(self, mock_ai):
         """Test POST to chat when AI is disabled"""
         response = self.client.post(
@@ -409,7 +409,7 @@ class RestartChatViewTest(TestCase):
             job_listing=self.job
         )
 
-    @patch('active_interview_app.views._ai_available', return_value=False)
+    @patch('active_interview_app.views.ai_available', return_value=False)
     def test_restart_chat_post(self, mock_ai):
         """Test POST to restart chat"""
         response = self.client.post(reverse('chat-restart', args=[self.chat.id]), {
@@ -480,7 +480,7 @@ class KeyQuestionsViewTest(TestCase):
         self.assertIn('chat', response.context)
         self.assertIn('question', response.context)
 
-    @patch('active_interview_app.views._ai_available', return_value=False)
+    @patch('active_interview_app.views.ai_available', return_value=False)
     def test_key_questions_view_post_ai_disabled(self, mock_ai):
         """Test POST answer when AI is disabled"""
         response = self.client.post(
