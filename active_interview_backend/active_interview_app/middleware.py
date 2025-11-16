@@ -33,8 +33,8 @@ class MetricsMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        # Record start time
-        start_time = time.time()
+        # Record start time with high-resolution timer
+        start_time = time.perf_counter()
 
         # Process request
         response = None
@@ -48,7 +48,7 @@ class MetricsMiddleware:
             raise
         finally:
             # Calculate response time
-            end_time = time.time()
+            end_time = time.perf_counter()
             response_time_ms = (end_time - start_time) * 1000
 
             # Record metrics (non-blocking)
@@ -180,12 +180,12 @@ class PerformanceMonitorMiddleware:
         self.slow_request_threshold_ms = 1000  # 1 second
 
     def __call__(self, request):
-        start_time = time.time()
+        start_time = time.perf_counter()
 
         response = self.get_response(request)
 
         # Calculate response time
-        end_time = time.time()
+        end_time = time.perf_counter()
         response_time_ms = (end_time - start_time) * 1000
 
         # Log slow requests

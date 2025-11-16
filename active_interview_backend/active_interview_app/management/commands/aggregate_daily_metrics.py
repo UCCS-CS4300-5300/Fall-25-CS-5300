@@ -80,17 +80,10 @@ class Command(BaseCommand):
         """
         self.stdout.write(f"\nProcessing request metrics for {date}...")
 
-        # Get all requests for this date
-        start_time = timezone.make_aware(
-            datetime.combine(date, datetime.min.time())
-        )
-        end_time = timezone.make_aware(
-            datetime.combine(date, datetime.max.time())
-        )
-
+        # Get all requests for this date using date filtering
+        # This works correctly with both timezone-aware and naive datetimes
         requests = RequestMetric.objects.filter(
-            timestamp__gte=start_time,
-            timestamp__lte=end_time
+            timestamp__date=date
         )
 
         total_requests = requests.count()
@@ -176,17 +169,10 @@ class Command(BaseCommand):
         """
         self.stdout.write(f"\nProcessing provider costs for {date}...")
 
-        # Get all token usage for this date
-        start_time = timezone.make_aware(
-            datetime.combine(date, datetime.min.time())
-        )
-        end_time = timezone.make_aware(
-            datetime.combine(date, datetime.max.time())
-        )
-
+        # Get all token usage for this date using date filtering
+        # This works correctly with both timezone-aware and naive datetimes
         token_records = TokenUsage.objects.filter(
-            created_at__gte=start_time,
-            created_at__lte=end_time
+            created_at__date=date
         )
 
         if not token_records.exists():

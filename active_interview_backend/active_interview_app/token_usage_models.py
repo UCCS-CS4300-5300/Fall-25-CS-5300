@@ -3,6 +3,7 @@ Token usage tracking models for monitoring API calls to Claude and ChatGPT.
 """
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 
 class TokenUsage(models.Model):
@@ -10,7 +11,7 @@ class TokenUsage(models.Model):
     Tracks individual API calls to Claude and ChatGPT services.
     Records token usage per request with model differentiation.
     """
-    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    created_at = models.DateTimeField(default=timezone.now, db_index=True)
     user = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,

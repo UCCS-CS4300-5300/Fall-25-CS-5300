@@ -153,13 +153,14 @@ class RequestMetricModelTests(TestCase):
 
         # Create mix of successful and error requests
         # 70 successful, 20 client errors, 10 server errors = 30% error rate
+        # Use seconds instead of minutes to fit all requests within 1 hour window
         for i in range(70):
             RequestMetric.objects.create(
                 endpoint='/api/test/',
                 method='GET',
                 status_code=200,
                 response_time_ms=100.0,
-                timestamp=start_time + timedelta(minutes=i)
+                timestamp=start_time + timedelta(seconds=i)
             )
 
         for i in range(20):
@@ -168,7 +169,7 @@ class RequestMetricModelTests(TestCase):
                 method='GET',
                 status_code=404,
                 response_time_ms=50.0,
-                timestamp=start_time + timedelta(minutes=i)
+                timestamp=start_time + timedelta(seconds=70 + i)
             )
 
         for i in range(10):
@@ -177,7 +178,7 @@ class RequestMetricModelTests(TestCase):
                 method='POST',
                 status_code=500,
                 response_time_ms=200.0,
-                timestamp=start_time + timedelta(minutes=i)
+                timestamp=start_time + timedelta(seconds=90 + i)
             )
 
         error_stats = RequestMetric.get_error_rate(
@@ -197,7 +198,9 @@ class RequestMetricModelTests(TestCase):
         end_time = start_time + timedelta(hours=1)
 
         # Create requests with varying response times
-        # Use known distribution: 50ms (p50) and 200ms (p95)
+        # Distribution: 50 values of 50ms, 30 of 100ms, 15 of 150ms, 5 of 200ms
+        # p50 will interpolate between index 49 (50ms) and 50 (100ms) = ~75ms
+        # p95 will be around 150-200ms range
         response_times = [50] * 50 + [100] * 30 + [150] * 15 + [200] * 5
 
         for i, rt in enumerate(response_times):
@@ -216,8 +219,10 @@ class RequestMetricModelTests(TestCase):
         )
 
         self.assertEqual(percentiles['count'], 100)
-        self.assertAlmostEqual(percentiles['p50'], 50.0, delta=10.0)
-        self.assertAlmostEqual(percentiles['p95'], 150.0, delta=30.0)
+        # p50 interpolates between 50ms and 100ms, expecting ~75ms
+        self.assertAlmostEqual(percentiles['p50'], 75.0, delta=10.0)
+        # p95 should be in the 150-200ms range
+        self.assertAlmostEqual(percentiles['p95'], 175.0, delta=30.0)
         self.assertEqual(percentiles['min'], 50.0)
         self.assertEqual(percentiles['max'], 200.0)
 
@@ -569,8 +574,11 @@ class CleanupOldMetricsCommandTests(TransactionTestCase):
 
     def test_cleanup_deletes_old_metrics(self):
         """Test that old metrics are actually deleted."""
+        # Use a fixed reference time to avoid timing issues
+        now = timezone.now()
+
         # Create old metric (40 days ago)
-        old_date = timezone.now() - timedelta(days=40)
+        old_date = now - timedelta(days=40)
         RequestMetric.objects.create(
             endpoint='/api/old/',
             method='GET',
@@ -580,7 +588,7 @@ class CleanupOldMetricsCommandTests(TransactionTestCase):
         )
 
         # Create recent metric (10 days ago)
-        recent_date = timezone.now() - timedelta(days=10)
+        recent_date = now - timedelta(days=10)
         RequestMetric.objects.create(
             endpoint='/api/recent/',
             method='GET',
@@ -592,8 +600,22 @@ class CleanupOldMetricsCommandTests(TransactionTestCase):
         out = StringIO()
         call_command('cleanup_old_metrics', '--days', '30', stdout=out)
 
+        # Debug: Print command output and dates
+        print(f"\nCleanup Command output:\n{out.getvalue()}")
+        print(f"Now: {now}")
+        print(f"Old date: {old_date}")
+        print(f"Recent date: {recent_date}")
+        print(f"Expected cutoff: {now - timedelta(days=30)}")
+        remaining_metrics = RequestMetric.objects.all()
+        for m in remaining_metrics:
+            print(f"  Remaining metric: {m.endpoint} at {m.timestamp}")
+
         # Only recent metric should remain
-        self.assertEqual(RequestMetric.objects.count(), 1)
+        remaining = RequestMetric.objects.count()
+        self.assertEqual(remaining, 1,
+            f"Expected 1 metric to remain, but found {remaining}. "
+            f"Old date: {old_date}, Recent date: {recent_date}, "
+            f"Cutoff would be: {now - timedelta(days=30)}")
         self.assertEqual(
             RequestMetric.objects.first().endpoint,
             '/api/recent/'
@@ -658,6 +680,12 @@ class AggregateDailyMetricsCommandTests(TransactionTestCase):
             stdout=out
         )
 
+        # Debug: Print command output
+        print(f"\nCommand output:\n{out.getvalue()}")
+        print(f"Yesterday: {self.yesterday}, Date: {self.yesterday.date()}")
+        print(f"RequestMetric count: {RequestMetric.objects.count()}")
+        print(f"DailyMetricsSummary count: {DailyMetricsSummary.objects.count()}")
+
         # Check that summary was created
         summary = DailyMetricsSummary.objects.get(
             date=self.yesterday.date()
@@ -687,6 +715,11 @@ class AggregateDailyMetricsCommandTests(TransactionTestCase):
             '--date', self.yesterday.strftime('%Y-%m-%d'),
             stdout=out
         )
+
+        # Debug: Print command output
+        print(f"\nProvider Cost Command output:\n{out.getvalue()}")
+        print(f"TokenUsage count: {TokenUsage.objects.count()}")
+        print(f"ProviderCostDaily count: {ProviderCostDaily.objects.count()}")
 
         # Check that provider cost was created
         cost = ProviderCostDaily.objects.get(

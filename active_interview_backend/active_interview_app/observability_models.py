@@ -15,7 +15,7 @@ class RequestMetric(models.Model):
     Tracks individual HTTP requests for calculating RPS and analyzing traffic patterns.
     Records every request with timestamp, endpoint, method, and status code.
     """
-    timestamp = models.DateTimeField(auto_now_add=True, db_index=True)
+    timestamp = models.DateTimeField(default=timezone.now, db_index=True)
     endpoint = models.CharField(
         max_length=255,
         db_index=True,
@@ -340,7 +340,7 @@ class ErrorLog(models.Model):
     Detailed error logging for debugging and analysis.
     Captures full error details including stack traces.
     """
-    timestamp = models.DateTimeField(auto_now_add=True, db_index=True)
+    timestamp = models.DateTimeField(default=timezone.now, db_index=True)
     endpoint = models.CharField(max_length=255, db_index=True)
     method = models.CharField(max_length=10)
     status_code = models.IntegerField(db_index=True)
