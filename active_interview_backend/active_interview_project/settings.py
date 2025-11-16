@@ -47,7 +47,9 @@ PROD = os.environ.get("PROD", "true").lower() == "true"
 DEBUG = not PROD
 
 ALLOWED_HOSTS = [
-    'app.activeinterviewservice.me',
+    'activeinterviewservice.app',
+    'www.activeinterviewservice.app',
+    'app.activeinterviewservice.me',  # Keep old domain for transition
     'localhost',
     '127.0.0.1',
     '.railway.app',
@@ -57,7 +59,9 @@ ALLOWED_HOSTS = [
 CSRF_TRUSTED_ORIGINS = [
     'https://*.railway.app',
     'https://*.up.railway.app',
-    'https://app.activeinterviewservice.me',
+    'https://activeinterviewservice.app',
+    'https://www.activeinterviewservice.app',
+    'https://app.activeinterviewservice.me',  # Keep old domain for transition
 ]
 
 # Proxy/HTTPS configuration for Railway
@@ -261,7 +265,7 @@ else:
 
 # Site URL for emails, invitations, and exports (Issue #4, #8, #63, #64, #139)
 if PROD:
-    SITE_URL = 'https://app.activeinterviewservice.me'
+    SITE_URL = 'https://activeinterviewservice.app'
 else:
     SITE_URL = 'http://localhost:8000'
 
@@ -274,8 +278,8 @@ if PROD:
     EMAIL_USE_TLS = True
     EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
     EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
-    DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@activeinterviewservice.me')
+    DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@activeinterviewservice.app')
 else:
     # Development: Use console backend (prints emails to console)
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-    DEFAULT_FROM_EMAIL = 'noreply@activeinterviewservice.me'
+    DEFAULT_FROM_EMAIL = 'noreply@activeinterviewservice.app'
