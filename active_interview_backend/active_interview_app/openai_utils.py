@@ -39,7 +39,7 @@ def get_openai_client():
     return _openai_client
 
 
-def _ai_available():
+def ai_available():
     """
     Return True if the OpenAI client can be initialized and is usable.
     This checks without raising exceptions.

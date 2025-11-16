@@ -7,6 +7,21 @@ from django.dispatch import receiver
 
 # Create your models here.
 
+# Seniority level constants (Issues #21, #51, #52, #53)
+SENIORITY_ENTRY = 'entry'
+SENIORITY_MID = 'mid'
+SENIORITY_SENIOR = 'senior'
+SENIORITY_LEAD = 'lead'
+SENIORITY_EXECUTIVE = 'executive'
+
+SENIORITY_CHOICES = [
+    (SENIORITY_ENTRY, 'Entry Level'),
+    (SENIORITY_MID, 'Mid Level'),
+    (SENIORITY_SENIOR, 'Senior'),
+    (SENIORITY_LEAD, 'Lead/Principal'),
+    (SENIORITY_EXECUTIVE, 'Executive'),
+]
+
 
 class UserProfile(models.Model):
     """
@@ -117,6 +132,66 @@ class UploadedJobListing(models.Model):  # Renamed from PastedText
     created_at = models.DateTimeField(auto_now_add=True)
     filepath = models.CharField(max_length=255, null=True, blank=True)
     title = models.CharField(max_length=255, null=True, blank=True)
+
+    # NEW: Parsed data fields (Issues #21, #51, #52, #53)
+    required_skills = models.JSONField(
+        default=list,
+        blank=True,
+        help_text='List of required skills extracted from job description'
+    )
+    # Structure: ["Python", "Django", "5+ years experience", "Team leadership"]
+
+    seniority_level = models.CharField(
+        max_length=50,
+        blank=True,
+        choices=SENIORITY_CHOICES,
+        help_text='Inferred seniority level from job description'
+    )
+
+    requirements = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text='Structured requirements extracted from job description'
+    )
+    # Structure: {
+    #     "education": ["Bachelor's in CS", "..."],
+    #     "years_experience": "5+",
+    #     "certifications": ["AWS", "..."],
+    #     "responsibilities": ["...", "..."]
+    # }
+
+    # NEW: Template association (Issue #53)
+    recommended_template = models.ForeignKey(
+        'InterviewTemplate',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='job_listings',
+        help_text='Auto-recommended interview template based on job requirements'
+    )
+
+    # NEW: Parsing metadata (same pattern as UploadedResume)
+    parsing_status = models.CharField(
+        max_length=20,
+        choices=[
+            ('pending', 'Pending'),
+            ('in_progress', 'In Progress'),
+            ('success', 'Success'),
+            ('error', 'Error'),
+        ],
+        default='pending',
+        help_text='Status of AI parsing for this job listing'
+    )
+    parsing_error = models.TextField(
+        blank=True,
+        null=True,
+        help_text='Error message if parsing failed'
+    )
+    parsed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='Timestamp when job description was successfully parsed'
+    )
 
     def __str__(self):
         # return self.filename

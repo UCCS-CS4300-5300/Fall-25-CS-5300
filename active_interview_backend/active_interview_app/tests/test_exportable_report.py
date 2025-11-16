@@ -142,7 +142,7 @@ class ExportableReportViewTest(TestCase):
         url = reverse('generate_report', kwargs={'chat_id': self.chat.id})
 
         # Mock the AI functions to avoid external API calls in tests
-        with patch('active_interview_app.views._ai_available', return_value=False):
+        with patch('active_interview_app.views.ai_available', return_value=False):
             response = self.client.post(url, follow=True)
 
         # Check that report was created
@@ -987,7 +987,7 @@ class IntegratedUserStoriesTest(TestCase):
         generate_url = reverse('generate_report', kwargs={'chat_id': self.chat.id})
 
         # Mock the AI calls to avoid external API dependency
-        with patch('active_interview_app.views._ai_available', return_value=True):
+        with patch('active_interview_app.views.ai_available', return_value=True):
             with patch('active_interview_app.views.get_openai_client') as mock_client:
                 # Mock scores response
                 mock_scores = MagicMock()

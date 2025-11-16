@@ -17,7 +17,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from docx import Document as DocxDocument
 
 from ..models import UploadedResume
-from ..openai_utils import get_openai_client, _ai_available, MAX_TOKENS
+from ..openai_utils import get_openai_client, ai_available, MAX_TOKENS
 from ..resume_parser import parse_resume_with_ai, validate_parsed_data
 
 
@@ -140,25 +140,25 @@ class OpenAIUtilsTests(TestCase):
 
     @override_settings(OPENAI_API_KEY="test-key")
     @patch('active_interview_app.openai_utils.OpenAI')
-    def test_ai_available_returns_true(self, mock_openai):
-        """Test _ai_available returns True when client initializes."""
+    def testai_available_returns_true(self, mock_openai):
+        """Test ai_available returns True when client initializes."""
         # Reset the global client
         import active_interview_app.openai_utils as utils
         utils._openai_client = None
 
         mock_openai.return_value = MagicMock()
 
-        result = _ai_available()
+        result = ai_available()
         self.assertTrue(result)
 
     @override_settings(OPENAI_API_KEY="")
-    def test_ai_available_returns_false(self):
-        """Test _ai_available returns False when client fails."""
+    def testai_available_returns_false(self):
+        """Test ai_available returns False when client fails."""
         # Reset the global client
         import active_interview_app.openai_utils as utils
         utils._openai_client = None
 
-        result = _ai_available()
+        result = ai_available()
         self.assertFalse(result)
 
     def test_max_tokens_constant(self):
@@ -173,11 +173,11 @@ class ResumeParserTests(TestCase):
 
     @override_settings(OPENAI_API_KEY="test-key")
     @patch('active_interview_app.resume_parser.get_openai_client')
-    @patch('active_interview_app.resume_parser._ai_available')
-    def test_parse_resume_with_ai_success(self, mock_ai_available, mock_get_client):
+    @patch('active_interview_app.resume_parser.ai_available')
+    def test_parse_resume_with_ai_success(self, mockai_available, mock_get_client):
         """Test successful resume parsing."""
         # Mock AI availability
-        mock_ai_available.return_value = True
+        mockai_available.return_value = True
 
         # Mock OpenAI client response
         mock_client = MagicMock()
@@ -204,10 +204,10 @@ class ResumeParserTests(TestCase):
         self.assertEqual(len(result['experience']), 2)
         self.assertEqual(result['experience'][0]['company'], "Tech Corp")
 
-    @patch('active_interview_app.resume_parser._ai_available')
-    def test_parse_resume_ai_unavailable(self, mock_ai_available):
+    @patch('active_interview_app.resume_parser.ai_available')
+    def test_parse_resume_ai_unavailable(self, mockai_available):
         """Test parsing fails gracefully when AI is unavailable."""
-        mock_ai_available.return_value = False
+        mockai_available.return_value = False
 
         with self.assertRaises(ValueError) as context:
             parse_resume_with_ai(create_sample_resume_text())
@@ -216,10 +216,10 @@ class ResumeParserTests(TestCase):
 
     @override_settings(OPENAI_API_KEY="test-key")
     @patch('active_interview_app.resume_parser.get_openai_client')
-    @patch('active_interview_app.resume_parser._ai_available')
-    def test_parse_resume_invalid_json(self, mock_ai_available, mock_get_client):
+    @patch('active_interview_app.resume_parser.ai_available')
+    def test_parse_resume_invalid_json(self, mockai_available, mock_get_client):
         """Test parsing handles invalid JSON response."""
-        mock_ai_available.return_value = True
+        mockai_available.return_value = True
 
         # Mock client with invalid JSON
         mock_client = MagicMock()
@@ -236,10 +236,10 @@ class ResumeParserTests(TestCase):
 
     @override_settings(OPENAI_API_KEY="test-key")
     @patch('active_interview_app.resume_parser.get_openai_client')
-    @patch('active_interview_app.resume_parser._ai_available')
-    def test_parse_resume_with_markdown_json(self, mock_ai_available, mock_get_client):
+    @patch('active_interview_app.resume_parser.ai_available')
+    def test_parse_resume_with_markdown_json(self, mockai_available, mock_get_client):
         """Test parsing handles JSON wrapped in markdown code blocks."""
-        mock_ai_available.return_value = True
+        mockai_available.return_value = True
 
         # Mock client with markdown-wrapped JSON
         mock_client = MagicMock()
@@ -258,10 +258,10 @@ class ResumeParserTests(TestCase):
 
     @override_settings(OPENAI_API_KEY="test-key")
     @patch('active_interview_app.resume_parser.get_openai_client')
-    @patch('active_interview_app.resume_parser._ai_available')
-    def test_parse_resume_missing_fields(self, mock_ai_available, mock_get_client):
+    @patch('active_interview_app.resume_parser.ai_available')
+    def test_parse_resume_missing_fields(self, mockai_available, mock_get_client):
         """Test parsing handles missing fields in response."""
-        mock_ai_available.return_value = True
+        mockai_available.return_value = True
 
         # Mock client with partial data
         mock_client = MagicMock()
@@ -281,10 +281,10 @@ class ResumeParserTests(TestCase):
 
     @override_settings(OPENAI_API_KEY="test-key")
     @patch('active_interview_app.resume_parser.get_openai_client')
-    @patch('active_interview_app.resume_parser._ai_available')
-    def test_parse_resume_truncates_long_content(self, mock_ai_available, mock_get_client):
+    @patch('active_interview_app.resume_parser.ai_available')
+    def test_parse_resume_truncates_long_content(self, mockai_available, mock_get_client):
         """Test parsing truncates very long resume content."""
-        mock_ai_available.return_value = True
+        mockai_available.return_value = True
 
         # Mock successful response
         mock_client = MagicMock()
@@ -339,12 +339,12 @@ class ResumeUploadParsingIntegrationTests(TestCase):
         self.client.login(username="testuser", password="testpass123")
 
     @override_settings(OPENAI_API_KEY="test-key")
-    @patch('active_interview_app.views._ai_available')
+    @patch('active_interview_app.views.ai_available')
     @patch('active_interview_app.views.parse_resume_with_ai')
     @patch('filetype.guess')
     @patch('pymupdf4llm.to_markdown')
     def test_resume_upload_with_successful_parsing(
-        self, mock_to_markdown, mock_guess, mock_parse, mock_ai_available
+        self, mock_to_markdown, mock_guess, mock_parse, mockai_available
     ):
         """Test resume upload triggers parsing successfully."""
         # Mock file type detection
@@ -355,7 +355,7 @@ class ResumeUploadParsingIntegrationTests(TestCase):
         mock_to_markdown.return_value = resume_text
 
         # Mock AI availability and parsing
-        mock_ai_available.return_value = True
+        mockai_available.return_value = True
         mock_parse.return_value = create_sample_parsed_data()
 
         # Upload resume
@@ -380,12 +380,12 @@ class ResumeUploadParsingIntegrationTests(TestCase):
         self.assertEqual(len(resume.education), 1)
 
     @override_settings(OPENAI_API_KEY="test-key")
-    @patch('active_interview_app.views._ai_available')
+    @patch('active_interview_app.views.ai_available')
     @patch('active_interview_app.views.parse_resume_with_ai')
     @patch('filetype.guess')
     @patch('pymupdf4llm.to_markdown')
     def test_resume_upload_with_parsing_error(
-        self, mock_to_markdown, mock_guess, mock_parse, mock_ai_available
+        self, mock_to_markdown, mock_guess, mock_parse, mockai_available
     ):
         """Test resume upload handles parsing errors gracefully."""
         # Mock file type detection and text extraction
@@ -393,7 +393,7 @@ class ResumeUploadParsingIntegrationTests(TestCase):
         mock_to_markdown.return_value = create_sample_resume_text()
 
         # Mock AI available but parsing fails
-        mock_ai_available.return_value = True
+        mockai_available.return_value = True
         mock_parse.side_effect = ValueError("OpenAI rate limit exceeded")
 
         # Upload resume
@@ -416,11 +416,11 @@ class ResumeUploadParsingIntegrationTests(TestCase):
         self.assertEqual(resume.skills, [])  # Default empty list
 
     @override_settings(OPENAI_API_KEY="")
-    @patch('active_interview_app.views._ai_available')
+    @patch('active_interview_app.views.ai_available')
     @patch('filetype.guess')
     @patch('pymupdf4llm.to_markdown')
     def test_resume_upload_with_ai_unavailable(
-        self, mock_to_markdown, mock_guess, mock_ai_available
+        self, mock_to_markdown, mock_guess, mockai_available
     ):
         """Test resume upload when AI service is unavailable."""
         # Mock file type detection and text extraction
@@ -428,7 +428,7 @@ class ResumeUploadParsingIntegrationTests(TestCase):
         mock_to_markdown.return_value = create_sample_resume_text()
 
         # Mock AI unavailable
-        mock_ai_available.return_value = False
+        mockai_available.return_value = False
 
         # Upload resume
         file = SimpleUploadedFile("resume.pdf", b"%PDF-1.4 test", content_type="application/pdf")
@@ -448,12 +448,12 @@ class ResumeUploadParsingIntegrationTests(TestCase):
         self.assertEqual(resume.skills, [])
 
     @override_settings(OPENAI_API_KEY="test-key")
-    @patch('active_interview_app.views._ai_available')
+    @patch('active_interview_app.views.ai_available')
     @patch('filetype.guess')
-    def test_docx_upload_with_parsing(self, mock_guess, mock_ai_available):
+    def test_docx_upload_with_parsing(self, mock_guess, mockai_available):
         """Test DOCX resume upload and parsing."""
         # Mock AI unavailable to simplify test (focus on file handling)
-        mock_ai_available.return_value = False
+        mockai_available.return_value = False
 
         # Create DOCX file
         doc = DocxDocument()
