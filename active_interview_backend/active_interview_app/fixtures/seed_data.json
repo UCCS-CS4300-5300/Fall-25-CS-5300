@@ -9,7 +9,7 @@
     "first_name": "Admin",
     "last_name": "User",
     "email": "admin@example.com",
-    "is_staff": true,
+    "is_staff": false,
     "is_active": true,
     "date_joined": "2024-01-01T00:00:00Z",
     "groups": [],
