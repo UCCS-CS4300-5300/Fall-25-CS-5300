@@ -80,6 +80,8 @@ urlpatterns = [
     path('pasted-text/', views.UploadedJobListingView.as_view(),
          name='save_pasted_text'),
     path('api/job-listings/', views.JobListingList.as_view(), name='pasted_text_list'),
+    path('api/job-listing/analyze/', views.JobListingAnalyzeView.as_view(),
+         name='analyze_job_listing'),  # Issues #21, #51, #52, #53
     path('resume/<int:resume_id>/', views.resume_detail, name='resume_detail'),
     path('job-posting/<int:job_id>/',
          views.job_posting_detail, name='job_posting_detail'),

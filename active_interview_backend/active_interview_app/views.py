@@ -13,7 +13,7 @@ from docx import Document
 from .models import (
     UploadedResume, UploadedJobListing, Chat,
     ExportableReport, UserProfile, RoleChangeRequest,
-    InterviewTemplate, DataExportRequest, DeletionRequest
+    InterviewTemplate, DataExportRequest, DeletionRequest, Tag
 )
 from .forms import (
     CreateUserForm,
@@ -31,6 +31,7 @@ from .serializers import (
 )
 from .pdf_export import generate_pdf_report, get_score_rating
 from .resume_parser import parse_resume_with_ai
+from .job_listing_parser import parse_job_listing_with_ai
 from .user_data_utils import (
     process_export_request,
     delete_user_account,
@@ -60,7 +61,7 @@ from rest_framework.views import APIView
 
 
 # Import OpenAI utilities (moved to separate module to prevent circular imports)
-from .openai_utils import get_openai_client, _ai_available, MAX_TOKENS
+from .openai_utils import get_openai_client, ai_available, MAX_TOKENS
 
 # Import RBAC decorators (Issue #69)
 from .decorators import (
@@ -275,7 +276,7 @@ class CreateChat(LoginRequiredMixin, View):
                 ]
 
                 # Make ai speak first
-                if not _ai_available():
+                if not ai_available():
                     messages.error(request, "AI features are disabled on this server.")
                     ai_message = ""
                 else:
@@ -404,7 +405,7 @@ class CreateChat(LoginRequiredMixin, View):
                 ]
 
                 # Make ai speak first
-                if not _ai_available():
+                if not ai_available():
                     messages.error(request, "AI features are disabled on this server.")
                     ai_message = "[]"
                 else:
@@ -466,7 +467,7 @@ class ChatView(LoginRequiredMixin, UserPassesTestMixin, View):
         new_messages = chat.messages
         new_messages.append({"role": "user", "content": user_message})
 
-        if not _ai_available():
+        if not ai_available():
             return _ai_unavailable_json()
 
         response = get_openai_client().chat.completions.create(
@@ -708,7 +709,7 @@ class KeyQuestionsView(LoginRequiredMixin, UserPassesTestMixin, View):
             }
         ]
 
-        if not _ai_available():
+        if not ai_available():
             return _ai_unavailable_json()
 
         response = get_openai_client().chat.completions.create(
@@ -744,7 +745,7 @@ class ResultsChat(LoginRequiredMixin, UserPassesTestMixin, View):
         input_messages = chat.messages
         input_messages.append({"role": "user", "content": feedback_prompt})
 
-        if not _ai_available():
+        if not ai_available():
             ai_message = "AI features are currently unavailable."
         else:
             response = get_openai_client().chat.completions.create(
@@ -796,7 +797,7 @@ class ResultCharts(LoginRequiredMixin, UserPassesTestMixin, View):
 
         input_messages.append({"role": "user", "content": scores_prompt})
 
-        if not _ai_available():
+        if not ai_available():
             professionalism, subject_knowledge, clarity, overall = [0, 0, 0, 0]
         else:
             response = get_openai_client().chat.completions.create(
@@ -830,7 +831,7 @@ class ResultCharts(LoginRequiredMixin, UserPassesTestMixin, View):
             interview
         """)
         input_messages.append({"role": "user", "content": explain})
-        if not _ai_available():
+        if not ai_available():
             ai_message = "AI features are currently unavailable."
         else:
             response = get_openai_client().chat.completions.create(
@@ -1009,7 +1010,7 @@ def upload_file(request):
 
                     # Trigger AI parsing for resumes (Issue #48: "upload triggers parsing")
                     if instance.__class__.__name__ == 'UploadedResume':
-                        if _ai_available():
+                        if ai_available():
                             try:
                                 # Set status to in_progress
                                 instance.parsing_status = 'in_progress'
@@ -1227,6 +1228,169 @@ class JobListingList(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+def recommend_template_for_job(job_listing):
+    """
+    Recommend an interview template for a job listing based on:
+    - Tags (match required skills to template tags)
+    - Seniority level (match difficulty distribution)
+    - User's existing templates
+
+    Args:
+        job_listing (UploadedJobListing): Job listing with parsed data
+
+    Returns:
+        InterviewTemplate or None: Best matching template, or None if no good match
+
+    Issues: #21, #53
+    """
+    # Get user's templates with prefetched tags to avoid N+1 queries
+    templates = InterviewTemplate.objects.filter(
+        user=job_listing.user
+    ).prefetch_related('tags')
+
+    if not templates.exists():
+        return None
+
+    best_match = None
+    best_score = 0
+
+    for template in templates:
+        score = 0
+
+        # Match tags (skills) - worth up to 50 points
+        template_tags = set(tag.name.lower().replace('#', '') for tag in template.tags.all())
+        if template_tags:
+            job_skills = set(skill.lower() for skill in job_listing.required_skills)
+            matching_tags = template_tags & job_skills
+            score += len(matching_tags) * 10  # 10 points per matching skill
+
+        # Match difficulty distribution to seniority - worth up to 30 points
+        if job_listing.seniority_level:
+            if job_listing.seniority_level == 'entry' and template.easy_percentage > 40:
+                score += 20
+            elif job_listing.seniority_level == 'mid' and template.medium_percentage > 40:
+                score += 20
+            elif job_listing.seniority_level == 'senior' and template.hard_percentage > 30:
+                score += 20
+            elif job_listing.seniority_level == 'lead' and template.hard_percentage > 40:
+                score += 25
+            elif job_listing.seniority_level == 'executive' and template.hard_percentage > 50:
+                score += 30
+
+        # Bonus points for complete templates - worth up to 20 points
+        if template.is_complete():
+            score += 20
+
+        if score > best_score:
+            best_score = score
+            best_match = template
+
+    # Only return a match if the score is meaningful (at least 20 points)
+    # This prevents recommending completely unrelated templates
+    if best_score >= 20:
+        return best_match
+
+    return None
+
+
+class JobListingAnalyzeView(APIView):
+    """
+    API endpoint to analyze job description and extract structured data.
+
+    POST /api/job-listing/analyze/
+    {
+        "title": "Senior Python Developer",
+        "description": "Job description text..."
+    }
+
+    Returns:
+    {
+        "id": 123,
+        "title": "Senior Python Developer",
+        "required_skills": ["Python", "Django", ...],
+        "seniority_level": "senior",
+        "requirements": {...},
+        "recommended_template": {...},
+        "parsing_status": "success"
+    }
+
+    Issues: #21, #51, #52, #53
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        # Validate input
+        title = request.data.get('title', '').strip()
+        description = request.data.get('description', '').strip()
+
+        if not title or not description:
+            return Response(
+                {'error': 'Both title and description are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Create UploadedJobListing with pending status
+        job_listing = UploadedJobListing.objects.create(
+            user=request.user,
+            title=title,
+            content=description,
+            filename=f"{slugify(title)}.txt",
+            parsing_status='in_progress'
+        )
+
+        try:
+            # Call AI parser
+            parsed_data = parse_job_listing_with_ai(description)
+
+            # Update job listing with parsed data
+            job_listing.required_skills = parsed_data['required_skills']
+            job_listing.seniority_level = parsed_data['seniority_level']
+            job_listing.requirements = parsed_data['requirements']
+            job_listing.parsing_status = 'success'
+            job_listing.parsed_at = timezone.now()
+
+            # Recommend template
+            recommended_template = recommend_template_for_job(job_listing)
+            if recommended_template:
+                job_listing.recommended_template = recommended_template
+
+            job_listing.save()
+
+            # Serialize and return
+            serializer = UploadedJobListingSerializer(job_listing)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        except ValueError as e:
+            # Parsing failed
+            job_listing.parsing_status = 'error'
+            job_listing.parsing_error = str(e)
+            job_listing.save()
+
+            return Response(
+                {
+                    'error': 'Failed to parse job description',
+                    'detail': str(e),
+                    'job_listing_id': job_listing.id
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        except Exception as e:
+            # Unexpected error
+            job_listing.parsing_status = 'error'
+            job_listing.parsing_error = f'Unexpected error: {str(e)}'
+            job_listing.save()
+
+            return Response(
+                {
+                    'error': 'An unexpected error occurred',
+                    'detail': str(e),
+                    'job_listing_id': job_listing.id
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
 class DocumentList(LoginRequiredMixin, View):
     def get(self, request):
         context = {}
@@ -1322,7 +1486,7 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
         input_messages = list(chat.messages)
         input_messages.append({"role": "user", "content": scores_prompt})
 
-        if not _ai_available():
+        if not ai_available():
             professionalism, subject_knowledge, clarity, overall = [0, 0, 0, 0]
         else:
             try:
@@ -1361,7 +1525,7 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
         input_messages = list(chat.messages)
         input_messages.append({"role": "user", "content": explain_prompt})
 
-        if not _ai_available():
+        if not ai_available():
             return "AI features are currently unavailable."
 
         try:
@@ -1395,7 +1559,7 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
         input_messages = list(chat.messages)
         input_messages.append({"role": "user", "content": rationale_prompt})
 
-        if not _ai_available():
+        if not ai_available():
             return {
                 'professionalism': 'AI features are currently unavailable.',
                 'subject_knowledge': 'AI features are currently unavailable.',

@@ -14,11 +14,27 @@ class UploadedResumeSerializer(serializers.ModelSerializer):
 class UploadedJobListingSerializer(serializers.ModelSerializer):
     filename = serializers.CharField(required=False, allow_blank=True, default='')
     file = serializers.FileField(required=False, allow_null=True)
+    recommended_template_name = serializers.CharField(
+        source='recommended_template.name',
+        read_only=True,
+        allow_null=True
+    )
 
     class Meta:
         model = UploadedJobListing
-        fields = ['id', 'user', 'filename', 'content', 'created_at', 'title', 'file']
-        read_only_fields = ['id', 'created_at', 'user']
+        fields = [
+            'id', 'user', 'filename', 'content', 'created_at', 'title', 'file',
+            # NEW: Parsed data fields (Issues #21, #51, #52, #53)
+            'required_skills', 'seniority_level', 'requirements',
+            'recommended_template', 'recommended_template_name',
+            'parsing_status', 'parsing_error', 'parsed_at'
+        ]
+        read_only_fields = [
+            'id', 'created_at', 'user',
+            # Parsing fields are set by backend, not user input
+            'required_skills', 'seniority_level', 'requirements',
+            'recommended_template', 'parsing_status', 'parsing_error', 'parsed_at'
+        ]
 
 
 class ExportableReportSerializer(serializers.ModelSerializer):

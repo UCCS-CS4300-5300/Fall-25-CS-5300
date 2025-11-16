@@ -278,7 +278,7 @@ class ResultChartsScoreParsingEdgeCasesTest(TestCase):
             messages=[{"role": "system", "content": "test"}]
         )
 
-    @patch('active_interview_app.views._ai_available')
+    @patch('active_interview_app.views.ai_available')
     @patch('active_interview_app.views.get_openai_client')
     def test_result_charts_with_non_digit_scores(self, mock_client, mock_ai):
         """Test when score response contains non-digits"""
@@ -303,7 +303,7 @@ class ResultChartsScoreParsingEdgeCasesTest(TestCase):
         scores = response.context['scores']
         self.assertEqual(scores['Professionalism'], 0)
 
-    @patch('active_interview_app.views._ai_available')
+    @patch('active_interview_app.views.ai_available')
     @patch('active_interview_app.views.get_openai_client')
     def test_result_charts_with_empty_response(self, mock_client, mock_ai):
         """Test when AI returns empty score response"""

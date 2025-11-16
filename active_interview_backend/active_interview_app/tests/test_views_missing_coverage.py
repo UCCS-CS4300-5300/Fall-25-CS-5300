@@ -16,7 +16,7 @@ from active_interview_app.models import (
 )
 from active_interview_app.views import (
     get_openai_client,
-    _ai_available,
+    ai_available,
     _ai_unavailable_json
 )
 
@@ -53,18 +53,18 @@ class OpenAIClientTest(TestCase):
         self.assertIn("Failed to initialize OpenAI client", str(context.exception))
 
     @patch('active_interview_app.views.get_openai_client')
-    def test_ai_available_returns_true(self, mock_get_client):
-        """Test _ai_available when client can be initialized"""
+    def testai_available_returns_true(self, mock_get_client):
+        """Test ai_available when client can be initialized"""
         mock_get_client.return_value = MagicMock()
 
-        self.assertTrue(_ai_available())
+        self.assertTrue(ai_available())
 
     @patch('active_interview_app.openai_utils.get_openai_client')
-    def test_ai_available_returns_false_on_error(self, mock_get_client):
-        """Test _ai_available when client cannot be initialized"""
+    def testai_available_returns_false_on_error(self, mock_get_client):
+        """Test ai_available when client cannot be initialized"""
         mock_get_client.side_effect = ValueError("No API key")
 
-        self.assertFalse(_ai_available())
+        self.assertFalse(ai_available())
 
     def test_ai_unavailable_json_response(self):
         """Test _ai_unavailable_json returns proper JSON error"""
