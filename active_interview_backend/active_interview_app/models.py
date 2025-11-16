@@ -7,6 +7,21 @@ from django.dispatch import receiver
 
 # Create your models here.
 
+# Seniority level constants (Issues #21, #51, #52, #53)
+SENIORITY_ENTRY = 'entry'
+SENIORITY_MID = 'mid'
+SENIORITY_SENIOR = 'senior'
+SENIORITY_LEAD = 'lead'
+SENIORITY_EXECUTIVE = 'executive'
+
+SENIORITY_CHOICES = [
+    (SENIORITY_ENTRY, 'Entry Level'),
+    (SENIORITY_MID, 'Mid Level'),
+    (SENIORITY_SENIOR, 'Senior'),
+    (SENIORITY_LEAD, 'Lead/Principal'),
+    (SENIORITY_EXECUTIVE, 'Executive'),
+]
+
 
 class UserProfile(models.Model):
     """
@@ -129,13 +144,7 @@ class UploadedJobListing(models.Model):  # Renamed from PastedText
     seniority_level = models.CharField(
         max_length=50,
         blank=True,
-        choices=[
-            ('entry', 'Entry Level'),
-            ('mid', 'Mid Level'),
-            ('senior', 'Senior'),
-            ('lead', 'Lead/Principal'),
-            ('executive', 'Executive'),
-        ],
+        choices=SENIORITY_CHOICES,
         help_text='Inferred seniority level from job description'
     )
 

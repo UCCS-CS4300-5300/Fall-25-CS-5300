@@ -119,7 +119,7 @@ class GenerateReportAITest(TestCase):
         self.client.login(username='testuser', password='pass123')
         url = reverse('generate_report', kwargs={'chat_id': self.chat.id})
 
-        with patch('active_interview_app.views._ai_available', return_value=True):
+        with patch('active_interview_app.views.ai_available', return_value=True):
             with patch('active_interview_app.views.get_openai_client') as mock_client:
                 mock_client.return_value.chat.completions.create.side_effect = Exception('API Error')
                 response = self.client.post(url, follow=True)
@@ -138,7 +138,7 @@ class GenerateReportAITest(TestCase):
         mock_response.choices = [MagicMock()]
         mock_response.choices[0].message.content = "invalid\nformat\nhere"
 
-        with patch('active_interview_app.views._ai_available', return_value=True):
+        with patch('active_interview_app.views.ai_available', return_value=True):
             with patch('active_interview_app.views.get_openai_client') as mock_client:
                 mock_client.return_value.chat.completions.create.return_value = mock_response
                 response = self.client.post(url, follow=True)
@@ -156,7 +156,7 @@ class GenerateReportAITest(TestCase):
         mock_response.choices = [MagicMock()]
         mock_response.choices[0].message.content = "85\n78"  # Only 2 scores
 
-        with patch('active_interview_app.views._ai_available', return_value=True):
+        with patch('active_interview_app.views.ai_available', return_value=True):
             with patch('active_interview_app.views.get_openai_client') as mock_client:
                 mock_client.return_value.chat.completions.create.return_value = mock_response
                 response = self.client.post(url, follow=True)
@@ -169,7 +169,7 @@ class GenerateReportAITest(TestCase):
         self.client.login(username='testuser', password='pass123')
         url = reverse('generate_report', kwargs={'chat_id': self.chat.id})
 
-        with patch('active_interview_app.views._ai_available', return_value=True):
+        with patch('active_interview_app.views.ai_available', return_value=True):
             with patch('active_interview_app.views.get_openai_client') as mock_client:
                 # Create proper mock responses for the three AI calls
                 mock_scores = MagicMock()
@@ -210,7 +210,7 @@ Overall: Great performance.
         self.client.login(username='testuser', password='pass123')
         url = reverse('generate_report', kwargs={'chat_id': self.chat.id})
 
-        with patch('active_interview_app.views._ai_available', return_value=True):
+        with patch('active_interview_app.views.ai_available', return_value=True):
             with patch('active_interview_app.views.get_openai_client') as mock_client:
                 # Create proper mock responses for the three AI calls
                 mock_scores = MagicMock()
@@ -252,7 +252,7 @@ Overall: Good.
         self.client.login(username='testuser', password='pass123')
         url = reverse('generate_report', kwargs={'chat_id': self.chat.id})
 
-        with patch('active_interview_app.views._ai_available', return_value=True):
+        with patch('active_interview_app.views.ai_available', return_value=True):
             with patch('active_interview_app.views.get_openai_client') as mock_client:
                 # Create proper mock responses for the three AI calls
                 mock_scores = MagicMock()
@@ -693,7 +693,7 @@ class ResultViewsTest(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(username='testuser', password='pass123')
 
-    @patch('active_interview_app.views._ai_available', return_value=False)
+    @patch('active_interview_app.views.ai_available', return_value=False)
     def test_results_chat_ai_unavailable(self, mock_ai):
         """Test results when AI unavailable"""
         chat = Chat.objects.create(
@@ -709,7 +709,7 @@ class ResultViewsTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn('AI features are currently unavailable', response.context['feedback'])
 
-    @patch('active_interview_app.views._ai_available', return_value=False)
+    @patch('active_interview_app.views.ai_available', return_value=False)
     def test_result_charts_ai_unavailable(self, mock_ai):
         """Test result charts when AI unavailable"""
         chat = Chat.objects.create(
@@ -785,7 +785,7 @@ class KeyQuestionsViewTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
-    @patch('active_interview_app.views._ai_available', return_value=False)
+    @patch('active_interview_app.views.ai_available', return_value=False)
     def test_key_questions_post_ai_unavailable(self, mock_ai):
         """Test key questions POST when AI unavailable"""
         job = UploadedJobListing.objects.create(
@@ -817,7 +817,7 @@ class ChatViewPostTest(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(username='testuser', password='pass123')
 
-    @patch('active_interview_app.views._ai_available', return_value=False)
+    @patch('active_interview_app.views.ai_available', return_value=False)
     def test_chat_view_post_ai_unavailable(self, mock_ai):
         """Test chat POST when AI unavailable"""
         chat = Chat.objects.create(
@@ -848,7 +848,7 @@ class CreateChatViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn('form', response.context)
 
-    @patch('active_interview_app.views._ai_available', return_value=True)
+    @patch('active_interview_app.views.ai_available', return_value=True)
     @patch('active_interview_app.views.get_openai_client')
     def test_create_chat_post_with_resume(self, mock_client, mock_ai):
         """Test CreateChat POST with resume"""
@@ -892,7 +892,7 @@ class CreateChatViewTest(TestCase):
         # Check chat was created
         self.assertTrue(Chat.objects.filter(title='Test Interview').exists())
 
-    @patch('active_interview_app.views._ai_available', return_value=True)
+    @patch('active_interview_app.views.ai_available', return_value=True)
     @patch('active_interview_app.views.get_openai_client')
     def test_create_chat_post_without_resume(self, mock_client, mock_ai):
         """Test CreateChat POST without resume"""

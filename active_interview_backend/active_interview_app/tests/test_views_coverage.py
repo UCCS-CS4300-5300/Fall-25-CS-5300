@@ -193,10 +193,10 @@ class ChatViewsCoverageTest(TestCase):
             file=fake_resume_file
         )
 
-    @patch('active_interview_app.views._ai_available')
-    def test_create_chat_ai_unavailable(self, mock_ai_available):
+    @patch('active_interview_app.views.ai_available')
+    def test_create_chat_ai_unavailable(self, mockai_available):
         """Test creating chat when AI is unavailable"""
-        mock_ai_available.return_value = False
+        mockai_available.return_value = False
 
         response = self.client.post(reverse('chat-create'), {
             'create': 'true',
@@ -209,11 +209,11 @@ class ChatViewsCoverageTest(TestCase):
         # Should still create chat but with empty AI message
         self.assertEqual(response.status_code, 302)
 
-    @patch('active_interview_app.views._ai_available')
+    @patch('active_interview_app.views.ai_available')
     @patch('active_interview_app.views.get_openai_client')
-    def test_create_chat_without_resume_ai_unavailable(self, mock_client, mock_ai_available):
+    def test_create_chat_without_resume_ai_unavailable(self, mock_client, mockai_available):
         """Test creating chat without resume when AI is unavailable"""
-        mock_ai_available.return_value = False
+        mockai_available.return_value = False
 
         response = self.client.post(reverse('chat-create'), {
             'create': 'true',
@@ -225,11 +225,11 @@ class ChatViewsCoverageTest(TestCase):
         })
         self.assertEqual(response.status_code, 302)
 
-    @patch('active_interview_app.views._ai_available')
+    @patch('active_interview_app.views.ai_available')
     @patch('active_interview_app.views.get_openai_client')
-    def test_create_chat_key_questions_regex_fail(self, mock_client, mock_ai_available):
+    def test_create_chat_key_questions_regex_fail(self, mock_client, mockai_available):
         """Test creating chat when key questions regex doesn't match"""
-        mock_ai_available.return_value = True
+        mockai_available.return_value = True
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
         mock_response.choices[0].message.content = "Invalid response without JSON array"
@@ -248,10 +248,10 @@ class ChatViewsCoverageTest(TestCase):
         })
         self.assertEqual(response.status_code, 302)
 
-    @patch('active_interview_app.views._ai_available')
-    def test_chat_view_post_ai_unavailable(self, mock_ai_available):
+    @patch('active_interview_app.views.ai_available')
+    def test_chat_view_post_ai_unavailable(self, mockai_available):
         """Test ChatView POST when AI is unavailable"""
-        mock_ai_available.return_value = False
+        mockai_available.return_value = False
 
         chat = Chat.objects.create(
             owner=self.user,
@@ -275,10 +275,10 @@ class ChatViewsCoverageTest(TestCase):
         json_response = json.loads(response.content)
         self.assertIn('error', json_response)
 
-    @patch('active_interview_app.views._ai_available')
-    def test_key_questions_view_ai_unavailable(self, mock_ai_available):
+    @patch('active_interview_app.views.ai_available')
+    def test_key_questions_view_ai_unavailable(self, mockai_available):
         """Test KeyQuestionsView POST when AI is unavailable"""
-        mock_ai_available.return_value = False
+        mockai_available.return_value = False
 
         chat = Chat.objects.create(
             owner=self.user,
@@ -307,10 +307,10 @@ class ChatViewsCoverageTest(TestCase):
         json_response = json.loads(response.content)
         self.assertIn('error', json_response)
 
-    @patch('active_interview_app.views._ai_available')
-    def test_key_questions_view_without_resume(self, mock_ai_available):
+    @patch('active_interview_app.views.ai_available')
+    def test_key_questions_view_without_resume(self, mockai_available):
         """Test KeyQuestionsView with chat that has no resume"""
-        mock_ai_available.return_value = False
+        mockai_available.return_value = False
 
         chat = Chat.objects.create(
             owner=self.user,
@@ -375,11 +375,11 @@ class ResultsViewsCoverageTest(TestCase):
             ]
         )
 
-    @patch('active_interview_app.views._ai_available')
+    @patch('active_interview_app.views.ai_available')
     @patch('active_interview_app.views.get_openai_client')
-    def test_result_charts_view(self, mock_client, mock_ai_available):
+    def test_result_charts_view(self, mock_client, mockai_available):
         """Test ResultCharts view (which is what chat-results URL points to)"""
-        mock_ai_available.return_value = True
+        mockai_available.return_value = True
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
 
@@ -397,10 +397,10 @@ class ResultsViewsCoverageTest(TestCase):
         self.assertEqual(response.context['scores']['Professionalism'], 85)
         self.assertEqual(response.context['scores']['Subject Knowledge'], 90)
 
-    @patch('active_interview_app.views._ai_available')
-    def test_result_charts_view_ai_unavailable(self, mock_ai_available):
+    @patch('active_interview_app.views.ai_available')
+    def test_result_charts_view_ai_unavailable(self, mockai_available):
         """Test ResultCharts view when AI is unavailable"""
-        mock_ai_available.return_value = False
+        mockai_available.return_value = False
 
         response = self.client.get(
             reverse('chat-results', kwargs={'chat_id': self.chat.id})
@@ -410,11 +410,11 @@ class ResultsViewsCoverageTest(TestCase):
         self.assertEqual(response.context['scores']['Professionalism'], 0)
         self.assertEqual(response.context['scores']['Overall'], 0)
 
-    @patch('active_interview_app.views._ai_available')
+    @patch('active_interview_app.views.ai_available')
     @patch('active_interview_app.views.get_openai_client')
-    def test_result_charts_invalid_scores(self, mock_client, mock_ai_available):
+    def test_result_charts_invalid_scores(self, mock_client, mockai_available):
         """Test ResultCharts view with invalid score format"""
-        mock_ai_available.return_value = True
+        mockai_available.return_value = True
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
 

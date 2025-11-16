@@ -14,7 +14,16 @@ from typing import Dict, Any
 
 # Import the OpenAI client utilities from openai_utils
 # This ensures consistent error handling and configuration
-from .openai_utils import get_openai_client, _ai_available, MAX_TOKENS
+from .openai_utils import get_openai_client, ai_available, MAX_TOKENS
+
+# Import seniority constants from models
+from .models import (
+    SENIORITY_ENTRY,
+    SENIORITY_MID,
+    SENIORITY_SENIOR,
+    SENIORITY_LEAD,
+    SENIORITY_EXECUTIVE
+)
 
 # Maximum characters for job description content before truncation
 # Keep first 15,000 characters (roughly 3,750 tokens)
@@ -57,7 +66,7 @@ def parse_job_listing_with_ai(job_description: str) -> Dict[str, Any]:
         ['Python', 'Django']
     """
     # Check if OpenAI is available (same pattern as resume_parser.py)
-    if not _ai_available():
+    if not ai_available():
         raise ValueError(
             "OpenAI service is unavailable. Please ensure "
             "OPENAI_API_KEY is configured and valid."
@@ -194,25 +203,31 @@ def parse_job_listing_with_ai(job_description: str) -> Dict[str, Any]:
             result['seniority_level'] = ''
 
         # Validate seniority level is one of the allowed values
-        allowed = ['entry', 'mid', 'senior', 'lead', 'executive']
+        allowed = [
+            SENIORITY_ENTRY,
+            SENIORITY_MID,
+            SENIORITY_SENIOR,
+            SENIORITY_LEAD,
+            SENIORITY_EXECUTIVE
+        ]
         if result['seniority_level'] and \
                 result['seniority_level'] not in allowed:
             # Try to map common variations
             seniority_lower = result['seniority_level'].lower()
             if 'junior' in seniority_lower or 'entry' in seniority_lower:
-                result['seniority_level'] = 'entry'
+                result['seniority_level'] = SENIORITY_ENTRY
             elif 'mid' in seniority_lower or \
                     'intermediate' in seniority_lower:
-                result['seniority_level'] = 'mid'
+                result['seniority_level'] = SENIORITY_MID
             elif 'senior' in seniority_lower:
-                result['seniority_level'] = 'senior'
+                result['seniority_level'] = SENIORITY_SENIOR
             elif 'lead' in seniority_lower or \
                     'principal' in seniority_lower:
-                result['seniority_level'] = 'lead'
+                result['seniority_level'] = SENIORITY_LEAD
             elif 'executive' in seniority_lower or \
                     'director' in seniority_lower or \
                     'vp' in seniority_lower:
-                result['seniority_level'] = 'executive'
+                result['seniority_level'] = SENIORITY_EXECUTIVE
             else:
                 result['seniority_level'] = ''  # Unknown, default empty
 

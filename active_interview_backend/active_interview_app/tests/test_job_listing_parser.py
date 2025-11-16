@@ -51,11 +51,11 @@ class JobListingParserTests(TestCase):
         }
 
     @patch('active_interview_app.job_listing_parser.get_openai_client')
-    @patch('active_interview_app.job_listing_parser._ai_available')
-    def test_parse_job_listing_valid(self, mock_ai_available, mock_get_client):
+    @patch('active_interview_app.job_listing_parser.ai_available')
+    def test_parse_job_listing_valid(self, mockai_available, mock_get_client):
         """Test successful parsing of a valid job description"""
         # Arrange
-        mock_ai_available.return_value = True
+        mockai_available.return_value = True
 
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
@@ -101,11 +101,11 @@ class JobListingParserTests(TestCase):
         self.assertIn('responsibilities', result['requirements'])
 
     @patch('active_interview_app.job_listing_parser.get_openai_client')
-    @patch('active_interview_app.job_listing_parser._ai_available')
-    def test_parse_job_listing_entry_level(self, mock_ai_available, mock_get_client):
+    @patch('active_interview_app.job_listing_parser.ai_available')
+    def test_parse_job_listing_entry_level(self, mockai_available, mock_get_client):
         """Test parsing of entry-level job description"""
         # Arrange
-        mock_ai_available.return_value = True
+        mockai_available.return_value = True
 
         entry_job = """
         Junior Software Developer
@@ -145,11 +145,11 @@ class JobListingParserTests(TestCase):
         self.assertIsInstance(result['required_skills'], list)
 
     @patch('active_interview_app.job_listing_parser.get_openai_client')
-    @patch('active_interview_app.job_listing_parser._ai_available')
-    def test_parse_job_listing_lead_level(self, mock_ai_available, mock_get_client):
+    @patch('active_interview_app.job_listing_parser.ai_available')
+    def test_parse_job_listing_lead_level(self, mockai_available, mock_get_client):
         """Test parsing of lead/principal level job description"""
         # Arrange
-        mock_ai_available.return_value = True
+        mockai_available.return_value = True
 
         lead_job = """
         Principal Engineer - Platform Architecture
@@ -187,11 +187,11 @@ class JobListingParserTests(TestCase):
         # Assert
         self.assertEqual(result['seniority_level'], 'lead')
 
-    @patch('active_interview_app.job_listing_parser._ai_available')
-    def test_parse_job_listing_ai_unavailable(self, mock_ai_available):
+    @patch('active_interview_app.job_listing_parser.ai_available')
+    def test_parse_job_listing_ai_unavailable(self, mockai_available):
         """Test error handling when OpenAI is unavailable"""
         # Arrange
-        mock_ai_available.return_value = False
+        mockai_available.return_value = False
 
         # Act & Assert
         with self.assertRaises(ValueError) as context:
@@ -200,11 +200,11 @@ class JobListingParserTests(TestCase):
         self.assertIn("OpenAI service is unavailable", str(context.exception))
 
     @patch('active_interview_app.job_listing_parser.get_openai_client')
-    @patch('active_interview_app.job_listing_parser._ai_available')
-    def test_parse_job_listing_with_truncation(self, mock_ai_available, mock_get_client):
+    @patch('active_interview_app.job_listing_parser.ai_available')
+    def test_parse_job_listing_with_truncation(self, mockai_available, mock_get_client):
         """Test parsing of extremely long job descriptions (truncation)"""
         # Arrange
-        mock_ai_available.return_value = True
+        mockai_available.return_value = True
 
         # Create a job description longer than JOB_DESCRIPTION_LIMIT (15000 chars)
         long_job = "Senior Developer\n" + ("Long description. " * 1000)
@@ -237,11 +237,11 @@ class JobListingParserTests(TestCase):
         mock_client.chat.completions.create.assert_called_once()
 
     @patch('active_interview_app.job_listing_parser.get_openai_client')
-    @patch('active_interview_app.job_listing_parser._ai_available')
-    def test_parse_job_listing_invalid_json_recovery(self, mock_ai_available, mock_get_client):
+    @patch('active_interview_app.job_listing_parser.ai_available')
+    def test_parse_job_listing_invalid_json_recovery(self, mockai_available, mock_get_client):
         """Test recovery from markdown-wrapped JSON response"""
         # Arrange
-        mock_ai_available.return_value = True
+        mockai_available.return_value = True
 
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
@@ -271,11 +271,11 @@ class JobListingParserTests(TestCase):
         self.assertEqual(result['seniority_level'], 'senior')
 
     @patch('active_interview_app.job_listing_parser.get_openai_client')
-    @patch('active_interview_app.job_listing_parser._ai_available')
-    def test_parse_job_listing_seniority_mapping(self, mock_ai_available, mock_get_client):
+    @patch('active_interview_app.job_listing_parser.ai_available')
+    def test_parse_job_listing_seniority_mapping(self, mockai_available, mock_get_client):
         """Test seniority level mapping from variations"""
         # Arrange
-        mock_ai_available.return_value = True
+        mockai_available.return_value = True
 
         # Test case where OpenAI returns "Junior" instead of "entry"
         mock_response = MagicMock()
@@ -305,11 +305,11 @@ class JobListingParserTests(TestCase):
         self.assertEqual(result['seniority_level'], 'entry')
 
     @patch('active_interview_app.job_listing_parser.get_openai_client')
-    @patch('active_interview_app.job_listing_parser._ai_available')
-    def test_parse_job_listing_empty_fields(self, mock_ai_available, mock_get_client):
+    @patch('active_interview_app.job_listing_parser.ai_available')
+    def test_parse_job_listing_empty_fields(self, mockai_available, mock_get_client):
         """Test parsing with minimal job description (empty fields)"""
         # Arrange
-        mock_ai_available.return_value = True
+        mockai_available.return_value = True
 
         minimal_job = "Looking for a developer."
 
@@ -341,11 +341,11 @@ class JobListingParserTests(TestCase):
         self.assertEqual(result['seniority_level'], '')
 
     @patch('active_interview_app.job_listing_parser.get_openai_client')
-    @patch('active_interview_app.job_listing_parser._ai_available')
-    def test_parse_job_listing_api_error(self, mock_ai_available, mock_get_client):
+    @patch('active_interview_app.job_listing_parser.ai_available')
+    def test_parse_job_listing_api_error(self, mockai_available, mock_get_client):
         """Test error handling when OpenAI API call fails"""
         # Arrange
-        mock_ai_available.return_value = True
+        mockai_available.return_value = True
 
         mock_client = MagicMock()
         mock_client.chat.completions.create.side_effect = Exception("API rate limit exceeded")
@@ -436,12 +436,12 @@ class JobListingParserTests(TestCase):
         self.assertFalse(result)
 
     @patch('active_interview_app.job_listing_parser.get_openai_client')
-    @patch('active_interview_app.job_listing_parser._ai_available')
+    @patch('active_interview_app.job_listing_parser.ai_available')
     def test_parse_job_listing_completely_invalid_json(
-            self, mock_ai_available, mock_get_client):
+            self, mockai_available, mock_get_client):
         """Test error when JSON is completely invalid even after cleaning"""
         # Arrange
-        mock_ai_available.return_value = True
+        mockai_available.return_value = True
 
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
@@ -461,12 +461,12 @@ class JobListingParserTests(TestCase):
                       str(context.exception))
 
     @patch('active_interview_app.job_listing_parser.get_openai_client')
-    @patch('active_interview_app.job_listing_parser._ai_available')
+    @patch('active_interview_app.job_listing_parser.ai_available')
     def test_parse_job_listing_returns_non_dict(
-            self, mock_ai_available, mock_get_client):
+            self, mockai_available, mock_get_client):
         """Test error when OpenAI returns valid JSON but not a dict"""
         # Arrange
-        mock_ai_available.return_value = True
+        mockai_available.return_value = True
 
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
@@ -485,12 +485,12 @@ class JobListingParserTests(TestCase):
                       str(context.exception))
 
     @patch('active_interview_app.job_listing_parser.get_openai_client')
-    @patch('active_interview_app.job_listing_parser._ai_available')
+    @patch('active_interview_app.job_listing_parser.ai_available')
     def test_parse_job_listing_wrong_field_types(
-            self, mock_ai_available, mock_get_client):
+            self, mockai_available, mock_get_client):
         """Test type correction when OpenAI returns wrong types"""
         # Arrange
-        mock_ai_available.return_value = True
+        mockai_available.return_value = True
 
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
@@ -517,12 +517,12 @@ class JobListingParserTests(TestCase):
         self.assertIsInstance(result['requirements'], dict)
 
     @patch('active_interview_app.job_listing_parser.get_openai_client')
-    @patch('active_interview_app.job_listing_parser._ai_available')
+    @patch('active_interview_app.job_listing_parser.ai_available')
     def test_parse_job_listing_seniority_mid_level(
-            self, mock_ai_available, mock_get_client):
+            self, mockai_available, mock_get_client):
         """Test seniority mapping for 'mid' or 'intermediate'"""
         # Arrange
-        mock_ai_available.return_value = True
+        mockai_available.return_value = True
 
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
@@ -549,12 +549,12 @@ class JobListingParserTests(TestCase):
         self.assertEqual(result['seniority_level'], 'mid')
 
     @patch('active_interview_app.job_listing_parser.get_openai_client')
-    @patch('active_interview_app.job_listing_parser._ai_available')
+    @patch('active_interview_app.job_listing_parser.ai_available')
     def test_parse_job_listing_seniority_lead_principal(
-            self, mock_ai_available, mock_get_client):
+            self, mockai_available, mock_get_client):
         """Test seniority mapping for 'principal' positions"""
         # Arrange
-        mock_ai_available.return_value = True
+        mockai_available.return_value = True
 
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
@@ -581,12 +581,12 @@ class JobListingParserTests(TestCase):
         self.assertEqual(result['seniority_level'], 'lead')
 
     @patch('active_interview_app.job_listing_parser.get_openai_client')
-    @patch('active_interview_app.job_listing_parser._ai_available')
+    @patch('active_interview_app.job_listing_parser.ai_available')
     def test_parse_job_listing_seniority_executive_variants(
-            self, mock_ai_available, mock_get_client):
+            self, mockai_available, mock_get_client):
         """Test seniority mapping for 'director', 'vp', 'executive'"""
         # Arrange
-        mock_ai_available.return_value = True
+        mockai_available.return_value = True
 
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
@@ -613,12 +613,12 @@ class JobListingParserTests(TestCase):
         self.assertEqual(result['seniority_level'], 'executive')
 
     @patch('active_interview_app.job_listing_parser.get_openai_client')
-    @patch('active_interview_app.job_listing_parser._ai_available')
+    @patch('active_interview_app.job_listing_parser.ai_available')
     def test_parse_job_listing_seniority_unknown(
-            self, mock_ai_available, mock_get_client):
+            self, mockai_available, mock_get_client):
         """Test seniority mapping for completely unknown level"""
         # Arrange
-        mock_ai_available.return_value = True
+        mockai_available.return_value = True
 
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
@@ -645,12 +645,12 @@ class JobListingParserTests(TestCase):
         self.assertEqual(result['seniority_level'], '')
 
     @patch('active_interview_app.job_listing_parser.get_openai_client')
-    @patch('active_interview_app.job_listing_parser._ai_available')
+    @patch('active_interview_app.job_listing_parser.ai_available')
     def test_parse_job_listing_wrong_requirements_types(
-            self, mock_ai_available, mock_get_client):
+            self, mockai_available, mock_get_client):
         """Test type correction for requirements fields"""
         # Arrange
-        mock_ai_available.return_value = True
+        mockai_available.return_value = True
 
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
@@ -685,12 +685,12 @@ class JobListingParserTests(TestCase):
         self.assertEqual(result['requirements']['responsibilities'], [])
 
     @patch('active_interview_app.job_listing_parser.get_openai_client')
-    @patch('active_interview_app.job_listing_parser._ai_available')
+    @patch('active_interview_app.job_listing_parser.ai_available')
     def test_parse_job_listing_api_key_sanitization(
-            self, mock_ai_available, mock_get_client):
+            self, mockai_available, mock_get_client):
         """Test that API key errors are sanitized in error messages"""
         # Arrange
-        mock_ai_available.return_value = True
+        mockai_available.return_value = True
 
         mock_client = MagicMock()
         # Simulate error with API key in message

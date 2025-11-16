@@ -61,7 +61,7 @@ from rest_framework.views import APIView
 
 
 # Import OpenAI utilities (moved to separate module to prevent circular imports)
-from .openai_utils import get_openai_client, _ai_available, MAX_TOKENS
+from .openai_utils import get_openai_client, ai_available, MAX_TOKENS
 
 # Import RBAC decorators (Issue #69)
 from .decorators import (
@@ -276,7 +276,7 @@ class CreateChat(LoginRequiredMixin, View):
                 ]
 
                 # Make ai speak first
-                if not _ai_available():
+                if not ai_available():
                     messages.error(request, "AI features are disabled on this server.")
                     ai_message = ""
                 else:
@@ -405,7 +405,7 @@ class CreateChat(LoginRequiredMixin, View):
                 ]
 
                 # Make ai speak first
-                if not _ai_available():
+                if not ai_available():
                     messages.error(request, "AI features are disabled on this server.")
                     ai_message = "[]"
                 else:
@@ -467,7 +467,7 @@ class ChatView(LoginRequiredMixin, UserPassesTestMixin, View):
         new_messages = chat.messages
         new_messages.append({"role": "user", "content": user_message})
 
-        if not _ai_available():
+        if not ai_available():
             return _ai_unavailable_json()
 
         response = get_openai_client().chat.completions.create(
@@ -709,7 +709,7 @@ class KeyQuestionsView(LoginRequiredMixin, UserPassesTestMixin, View):
             }
         ]
 
-        if not _ai_available():
+        if not ai_available():
             return _ai_unavailable_json()
 
         response = get_openai_client().chat.completions.create(
@@ -745,7 +745,7 @@ class ResultsChat(LoginRequiredMixin, UserPassesTestMixin, View):
         input_messages = chat.messages
         input_messages.append({"role": "user", "content": feedback_prompt})
 
-        if not _ai_available():
+        if not ai_available():
             ai_message = "AI features are currently unavailable."
         else:
             response = get_openai_client().chat.completions.create(
@@ -797,7 +797,7 @@ class ResultCharts(LoginRequiredMixin, UserPassesTestMixin, View):
 
         input_messages.append({"role": "user", "content": scores_prompt})
 
-        if not _ai_available():
+        if not ai_available():
             professionalism, subject_knowledge, clarity, overall = [0, 0, 0, 0]
         else:
             response = get_openai_client().chat.completions.create(
@@ -831,7 +831,7 @@ class ResultCharts(LoginRequiredMixin, UserPassesTestMixin, View):
             interview
         """)
         input_messages.append({"role": "user", "content": explain})
-        if not _ai_available():
+        if not ai_available():
             ai_message = "AI features are currently unavailable."
         else:
             response = get_openai_client().chat.completions.create(
@@ -1010,7 +1010,7 @@ def upload_file(request):
 
                     # Trigger AI parsing for resumes (Issue #48: "upload triggers parsing")
                     if instance.__class__.__name__ == 'UploadedResume':
-                        if _ai_available():
+                        if ai_available():
                             try:
                                 # Set status to in_progress
                                 instance.parsing_status = 'in_progress'
@@ -1243,8 +1243,10 @@ def recommend_template_for_job(job_listing):
 
     Issues: #21, #53
     """
-    # Get user's templates
-    templates = InterviewTemplate.objects.filter(user=job_listing.user)
+    # Get user's templates with prefetched tags to avoid N+1 queries
+    templates = InterviewTemplate.objects.filter(
+        user=job_listing.user
+    ).prefetch_related('tags')
 
     if not templates.exists():
         return None
@@ -1484,7 +1486,7 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
         input_messages = list(chat.messages)
         input_messages.append({"role": "user", "content": scores_prompt})
 
-        if not _ai_available():
+        if not ai_available():
             professionalism, subject_knowledge, clarity, overall = [0, 0, 0, 0]
         else:
             try:
@@ -1523,7 +1525,7 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
         input_messages = list(chat.messages)
         input_messages.append({"role": "user", "content": explain_prompt})
 
-        if not _ai_available():
+        if not ai_available():
             return "AI features are currently unavailable."
 
         try:
@@ -1557,7 +1559,7 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
         input_messages = list(chat.messages)
         input_messages.append({"role": "user", "content": rationale_prompt})
 
-        if not _ai_available():
+        if not ai_available():
             return {
                 'professionalism': 'AI features are currently unavailable.',
                 'subject_knowledge': 'AI features are currently unavailable.',
