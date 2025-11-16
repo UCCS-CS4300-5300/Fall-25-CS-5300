@@ -102,7 +102,7 @@ class PasswordChangeTestCase(TestCase):
             response,
             'form',
             'new_password2',
-            'The two password fields didn't match.'
+            "The two password fields didn't match."
         )
 
     def test_password_change_validates_password_strength(self):
