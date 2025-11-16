@@ -166,6 +166,21 @@
       margin-top: 0.5rem;
     }
 
+    .settings-info {
+      margin-bottom: 1.5rem;
+    }
+
+    .settings-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .settings-actions a {
+      width: 100%;
+      text-align: center;
+    }
+
     .document-list {
       list-style: none;
       padding: 0;
@@ -358,6 +373,20 @@
                                 </div>
                             {% endif %}
                         {% endif %}
+                    </div>
+                </div>
+
+                <!-- Account Settings Section -->
+                <div class="profile-section">
+                    <h2>Account Settings</h2>
+                    <div class="settings-info">
+                        <p class="help-text">Manage your account security and preferences</p>
+                    </div>
+                    <div class="settings-actions">
+                        <a href="{% url 'password_change' %}" class="btn-request-role">
+                            <i class="bi bi-key"></i> Change Password
+                        </a>
+                        <p class="help-text">Update your password to keep your account secure.</p>
                     </div>
                 </div>
             </div>
