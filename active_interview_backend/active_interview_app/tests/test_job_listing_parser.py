@@ -434,3 +434,311 @@ class JobListingParserTests(TestCase):
 
         # Assert
         self.assertFalse(result)
+
+    @patch('active_interview_app.job_listing_parser.get_openai_client')
+    @patch('active_interview_app.job_listing_parser._ai_available')
+    def test_parse_job_listing_completely_invalid_json(
+            self, mock_ai_available, mock_get_client):
+        """Test error when JSON is completely invalid even after cleaning"""
+        # Arrange
+        mock_ai_available.return_value = True
+
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        # Return completely invalid JSON that can't be parsed
+        mock_response.choices[0].message.content = \
+            'This is not JSON at all, just plain text'
+
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.return_value = mock_response
+        mock_get_client.return_value = mock_client
+
+        # Act & Assert
+        with self.assertRaises(ValueError) as context:
+            parse_job_listing_with_ai("Test job")
+
+        self.assertIn("Failed to parse OpenAI response as JSON",
+                      str(context.exception))
+
+    @patch('active_interview_app.job_listing_parser.get_openai_client')
+    @patch('active_interview_app.job_listing_parser._ai_available')
+    def test_parse_job_listing_returns_non_dict(
+            self, mock_ai_available, mock_get_client):
+        """Test error when OpenAI returns valid JSON but not a dict"""
+        # Arrange
+        mock_ai_available.return_value = True
+
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        # Return a JSON array instead of object
+        mock_response.choices[0].message.content = '["item1", "item2"]'
+
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.return_value = mock_response
+        mock_get_client.return_value = mock_client
+
+        # Act & Assert
+        with self.assertRaises(ValueError) as context:
+            parse_job_listing_with_ai("Test job")
+
+        self.assertIn("Expected dict from OpenAI, got list",
+                      str(context.exception))
+
+    @patch('active_interview_app.job_listing_parser.get_openai_client')
+    @patch('active_interview_app.job_listing_parser._ai_available')
+    def test_parse_job_listing_wrong_field_types(
+            self, mock_ai_available, mock_get_client):
+        """Test type correction when OpenAI returns wrong types"""
+        # Arrange
+        mock_ai_available.return_value = True
+
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        # Return wrong types: skills as string, seniority as int,
+        # requirements as string
+        mock_response.choices[0].message.content = '''{
+            "required_skills": "Python, Django",
+            "seniority_level": 123,
+            "requirements": "some requirements"
+        }'''
+
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.return_value = mock_response
+        mock_get_client.return_value = mock_client
+
+        # Act
+        result = parse_job_listing_with_ai("Test job")
+
+        # Assert - should auto-correct to proper types
+        self.assertIsInstance(result['required_skills'], list)
+        self.assertEqual(result['required_skills'], [])  # Corrected to empty
+        self.assertIsInstance(result['seniority_level'], str)
+        self.assertEqual(result['seniority_level'], '')  # Corrected to empty
+        self.assertIsInstance(result['requirements'], dict)
+
+    @patch('active_interview_app.job_listing_parser.get_openai_client')
+    @patch('active_interview_app.job_listing_parser._ai_available')
+    def test_parse_job_listing_seniority_mid_level(
+            self, mock_ai_available, mock_get_client):
+        """Test seniority mapping for 'mid' or 'intermediate'"""
+        # Arrange
+        mock_ai_available.return_value = True
+
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        # AI returns "Intermediate Level" instead of "mid"
+        mock_response.choices[0].message.content = '''{
+            "required_skills": ["Python"],
+            "seniority_level": "Intermediate Level",
+            "requirements": {
+                "education": [],
+                "years_experience": "2-5",
+                "certifications": [],
+                "responsibilities": []
+            }
+        }'''
+
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.return_value = mock_response
+        mock_get_client.return_value = mock_client
+
+        # Act
+        result = parse_job_listing_with_ai("Mid-level Developer")
+
+        # Assert - should map "Intermediate Level" to "mid"
+        self.assertEqual(result['seniority_level'], 'mid')
+
+    @patch('active_interview_app.job_listing_parser.get_openai_client')
+    @patch('active_interview_app.job_listing_parser._ai_available')
+    def test_parse_job_listing_seniority_lead_principal(
+            self, mock_ai_available, mock_get_client):
+        """Test seniority mapping for 'principal' positions"""
+        # Arrange
+        mock_ai_available.return_value = True
+
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        # AI returns "Principal Engineer"
+        mock_response.choices[0].message.content = '''{
+            "required_skills": ["System Design"],
+            "seniority_level": "Principal Engineer",
+            "requirements": {
+                "education": [],
+                "years_experience": "10+",
+                "certifications": [],
+                "responsibilities": []
+            }
+        }'''
+
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.return_value = mock_response
+        mock_get_client.return_value = mock_client
+
+        # Act
+        result = parse_job_listing_with_ai("Principal Engineer")
+
+        # Assert - should map "Principal Engineer" to "lead"
+        self.assertEqual(result['seniority_level'], 'lead')
+
+    @patch('active_interview_app.job_listing_parser.get_openai_client')
+    @patch('active_interview_app.job_listing_parser._ai_available')
+    def test_parse_job_listing_seniority_executive_variants(
+            self, mock_ai_available, mock_get_client):
+        """Test seniority mapping for 'director', 'vp', 'executive'"""
+        # Arrange
+        mock_ai_available.return_value = True
+
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        # AI returns "VP of Engineering"
+        mock_response.choices[0].message.content = '''{
+            "required_skills": ["Leadership", "Strategy"],
+            "seniority_level": "VP of Engineering",
+            "requirements": {
+                "education": [],
+                "years_experience": "15+",
+                "certifications": [],
+                "responsibilities": []
+            }
+        }'''
+
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.return_value = mock_response
+        mock_get_client.return_value = mock_client
+
+        # Act
+        result = parse_job_listing_with_ai("VP Engineering")
+
+        # Assert - should map "VP of Engineering" to "executive"
+        self.assertEqual(result['seniority_level'], 'executive')
+
+    @patch('active_interview_app.job_listing_parser.get_openai_client')
+    @patch('active_interview_app.job_listing_parser._ai_available')
+    def test_parse_job_listing_seniority_unknown(
+            self, mock_ai_available, mock_get_client):
+        """Test seniority mapping for completely unknown level"""
+        # Arrange
+        mock_ai_available.return_value = True
+
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        # AI returns unrecognizable seniority
+        mock_response.choices[0].message.content = '''{
+            "required_skills": ["Python"],
+            "seniority_level": "Astronaut Level 5",
+            "requirements": {
+                "education": [],
+                "years_experience": "",
+                "certifications": [],
+                "responsibilities": []
+            }
+        }'''
+
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.return_value = mock_response
+        mock_get_client.return_value = mock_client
+
+        # Act
+        result = parse_job_listing_with_ai("Strange job")
+
+        # Assert - should default to empty string for unknown
+        self.assertEqual(result['seniority_level'], '')
+
+    @patch('active_interview_app.job_listing_parser.get_openai_client')
+    @patch('active_interview_app.job_listing_parser._ai_available')
+    def test_parse_job_listing_wrong_requirements_types(
+            self, mock_ai_available, mock_get_client):
+        """Test type correction for requirements fields"""
+        # Arrange
+        mock_ai_available.return_value = True
+
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        # Return requirements with wrong types
+        mock_response.choices[0].message.content = '''{
+            "required_skills": ["Python"],
+            "seniority_level": "senior",
+            "requirements": {
+                "education": "Bachelor's degree",
+                "years_experience": 5,
+                "certifications": "AWS",
+                "responsibilities": "Lead team"
+            }
+        }'''
+
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.return_value = mock_response
+        mock_get_client.return_value = mock_client
+
+        # Act
+        result = parse_job_listing_with_ai("Test job")
+
+        # Assert - should auto-correct types
+        self.assertIsInstance(result['requirements']['education'], list)
+        self.assertEqual(result['requirements']['education'], [])
+        self.assertIsInstance(result['requirements']['years_experience'], str)
+        self.assertEqual(result['requirements']['years_experience'], '5')
+        self.assertIsInstance(result['requirements']['certifications'], list)
+        self.assertEqual(result['requirements']['certifications'], [])
+        self.assertIsInstance(
+            result['requirements']['responsibilities'], list)
+        self.assertEqual(result['requirements']['responsibilities'], [])
+
+    @patch('active_interview_app.job_listing_parser.get_openai_client')
+    @patch('active_interview_app.job_listing_parser._ai_available')
+    def test_parse_job_listing_api_key_sanitization(
+            self, mock_ai_available, mock_get_client):
+        """Test that API key errors are sanitized in error messages"""
+        # Arrange
+        mock_ai_available.return_value = True
+
+        mock_client = MagicMock()
+        # Simulate error with API key in message
+        mock_client.chat.completions.create.side_effect = Exception(
+            "Invalid API Key: sk-abc123xyz"
+        )
+        mock_get_client.return_value = mock_client
+
+        # Act & Assert
+        with self.assertRaises(ValueError) as context:
+            parse_job_listing_with_ai("Test job")
+
+        # Should sanitize the API key from error message
+        error_message = str(context.exception)
+        self.assertIn("OpenAI API authentication error", error_message)
+        self.assertNotIn("sk-abc123xyz", error_message)
+
+    def test_validate_parsed_data_wrong_seniority_type(self):
+        """Test validation fails when seniority_level is not a string"""
+        # Arrange
+        invalid_data = {
+            'required_skills': ['Python'],
+            'seniority_level': 123,  # Should be string
+            'requirements': {
+                'education': [],
+                'years_experience': '',
+                'certifications': [],
+                'responsibilities': []
+            }
+        }
+
+        # Act
+        result = validate_parsed_data(invalid_data)
+
+        # Assert
+        self.assertFalse(result)
+
+    def test_validate_parsed_data_wrong_requirements_type(self):
+        """Test validation fails when requirements is not a dict"""
+        # Arrange
+        invalid_data = {
+            'required_skills': ['Python'],
+            'seniority_level': 'senior',
+            'requirements': ['education', 'experience']  # Should be dict
+        }
+
+        # Act
+        result = validate_parsed_data(invalid_data)
+
+        # Assert
+        self.assertFalse(result)
