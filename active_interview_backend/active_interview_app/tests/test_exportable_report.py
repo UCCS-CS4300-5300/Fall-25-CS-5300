@@ -905,9 +905,13 @@ class SectionScoresWithRationalesTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
-        # Check for the generate report button
-        self.assertContains(response, 'Generate Detailed Report with Section Scores')
+        # Check for the generate report button (updated for Issue #130 spinner)
+        self.assertContains(response, 'Generate Detailed Report')
         self.assertContains(response, 'generate_report')
+        # Check for loading spinner elements added in Issue #130
+        self.assertContains(response, 'id="generateReportBtn"')
+        self.assertContains(response, 'id="reportSpinner"')
+        self.assertContains(response, 'loading-spinner-button')
 
     def test_pdf_export_includes_rationales(self):
         """Test that PDF export includes section rationales"""
