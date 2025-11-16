@@ -140,19 +140,47 @@
 
     <!-- Generate Detailed Report Button -->
     <div class="container report-button-container" style="text-align: center;">
-      <form method="POST" action="{% url 'generate_report' chat.id %}" id="generate_report" aria-label="Generate interview report form">
+      <form method="POST" action="{% url 'generate_report' chat.id %}" id="generate_report" aria-label="Generate interview report form" onsubmit="return showReportSpinner()">
         {% csrf_token %}
         <button
           type="submit"
           class="btn btn-primary btn-lg"
+          id="generateReportBtn"
           style="padding: 1rem 2rem; font-size: 1rem;"
+          title="Generate a comprehensive report with detailed section scores, rationales, and export options (PDF/CSV)"
           aria-label="Generate and download detailed interview report with section scores">
-          Generate Detailed Report with Section Scores
+          <span class="loading-spinner-button"
+                id="reportSpinner"
+                role="status"
+                aria-hidden="true"
+                style="display:none;"></span>
+          <span id="reportBtnText">Generate Detailed Report</span>
         </button>
+        <p style="color: var(--text-secondary, #777); margin-top: 0.75rem; font-size: 0.85rem; font-style: italic; max-width: 600px; margin-left: auto; margin-right: auto;">
+          Includes section scores, rationales, and export options (PDF/CSV)
+        </p>
       </form>
-      <p style="color: var(--text-secondary, #777); margin-top: 1rem; font-size: 0.9rem;">
-        Click to generate a comprehensive report with detailed section scores, rationales, and export options (PDF/CSV)
-      </p>
     </div>
   </div>
+
+  <script>
+    /**
+     * Show loading spinner when generating detailed report
+     * Provides visual feedback during AI processing
+     * Issues: #130 (loading indicators)
+     */
+    function showReportSpinner() {
+      const button = document.getElementById('generateReportBtn');
+      const spinner = document.getElementById('reportSpinner');
+      const buttonText = document.getElementById('reportBtnText');
+
+      // Show spinner and update button state
+      spinner.style.display = 'inline-block';
+      buttonText.textContent = 'Generating Report...';
+      button.disabled = true;
+
+      // Allow form submission to proceed
+      return true;
+    }
+  </script>
 {% endblock content %}
