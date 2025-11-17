@@ -2109,22 +2109,13 @@ a:hover {
    =================================== */
 
 /* ===================================
-<<<<<<< Updated upstream
-   LOADING INDICATORS
-   Issue #130: Add loading spinners for long-running operations
-   =================================== */
-
-/* Loading Spinner - Base Class
-   ---
-   Animated circular spinner using CSS variables for theming.
-   Works in both light and dark modes.
-*/
-=======
    LOADING INDICATORS (Issue #130)
    =================================== */
 
-/* Loading Spinner - Base Class */
->>>>>>> Stashed changes
+/* Loading Spinner - Base Class
+   Animated circular spinner using CSS variables for theming.
+   Works in both light and dark modes.
+*/
 .loading-spinner {
     border: 3px solid var(--surface);
     border-top: 3px solid var(--primary);
@@ -2133,7 +2124,6 @@ a:hover {
     display: inline-block;
 }
 
-<<<<<<< Updated upstream
 /* Keyframe animation for spinner rotation */
 @keyframes spin {
     0% {
@@ -2144,55 +2134,33 @@ a:hover {
     }
 }
 
-/* Loading Spinner Modifiers
-   ---
-   Different sizes for different contexts
-*/
+/* Loading Spinner Modifiers - Different sizes for different contexts */
 
 /* Small spinner for buttons */
-=======
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* Size modifiers */
->>>>>>> Stashed changes
 .loading-spinner-sm {
     width: 1rem;
     height: 1rem;
     border-width: 2px;
 }
 
-<<<<<<< Updated upstream
 /* Medium spinner for inline content */
-=======
->>>>>>> Stashed changes
 .loading-spinner-md {
     width: 2rem;
     height: 2rem;
     border-width: 3px;
 }
 
-<<<<<<< Updated upstream
 /* Large spinner for modals/full-page loading */
-=======
->>>>>>> Stashed changes
 .loading-spinner-lg {
     width: 3rem;
     height: 3rem;
     border-width: 4px;
 }
 
-<<<<<<< Updated upstream
 /* Button Spinner
-   ---
    Spinner specifically for use inside buttons.
    Uses white border-top for visibility on colored buttons.
 */
-=======
-/* Button spinner (white, for colored buttons) */
->>>>>>> Stashed changes
 .loading-spinner-button {
     width: 1rem;
     height: 1rem;
@@ -2205,20 +2173,12 @@ a:hover {
     vertical-align: middle;
 }
 
-<<<<<<< Updated upstream
-/* Loading State for Buttons
-   ---
-   Styles for buttons in loading state
-*/
-=======
-/* Disabled state for buttons with spinners */
->>>>>>> Stashed changes
+/* Loading State for Buttons - Styles for buttons in loading state */
 .btn-loading {
     opacity: 0.7;
     cursor: not-allowed;
     pointer-events: none;
 }
-<<<<<<< Updated upstream
 
 /* Usage Examples:
 
@@ -2240,5 +2200,3 @@ a:hover {
      <p>Generating report...</p>
    </div>
 */
-=======
->>>>>>> Stashed changes
