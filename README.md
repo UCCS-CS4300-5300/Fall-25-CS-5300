@@ -247,6 +247,8 @@ docker-compose up -d --build
 ### For Job Seekers
 
 - 📝 **Upload Resumes & Job Listings** - PDF/DOCX support with text extraction
+- 🔍 **AI-Powered Job Analysis** - Automatic extraction of required skills, seniority level, and requirements from job listings (Issues #21, #51, #52)
+- 🎯 **Smart Template Recommendations** - Auto-recommend interview templates based on job requirements (Issue #53)
 - 🤖 **AI Interview Practice** - Powered by OpenAI GPT-4o
 - 🎯 **Multiple Interview Types** - General, Technical Skills, Personality, Final Screening
 - 📊 **Performance Feedback** - AI-generated scores and detailed feedback
@@ -288,6 +290,7 @@ docker-compose up -d --build
 
 ### Features
 
+- **[Job Listing Ingestion](docs/features/job-listing-ingestion.md)** - AI-powered job analysis and template recommendations (Issues #21, #51, #52, #53)
 - **[Exportable Reports](docs/features/exportable-reports.md)** - PDF report generation
 
 ---

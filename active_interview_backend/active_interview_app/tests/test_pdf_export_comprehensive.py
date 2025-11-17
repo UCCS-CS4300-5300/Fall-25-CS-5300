@@ -14,7 +14,9 @@ from active_interview_app.pdf_export import (
     _create_styles,
     _create_metadata_section,
     _create_performance_scores_section,
+    _create_score_rationales_section,
     _create_feedback_section,
+    _create_recommended_exercises_section,
     _create_statistics_section,
     _create_footer
 )
@@ -546,3 +548,251 @@ class GeneratePDFReportTest(TestCase):
 
         self.assertIsNotNone(pdf_content)
         self.assertTrue(pdf_content.startswith(b'%PDF'))
+
+
+class ScoreRationalesSectionTest(TestCase):
+    """Test _create_score_rationales_section function"""
+
+    def setUp(self):
+        """Set up test data"""
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='testpass123'
+        )
+        self.chat = Chat.objects.create(
+            owner=self.user,
+            title='Sample Interview',
+            difficulty=8,
+            messages=[],
+            type='GEN'
+        )
+
+    def test_create_score_rationales_with_all_rationales(self):
+        """Test rationales section with all rationales provided"""
+        report = ExportableReport.objects.create(
+            chat=self.chat,
+            professionalism_score=85,
+            subject_knowledge_score=78,
+            clarity_score=82,
+            overall_score=81,
+            professionalism_rationale='Demonstrated strong professional behavior throughout.',
+            subject_knowledge_rationale='Good technical knowledge with some gaps.',
+            clarity_rationale='Communicated clearly and concisely.',
+            overall_rationale='Solid performance overall with room for improvement.',
+            total_questions_asked=15,
+            total_responses_given=15
+        )
+
+        _, heading_style, normal_style = _create_styles()
+        result = _create_score_rationales_section(report, heading_style, normal_style)
+
+        self.assertIsInstance(result, list)
+        self.assertGreater(len(result), 0)
+
+    def test_create_score_rationales_without_scores(self):
+        """Test rationales section when overall_score is None"""
+        report = ExportableReport.objects.create(
+            chat=self.chat,
+            overall_score=None,
+            total_questions_asked=5,
+            total_responses_given=5
+        )
+
+        _, heading_style, normal_style = _create_styles()
+        result = _create_score_rationales_section(report, heading_style, normal_style)
+
+        self.assertIsInstance(result, list)
+        # Should be empty when no overall score
+        self.assertEqual(len(result), 0)
+
+    def test_create_score_rationales_partial_rationales(self):
+        """Test rationales section with only some rationales provided"""
+        report = ExportableReport.objects.create(
+            chat=self.chat,
+            professionalism_score=90,
+            subject_knowledge_score=85,
+            clarity_score=88,
+            overall_score=87,
+            professionalism_rationale='Excellent professionalism.',
+            subject_knowledge_rationale='',
+            clarity_rationale='Great clarity.',
+            overall_rationale='',
+            total_questions_asked=10,
+            total_responses_given=10
+        )
+
+        _, heading_style, normal_style = _create_styles()
+        result = _create_score_rationales_section(report, heading_style, normal_style)
+
+        self.assertIsInstance(result, list)
+        # Should still generate content for rationales that exist
+        self.assertGreater(len(result), 0)
+
+    def test_create_score_rationales_with_weights(self):
+        """Test rationales section includes weight information"""
+        report = ExportableReport.objects.create(
+            chat=self.chat,
+            professionalism_score=92,
+            subject_knowledge_score=88,
+            clarity_score=90,
+            overall_score=90,
+            professionalism_weight=30,
+            subject_knowledge_weight=40,
+            clarity_weight=30,
+            professionalism_rationale='Outstanding professionalism.',
+            subject_knowledge_rationale='Strong technical skills.',
+            clarity_rationale='Excellent communication.',
+            overall_rationale='Exceptional overall performance.',
+            total_questions_asked=20,
+            total_responses_given=20
+        )
+
+        _, heading_style, normal_style = _create_styles()
+        result = _create_score_rationales_section(report, heading_style, normal_style)
+
+        self.assertIsInstance(result, list)
+        self.assertGreater(len(result), 0)
+
+
+class RecommendedExercisesSectionTest(TestCase):
+    """Test _create_recommended_exercises_section function"""
+
+    def setUp(self):
+        """Set up test data"""
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='testpass123'
+        )
+        self.chat = Chat.objects.create(
+            owner=self.user,
+            title='Sample Interview',
+            difficulty=8,
+            messages=[],
+            type='GEN'
+        )
+
+    def test_create_recommended_exercises_excellent_score(self):
+        """Test recommendations for excellent score (>= 90)"""
+        report = ExportableReport.objects.create(
+            chat=self.chat,
+            professionalism_score=92,
+            subject_knowledge_score=91,
+            clarity_score=90,
+            overall_score=91,
+            total_questions_asked=15,
+            total_responses_given=15
+        )
+
+        _, heading_style, normal_style = _create_styles()
+        result = _create_recommended_exercises_section(report, heading_style, normal_style)
+
+        self.assertIsInstance(result, list)
+        self.assertGreater(len(result), 0)
+
+    def test_create_recommended_exercises_good_score(self):
+        """Test recommendations for good score (75-89)"""
+        report = ExportableReport.objects.create(
+            chat=self.chat,
+            professionalism_score=80,
+            subject_knowledge_score=78,
+            clarity_score=82,
+            overall_score=80,
+            total_questions_asked=15,
+            total_responses_given=15
+        )
+
+        _, heading_style, normal_style = _create_styles()
+        result = _create_recommended_exercises_section(report, heading_style, normal_style)
+
+        self.assertIsInstance(result, list)
+        self.assertGreater(len(result), 0)
+
+    def test_create_recommended_exercises_fair_score(self):
+        """Test recommendations for fair score (60-74)"""
+        report = ExportableReport.objects.create(
+            chat=self.chat,
+            professionalism_score=65,
+            subject_knowledge_score=68,
+            clarity_score=70,
+            overall_score=68,
+            total_questions_asked=15,
+            total_responses_given=15
+        )
+
+        _, heading_style, normal_style = _create_styles()
+        result = _create_recommended_exercises_section(report, heading_style, normal_style)
+
+        self.assertIsInstance(result, list)
+        self.assertGreater(len(result), 0)
+
+    def test_create_recommended_exercises_poor_score(self):
+        """Test recommendations for poor score (< 60)"""
+        report = ExportableReport.objects.create(
+            chat=self.chat,
+            professionalism_score=45,
+            subject_knowledge_score=50,
+            clarity_score=48,
+            overall_score=48,
+            total_questions_asked=15,
+            total_responses_given=15
+        )
+
+        _, heading_style, normal_style = _create_styles()
+        result = _create_recommended_exercises_section(report, heading_style, normal_style)
+
+        self.assertIsInstance(result, list)
+        self.assertGreater(len(result), 0)
+
+    def test_create_recommended_exercises_zero_scores(self):
+        """Test recommendations with zero scores"""
+        report = ExportableReport.objects.create(
+            chat=self.chat,
+            professionalism_score=0,
+            subject_knowledge_score=0,
+            clarity_score=0,
+            overall_score=0,
+            total_questions_asked=5,
+            total_responses_given=5
+        )
+
+        _, heading_style, normal_style = _create_styles()
+        result = _create_recommended_exercises_section(report, heading_style, normal_style)
+
+        self.assertIsInstance(result, list)
+        self.assertGreater(len(result), 0)
+
+    def test_create_recommended_exercises_none_scores(self):
+        """Test recommendations with None scores"""
+        report = ExportableReport.objects.create(
+            chat=self.chat,
+            professionalism_score=None,
+            subject_knowledge_score=None,
+            clarity_score=None,
+            overall_score=None,
+            total_questions_asked=5,
+            total_responses_given=5
+        )
+
+        _, heading_style, normal_style = _create_styles()
+        result = _create_recommended_exercises_section(report, heading_style, normal_style)
+
+        self.assertIsInstance(result, list)
+        self.assertGreater(len(result), 0)
+
+    def test_create_recommended_exercises_mixed_scores(self):
+        """Test recommendations with mixed score levels (targeting weak areas)"""
+        report = ExportableReport.objects.create(
+            chat=self.chat,
+            professionalism_score=90,  # High
+            subject_knowledge_score=55,  # Low - should be prioritized
+            clarity_score=50,  # Low - should be prioritized
+            overall_score=65,
+            total_questions_asked=15,
+            total_responses_given=15
+        )
+
+        _, heading_style, normal_style = _create_styles()
+        result = _create_recommended_exercises_section(report, heading_style, normal_style)
+
+        self.assertIsInstance(result, list)
+        self.assertGreater(len(result), 0)

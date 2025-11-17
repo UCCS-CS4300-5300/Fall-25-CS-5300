@@ -1,7 +1,9 @@
 from django.contrib import admin
 from .models import (
     Chat, UploadedJobListing, UploadedResume,
-    ExportableReport, UserProfile, RoleChangeRequest
+    ExportableReport, UserProfile, RoleChangeRequest,
+    DataExportRequest, DeletionRequest,
+    Tag, QuestionBank, Question, InterviewTemplate, InvitedInterview
 )
 from .token_usage_models import TokenUsage
 from .merge_stats_models import MergeTokenStats
@@ -11,6 +13,72 @@ admin.site.register(Chat)
 admin.site.register(UploadedJobListing)
 admin.site.register(UploadedResume)
 admin.site.register(ExportableReport)
+
+
+# Invited Interview Admin - Issue #4, #134
+@admin.register(InvitedInterview)
+class InvitedInterviewAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'interviewer',
+        'candidate_email',
+        'template',
+        'scheduled_time',
+        'status',
+        'interviewer_review_status',
+        'created_at'
+    )
+    list_filter = ('status', 'interviewer_review_status', 'scheduled_time', 'created_at')
+    search_fields = (
+        'candidate_email',
+        'interviewer__username',
+        'template__name',
+        'id'
+    )
+    readonly_fields = ('id', 'created_at', 'invitation_sent_at', 'completed_at', 'reviewed_at')
+
+    fieldsets = (
+        ('Invitation Details', {
+            'fields': (
+                'id',
+                'interviewer',
+                'candidate_email',
+                'template'
+            )
+        }),
+        ('Schedule', {
+            'fields': (
+                'scheduled_time',
+                'duration_minutes'
+            )
+        }),
+        ('Status', {
+            'fields': (
+                'status',
+                'interviewer_review_status',
+                'chat'
+            )
+        }),
+        ('Review', {
+            'fields': (
+                'interviewer_feedback',
+                'reviewed_at'
+            )
+        }),
+        ('Timestamps', {
+            'fields': (
+                'created_at',
+                'invitation_sent_at',
+                'completed_at'
+            ),
+            'classes': ('collapse',)
+        })
+    )
+
+    def get_queryset(self, request):
+        """Optimize query with select_related"""
+        qs = super().get_queryset(request)
+        return qs.select_related('interviewer', 'template', 'chat')
 
 
 # RBAC Admin - Issue #69
@@ -101,6 +169,99 @@ class RoleChangeRequestAdmin(admin.ModelAdmin):
         qs = super().get_queryset(request)
         return qs.select_related('user', 'reviewed_by')
 
+
+# Question Bank Tagging Admin
+@admin.register(Tag)
+class TagAdmin(admin.ModelAdmin):
+    list_display = ('name', 'created_at', 'question_count')
+    search_fields = ('name',)
+    readonly_fields = ('created_at',)
+
+    def question_count(self, obj):
+        return obj.questions.count()
+    question_count.short_description = 'Questions'
+
+
+class QuestionInline(admin.TabularInline):
+    model = Question
+    extra = 0
+    fields = ('text', 'difficulty', 'created_at')
+    readonly_fields = ('created_at',)
+
+
+@admin.register(QuestionBank)
+class QuestionBankAdmin(admin.ModelAdmin):
+    list_display = ('name', 'owner', 'question_count', 'created_at', 'updated_at')
+    list_filter = ('created_at', 'updated_at')
+    search_fields = ('name', 'description', 'owner__username')
+    readonly_fields = ('created_at', 'updated_at')
+    inlines = [QuestionInline]
+
+    def question_count(self, obj):
+        return obj.questions.count()
+    question_count.short_description = 'Questions'
+
+
+@admin.register(Question)
+class QuestionAdmin(admin.ModelAdmin):
+    list_display = ('text_preview', 'question_bank', 'difficulty', 'tag_list',
+                   'owner', 'created_at')
+    list_filter = ('difficulty', 'created_at', 'tags')
+    search_fields = ('text', 'question_bank__name', 'owner__username')
+    readonly_fields = ('created_at', 'updated_at')
+    filter_horizontal = ('tags',)
+
+    def text_preview(self, obj):
+        return obj.text[:100] + '...' if len(obj.text) > 100 else obj.text
+    text_preview.short_description = 'Question'
+
+    def tag_list(self, obj):
+        return ', '.join([tag.name for tag in obj.tags.all()])
+    tag_list.short_description = 'Tags'
+
+
+@admin.register(InterviewTemplate)
+class InterviewTemplateAdmin(admin.ModelAdmin):
+    list_display = ('name', 'user', 'use_auto_assembly', 'question_count',
+                   'tag_list', 'difficulty_distribution', 'status', 'created_at')
+    list_filter = ('use_auto_assembly', 'created_at', 'updated_at')
+    search_fields = ('name', 'user__username', 'description')
+    readonly_fields = ('created_at', 'updated_at')
+    filter_horizontal = ('tags', 'question_banks')
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('name', 'user', 'description')
+        }),
+        ('Template Sections', {
+            'fields': ('sections',),
+            'description': 'JSON structure for template sections'
+        }),
+        ('Auto-Assembly Configuration', {
+            'fields': ('use_auto_assembly', 'question_banks', 'tags',
+                      'question_count', 'easy_percentage', 'medium_percentage',
+                      'hard_percentage'),
+            'description': 'Settings for automatically assembling interviews from question banks'
+        }),
+        ('Metadata', {
+            'fields': ('created_at', 'updated_at')
+        }),
+    )
+
+    def tag_list(self, obj):
+        return ', '.join([tag.name for tag in obj.tags.all()][:5]) + \
+               ('...' if obj.tags.count() > 5 else '')
+    tag_list.short_description = 'Tags'
+
+    def difficulty_distribution(self, obj):
+        if obj.use_auto_assembly:
+            return f"E:{obj.easy_percentage}% M:{obj.medium_percentage}% H:{obj.hard_percentage}%"
+        return "N/A"
+    difficulty_distribution.short_description = 'Difficulty'
+
+    def status(self, obj):
+        return obj.get_status_display()
+    status.short_description = 'Status'
+
 # Token Tracking Admin
 @admin.register(TokenUsage)
 class TokenUsageAdmin(admin.ModelAdmin):
@@ -145,3 +306,117 @@ class MergeTokenStatsAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         })
     )
+
+
+# Data Export Request Admin - Issue #63, #64
+@admin.register(DataExportRequest)
+class DataExportRequestAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'user',
+        'status',
+        'requested_at',
+        'completed_at',
+        'expires_at',
+        'file_size_display',
+        'download_count'
+    )
+    list_filter = ('status', 'requested_at', 'completed_at')
+    search_fields = ('user__username', 'user__email')
+    readonly_fields = (
+        'requested_at',
+        'completed_at',
+        'last_downloaded_at',
+        'file_size_bytes'
+    )
+    date_hierarchy = 'requested_at'
+
+    fieldsets = (
+        ('User & Status', {
+            'fields': ('user', 'status')
+        }),
+        ('Export File', {
+            'fields': ('export_file', 'file_size_bytes', 'download_count')
+        }),
+        ('Timestamps', {
+            'fields': (
+                'requested_at',
+                'completed_at',
+                'expires_at',
+                'last_downloaded_at'
+            )
+        }),
+        ('Error Information', {
+            'fields': ('error_message',),
+            'classes': ('collapse',)
+        })
+    )
+
+    def file_size_display(self, obj):
+        if obj.file_size_bytes:
+            # Convert bytes to human-readable format
+            size = obj.file_size_bytes
+            for unit in ['B', 'KB', 'MB', 'GB']:
+                if size < 1024.0:
+                    return f"{size:.1f} {unit}"
+                size /= 1024.0
+            return f"{size:.1f} TB"
+        return "N/A"
+    file_size_display.short_description = 'File Size'
+
+    def get_queryset(self, request):
+        """Optimize query with select_related"""
+        qs = super().get_queryset(request)
+        return qs.select_related('user')
+
+
+# Deletion Request Admin - Issue #63, #65
+@admin.register(DeletionRequest)
+class DeletionRequestAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'anonymized_user_id',
+        'username',
+        'status',
+        'requested_at',
+        'completed_at',
+        'total_data_deleted'
+    )
+    list_filter = ('status', 'requested_at', 'completed_at')
+    search_fields = ('anonymized_user_id', 'username', 'email')
+    readonly_fields = ('requested_at', 'completed_at')
+    date_hierarchy = 'requested_at'
+
+    fieldsets = (
+        ('User Information', {
+            'fields': (
+                'anonymized_user_id',
+                'username',
+                'email',
+                'status'
+            )
+        }),
+        ('Deletion Statistics', {
+            'fields': (
+                'total_interviews_deleted',
+                'total_resumes_deleted',
+                'total_job_listings_deleted'
+            )
+        }),
+        ('Timestamps', {
+            'fields': ('requested_at', 'completed_at')
+        }),
+        ('Error Information', {
+            'fields': ('error_message',),
+            'classes': ('collapse',)
+        })
+    )
+
+    def total_data_deleted(self, obj):
+        total = (
+            obj.total_interviews_deleted +
+            obj.total_resumes_deleted +
+            obj.total_job_listings_deleted
+        )
+        return f"{total} items"
+    total_data_deleted.short_description = 'Total Deleted'

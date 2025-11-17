@@ -1,0 +1,1611 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Question Banks{% endblock %}
+
+{% block content %}
+<style>
+  .question-bank-container {
+    background-color: var(--background);
+    color: var(--text-primary);
+    min-height: calc(100vh - 66px);
+  }
+
+  .question-bank-header {
+    color: var(--text-primary);
+  }
+
+  .question-bank-subtitle {
+    color: var(--text-secondary);
+  }
+
+  .question-bank-card {
+    background-color: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.3s ease;
+    color: var(--text-primary);
+  }
+
+  /* Warning modal styling with custom colors for dark mode */
+  .warning-header {
+    background-color: var(--warning) !important;
+    color: var(--text-primary) !important;
+  }
+
+  .warning-btn {
+    background-color: var(--warning) !important;
+    border-color: var(--warning) !important;
+    color: var(--text-primary) !important;
+  }
+
+  .warning-btn:hover {
+    background-color: var(--accent) !important;
+    border-color: var(--accent) !important;
+  }
+
+  /* Confirmation modal styling */
+  .confirmation-header {
+    background-color: var(--warning) !important;
+    color: var(--text-primary) !important;
+  }
+
+  /* Error modal styling for dark mode compatibility */
+  .error-modal-header {
+    background-color: var(--error) !important;
+    color: var(--text-white) !important;
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .error-modal-body .alert-danger {
+    background-color: var(--surface) !important;
+    border: 2px solid var(--error) !important;
+    color: var(--text-primary) !important;
+  }
+
+  .error-modal-body .alert-danger .alert-heading {
+    color: var(--error) !important;
+  }
+
+  .error-modal-body .alert-info {
+    background-color: var(--surface-hover) !important;
+    border: 1px solid var(--info) !important;
+    color: var(--text-primary) !important;
+  }
+
+  .error-modal-body .table {
+    color: var(--text-primary);
+    background-color: var(--surface);
+  }
+
+  .error-modal-body .table thead {
+    background-color: var(--surface-hover) !important;
+    color: var(--text-primary) !important;
+  }
+
+  .error-modal-body .table-bordered {
+    border-color: var(--border) !important;
+  }
+
+  .error-modal-body .table-bordered th,
+  .error-modal-body .table-bordered td {
+    border-color: var(--border-light) !important;
+  }
+
+  .error-modal-body .table-danger {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+  }
+
+  [data-theme="dark"] .error-modal-body .table-danger {
+    background-color: rgba(220, 53, 69, 0.2) !important;
+  }
+
+  .error-modal-body .text-danger {
+    color: var(--error) !important;
+  }
+
+  .error-modal-body .text-success {
+    color: var(--success) !important;
+  }
+
+  .question-bank-card:hover {
+    box-shadow: var(--shadow-md);
+  }
+
+  .question-bank-card .card-title {
+    color: var(--text-primary);
+  }
+
+  .question-bank-card .card-text {
+    color: var(--text-secondary);
+  }
+
+  .question-bank-card .text-muted {
+    color: var(--text-light) !important;
+  }
+
+  .question-bank-card .card-footer {
+    background-color: var(--surface-hover);
+    border-top: 1px solid var(--border-light);
+  }
+
+  .modal-content {
+    background-color: var(--surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+  }
+
+  .modal-header {
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .modal-title {
+    color: var(--text-primary);
+  }
+
+  .modal-footer {
+    border-top: 1px solid var(--border-light);
+  }
+
+  .form-control {
+    background-color: var(--surface-hover);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+  }
+
+  .form-control:focus {
+    background-color: var(--surface);
+    border-color: var(--primary);
+    color: var(--text-primary);
+  }
+
+  .form-label {
+    color: var(--text-primary);
+  }
+
+  .btn-close {
+    background-color: transparent;
+    opacity: 0.5;
+  }
+
+  [data-theme="dark"] .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+  }
+
+  .list-group-item {
+    background-color: var(--surface);
+    border: 1px solid var(--border-light);
+    color: var(--text-primary);
+  }
+
+  .badge {
+    background-color: var(--primary);
+    color: var(--text-white);
+  }
+
+  .text-muted {
+    color: var(--text-light) !important;
+  }
+
+  small.text-muted {
+    color: var(--text-secondary) !important;
+  }
+
+  .spinner-border {
+    color: var(--primary);
+  }
+
+  .alert {
+    background-color: var(--surface-hover);
+    border-color: var(--border);
+    color: var(--text-primary);
+  }
+
+  .alert-danger {
+    background-color: var(--surface);
+    border: 2px solid var(--error);
+    color: var(--error);
+  }
+
+  .btn-primary {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: var(--text-white);
+  }
+
+  .btn-primary:hover {
+    background-color: var(--primary-dark);
+    border-color: var(--primary-dark);
+  }
+
+  .btn-danger {
+    background-color: var(--error);
+    border-color: var(--error);
+    color: var(--text-white);
+  }
+
+  .btn-secondary {
+    background-color: var(--text-secondary);
+    border-color: var(--text-secondary);
+    color: var(--text-white);
+  }
+
+  .btn-success {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: var(--text-white);
+  }
+
+  .btn-success:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+  }
+
+  .input-group .btn-outline-secondary {
+    background-color: var(--surface-hover);
+    border-color: var(--border);
+    color: var(--text-primary);
+  }
+
+  .input-group .btn-outline-secondary:hover {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: var(--text-white);
+  }
+
+  #availableTags .badge {
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  #availableTags .badge:hover {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+
+  #selectedTags .badge {
+    background-color: var(--primary) !important;
+  }
+
+  .badge.bg-secondary {
+    background-color: var(--text-secondary) !important;
+    color: var(--text-white) !important;
+  }
+
+  .badge.bg-primary {
+    background-color: var(--primary) !important;
+    color: var(--text-white) !important;
+  }
+
+  select.form-control {
+    background-color: var(--surface-hover);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%232C3E50' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+    padding-right: 2.5rem;
+  }
+
+  [data-theme="dark"] select.form-control {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23e0e0e0' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+  }
+
+  .form-control::placeholder {
+    color: var(--text-light);
+    opacity: 0.7;
+  }
+
+  textarea.form-control {
+    background-color: var(--surface-hover);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+  }
+
+  textarea.form-control:focus {
+    background-color: var(--surface);
+    border-color: var(--primary);
+    color: var(--text-primary);
+  }
+</style>
+
+<div class="question-bank-container container-fluid p-4">
+  <div class="row mb-4">
+    <div class="col-md-8">
+      <h2 class="question-bank-header">Question Banks</h2>
+      <p class="question-bank-subtitle">Manage your interview question banks and tags</p>
+    </div>
+    <div class="col-md-4 text-end">
+      <button class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#createBankModal">
+        <i class="bi bi-plus-circle"></i> Create Question Bank
+      </button>
+      <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#autoAssembleModal">
+        <i class="bi bi-magic"></i> Auto-Assemble Interview
+      </button>
+    </div>
+  </div>
+
+  <!-- Question Banks List -->
+  <div class="row">
+    <div class="col-12">
+      <div id="questionBanksList" class="row">
+        <!-- Question banks will be loaded here dynamically -->
+        <div class="text-center p-5">
+          <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create Question Bank Modal -->
+<div class="modal fade" id="createBankModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Create Question Bank</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="createBankForm">
+          <div class="mb-3">
+            <label for="bankName" class="form-label">Name</label>
+            <input type="text" class="form-control" id="bankName" required>
+          </div>
+          <div class="mb-3">
+            <label for="bankDescription" class="form-label">Description</label>
+            <textarea class="form-control" id="bankDescription" rows="3"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="createQuestionBank()">Create</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- View Question Bank Modal -->
+<div class="modal fade" id="viewBankModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="viewBankTitle">Question Bank</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="viewBankContent">
+          <!-- Questions will be loaded here -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" onclick="showAddQuestionModal()">Add Question</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Question Modal -->
+<div class="modal fade" id="addQuestionModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Add Question</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="addQuestionForm">
+          <div class="mb-3">
+            <label for="questionText" class="form-label">Question</label>
+            <textarea class="form-control" id="questionText" rows="3" required></textarea>
+          </div>
+          <div class="mb-3">
+            <label for="questionDifficulty" class="form-label">Difficulty</label>
+            <select class="form-control" id="questionDifficulty">
+              <option value="easy">Easy</option>
+              <option value="medium" selected>Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="questionTags" class="form-label">Tags (optional)</label>
+            <div id="availableTags" class="mb-2">
+              <!-- Available tags will be loaded here -->
+            </div>
+            <div class="input-group">
+              <input type="text" class="form-control" id="newTagName" placeholder="Create new tag (e.g., python, sql)">
+              <button type="button" class="btn btn-outline-secondary" onclick="createNewTag()">Add Tag</button>
+            </div>
+            <small class="text-muted">Select existing tags or create new ones</small>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Selected Tags:</label>
+            <div id="selectedTags">
+              <span class="text-muted">No tags selected</span>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="saveQuestion()">Save Question</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Auto-Assemble Interview Modal -->
+<div class="modal fade" id="autoAssembleModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Auto-Assemble Interview</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="autoAssembleForm">
+          <div class="mb-3">
+            <label for="interviewTitle" class="form-label">Interview Title</label>
+            <input type="text" class="form-control" id="interviewTitle" placeholder="e.g., Python Backend Interview" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="questionCount" class="form-label">Number of Questions</label>
+            <input type="number" class="form-control" id="questionCount" min="1" max="50" value="10" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Select Tags to Include</label>
+            <div id="autoAssembleAvailableTags" class="mb-2">
+              <!-- Available tags will be loaded here -->
+            </div>
+            <small class="text-muted">Select at least one tag to filter questions</small>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Selected Tags:</label>
+            <div id="autoAssembleSelectedTags">
+              <span class="text-muted">No tags selected</span>
+            </div>
+          </div>
+
+          <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="disregardDifficulty">
+            <label class="form-check-label" for="disregardDifficulty">
+              Disregard difficulty (select questions randomly regardless of difficulty level)
+            </label>
+          </div>
+
+          <div class="mb-3" id="difficultyDistributionSection">
+            <label class="form-label">Difficulty Distribution (%)</label>
+            <div class="row">
+              <div class="col-md-4">
+                <label for="easyPercentage" class="form-label">Easy</label>
+                <input type="number" class="form-control" id="easyPercentage" min="0" max="100" value="30">
+              </div>
+              <div class="col-md-4">
+                <label for="mediumPercentage" class="form-label">Medium</label>
+                <input type="number" class="form-control" id="mediumPercentage" min="0" max="100" value="50">
+              </div>
+              <div class="col-md-4">
+                <label for="hardPercentage" class="form-label">Hard</label>
+                <input type="number" class="form-control" id="hardPercentage" min="0" max="100" value="20">
+              </div>
+            </div>
+            <small class="text-muted">Percentages should total 100%</small>
+          </div>
+
+          <div class="mb-3">
+            <label for="questionBankSelect" class="form-label">Question Bank (Optional)</label>
+            <select class="form-control" id="questionBankSelect">
+              <option value="">All Question Banks</option>
+              <!-- Question banks will be loaded here -->
+            </select>
+            <small class="text-muted">Leave blank to search across all question banks</small>
+          </div>
+
+          <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="randomizeQuestions" checked>
+            <label class="form-check-label" for="randomizeQuestions">
+              Randomize question selection
+            </label>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-success" onclick="assembleInterview()">Assemble Interview</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Interview Results Modal -->
+<div class="modal fade" id="assemblyResultsModal" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="resultsTitle">Interview Preview</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="assemblyResults">
+          <!-- Results will be displayed here -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" onclick="saveAssembledInterview()">Save as Interview Template</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Validation Error Modal -->
+<div class="modal fade" id="validationErrorModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header error-modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>
+          Unable to Assemble Interview
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body error-modal-body">
+        <div class="alert alert-danger mb-3">
+          <h6 class="alert-heading" id="errorMainMessage">Error Message</h6>
+          <p class="mb-0" id="errorDescription"></p>
+        </div>
+
+        <div id="errorBreakdownSection" style="display: none;">
+          <h6 class="mb-3">Question Availability Breakdown:</h6>
+          <div class="table-responsive">
+            <table class="table table-bordered">
+              <thead>
+                <tr>
+                  <th>Difficulty</th>
+                  <th>Requested</th>
+                  <th>Available</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="errorBreakdownTable">
+                <!-- Breakdown rows will be added here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="alert alert-info mt-3" id="errorHelpMessage">
+          <strong>What can you do?</strong>
+          <ul class="mb-0 mt-2" id="errorSuggestions">
+            <!-- Suggestions will be added here -->
+          </ul>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal" onclick="reopenAutoAssembleModal()">
+          <i class="bi bi-arrow-left me-1"></i>
+          Adjust Settings
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Generic Notification Modal -->
+<div class="modal fade" id="notificationModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header" id="notificationModalHeader">
+        <h5 class="modal-title" id="notificationModalTitle">
+          <i id="notificationModalIcon" class="me-2"></i>
+          <span id="notificationModalTitleText">Notification</span>
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" id="notificationModalCloseBtn"></button>
+      </div>
+      <div class="modal-body">
+        <p id="notificationModalMessage"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn" id="notificationModalOkBtn" data-bs-dismiss="modal">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmationModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header confirmation-header">
+        <h5 class="modal-title">
+          <i class="bi bi-question-circle-fill me-2"></i>
+          Confirm Action
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p id="confirmationModalMessage"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirmationModalConfirmBtn">Confirm</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script>
+  let currentBankId = null;
+
+  // Load question banks on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    loadQuestionBanks();
+  });
+
+  // Load all question banks
+  function loadQuestionBanks() {
+    fetch('/api/question-banks/')
+      .then(response => response.json())
+      .then(data => {
+        displayQuestionBanks(data);
+      })
+      .catch(error => {
+        console.error('Error loading question banks:', error);
+        document.getElementById('questionBanksList').innerHTML =
+          '<div class="alert alert-danger">Error loading question banks</div>';
+      });
+  }
+
+  // Display question banks
+  function displayQuestionBanks(banks) {
+    const container = document.getElementById('questionBanksList');
+
+    if (banks.length === 0) {
+      container.innerHTML = '<div class="col-12 text-center p-5"><p class="question-bank-subtitle">No question banks yet. Create one to get started!</p></div>';
+      return;
+    }
+
+    container.innerHTML = banks.map(bank => `
+      <div class="col-md-6 col-lg-4 mb-3">
+        <div class="question-bank-card card h-100">
+          <div class="card-body">
+            <h5 class="card-title">${bank.name}</h5>
+            <p class="card-text">${bank.description || 'No description'}</p>
+            <p class="card-text">
+              <small class="text-muted">
+                <strong>${bank.question_count}</strong> questions
+              </small>
+            </p>
+          </div>
+          <div class="card-footer">
+            <button class="btn btn-sm btn-primary" onclick="viewQuestionBank(${bank.id})">
+              View Questions
+            </button>
+            <button class="btn btn-sm btn-danger" onclick="deleteQuestionBank(${bank.id})">
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // Create new question bank
+  function createQuestionBank() {
+    const name = document.getElementById('bankName').value.trim();
+    const description = document.getElementById('bankDescription').value.trim();
+
+    // Validation
+    if (!name) {
+      showNotification('Please enter a name for the question bank', 'warning');
+      return;
+    }
+
+    fetch('/api/question-banks/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify({ name, description })
+    })
+    .then(response => {
+      if (!response.ok) {
+        // Handle error responses
+        return response.json().then(errorData => {
+          throw { status: response.status, data: errorData };
+        });
+      }
+      return response.json();
+    })
+    .then(data => {
+      // Close modal
+      const modalElement = document.getElementById('createBankModal');
+      const modalInstance = bootstrap.Modal.getInstance(modalElement);
+      if (modalInstance) {
+        modalInstance.hide();
+      }
+
+      // Reset form
+      document.getElementById('createBankForm').reset();
+
+      // Show success message
+      showNotification('Question bank created successfully!', 'success');
+
+      // Reload question banks
+      loadQuestionBanks();
+    })
+    .catch(error => {
+      console.error('Error creating question bank:', error);
+
+      // Show specific error message if available
+      let errorMessage = 'Failed to create question bank. Please try again.';
+
+      if (error.status === 403) {
+        // Permission denied
+        errorMessage = 'Access denied. This feature is only available to Interviewers and Admins.';
+      } else if (error.status === 401) {
+        // Not authenticated
+        errorMessage = 'Please log in to create question banks.';
+      } else if (error.data) {
+        // Check for specific field errors
+        if (error.data.name) {
+          errorMessage = error.data.name[0]; // Display first error for name field
+        } else if (error.data.error) {
+          errorMessage = error.data.error;
+        } else if (error.data.detail) {
+          errorMessage = error.data.detail;
+        }
+      }
+
+      // Clean up modal backdrop if error occurs
+      cleanupModalBackdrops();
+
+      showNotification(errorMessage, 'error');
+    });
+  }
+
+  // View question bank details
+  function viewQuestionBank(bankId) {
+    currentBankId = bankId;
+
+    fetch(`/api/question-banks/${bankId}/`)
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById('viewBankTitle').textContent = data.name;
+        displayQuestions(data.questions);
+
+        // Clean up any stray backdrops before showing modal
+        cleanupModalBackdrops();
+
+        new bootstrap.Modal(document.getElementById('viewBankModal')).show();
+      })
+      .catch(error => {
+        console.error('Error loading question bank:', error);
+      });
+  }
+
+  // Display questions in a bank
+  function displayQuestions(questions) {
+    const container = document.getElementById('viewBankContent');
+
+    if (questions.length === 0) {
+      container.innerHTML = '<p class="question-bank-subtitle">No questions in this bank yet.</p>';
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="list-group">
+        ${questions.map(q => `
+          <div class="list-group-item">
+            <div class="d-flex justify-content-between align-items-start">
+              <div class="flex-grow-1">
+                <p class="mb-1">${q.text}</p>
+                <small class="text-muted">Difficulty: ${q.difficulty}</small>
+                <div class="mt-2">
+                  ${q.tags.map(tag => `<span class="badge me-1">${tag.name}</span>`).join('')}
+                </div>
+              </div>
+              <button class="btn btn-sm btn-danger" onclick="deleteQuestion(${q.id})">Delete</button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  // Delete question bank
+  function deleteQuestionBank(bankId) {
+    if (!confirm('Are you sure you want to delete this question bank?')) return;
+
+    fetch(`/api/question-banks/${bankId}/`, {
+      method: 'DELETE',
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken')
+      }
+    })
+    .then(() => {
+      loadQuestionBanks();
+    })
+    .catch(error => {
+      console.error('Error deleting question bank:', error);
+      showNotification('Failed to delete question bank. Please try again.', 'error');
+    });
+  }
+
+  // Get CSRF token
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  // Cleanup function to remove any stray modal backdrops
+  function cleanupModalBackdrops() {
+    // Remove any leftover modal backdrops
+    document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+      backdrop.remove();
+    });
+    // Remove modal-open class from body if no modals are actually open
+    const openModals = document.querySelectorAll('.modal.show');
+    if (openModals.length === 0) {
+      document.body.classList.remove('modal-open');
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    }
+  }
+
+  // Track selected tags
+  let selectedTagIds = [];
+  let allTags = [];
+
+  // Show add question modal
+  function showAddQuestionModal() {
+    // Load available tags
+    loadAvailableTags();
+
+    // Reset form
+    document.getElementById('addQuestionForm').reset();
+    selectedTagIds = [];
+    updateSelectedTagsDisplay();
+
+    // Show modal
+    new bootstrap.Modal(document.getElementById('addQuestionModal')).show();
+  }
+
+  // Load available tags
+  function loadAvailableTags() {
+    fetch('/api/tags/')
+      .then(response => response.json())
+      .then(data => {
+        allTags = data;
+        displayAvailableTags(data);
+      })
+      .catch(error => {
+        console.error('Error loading tags:', error);
+      });
+  }
+
+  // Display available tags as clickable badges
+  function displayAvailableTags(tags) {
+    const container = document.getElementById('availableTags');
+
+    if (tags.length === 0) {
+      container.innerHTML = '<small class="text-muted">No tags available. Create one below.</small>';
+      return;
+    }
+
+    container.innerHTML = tags.map(tag => {
+      const isSelected = selectedTagIds.includes(tag.id);
+      const badgeClass = isSelected ? 'badge bg-primary' : 'badge bg-secondary';
+      return `<span class="${badgeClass} me-1 mb-1" style="cursor: pointer;" onclick="toggleTag(${tag.id})">${tag.name}</span>`;
+    }).join('');
+  }
+
+  // Toggle tag selection
+  function toggleTag(tagId) {
+    const index = selectedTagIds.indexOf(tagId);
+    if (index > -1) {
+      selectedTagIds.splice(index, 1);
+    } else {
+      selectedTagIds.push(tagId);
+    }
+    displayAvailableTags(allTags);
+    updateSelectedTagsDisplay();
+  }
+
+  // Update selected tags display
+  function updateSelectedTagsDisplay() {
+    const container = document.getElementById('selectedTags');
+
+    if (selectedTagIds.length === 0) {
+      container.innerHTML = '<span class="text-muted">No tags selected</span>';
+      return;
+    }
+
+    const selectedTags = allTags.filter(tag => selectedTagIds.includes(tag.id));
+    container.innerHTML = selectedTags.map(tag =>
+      `<span class="badge bg-primary me-1">${tag.name} <span style="cursor: pointer;" onclick="toggleTag(${tag.id})">×</span></span>`
+    ).join('');
+  }
+
+  // Create new tag
+  function createNewTag() {
+    const tagName = document.getElementById('newTagName').value.trim();
+
+    if (!tagName) {
+      showNotification('Please enter a tag name', 'warning');
+      return;
+    }
+
+    fetch('/api/tags/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify({ name: tagName })
+    })
+    .then(response => response.json())
+    .then(data => {
+      document.getElementById('newTagName').value = '';
+      loadAvailableTags();
+      // Auto-select the newly created tag
+      selectedTagIds.push(data.id);
+      setTimeout(() => {
+        displayAvailableTags(allTags);
+        updateSelectedTagsDisplay();
+      }, 100);
+    })
+    .catch(error => {
+      console.error('Error creating tag:', error);
+      showNotification('Failed to create tag. It may already exist.', 'error');
+    });
+  }
+
+  // Save question
+  function saveQuestion() {
+    const text = document.getElementById('questionText').value.trim();
+    const difficulty = document.getElementById('questionDifficulty').value;
+
+    if (!text) {
+      showNotification('Please enter a question', 'warning');
+      return;
+    }
+
+    if (!currentBankId) {
+      showNotification('No question bank selected', 'warning');
+      return;
+    }
+
+    const questionData = {
+      question_bank: currentBankId,
+      text: text,
+      difficulty: difficulty,
+      tag_ids: selectedTagIds
+    };
+
+    fetch('/api/questions/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify(questionData)
+    })
+    .then(response => response.json())
+    .then(data => {
+      // Get the add question modal
+      const addQuestionModalEl = document.getElementById('addQuestionModal');
+      const addQuestionModal = bootstrap.Modal.getInstance(addQuestionModalEl);
+
+      // Wait for the modal to be fully hidden before showing the view modal
+      addQuestionModalEl.addEventListener('hidden.bs.modal', function reloadBank() {
+        // Remove this event listener after it fires once
+        addQuestionModalEl.removeEventListener('hidden.bs.modal', reloadBank);
+
+        // Reload the question bank to show the new question
+        viewQuestionBank(currentBankId);
+      });
+
+      // Close add question modal
+      addQuestionModal.hide();
+    })
+    .catch(error => {
+      console.error('Error saving question:', error);
+      showNotification('Failed to save question. Please try again.', 'error');
+    });
+  }
+
+  // Delete question
+  function deleteQuestion(questionId) {
+    if (!confirm('Are you sure you want to delete this question?')) return;
+
+    fetch(`/api/questions/${questionId}/`, {
+      method: 'DELETE',
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken')
+      }
+    })
+    .then(() => {
+      // Reload the question bank
+      viewQuestionBank(currentBankId);
+    })
+    .catch(error => {
+      console.error('Error deleting question:', error);
+      showNotification('Failed to delete question. Please try again.', 'error');
+    });
+  }
+
+  // Auto-Assembly Feature
+  let autoAssembleSelectedTagIds = [];
+  let assembledInterviewData = null;
+
+  // Setup modal event listeners
+  document.addEventListener('DOMContentLoaded', function() {
+    const autoAssembleModal = document.getElementById('autoAssembleModal');
+    autoAssembleModal.addEventListener('show.bs.modal', function() {
+      loadAutoAssembleTags();
+      loadQuestionBanksForSelect();
+    });
+
+    // Handle disregard difficulty checkbox
+    const disregardDifficultyCheckbox = document.getElementById('disregardDifficulty');
+    const difficultySection = document.getElementById('difficultyDistributionSection');
+
+    disregardDifficultyCheckbox.addEventListener('change', function() {
+      if (this.checked) {
+        // Hide difficulty distribution section
+        difficultySection.style.display = 'none';
+      } else {
+        // Show difficulty distribution section
+        difficultySection.style.display = 'block';
+      }
+    });
+  });
+
+  // Load tags for auto-assembly
+  function loadAutoAssembleTags() {
+    fetch('/api/tags/')
+      .then(response => response.json())
+      .then(data => {
+        allTags = data;
+        displayAutoAssembleAvailableTags(data);
+      })
+      .catch(error => {
+        console.error('Error loading tags:', error);
+      });
+  }
+
+  // Display available tags for auto-assembly
+  function displayAutoAssembleAvailableTags(tags) {
+    const container = document.getElementById('autoAssembleAvailableTags');
+
+    if (tags.length === 0) {
+      container.innerHTML = '<small class="text-muted">No tags available. Create questions with tags first.</small>';
+      return;
+    }
+
+    container.innerHTML = tags.map(tag => {
+      const isSelected = autoAssembleSelectedTagIds.includes(tag.id);
+      const badgeClass = isSelected ? 'badge bg-primary' : 'badge bg-secondary';
+      return `<span class="${badgeClass} me-1 mb-1" style="cursor: pointer;" onclick="toggleAutoAssembleTag(${tag.id})">${tag.name}</span>`;
+    }).join('');
+  }
+
+  // Toggle tag selection for auto-assembly
+  function toggleAutoAssembleTag(tagId) {
+    const index = autoAssembleSelectedTagIds.indexOf(tagId);
+    if (index > -1) {
+      autoAssembleSelectedTagIds.splice(index, 1);
+    } else {
+      autoAssembleSelectedTagIds.push(tagId);
+    }
+    displayAutoAssembleAvailableTags(allTags);
+    updateAutoAssembleSelectedTagsDisplay();
+  }
+
+  // Update selected tags display for auto-assembly
+  function updateAutoAssembleSelectedTagsDisplay() {
+    const container = document.getElementById('autoAssembleSelectedTags');
+
+    if (autoAssembleSelectedTagIds.length === 0) {
+      container.innerHTML = '<span class="text-muted">No tags selected</span>';
+      return;
+    }
+
+    const selectedTags = allTags.filter(tag => autoAssembleSelectedTagIds.includes(tag.id));
+    container.innerHTML = selectedTags.map(tag =>
+      `<span class="badge bg-primary me-1">${tag.name} <span style="cursor: pointer;" onclick="toggleAutoAssembleTag(${tag.id})">×</span></span>`
+    ).join('');
+  }
+
+  // Load question banks for select dropdown
+  function loadQuestionBanksForSelect() {
+    fetch('/api/question-banks/')
+      .then(response => response.json())
+      .then(data => {
+        const select = document.getElementById('questionBankSelect');
+        const currentOptions = select.innerHTML;
+
+        if (data.length > 0) {
+          select.innerHTML = '<option value="">All Question Banks</option>' +
+            data.map(bank => `<option value="${bank.id}">${bank.name}</option>`).join('');
+        }
+      })
+      .catch(error => {
+        console.error('Error loading question banks:', error);
+      });
+  }
+
+  // Assemble interview
+  function assembleInterview() {
+    const title = document.getElementById('interviewTitle').value.trim();
+    const questionCount = parseInt(document.getElementById('questionCount').value);
+    const disregardDifficulty = document.getElementById('disregardDifficulty').checked;
+    const easyPercentage = parseInt(document.getElementById('easyPercentage').value);
+    const mediumPercentage = parseInt(document.getElementById('mediumPercentage').value);
+    const hardPercentage = parseInt(document.getElementById('hardPercentage').value);
+    const questionBankId = document.getElementById('questionBankSelect').value;
+    const randomize = document.getElementById('randomizeQuestions').checked;
+
+    // Validation
+    if (!title) {
+      showNotification('Please enter an interview title', 'warning');
+      return;
+    }
+
+    if (autoAssembleSelectedTagIds.length === 0) {
+      showNotification('Please select at least one tag', 'warning');
+      return;
+    }
+
+    // Only validate difficulty percentages if not disregarding difficulty
+    if (!disregardDifficulty) {
+      const totalPercentage = easyPercentage + mediumPercentage + hardPercentage;
+      if (totalPercentage !== 100) {
+        showNotification(`Difficulty percentages must total 100% (currently ${totalPercentage}%)`, 'warning');
+        return;
+      }
+    }
+
+    // Build request data
+    const requestData = {
+      title: title,
+      tag_ids: autoAssembleSelectedTagIds,
+      question_count: questionCount,
+      randomize: randomize,
+      disregard_difficulty: disregardDifficulty
+    };
+
+    // Only include difficulty distribution if not disregarding difficulty
+    if (!disregardDifficulty) {
+      requestData.difficulty_distribution = {
+        easy: easyPercentage,
+        medium: mediumPercentage,
+        hard: hardPercentage
+      };
+    }
+
+    if (questionBankId) {
+      requestData.question_bank_id = parseInt(questionBankId);
+    }
+
+    // Show loading state
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Assembling...';
+    button.disabled = true;
+
+    // Make API request
+    fetch('/api/auto-assemble-interview/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify(requestData)
+    })
+    .then(response => {
+      // Check if response is OK (status 200-299)
+      if (!response.ok) {
+        // Handle error responses
+        return response.json().then(errorData => {
+          throw { status: response.status, data: errorData };
+        });
+      }
+      return response.json();
+    })
+    .then(data => {
+      // Reset button
+      button.innerHTML = originalText;
+      button.disabled = false;
+
+      // Store the assembled data
+      assembledInterviewData = data;
+
+      // Clear the form fields
+      clearAutoAssembleForm();
+
+      // Close the auto-assemble modal
+      bootstrap.Modal.getInstance(document.getElementById('autoAssembleModal')).hide();
+
+      // Show results modal
+      displayAssemblyResults(data);
+    })
+    .catch(error => {
+      console.error('Error assembling interview:', error);
+
+      // Reset button
+      button.innerHTML = originalText;
+      button.disabled = false;
+
+      // Handle validation errors (400 Bad Request)
+      if (error.status === 400 && error.data) {
+        showValidationErrorModal(error.data);
+      } else {
+        showValidationErrorModal({
+          error: 'Error assembling interview',
+          message: 'An unexpected error occurred. Please try again.'
+        });
+      }
+    });
+  }
+
+  // Show validation error modal
+  function showValidationErrorModal(errorData) {
+    // Set main error message
+    document.getElementById('errorMainMessage').textContent = errorData.error || 'Validation Error';
+
+    // Set description if available
+    const descriptionEl = document.getElementById('errorDescription');
+    if (errorData.available_count !== undefined && errorData.requested_count !== undefined) {
+      descriptionEl.textContent = `You requested ${errorData.requested_count} questions, but only ${errorData.available_count} are available with the selected tags and difficulty distribution.`;
+    } else {
+      descriptionEl.textContent = errorData.message || 'Please review the details below and adjust your settings.';
+    }
+
+    // Show breakdown table if available
+    const breakdownSection = document.getElementById('errorBreakdownSection');
+    const breakdownTable = document.getElementById('errorBreakdownTable');
+
+    if (errorData.breakdown) {
+      breakdownSection.style.display = 'block';
+      breakdownTable.innerHTML = '';
+
+      // Add rows for each difficulty level
+      ['easy', 'medium', 'hard'].forEach(difficulty => {
+        if (errorData.breakdown[difficulty]) {
+          const data = errorData.breakdown[difficulty];
+          const isInsufficient = data.available < data.requested;
+          const statusIcon = isInsufficient ?
+            '<i class="bi bi-x-circle-fill text-danger"></i>' :
+            '<i class="bi bi-check-circle-fill text-success"></i>';
+          const statusText = isInsufficient ? 'Insufficient' : 'OK';
+          const rowClass = isInsufficient ? 'table-danger' : '';
+
+          breakdownTable.innerHTML += `
+            <tr class="${rowClass}">
+              <td class="text-capitalize">${difficulty}</td>
+              <td><strong>${data.requested}</strong></td>
+              <td><strong>${data.available}</strong></td>
+              <td>${statusIcon} ${statusText}</td>
+            </tr>
+          `;
+        }
+      });
+    } else {
+      breakdownSection.style.display = 'none';
+    }
+
+    // Set suggestions
+    const suggestionsEl = document.getElementById('errorSuggestions');
+    suggestionsEl.innerHTML = '';
+
+    const suggestions = [
+      'Reduce the total number of questions',
+      'Adjust the difficulty distribution percentages',
+      'Change tag selection to include more questions',
+      'Add more questions to your question bank'
+    ];
+
+    suggestions.forEach(suggestion => {
+      suggestionsEl.innerHTML += `<li>${suggestion}</li>`;
+    });
+
+    // Close auto-assemble modal and show error modal
+    const autoAssembleModal = bootstrap.Modal.getInstance(document.getElementById('autoAssembleModal'));
+    if (autoAssembleModal) {
+      autoAssembleModal.hide();
+    }
+
+    // Show error modal
+    const errorModal = new bootstrap.Modal(document.getElementById('validationErrorModal'));
+    errorModal.show();
+  }
+
+  // Reopen auto-assemble modal to adjust settings
+  function reopenAutoAssembleModal() {
+    const autoAssembleModal = new bootstrap.Modal(document.getElementById('autoAssembleModal'));
+    autoAssembleModal.show();
+  }
+
+  // Clear auto-assemble form fields
+  function clearAutoAssembleForm() {
+    // Clear title
+    document.getElementById('interviewTitle').value = '';
+
+    // Reset question count to default
+    document.getElementById('questionCount').value = '5';
+
+    // Reset difficulty percentages to defaults
+    document.getElementById('easyPercentage').value = '30';
+    document.getElementById('mediumPercentage').value = '50';
+    document.getElementById('hardPercentage').value = '20';
+
+    // Reset question bank selection
+    const questionBankSelect = document.getElementById('questionBankSelect');
+    if (questionBankSelect) {
+      questionBankSelect.value = '';
+    }
+
+    // Reset randomize checkbox
+    document.getElementById('randomizeQuestions').checked = true;
+
+    // Reset disregard difficulty checkbox and show difficulty section
+    document.getElementById('disregardDifficulty').checked = false;
+    document.getElementById('difficultyDistributionSection').style.display = 'block';
+
+    // Clear selected tags
+    autoAssembleSelectedTagIds = [];
+    updateAutoAssembleSelectedTagsDisplay();
+  }
+
+  // Show notification modal
+  function showNotification(message, type = 'info', title = null) {
+    const modal = document.getElementById('notificationModal');
+    const header = document.getElementById('notificationModalHeader');
+    const icon = document.getElementById('notificationModalIcon');
+    const titleText = document.getElementById('notificationModalTitleText');
+    const messageEl = document.getElementById('notificationModalMessage');
+    const okBtn = document.getElementById('notificationModalOkBtn');
+    const closeBtn = document.getElementById('notificationModalCloseBtn');
+
+    // Set message
+    messageEl.textContent = message;
+
+    // Configure based on type
+    let iconClass = '';
+    let headerClass = '';
+    let btnClass = 'btn';
+
+    switch(type) {
+      case 'success':
+        iconClass = 'bi bi-check-circle-fill text-white';
+        headerClass = 'bg-success text-white';
+        btnClass = 'btn btn-success';
+        titleText.textContent = title || 'Success';
+        closeBtn.classList.add('btn-close-white');
+        break;
+      case 'error':
+        iconClass = 'bi bi-x-circle-fill text-white';
+        headerClass = 'bg-danger text-white';
+        btnClass = 'btn btn-danger';
+        titleText.textContent = title || 'Error';
+        closeBtn.classList.add('btn-close-white');
+        break;
+      case 'warning':
+        iconClass = 'bi bi-exclamation-triangle-fill';
+        headerClass = 'warning-header';
+        btnClass = 'btn warning-btn';
+        titleText.textContent = title || 'Warning';
+        closeBtn.classList.add('btn-close-white');
+        break;
+      default: // info
+        iconClass = 'bi bi-info-circle-fill text-white';
+        headerClass = 'bg-info text-white';
+        btnClass = 'btn btn-info';
+        titleText.textContent = title || 'Information';
+        closeBtn.classList.add('btn-close-white');
+    }
+
+    icon.className = iconClass + ' me-2';
+    header.className = 'modal-header ' + headerClass;
+    okBtn.className = btnClass;
+
+    // Show modal
+    const notificationModal = new bootstrap.Modal(modal);
+    notificationModal.show();
+  }
+
+  // Show confirmation modal
+  function showConfirmation(message, onConfirm, title = 'Confirm Action') {
+    const messageEl = document.getElementById('confirmationModalMessage');
+    const confirmBtn = document.getElementById('confirmationModalConfirmBtn');
+
+    messageEl.textContent = message;
+
+    // Remove old event listeners by cloning the button
+    const newConfirmBtn = confirmBtn.cloneNode(true);
+    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+
+    // Add new event listener
+    newConfirmBtn.addEventListener('click', function() {
+      const modal = bootstrap.Modal.getInstance(document.getElementById('confirmationModal'));
+      modal.hide();
+      onConfirm();
+    });
+
+    // Show modal
+    const confirmModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
+    confirmModal.show();
+  }
+
+  // Display assembly results
+  function displayAssemblyResults(data) {
+    const container = document.getElementById('assemblyResults');
+    document.getElementById('resultsTitle').textContent = data.title || 'Interview Preview';
+
+    let html = `
+      <div class="alert alert-info mb-4">
+        <h5>Interview Summary</h5>
+        <p class="mb-2"><strong>Total Questions:</strong> ${data.total_questions}</p>
+        <p class="mb-2"><strong>Difficulty Breakdown:</strong></p>
+        <ul class="mb-0">
+          <li>Easy: ${data.difficulty_breakdown.easy} questions</li>
+          <li>Medium: ${data.difficulty_breakdown.medium} questions</li>
+          <li>Hard: ${data.difficulty_breakdown.hard} questions</li>
+        </ul>
+    `;
+
+    if (data.warning) {
+      html += `<div class="alert alert-warning mt-3 mb-0">${data.warning}</div>`;
+    }
+
+    html += `</div>`;
+
+    // Display tag breakdown
+    if (data.tag_breakdown && Object.keys(data.tag_breakdown).length > 0) {
+      html += `
+        <div class="mb-4">
+          <h5>Tag Distribution:</h5>
+          <div>
+            ${Object.entries(data.tag_breakdown).map(([tag, count]) =>
+              `<span class="badge bg-primary me-1">${tag}: ${count}</span>`
+            ).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    // Display questions
+    html += `<h5>Questions Preview:</h5>`;
+
+    if (data.questions && data.questions.length > 0) {
+      html += `
+        <div class="list-group">
+          ${data.questions.map((q, index) => `
+            <div class="list-group-item">
+              <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                  <strong>${index + 1}.</strong> ${q.text}
+                  <div class="mt-2">
+                    <span class="badge bg-secondary">${q.difficulty}</span>
+                    ${q.tags.map(tag => `<span class="badge bg-primary ms-1">${tag.name}</span>`).join('')}
+                  </div>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    } else {
+      html += `<p class="text-muted">No questions found matching your criteria.</p>`;
+    }
+
+    container.innerHTML = html;
+
+    // Show the results modal
+    new bootstrap.Modal(document.getElementById('assemblyResultsModal')).show();
+  }
+
+  // Save assembled interview as a template
+  function saveAssembledInterview() {
+    if (!assembledInterviewData) {
+      showNotification('No interview data to save', 'warning');
+      return;
+    }
+
+    // Use the interview title as the template name
+    const templateName = assembledInterviewData.title;
+
+    // Get the current form values to get the question bank ID
+    const questionBankId = document.getElementById('questionBankSelect').value;
+    const questionCount = parseInt(document.getElementById('questionCount').value);
+    const easyPercentage = parseInt(document.getElementById('easyPercentage').value);
+    const mediumPercentage = parseInt(document.getElementById('mediumPercentage').value);
+    const hardPercentage = parseInt(document.getElementById('hardPercentage').value);
+
+    // Prepare the request data
+    const requestData = {
+      name: templateName,
+      description: `Auto-assembled interview with ${assembledInterviewData.total_questions} questions`,
+      tag_ids: autoAssembleSelectedTagIds,
+      question_count: questionCount,
+      easy_percentage: easyPercentage,
+      medium_percentage: mediumPercentage,
+      hard_percentage: hardPercentage,
+      questions: assembledInterviewData.questions  // Include the actual questions
+    };
+
+    if (questionBankId) {
+      requestData.question_bank_id = parseInt(questionBankId);
+    }
+
+    // Show loading state
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+    button.disabled = true;
+
+    // Make API request to save template
+    fetch('/api/save-as-template/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify(requestData)
+    })
+    .then(response => {
+      if (!response.ok) {
+        return response.json().then(err => Promise.reject(err));
+      }
+      return response.json();
+    })
+    .then(data => {
+      // Reset button
+      button.innerHTML = originalText;
+      button.disabled = false;
+
+      // Show success message
+      showNotification(`Template "${templateName}" saved successfully! You can view it in the Templates page.`, 'success', 'Template Saved');
+
+      // Close the modal
+      bootstrap.Modal.getInstance(document.getElementById('assemblyResultsModal')).hide();
+    })
+    .catch(error => {
+      console.error('Error saving template:', error);
+      showNotification('Error saving template: ' + (error.error || 'Please try again'), 'error');
+      button.innerHTML = originalText;
+      button.disabled = false;
+    });
+  }
+</script>
+{% endblock %}

@@ -7,10 +7,21 @@ from rest_framework import routers
 from allauth.account import views as allauth_views
 
 from . import views
+from . import question_bank_views
 
 
 # Create router and register views
 router = routers.DefaultRouter()
+
+# Register Question Bank viewsets (Issue #24)
+router.register(r'question-banks', question_bank_views.QuestionBankViewSet,
+               basename='question-bank')
+router.register(r'questions', question_bank_views.QuestionViewSet,
+               basename='question')
+router.register(r'tags', question_bank_views.TagViewSet,
+               basename='tag')
+router.register(r'interview-templates', question_bank_views.InterviewTemplateViewSet,
+               basename='interview-template')
 
 
 urlpatterns = [
@@ -69,6 +80,8 @@ urlpatterns = [
     path('pasted-text/', views.UploadedJobListingView.as_view(),
          name='save_pasted_text'),
     path('api/job-listings/', views.JobListingList.as_view(), name='pasted_text_list'),
+    path('api/job-listing/analyze/', views.JobListingAnalyzeView.as_view(),
+         name='analyze_job_listing'),  # Issues #21, #51, #52, #53
     path('resume/<int:resume_id>/', views.resume_detail, name='resume_detail'),
     path('job-posting/<int:job_id>/',
          views.job_posting_detail, name='job_posting_detail'),
@@ -87,6 +100,18 @@ urlpatterns = [
          views.ExportReportView.as_view(), name='export_report'),
     path('chat/<int:chat_id>/download-pdf/',
          views.DownloadPDFReportView.as_view(), name='download_pdf_report'),
+    path('chat/<int:chat_id>/download-csv/',
+         views.DownloadCSVReportView.as_view(), name='download_csv_report'),
+
+    # Question Bank Tagging urls (Issue #24)
+    path('question-banks/', question_bank_views.question_banks_view,
+         name='question_banks'),
+    path('api/auto-assemble-interview/',
+         question_bank_views.AutoAssembleInterviewView.as_view(),
+         name='auto_assemble_interview'),
+    path('api/save-as-template/',
+         question_bank_views.SaveAsTemplateView.as_view(),
+         name='save_as_template'),
 
     # User Profile View (Issue #69)
     path('user/<int:user_id>/profile/', views.view_user_profile,
@@ -121,6 +146,42 @@ urlpatterns = [
          views.edit_section, name='edit_section'),
     path('templates/<int:template_id>/sections/<str:section_id>/delete/',
          views.delete_section, name='delete_section'),
+
+    # User Data Export & Deletion URLs (Issues #63, #64, #65)
+    path('profile/data-settings/', views.user_data_settings,
+         name='user_data_settings'),
+    path('profile/data-export/request/', views.request_data_export,
+         name='request_data_export'),
+    path('profile/data-export/<int:request_id>/status/',
+         views.data_export_status, name='data_export_status'),
+    path('profile/data-export/<int:request_id>/download/',
+         views.download_data_export, name='download_data_export'),
+    path('profile/delete-account/', views.request_account_deletion,
+         name='request_account_deletion'),
+    path('profile/delete-account/confirm/', views.confirm_account_deletion,
+         name='confirm_account_deletion'),
+
+    # Interview Invitation urls (Issue #4, #5, #9, #134, #138)
+    path('invitations/', views.invitation_dashboard,
+         name='invitation_dashboard'),
+    path('invitations/create/', views.invitation_create,
+         name='invitation_create'),
+    path('invitations/create/<int:template_id>/', views.invitation_create,
+         name='invitation_create_from_template'),
+    path('invitations/<uuid:invitation_id>/confirmation/',
+         views.invitation_confirmation, name='invitation_confirmation'),
+    path('invitations/<uuid:invitation_id>/review/',
+         views.invitation_review, name='invitation_review'),
+
+    # Candidate Invitation Join urls (Issue #135, #136)
+    path('interview/invite/<uuid:invitation_id>/',
+         views.invitation_join, name='invitation_join'),
+    path('interview/invited/<uuid:invitation_id>/',
+         views.invited_interview_detail, name='invited_interview_detail'),
+    path('interview/invited/<uuid:invitation_id>/start/',
+         views.start_invited_interview, name='start_invited_interview'),
+    path('my-invitations/', views.candidate_invitations,
+         name='candidate_invitations'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

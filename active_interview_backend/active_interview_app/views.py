@@ -5,13 +5,17 @@ import pymupdf4llm
 import tempfile
 import textwrap
 import re
+import csv
+import io
+from datetime import timedelta
 from markdownify import markdownify as md
 from docx import Document
 
 from .models import (
     UploadedResume, UploadedJobListing, Chat,
     ExportableReport, UserProfile, RoleChangeRequest,
-    InterviewTemplate
+    InterviewTemplate, DataExportRequest, DeletionRequest, Tag,
+    InvitedInterview
 )
 from .forms import (
     CreateUserForm,
@@ -20,15 +24,23 @@ from .forms import (
     UploadFileForm,
     DocumentEditForm,
     JobPostingEditForm,
-    InterviewTemplateForm
+    InterviewTemplateForm,
+    InvitationCreationForm
 )
 from .serializers import (
     UploadedResumeSerializer,
     UploadedJobListingSerializer,
     ExportableReportSerializer
 )
-from .pdf_export import generate_pdf_report
+from .pdf_export import generate_pdf_report, get_score_rating
 from .resume_parser import parse_resume_with_ai
+from .job_listing_parser import parse_job_listing_with_ai
+from .user_data_utils import (
+    process_export_request,
+    delete_user_account,
+    generate_anonymized_id
+)
+from .invitation_utils import send_invitation_email
 
 
 from django.conf import settings
@@ -53,7 +65,7 @@ from rest_framework.views import APIView
 
 
 # Import OpenAI utilities (moved to separate module to prevent circular imports)
-from .openai_utils import get_openai_client, _ai_available, MAX_TOKENS
+from .openai_utils import get_openai_client, ai_available, MAX_TOKENS
 
 # Import RBAC decorators (Issue #69)
 from .decorators import (
@@ -154,11 +166,40 @@ class CreateChat(LoginRequiredMixin, View):
         owner_chats = Chat.objects.filter(owner=request.user)\
             .order_by('-modified_date')
 
-        form = CreateChatForm(user=request.user)  # Pass user into chatform
+        # Pre-populate form from URL parameters (Issue #53)
+        job_id = request.GET.get('job_id')
+        template_id = request.GET.get('template_id')
 
-        context = {}
-        context['owner_chats'] = owner_chats
-        context['form'] = form
+        initial_data = {}
+
+        # Pre-select job listing if provided
+        if job_id:
+            try:
+                job_listing = UploadedJobListing.objects.get(
+                    id=job_id, user=request.user
+                )
+                initial_data['listing_choice'] = job_listing
+            except UploadedJobListing.DoesNotExist:
+                pass  # Ignore invalid job_id
+
+        # Set suggested template in context (not in form, just for display)
+        suggested_template = None
+        if template_id:
+            try:
+                suggested_template = InterviewTemplate.objects.get(
+                    id=template_id, user=request.user
+                )
+            except InterviewTemplate.DoesNotExist:
+                pass  # Ignore invalid template_id
+
+        form = CreateChatForm(user=request.user, initial=initial_data)
+
+        context = {
+            'owner_chats': owner_chats,
+            'form': form,
+            'suggested_template': suggested_template,  # Issue #53
+            'from_job_analysis': bool(job_id)  # Flag for UI
+        }
 
         return render(request, os.path.join('chat', 'chat-create.html'),
                       context)
@@ -268,7 +309,7 @@ class CreateChat(LoginRequiredMixin, View):
                 ]
 
                 # Make ai speak first
-                if not _ai_available():
+                if not ai_available():
                     messages.error(request, "AI features are disabled on this server.")
                     ai_message = ""
                 else:
@@ -397,7 +438,7 @@ class CreateChat(LoginRequiredMixin, View):
                 ]
 
                 # Make ai speak first
-                if not _ai_available():
+                if not ai_available():
                     messages.error(request, "AI features are disabled on this server.")
                     ai_message = "[]"
                 else:
@@ -445,21 +486,63 @@ class ChatView(LoginRequiredMixin, UserPassesTestMixin, View):
         owner_chats = Chat.objects.filter(owner=request.user)\
             .order_by('-modified_date')
 
+        # Check if invited interview time has expired (Issue #138)
+        time_expired = False
+        if chat.interview_type == Chat.INVITED:
+            time_expired = chat.is_time_expired()
+            if time_expired:
+                # Mark invitation as completed if not already
+                try:
+                    invitation = InvitedInterview.objects.get(chat=chat)
+                    if invitation.status != InvitedInterview.COMPLETED:
+                        invitation.status = InvitedInterview.COMPLETED
+                        invitation.completed_at = timezone.now()
+                        invitation.save()
+
+                        # Send completion notification to interviewer
+                        from .invitation_utils import send_completion_notification_email
+                        send_completion_notification_email(invitation)
+                except InvitedInterview.DoesNotExist:
+                    pass
+
         context = {}
         context['chat'] = chat
         context['owner_chats'] = owner_chats
+        context['time_expired'] = time_expired
+        context['time_remaining'] = chat.time_remaining()
 
         return render(request, os.path.join('chat', 'chat-view.html'), context)
 
     def post(self, request, chat_id):
         chat = Chat.objects.get(id=chat_id)
 
+        # Check if invited interview time has expired (Issue #138)
+        if chat.interview_type == Chat.INVITED and chat.is_time_expired():
+            # Mark invitation as completed if not already
+            try:
+                invitation = InvitedInterview.objects.get(chat=chat)
+                if invitation.status != InvitedInterview.COMPLETED:
+                    invitation.status = InvitedInterview.COMPLETED
+                    invitation.completed_at = timezone.now()
+                    invitation.save()
+
+                    # Send completion notification to interviewer
+                    from .invitation_utils import send_completion_notification_email
+                    send_completion_notification_email(invitation)
+            except InvitedInterview.DoesNotExist:
+                pass
+
+            return JsonResponse({
+                'error': 'Interview time has expired',
+                'time_expired': True
+            }, status=403)
+
         user_message = request.POST.get('message', '')
 
         new_messages = chat.messages
         new_messages.append({"role": "user", "content": user_message})
 
-        if not _ai_available():
+        if not ai_available():
             return _ai_unavailable_json()
 
         response = get_openai_client().chat.completions.create(
@@ -701,7 +784,7 @@ class KeyQuestionsView(LoginRequiredMixin, UserPassesTestMixin, View):
             }
         ]
 
-        if not _ai_available():
+        if not ai_available():
             return _ai_unavailable_json()
 
         response = get_openai_client().chat.completions.create(
@@ -737,7 +820,7 @@ class ResultsChat(LoginRequiredMixin, UserPassesTestMixin, View):
         input_messages = chat.messages
         input_messages.append({"role": "user", "content": feedback_prompt})
 
-        if not _ai_available():
+        if not ai_available():
             ai_message = "AI features are currently unavailable."
         else:
             response = get_openai_client().chat.completions.create(
@@ -747,10 +830,19 @@ class ResultsChat(LoginRequiredMixin, UserPassesTestMixin, View):
             )
             ai_message = response.choices[0].message.content
 
+        # Check if this is an invited interview and get invitation details
+        invitation = None
+        if chat.interview_type == Chat.INVITED:
+            try:
+                invitation = InvitedInterview.objects.get(chat=chat)
+            except InvitedInterview.DoesNotExist:
+                pass
+
         context = {}
         context['chat'] = chat
         context['owner_chats'] = owner_chats
         context['feedback'] = ai_message
+        context['invitation'] = invitation
 
         return render(request, os.path.join('chat', 'chat-results.html'),
                       context)
@@ -789,7 +881,7 @@ class ResultCharts(LoginRequiredMixin, UserPassesTestMixin, View):
 
         input_messages.append({"role": "user", "content": scores_prompt})
 
-        if not _ai_available():
+        if not ai_available():
             professionalism, subject_knowledge, clarity, overall = [0, 0, 0, 0]
         else:
             response = get_openai_client().chat.completions.create(
@@ -823,7 +915,7 @@ class ResultCharts(LoginRequiredMixin, UserPassesTestMixin, View):
             interview
         """)
         input_messages.append({"role": "user", "content": explain})
-        if not _ai_available():
+        if not ai_available():
             ai_message = "AI features are currently unavailable."
         else:
             response = get_openai_client().chat.completions.create(
@@ -833,6 +925,15 @@ class ResultCharts(LoginRequiredMixin, UserPassesTestMixin, View):
             )
             ai_message = response.choices[0].message.content
         context['feedback'] = ai_message
+
+        # Check if this is an invited interview and get invitation details
+        invitation = None
+        if chat.interview_type == Chat.INVITED:
+            try:
+                invitation = InvitedInterview.objects.get(chat=chat)
+            except InvitedInterview.DoesNotExist:
+                pass
+        context['invitation'] = invitation
 
         return render(request, os.path.join('chat', 'chat-results.html'),
                       context)
@@ -844,6 +945,9 @@ def loggedin(request):
 
 
 def register(request):
+    # Preserve invitation context if coming from invitation link
+    next_url = request.GET.get('next', '/')
+
     if request.method == 'POST':
         form = CreateUserForm(request.POST)
         if form.is_valid():
@@ -853,11 +957,16 @@ def register(request):
             user.groups.add(group)
             user.save()
             messages.success(request, 'Account was created for ' + username)
-            return redirect('/accounts/login/?next=/')
+
+            # Redirect to next URL (invitation link) or login
+            return redirect(f'/accounts/login/?next={next_url}')
     else:
         form = CreateUserForm()
 
-    context = {'form': form}
+    context = {
+        'form': form,
+        'next': next_url
+    }
     return render(request, 'registration/register.html', context)
 
 
@@ -887,10 +996,16 @@ def view_user_profile(request, user_id):
     View another user's profile (read-only).
     Accessible by admins and interviewers.
     """
-    # Check permissions
     from .decorators import check_user_permission
     from django.http import HttpResponseForbidden, Http404
 
+    # Get user first (to return 404 if user doesn't exist)
+    try:
+        profile_user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        raise Http404("User not found")
+
+    # Check permissions after confirming user exists
     has_permission = check_user_permission(
         request, user_id,
         allow_self=True,
@@ -900,12 +1015,6 @@ def view_user_profile(request, user_id):
 
     if not has_permission:
         return HttpResponseForbidden("You don't have permission to view this profile.")
-
-    # Get user
-    try:
-        profile_user = User.objects.get(id=user_id)
-    except User.DoesNotExist:
-        raise Http404("User not found")
 
     # Get user's resumes and job listings
     resumes = UploadedResume.objects.filter(user=profile_user)
@@ -1002,7 +1111,7 @@ def upload_file(request):
 
                     # Trigger AI parsing for resumes (Issue #48: "upload triggers parsing")
                     if instance.__class__.__name__ == 'UploadedResume':
-                        if _ai_available():
+                        if ai_available():
                             try:
                                 # Set status to in_progress
                                 instance.parsing_status = 'in_progress'
@@ -1220,6 +1329,169 @@ class JobListingList(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+def recommend_template_for_job(job_listing):
+    """
+    Recommend an interview template for a job listing based on:
+    - Tags (match required skills to template tags)
+    - Seniority level (match difficulty distribution)
+    - User's existing templates
+
+    Args:
+        job_listing (UploadedJobListing): Job listing with parsed data
+
+    Returns:
+        InterviewTemplate or None: Best matching template, or None if no good match
+
+    Issues: #21, #53
+    """
+    # Get user's templates with prefetched tags to avoid N+1 queries
+    templates = InterviewTemplate.objects.filter(
+        user=job_listing.user
+    ).prefetch_related('tags')
+
+    if not templates.exists():
+        return None
+
+    best_match = None
+    best_score = 0
+
+    for template in templates:
+        score = 0
+
+        # Match tags (skills) - worth up to 50 points
+        template_tags = set(tag.name.lower().replace('#', '') for tag in template.tags.all())
+        if template_tags:
+            job_skills = set(skill.lower() for skill in job_listing.required_skills)
+            matching_tags = template_tags & job_skills
+            score += len(matching_tags) * 10  # 10 points per matching skill
+
+        # Match difficulty distribution to seniority - worth up to 30 points
+        if job_listing.seniority_level:
+            if job_listing.seniority_level == 'entry' and template.easy_percentage > 40:
+                score += 20
+            elif job_listing.seniority_level == 'mid' and template.medium_percentage > 40:
+                score += 20
+            elif job_listing.seniority_level == 'senior' and template.hard_percentage > 30:
+                score += 20
+            elif job_listing.seniority_level == 'lead' and template.hard_percentage > 40:
+                score += 25
+            elif job_listing.seniority_level == 'executive' and template.hard_percentage > 50:
+                score += 30
+
+        # Bonus points for complete templates - worth up to 20 points
+        if template.is_complete():
+            score += 20
+
+        if score > best_score:
+            best_score = score
+            best_match = template
+
+    # Only return a match if the score is meaningful (at least 20 points)
+    # This prevents recommending completely unrelated templates
+    if best_score >= 20:
+        return best_match
+
+    return None
+
+
+class JobListingAnalyzeView(APIView):
+    """
+    API endpoint to analyze job description and extract structured data.
+
+    POST /api/job-listing/analyze/
+    {
+        "title": "Senior Python Developer",
+        "description": "Job description text..."
+    }
+
+    Returns:
+    {
+        "id": 123,
+        "title": "Senior Python Developer",
+        "required_skills": ["Python", "Django", ...],
+        "seniority_level": "senior",
+        "requirements": {...},
+        "recommended_template": {...},
+        "parsing_status": "success"
+    }
+
+    Issues: #21, #51, #52, #53
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        # Validate input
+        title = request.data.get('title', '').strip()
+        description = request.data.get('description', '').strip()
+
+        if not title or not description:
+            return Response(
+                {'error': 'Both title and description are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Create UploadedJobListing with pending status
+        job_listing = UploadedJobListing.objects.create(
+            user=request.user,
+            title=title,
+            content=description,
+            filename=f"{slugify(title)}.txt",
+            parsing_status='in_progress'
+        )
+
+        try:
+            # Call AI parser
+            parsed_data = parse_job_listing_with_ai(description)
+
+            # Update job listing with parsed data
+            job_listing.required_skills = parsed_data['required_skills']
+            job_listing.seniority_level = parsed_data['seniority_level']
+            job_listing.requirements = parsed_data['requirements']
+            job_listing.parsing_status = 'success'
+            job_listing.parsed_at = timezone.now()
+
+            # Recommend template
+            recommended_template = recommend_template_for_job(job_listing)
+            if recommended_template:
+                job_listing.recommended_template = recommended_template
+
+            job_listing.save()
+
+            # Serialize and return
+            serializer = UploadedJobListingSerializer(job_listing)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        except ValueError as e:
+            # Parsing failed
+            job_listing.parsing_status = 'error'
+            job_listing.parsing_error = str(e)
+            job_listing.save()
+
+            return Response(
+                {
+                    'error': 'Failed to parse job description',
+                    'detail': str(e),
+                    'job_listing_id': job_listing.id
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        except Exception as e:
+            # Unexpected error
+            job_listing.parsing_status = 'error'
+            job_listing.parsing_error = f'Unexpected error: {str(e)}'
+            job_listing.save()
+
+            return Response(
+                {
+                    'error': 'An unexpected error occurred',
+                    'detail': str(e),
+                    'job_listing_id': job_listing.id
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
 class DocumentList(LoginRequiredMixin, View):
     def get(self, request):
         context = {}
@@ -1269,6 +1541,12 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
         # Extract feedback text using AI
         report.feedback_text = self._extract_feedback_from_chat(chat)
 
+        # Extract rationales for each score component
+        rationales = self._extract_rationales_from_chat(chat, scores)
+        report.professionalism_rationale = rationales.get('professionalism', '')
+        report.subject_knowledge_rationale = rationales.get('subject_knowledge', '')
+        report.clarity_rationale = rationales.get('clarity', '')
+        report.overall_rationale = rationales.get('overall', '')
 
         # Calculate statistics
         chat_messages = chat.messages
@@ -1309,7 +1587,7 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
         input_messages = list(chat.messages)
         input_messages.append({"role": "user", "content": scores_prompt})
 
-        if not _ai_available():
+        if not ai_available():
             professionalism, subject_knowledge, clarity, overall = [0, 0, 0, 0]
         else:
             try:
@@ -1348,7 +1626,7 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
         input_messages = list(chat.messages)
         input_messages.append({"role": "user", "content": explain_prompt})
 
-        if not _ai_available():
+        if not ai_available():
             return "AI features are currently unavailable."
 
         try:
@@ -1360,6 +1638,100 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
             return response.choices[0].message.content.strip()
         except Exception:
             return "Unable to generate feedback at this time."
+
+    def _extract_rationales_from_chat(self, chat, scores):
+        """
+        Generate rationales for each score component using AI.
+        Returns a dict with keys: professionalism, subject_knowledge, clarity, overall
+        """
+        rationale_prompt = textwrap.dedent(f"""\
+            Based on the interview, please provide a brief rationale for each of the following scores.
+            Format your response exactly as shown below:
+
+            Professionalism: [Your explanation for the professionalism score of {scores.get('Professionalism', 0)}]
+
+            Subject Knowledge: [Your explanation for the subject knowledge score of {scores.get('Subject Knowledge', 0)}]
+
+            Clarity: [Your explanation for the clarity score of {scores.get('Clarity', 0)}]
+
+            Overall: [Your explanation for the overall score of {scores.get('Overall', 0)}]
+        """)
+
+        input_messages = list(chat.messages)
+        input_messages.append({"role": "user", "content": rationale_prompt})
+
+        if not ai_available():
+            return {
+                'professionalism': 'AI features are currently unavailable.',
+                'subject_knowledge': 'AI features are currently unavailable.',
+                'clarity': 'AI features are currently unavailable.',
+                'overall': 'AI features are currently unavailable.'
+            }
+
+        try:
+            response = get_openai_client().chat.completions.create(
+                model="gpt-4o",
+                messages=input_messages,
+                max_tokens=MAX_TOKENS
+            )
+            rationale_text = response.choices[0].message.content.strip()
+
+            # Parse the rationale text to extract each component
+            rationales = {
+                'professionalism': '',
+                'subject_knowledge': '',
+                'clarity': '',
+                'overall': ''
+            }
+
+            # Split by the section headers and extract content
+            sections = rationale_text.split('\n\n')
+            current_section = None
+            current_text = []
+
+            for line in rationale_text.split('\n'):
+                line = line.strip()
+                if not line:
+                    continue
+
+                if line.startswith('Professionalism:'):
+                    if current_section and current_text:
+                        rationales[current_section] = ' '.join(current_text).strip()
+                    current_section = 'professionalism'
+                    current_text = [line.split(':', 1)[1].strip()]
+                elif line.startswith('Subject Knowledge:'):
+                    if current_section and current_text:
+                        rationales[current_section] = ' '.join(current_text).strip()
+                    current_section = 'subject_knowledge'
+                    current_text = [line.split(':', 1)[1].strip()]
+                elif line.startswith('Clarity:'):
+                    if current_section and current_text:
+                        rationales[current_section] = ' '.join(current_text).strip()
+                    current_section = 'clarity'
+                    current_text = [line.split(':', 1)[1].strip()]
+                elif line.startswith('Overall:'):
+                    if current_section and current_text:
+                        rationales[current_section] = ' '.join(current_text).strip()
+                    current_section = 'overall'
+                    current_text = [line.split(':', 1)[1].strip()]
+                elif current_section:
+                    # This is a continuation of the current section
+                    current_text.append(line)
+
+            # Don't forget the last section
+            if current_section and current_text:
+                rationales[current_section] = ' '.join(current_text).strip()
+
+            return rationales
+
+        except Exception as e:
+            # If rationale generation fails, provide fallback text
+            return {
+                'professionalism': 'Unable to generate rationale at this time.',
+                'subject_knowledge': 'Unable to generate rationale at this time.',
+                'clarity': 'Unable to generate rationale at this time.',
+                'overall': 'Unable to generate rationale at this time.'
+            }
 
     def _extract_question_responses(self, chat):
         """
@@ -1444,7 +1816,7 @@ class DownloadPDFReportView(LoginRequiredMixin, UserPassesTestMixin, View):
             report = ExportableReport.objects.get(chat=chat)
         except ExportableReport.DoesNotExist:
             messages.error(request, 'No report exists. Please generate one first.')
-            return redirect('chat_results', chat_id=chat_id)
+            return redirect('chat-results', chat_id=chat_id)
 
         # Generate PDF
         pdf_content = generate_pdf_report(report)
@@ -1461,6 +1833,131 @@ class DownloadPDFReportView(LoginRequiredMixin, UserPassesTestMixin, View):
         return response
 
 
+class DownloadCSVReportView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """
+    View to download a CSV version of the exportable report.
+    """
+
+    def test_func(self):
+        """Verify that the user owns the chat"""
+        chat = get_object_or_404(Chat, id=self.kwargs['chat_id'])
+        return self.request.user == chat.owner
+
+    def get(self, request, chat_id):
+        """Generate and download CSV report"""
+        chat = get_object_or_404(Chat, id=chat_id)
+
+        try:
+            report = ExportableReport.objects.get(chat=chat)
+        except ExportableReport.DoesNotExist:
+            messages.error(request, 'No report exists. Please generate one first.')
+            return redirect('chat-results', chat_id=chat_id)
+
+        # Create CSV in memory
+        output = io.StringIO()
+        writer = csv.writer(output)
+
+        # Write header
+        writer.writerow(['Interview Report'])
+        writer.writerow([''])
+
+        # Write Interview Details section
+        writer.writerow(['Interview Details'])
+        writer.writerow(['Title', chat.title])
+        writer.writerow(['Generated At', report.generated_at.strftime('%Y-%m-%d %H:%M:%S')])
+        writer.writerow(['Difficulty', f'{chat.difficulty}/10'])
+
+        # Add job listing and resume if present
+        if chat.job_listing:
+            writer.writerow(['Job Listing', chat.job_listing.title])
+        if chat.resume:
+            writer.writerow(['Resume', chat.resume.title])
+
+        # Add interview duration if present
+        if report.interview_duration_minutes:
+            writer.writerow(['Duration', f'{report.interview_duration_minutes} minutes'])
+
+        writer.writerow([''])
+
+        # Write scores with ratings and weights
+        writer.writerow(['Scores'])
+        writer.writerow(['Category', 'Score', 'Rating', 'Weight'])
+
+        if report.professionalism_score is not None:
+            writer.writerow([
+                'Professionalism',
+                f'{report.professionalism_score}/100',
+                get_score_rating(report.professionalism_score),
+                f'{report.professionalism_weight}%'
+            ])
+
+        if report.subject_knowledge_score is not None:
+            writer.writerow([
+                'Subject Knowledge',
+                f'{report.subject_knowledge_score}/100',
+                get_score_rating(report.subject_knowledge_score),
+                f'{report.subject_knowledge_weight}%'
+            ])
+
+        if report.clarity_score is not None:
+            writer.writerow([
+                'Clarity',
+                f'{report.clarity_score}/100',
+                get_score_rating(report.clarity_score),
+                f'{report.clarity_weight}%'
+            ])
+
+        if report.overall_score is not None:
+            writer.writerow([
+                'Overall Score',
+                f'{report.overall_score}/100',
+                get_score_rating(report.overall_score),
+                ''
+            ])
+
+        writer.writerow([''])
+
+        # Write Score Breakdown & Rationales section
+        writer.writerow(['Score Breakdown & Rationales'])
+        writer.writerow([''])
+
+        if report.professionalism_rationale:
+            writer.writerow(['Professionalism Rationale'])
+            writer.writerow([report.professionalism_rationale])
+            writer.writerow([''])
+
+        if report.subject_knowledge_rationale:
+            writer.writerow(['Subject Knowledge Rationale'])
+            writer.writerow([report.subject_knowledge_rationale])
+            writer.writerow([''])
+
+        if report.clarity_rationale:
+            writer.writerow(['Clarity Rationale'])
+            writer.writerow([report.clarity_rationale])
+            writer.writerow([''])
+
+        if report.overall_rationale:
+            writer.writerow(['Overall Rationale'])
+            writer.writerow([report.overall_rationale])
+            writer.writerow([''])
+
+        # Write feedback
+        writer.writerow(['Feedback'])
+        writer.writerow([report.feedback_text])
+        writer.writerow([''])
+
+        # Write statistics
+        writer.writerow(['Statistics'])
+        writer.writerow(['Total Questions Asked', report.total_questions_asked])
+        writer.writerow(['Total Responses Given', report.total_responses_given])
+
+        # Create response
+        csv_content = output.getvalue()
+        response = HttpResponse(csv_content, content_type='text/csv')
+        filename = f"interview_report_{slugify(chat.title)}_{report.generated_at.strftime('%Y%m%d')}.csv"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+        return response
 
 
 # =============================================================================
@@ -1631,18 +2128,20 @@ def create_template(request):
     POST /templates/create/ - Save template
     """
     if request.method == 'POST':
-        form = InterviewTemplateForm(request.POST)
+        form = InterviewTemplateForm(request.POST, user=request.user)
         if form.is_valid():
             template = form.save(commit=False)
             template.user = request.user
             template.save()
+            # Save many-to-many relationships
+            form.save_m2m()
             messages.success(
                 request,
                 f'Template "{template.name}" created successfully'
             )
             return redirect('template_list')
     else:
-        form = InterviewTemplateForm()
+        form = InterviewTemplateForm(user=request.user)
 
     context = {
         'form': form,
@@ -1691,7 +2190,7 @@ def edit_template(request, template_id):
     )
 
     if request.method == 'POST':
-        form = InterviewTemplateForm(request.POST, instance=template)
+        form = InterviewTemplateForm(request.POST, instance=template, user=request.user)
         if form.is_valid():
             form.save()
             messages.success(
@@ -1700,7 +2199,7 @@ def edit_template(request, template_id):
             )
             return redirect('template_detail', template_id=template.id)
     else:
-        form = InterviewTemplateForm(instance=template)
+        form = InterviewTemplateForm(instance=template, user=request.user)
 
     context = {
         'form': form,
@@ -1928,3 +2427,776 @@ def delete_section(request, template_id, section_id):
 
     # If GET, redirect to template detail
     return redirect('template_detail', template_id=template.id)
+
+
+# ============================================================================
+# USER DATA EXPORT & DELETION VIEWS (Issues #63, #64, #65)
+# ============================================================================
+
+@login_required
+def request_data_export(request):
+    """
+    Request a data export (GDPR/CCPA compliance).
+    Creates a DataExportRequest and processes it asynchronously.
+
+    GET: Show confirmation page
+    POST: Create export request and redirect to status page
+
+    Related to Issue #64 (Data Export Functionality).
+    """
+    if request.method == 'POST':
+        # Check for existing pending/processing requests
+        existing = DataExportRequest.objects.filter(
+            user=request.user,
+            status__in=[DataExportRequest.PENDING, DataExportRequest.PROCESSING]
+        ).first()
+
+        if existing:
+            messages.info(
+                request,
+                'You already have a pending data export request. '
+                'Please wait for it to complete.'
+            )
+            return redirect('data_export_status', request_id=existing.id)
+
+        # Create new export request
+        export_request = DataExportRequest.objects.create(user=request.user)
+
+        # Process the request (in production, this would be async with Celery)
+        # For now, process synchronously
+        process_export_request(export_request)
+
+        messages.success(
+            request,
+            'Your data export request has been submitted. '
+            'You will receive an email when it is ready.'
+        )
+
+        return redirect('data_export_status', request_id=export_request.id)
+
+    # GET request - show confirmation page
+    context = {
+        'recent_exports': DataExportRequest.objects.filter(
+            user=request.user
+        ).order_by('-requested_at')[:5]
+    }
+
+    return render(request, 'user_data/request_export.html', context)
+
+
+@login_required
+def data_export_status(request, request_id):
+    """
+    View status of a data export request.
+
+    Args:
+        request_id: DataExportRequest ID
+
+    Related to Issue #64 (Data Export Functionality).
+    """
+    export_request = get_object_or_404(
+        DataExportRequest,
+        id=request_id,
+        user=request.user
+    )
+
+    # Check if expired
+    is_expired = export_request.is_expired()
+    if is_expired and export_request.status == DataExportRequest.COMPLETED:
+        export_request.status = DataExportRequest.EXPIRED
+        export_request.save()
+
+    context = {
+        'export_request': export_request,
+        'is_expired': is_expired,
+    }
+
+    return render(request, 'user_data/export_status.html', context)
+
+
+@login_required
+def download_data_export(request, request_id):
+    """
+    Download a completed data export file.
+
+    Args:
+        request_id: DataExportRequest ID
+
+    Returns:
+        FileResponse with ZIP file
+
+    Related to Issue #64 (Data Export Functionality).
+    """
+    export_request = get_object_or_404(
+        DataExportRequest,
+        id=request_id,
+        user=request.user
+    )
+
+    # Check if export is completed
+    if export_request.status != DataExportRequest.COMPLETED:
+        messages.error(request, 'Export is not ready yet.')
+        return redirect('data_export_status', request_id=request_id)
+
+    # Check if expired
+    if export_request.is_expired():
+        export_request.status = DataExportRequest.EXPIRED
+        export_request.save()
+        messages.error(
+            request,
+            'This export link has expired. Please request a new export.'
+        )
+        return redirect('data_export_status', request_id=request_id)
+
+    # Check if file exists
+    if not export_request.export_file:
+        messages.error(request, 'Export file not found.')
+        return redirect('data_export_status', request_id=request_id)
+
+    # Mark as downloaded
+    export_request.mark_downloaded()
+
+    # Serve file
+    response = FileResponse(
+        export_request.export_file.open('rb'),
+        as_attachment=True,
+        filename=os.path.basename(export_request.export_file.name)
+    )
+
+    return response
+
+
+@login_required
+def request_account_deletion(request):
+    """
+    Request account deletion (GDPR/CCPA Right to be Forgotten).
+
+    GET: Show confirmation page with warnings
+    POST: Show password confirmation
+
+    Related to Issue #65 (Data Deletion & Anonymization).
+    """
+    if request.method == 'POST':
+        # This just shows the confirmation dialog
+        # Actual deletion happens in confirm_account_deletion
+        return render(request, 'user_data/confirm_deletion.html', {
+            'user': request.user,
+        })
+
+    # GET request - show information page
+    context = {
+        'user': request.user,
+        'resume_count': UploadedResume.objects.filter(user=request.user).count(),
+        'job_count': UploadedJobListing.objects.filter(user=request.user).count(),
+        'interview_count': Chat.objects.filter(owner=request.user).count(),
+    }
+
+    return render(request, 'user_data/request_deletion.html', context)
+
+
+@login_required
+def confirm_account_deletion(request):
+    """
+    Confirm and execute account deletion.
+    Requires password verification for security.
+
+    POST only: Verify password and delete account
+
+    Related to Issue #65 (Data Deletion & Anonymization).
+    """
+    if request.method != 'POST':
+        return redirect('request_account_deletion')
+
+    # Verify password
+    password = request.POST.get('password', '')
+    if not request.user.check_password(password):
+        messages.error(request, 'Incorrect password. Account deletion cancelled.')
+        return redirect('request_account_deletion')
+
+    # Create deletion audit record
+    anonymized_id = generate_anonymized_id(request.user)
+    deletion_request = DeletionRequest.objects.create(
+        anonymized_user_id=anonymized_id,
+        username=request.user.username,
+        email=request.user.email,
+        status=DeletionRequest.PENDING,
+    )
+
+    # Perform deletion
+    success, error = delete_user_account(request.user, deletion_request)
+
+    if success:
+        # User is deleted, so we can't redirect to a logged-in page
+        # Render a static success page
+        return render(request, 'user_data/deletion_complete.html', {
+            'username': deletion_request.username,
+        })
+    else:
+        messages.error(
+            request,
+            f'An error occurred during account deletion: {error}. '
+            'Please contact support.'
+        )
+        return redirect('profile')
+
+
+@login_required
+def user_data_settings(request):
+    """
+    Main page for user data management settings.
+    Shows options for data export and account deletion.
+
+    Related to Issue #63 (GDPR/CCPA Data Export & Delete).
+    """
+    context = {
+        'user': request.user,
+        'recent_exports': DataExportRequest.objects.filter(
+            user=request.user
+        ).order_by('-requested_at')[:3],
+        'has_pending_export': DataExportRequest.objects.filter(
+            user=request.user,
+            status__in=[DataExportRequest.PENDING, DataExportRequest.PROCESSING]
+        ).exists(),
+    }
+
+    return render(request, 'user_data/settings.html', context)
+
+
+# ============================================================================
+# INVITATION VIEWS (Issue #4: Interview Invitation Workflow)
+# ============================================================================
+
+@login_required
+@admin_or_interviewer_required
+def invitation_create(request, template_id=None):
+    """
+    Create a new interview invitation.
+    Can be accessed from template detail page (with template_id) or
+    from the invitation dashboard (without template_id).
+
+    Related to Issue #5 (Create Interview Invitation).
+    """
+    # Permission already checked by @admin_or_interviewer_required decorator
+
+    if request.method == 'POST':
+        form = InvitationCreationForm(
+            request.POST,
+            user=request.user,
+            template_id=template_id
+        )
+
+        if form.is_valid():
+            # Create invitation but don't save yet
+            invitation = form.save(commit=False)
+            invitation.interviewer = request.user
+
+            # Get combined datetime from form's clean method
+            scheduled_datetime = form.cleaned_data.get('scheduled_datetime')
+            invitation.scheduled_time = scheduled_datetime
+
+            # Save invitation
+            invitation.save()
+
+            # Send invitation email with calendar attachment
+            email_sent = send_invitation_email(invitation)
+
+            # Mark invitation as sent
+            if email_sent:
+                invitation.invitation_sent_at = timezone.now()
+                invitation.save()
+                messages.success(
+                    request,
+                    f'Invitation sent to {invitation.candidate_email}'
+                )
+            else:
+                messages.warning(
+                    request,
+                    f'Invitation created but email failed to send. Join link: {invitation.get_join_url()}'
+                )
+
+            # Redirect to confirmation page
+            return redirect('invitation_confirmation', invitation_id=invitation.id)
+    else:
+        # GET request - show form
+        form = InvitationCreationForm(
+            user=request.user,
+            template_id=template_id
+        )
+
+    # Get template if template_id provided (for context)
+    template = None
+    if template_id:
+        template = get_object_or_404(
+            InterviewTemplate,
+            id=template_id,
+            user=request.user
+        )
+
+    context = {
+        'form': form,
+        'template': template,
+    }
+
+    return render(request, 'invitations/invitation_create.html', context)
+
+
+@login_required
+@admin_or_interviewer_required
+def invitation_confirmation(request, invitation_id):
+    """
+    Show confirmation page after successfully creating an invitation.
+
+    Related to Issue #9 (Interview Confirmation Page).
+    """
+    # Get invitation and verify ownership
+    invitation = get_object_or_404(
+        InvitedInterview,
+        id=invitation_id,
+        interviewer=request.user
+    )
+
+    context = {
+        'invitation': invitation,
+        'join_url': invitation.get_join_url(),
+        'window_end': invitation.get_window_end(),
+    }
+
+    return render(request, 'invitations/invitation_confirmation.html', context)
+
+
+@login_required
+@admin_or_interviewer_required
+def invitation_dashboard(request):
+    """
+    Dashboard for managing all interview invitations sent by the user.
+    Supports filtering by status.
+
+    Related to Issue #134 (Invitation Management Dashboard).
+    """
+    # Get filter parameter from query string
+    status_filter = request.GET.get('status', 'all')
+
+    # Get all invitations for this user
+    invitations = InvitedInterview.objects.filter(
+        interviewer=request.user
+    ).select_related('template', 'chat').order_by('-created_at')
+
+    # Apply status filter
+    if status_filter and status_filter != 'all':
+        invitations = invitations.filter(status=status_filter)
+
+    # Get counts for each status (for filter badges)
+    all_invitations = InvitedInterview.objects.filter(interviewer=request.user)
+    status_counts = {
+        'all': all_invitations.count(),
+        'pending': all_invitations.filter(status=InvitedInterview.PENDING).count(),
+        'completed': all_invitations.filter(status=InvitedInterview.COMPLETED).count(),
+        'reviewed': all_invitations.filter(status=InvitedInterview.REVIEWED).count(),
+        'expired': all_invitations.filter(status=InvitedInterview.EXPIRED).count(),
+    }
+
+    context = {
+        'invitations': invitations,
+        'status_filter': status_filter,
+        'status_counts': status_counts,
+    }
+
+    return render(request, 'invitations/invitation_dashboard.html', context)
+
+
+@login_required
+@admin_or_interviewer_required
+def invitation_review(request, invitation_id):
+    """
+    Interviewer review page for a completed invited interview.
+
+    Shows:
+    - Interview metadata
+    - Candidate responses (from Chat messages)
+    - AI feedback and scores
+    - Form for interviewer to add feedback
+    - Button to mark as reviewed
+
+    Only accessible by the interviewer who created the invitation.
+
+    Related to Issue #138 (Interviewer Review & Feedback).
+    """
+    # Get invitation and verify ownership
+    invitation = get_object_or_404(
+        InvitedInterview,
+        id=invitation_id,
+        interviewer=request.user
+    )
+
+    # Check if interview has been completed
+    if not invitation.chat:
+        messages.error(request, 'This interview has not been started yet.')
+        return redirect('invitation_dashboard')
+
+    # Get the chat/interview session
+    chat = invitation.chat
+
+    # Handle POST request (submitting feedback)
+    if request.method == 'POST':
+        feedback = request.POST.get('interviewer_feedback', '').strip()
+        mark_reviewed = request.POST.get('mark_reviewed') == 'true'
+
+        # Save feedback
+        if feedback:
+            invitation.interviewer_feedback = feedback
+
+        # Mark as reviewed if requested
+        if mark_reviewed:
+            invitation.interviewer_review_status = InvitedInterview.REVIEW_COMPLETED
+            invitation.status = InvitedInterview.REVIEWED
+            invitation.reviewed_at = timezone.now()
+
+            # Send notification email to candidate
+            from .invitation_utils import send_review_notification_email
+            send_review_notification_email(invitation)
+
+            messages.success(request, 'Review completed! Notification sent to candidate.')
+        else:
+            messages.success(request, 'Feedback saved.')
+
+        invitation.save()
+        return redirect('invitation_dashboard')
+
+    # GET request - show review page
+    context = {
+        'invitation': invitation,
+        'chat': chat,
+    }
+
+    return render(request, 'invitations/invitation_review.html', context)
+
+
+# ============================================================================
+# CANDIDATE INVITATION VIEWS (Issue #4: Candidate Experience)
+# ============================================================================
+
+def invitation_join(request, invitation_id):
+    """
+    Handle candidate clicking on invitation join link.
+
+    - If not authenticated: redirect to registration with next parameter
+    - If authenticated but not matching email: show error
+    - If authenticated and matching email: show interview detail page
+
+    Related to Issue #135 (Registration Redirect Flow).
+    """
+    # Get invitation or 404
+    invitation = get_object_or_404(InvitedInterview, id=invitation_id)
+
+    # If user not authenticated, redirect to registration
+    if not request.user.is_authenticated:
+        # Build the join URL to redirect back to after registration/login
+        join_url = f'/interview/invite/{invitation_id}/'
+        messages.info(
+            request,
+            'Please register or log in to access your interview invitation.'
+        )
+        return redirect(f'/register/?next={join_url}')
+
+    # User is authenticated - verify they're the invited candidate
+    # Check if user's email matches invitation email
+    if request.user.email.lower() != invitation.candidate_email.lower():
+        messages.error(
+            request,
+            'This invitation was sent to a different email address. '
+            'Please log in with the correct account.'
+        )
+        return redirect('index')
+
+    # User is authenticated and email matches - redirect to interview detail
+    return redirect('invited_interview_detail', invitation_id=invitation.id)
+
+
+@login_required
+def invited_interview_detail(request, invitation_id):
+    """
+    Show interview detail page with time-gated access.
+
+    Candidates can view details but cannot start until scheduled time.
+    Shows different states based on current time and invitation status.
+
+    Related to Issues #136 (Time-Gated Access), #140 (Duration Enforcement).
+    """
+    # Get invitation and verify user
+    invitation = get_object_or_404(InvitedInterview, id=invitation_id)
+
+    # Verify user is the invited candidate
+    if request.user.email.lower() != invitation.candidate_email.lower():
+        messages.error(request, 'You do not have permission to access this interview.')
+        return redirect('index')
+
+    # Calculate time-related info
+    now = timezone.now()
+    window_end = invitation.get_window_end()
+    can_start = invitation.can_start()
+    is_expired = invitation.is_expired()
+    is_accessible = invitation.is_accessible()
+
+    # Calculate time until start (if not started yet)
+    time_until_start = None
+    if now < invitation.scheduled_time:
+        time_until_start = invitation.scheduled_time - now
+
+    # Calculate time remaining (if in window)
+    time_remaining = None
+    if invitation.scheduled_time <= now <= window_end and not invitation.chat:
+        time_remaining = window_end - now
+
+    context = {
+        'invitation': invitation,
+        'window_end': window_end,
+        'can_start': can_start,
+        'is_expired': is_expired,
+        'is_accessible': is_accessible,
+        'time_until_start': time_until_start,
+        'time_remaining': time_remaining,
+        'now': now,
+    }
+
+    return render(request, 'invitations/invited_interview_detail.html', context)
+
+
+@login_required
+def candidate_invitations(request):
+    """
+    Show all invitations for the current user (as candidate).
+
+    Displays invitations sent to the user's email address with status filtering.
+
+    Sorting order (when status_filter='all'):
+    1. Pending (sorted by soonest scheduled_time)
+    2. Completed (sorted by most recent completed_at)
+    3. Reviewed (sorted by most recent completed_at)
+    4. Expired (sorted by most recent scheduled_time)
+
+    When filtering by specific status, applies appropriate sorting for that status.
+    """
+    # Get filter parameter from query string
+    status_filter = request.GET.get('status', 'all')
+
+    # Get all invitations for this user's email
+    invitations = InvitedInterview.objects.filter(
+        candidate_email__iexact=request.user.email
+    ).select_related('template', 'chat', 'interviewer')
+
+    # Apply status filter
+    if status_filter and status_filter != 'all':
+        invitations = invitations.filter(status=status_filter)
+
+    # Apply custom sorting
+    invitations_list = list(invitations)
+
+    if status_filter == 'all':
+        # Custom sorting for 'all' view:
+        # Group by status with specific order, then sort within each group
+        def sort_key(invitation):
+            # Status priority order: pending=1, completed=2, reviewed=3, expired=4
+            status_priority = {
+                InvitedInterview.PENDING: 1,
+                InvitedInterview.COMPLETED: 2,
+                InvitedInterview.REVIEWED: 3,
+                InvitedInterview.EXPIRED: 4,
+            }
+
+            priority = status_priority.get(invitation.status, 5)
+
+            # Within-status sorting
+            if invitation.status == InvitedInterview.PENDING:
+                # Sort by soonest scheduled_time (ascending)
+                return (priority, invitation.scheduled_time)
+            elif invitation.status in [InvitedInterview.COMPLETED, InvitedInterview.REVIEWED]:
+                # Sort by most recent completed_at (descending)
+                # Use negative timestamp for descending order
+                completed_time = invitation.completed_at or invitation.created_at
+                return (priority, -completed_time.timestamp())
+            elif invitation.status == InvitedInterview.EXPIRED:
+                # Sort by most recent scheduled_time (descending)
+                return (priority, -invitation.scheduled_time.timestamp())
+            else:
+                # Fallback
+                return (priority, -invitation.created_at.timestamp())
+
+        invitations_list.sort(key=sort_key)
+
+    elif status_filter == 'pending':
+        # Sort pending by soonest scheduled_time
+        invitations_list.sort(key=lambda inv: inv.scheduled_time)
+
+    elif status_filter in ['completed', 'reviewed']:
+        # Sort completed/reviewed by most recent completed_at
+        invitations_list.sort(
+            key=lambda inv: inv.completed_at or inv.created_at,
+            reverse=True
+        )
+
+    elif status_filter == 'expired':
+        # Sort expired by most recent scheduled_time
+        invitations_list.sort(key=lambda inv: inv.scheduled_time, reverse=True)
+
+    # Get counts for each status (for filter badges)
+    all_invitations = InvitedInterview.objects.filter(
+        candidate_email__iexact=request.user.email
+    )
+    status_counts = {
+        'all': all_invitations.count(),
+        'pending': all_invitations.filter(status=InvitedInterview.PENDING).count(),
+        'completed': all_invitations.filter(
+            status=InvitedInterview.COMPLETED
+        ).count(),
+        'reviewed': all_invitations.filter(status=InvitedInterview.REVIEWED).count(),
+        'expired': all_invitations.filter(status=InvitedInterview.EXPIRED).count(),
+    }
+
+    context = {
+        'invitations': invitations_list,
+        'status_filter': status_filter,
+        'status_counts': status_counts,
+        'is_candidate_view': True,  # Flag to differentiate from interviewer view
+    }
+
+    return render(request, 'invitations/candidate_invitations.html', context)
+
+
+@login_required
+def start_invited_interview(request, invitation_id):
+    """
+    Start an invited interview by creating a Chat session.
+
+    Verifies time window and user permissions before creating the chat.
+
+    Related to Issue #136 (Time-Gated Access).
+    """
+    # Get invitation and verify user
+    invitation = get_object_or_404(InvitedInterview, id=invitation_id)
+
+    # Verify user is the invited candidate
+    if request.user.email.lower() != invitation.candidate_email.lower():
+        messages.error(request, 'You do not have permission to start this interview.')
+        return redirect('index')
+
+    # Check if already started
+    if invitation.chat:
+        messages.info(request, 'This interview has already been started.')
+        return redirect('chat-view', chat_id=invitation.chat.id)
+
+    # Check if can start (time window validation)
+    if not invitation.can_start():
+        if invitation.is_expired():
+            messages.error(
+                request,
+                'This interview time has passed and you can no longer take it.'
+            )
+        else:
+            messages.error(
+                request,
+                f'This interview cannot be started until {invitation.scheduled_time.strftime("%B %d, %Y at %I:%M %p")}.'
+            )
+        return redirect('invited_interview_detail', invitation_id=invitation.id)
+
+    # Create Chat session with time tracking (Issue #138)
+    now = timezone.now()
+    scheduled_end = now + timedelta(minutes=invitation.duration_minutes)
+
+    chat = Chat.objects.create(
+        owner=request.user,
+        title=f"{invitation.template.name} - Invited Interview",
+        interview_type=Chat.INVITED,
+        type=Chat.GENERAL,  # Or inherit from template if available
+        started_at=now,
+        scheduled_end_at=scheduled_end,
+    )
+
+    # Initialize interview with system prompt based on template sections
+    template = invitation.template
+    sections = template.sections if template.sections else []
+
+    # Build system prompt from template sections
+    sections_content = ""
+    if sections:
+        # Sort sections by order
+        sorted_sections = sorted(sections, key=lambda s: s.get('order', 0))
+        for section in sorted_sections:
+            title = section.get('title', 'Untitled Section')
+            content = section.get('content', '')
+            weight = section.get('weight', 0)
+            sections_content += f"\n## {title} (Weight: {weight}%)\n{content}\n"
+
+    system_prompt = textwrap.dedent("""\
+        You are a professional interviewer conducting a structured interview.
+
+        # Interview Template: {template_name}
+        {template_description}
+
+        # Interview Duration
+        This interview has a time limit of {duration} minutes.
+
+        # Interview Structure
+        The interview is organized into the following sections:
+        {sections_content}
+
+        # CRITICAL INSTRUCTIONS - READ CAREFULLY
+        - ONLY greet the candidate briefly and ask ONE question at a time
+        - DO NOT list all the sections or questions upfront
+        - DO NOT provide an agenda or overview of the interview
+        - Start with a brief greeting, then immediately ask your first question from the first section
+        - Wait for the candidate's response before asking the next question
+        - Ask questions one at a time, conversationally
+        - Progress through sections naturally based on their order and weight
+        - Keep your responses concise - this is an interview, not a lecture
+        - Be professional and encouraging in your tone
+        - At the very end (after all sections), thank the candidate briefly
+
+        IMPORTANT: This is a conversational interview. Ask questions one by one,
+        listen to responses, and follow up naturally. Do NOT dump all questions
+        at once or provide a roadmap of the interview.
+
+        Respond critically to any responses that are off-topic or ignore
+        the fact that the user is in an interview. The candidate should
+        focus on answering interview questions, not asking for general
+        AI assistance.
+    """).format(
+        template_name=template.name,
+        template_description=f"\n{template.description}" if template.description else "",
+        duration=invitation.duration_minutes,
+        sections_content=sections_content if sections_content else "\n(No specific sections defined)"
+    )
+
+    chat.messages = [
+        {
+            "role": "system",
+            "content": system_prompt
+        },
+    ]
+
+    # Get AI's initial greeting
+    if not ai_available():
+        messages.error(request, "AI features are disabled on this server.")
+        ai_message = "Hello! I'm your interviewer today. Unfortunately, AI features are currently disabled. Please contact support."
+    else:
+        response = get_openai_client().chat.completions.create(
+            model="gpt-4o",
+            messages=chat.messages,
+            max_tokens=MAX_TOKENS
+        )
+        ai_message = response.choices[0].message.content
+
+    chat.messages.append(
+        {
+            "role": "assistant",
+            "content": ai_message
+        }
+    )
+
+    chat.save()
+
+    # Link chat to invitation
+    invitation.chat = chat
+    invitation.save()
+
+    messages.success(request, 'Interview started! Good luck!')
+    return redirect('chat-view', chat_id=chat.id)

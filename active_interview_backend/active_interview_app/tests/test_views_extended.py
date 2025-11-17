@@ -391,10 +391,10 @@ class ResultsChatViewTest(TestCase):
         )
         self.assertEqual(response.status_code, 403)
 
-    @patch('active_interview_app.views._ai_available')
-    def test_results_chat_ai_unavailable(self, mock_ai_available):
+    @patch('active_interview_app.views.ai_available')
+    def test_results_chat_ai_unavailable(self, mockai_available):
         """Test results chat when AI is unavailable"""
-        mock_ai_available.return_value = False
+        mockai_available.return_value = False
         self.client.login(username='testuser', password='testpass123')
 
         response = self.client.get(
@@ -407,10 +407,10 @@ class ResultsChatViewTest(TestCase):
                          'AI features are currently unavailable.')
 
     @patch('active_interview_app.views.get_openai_client')
-    @patch('active_interview_app.views._ai_available')
-    def test_results_chat_ai_available(self, mock_ai_available, mock_get_client):
+    @patch('active_interview_app.views.ai_available')
+    def test_results_chatai_available(self, mockai_available, mock_get_client):
         """Test results chat when AI is available"""
-        mock_ai_available.return_value = True
+        mockai_available.return_value = True
 
         # Mock OpenAI response
         mock_client = Mock()
@@ -461,10 +461,10 @@ class ResultChartsViewTest(TestCase):
         self.client = Client()
 
     @skip("chat-results-charts URL not implemented yet")
-    @patch('active_interview_app.views._ai_available')
-    def test_result_charts_ai_unavailable(self, mock_ai_available):
+    @patch('active_interview_app.views.ai_available')
+    def test_result_charts_ai_unavailable(self, mockai_available):
         """Test result charts when AI is unavailable"""
-        mock_ai_available.return_value = False
+        mockai_available.return_value = False
         self.client.login(username='testuser', password='testpass123')
 
         response = self.client.get(
@@ -481,10 +481,10 @@ class ResultChartsViewTest(TestCase):
 
     @skip("chat-results-charts URL not implemented yet")
     @patch('active_interview_app.views.get_openai_client')
-    @patch('active_interview_app.views._ai_available')
-    def test_result_charts_ai_available_valid_scores(self, mock_ai_available, mock_get_client):
+    @patch('active_interview_app.views.ai_available')
+    def test_result_chartsai_available_valid_scores(self, mockai_available, mock_get_client):
         """Test result charts with valid AI scores"""
-        mock_ai_available.return_value = True
+        mockai_available.return_value = True
 
         # Mock OpenAI response
         mock_client = Mock()
@@ -521,10 +521,10 @@ class ResultChartsViewTest(TestCase):
 
     @skip("chat-results-charts URL not implemented yet")
     @patch('active_interview_app.views.get_openai_client')
-    @patch('active_interview_app.views._ai_available')
-    def test_result_charts_ai_invalid_scores(self, mock_ai_available, mock_get_client):
+    @patch('active_interview_app.views.ai_available')
+    def test_result_charts_ai_invalid_scores(self, mockai_available, mock_get_client):
         """Test result charts with invalid AI response"""
-        mock_ai_available.return_value = True
+        mockai_available.return_value = True
 
         # Mock OpenAI response with invalid format
         mock_client = Mock()
@@ -584,10 +584,10 @@ class CreateChatViewExtendedTest(TestCase):
         self.client.login(username='testuser', password='testpass123')
 
     @patch('active_interview_app.views.get_openai_client')
-    @patch('active_interview_app.views._ai_available')
-    def test_create_chat_without_resume_ai_available(self, mock_ai_available, mock_get_client):
+    @patch('active_interview_app.views.ai_available')
+    def test_create_chat_without_resumeai_available(self, mockai_available, mock_get_client):
         """Test creating chat without resume when AI is available"""
-        mock_ai_available.return_value = True
+        mockai_available.return_value = True
 
         # Mock OpenAI responses
         mock_client = Mock()
@@ -626,10 +626,10 @@ class CreateChatViewExtendedTest(TestCase):
         self.assertIsNone(chat.resume)
         self.assertEqual(chat.job_listing, self.job_listing)
 
-    @patch('active_interview_app.views._ai_available')
-    def test_create_chat_ai_unavailable(self, mock_ai_available):
+    @patch('active_interview_app.views.ai_available')
+    def test_create_chat_ai_unavailable(self, mockai_available):
         """Test creating chat when AI is unavailable"""
-        mock_ai_available.return_value = False
+        mockai_available.return_value = False
 
         data = {
             'create': 'true',

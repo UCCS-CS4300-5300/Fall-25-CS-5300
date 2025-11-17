@@ -490,9 +490,9 @@ class OpenAIClientTest(TestCase):
         self.client = Client()
 
     @patch('active_interview_app.openai_utils.settings')
-    def test_ai_available_without_api_key(self, mock_settings):
-        """Test _ai_available returns False when API key is not set"""
-        from active_interview_app.openai_utils import _ai_available
+    def testai_available_without_api_key(self, mock_settings):
+        """Test ai_available returns False when API key is not set"""
+        from active_interview_app.openai_utils import ai_available
         import active_interview_app.openai_utils as openai_utils
 
         # Reset the global client
@@ -500,7 +500,7 @@ class OpenAIClientTest(TestCase):
 
         mock_settings.OPENAI_API_KEY = None
 
-        result = _ai_available()
+        result = ai_available()
         self.assertFalse(result)
 
     @patch('active_interview_app.openai_utils.settings')

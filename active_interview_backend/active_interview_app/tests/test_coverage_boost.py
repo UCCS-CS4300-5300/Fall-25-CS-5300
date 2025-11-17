@@ -177,15 +177,15 @@ class ViewsCriticalPathsTest(TransactionTestCase):
                 with self.assertRaises(ValueError):
                     views.get_openai_client()
 
-    def test_ai_available_and_unavailable(self):
-        """Test _ai_available and _ai_unavailable_json"""
-        # Test _ai_available returns True
+    def testai_available_and_unavailable(self):
+        """Test ai_available and _ai_unavailable_json"""
+        # Test ai_available returns True
         with patch('active_interview_app.openai_utils.get_openai_client', return_value=MagicMock()):
-            self.assertTrue(views._ai_available())
+            self.assertTrue(views.ai_available())
 
-        # Test _ai_available returns False
+        # Test ai_available returns False
         with patch('active_interview_app.openai_utils.get_openai_client', side_effect=ValueError()):
-            self.assertFalse(views._ai_available())
+            self.assertFalse(views.ai_available())
 
         # Test _ai_unavailable_json
         response = views._ai_unavailable_json()
@@ -213,7 +213,7 @@ class ViewsCriticalPathsTest(TransactionTestCase):
         user = User.objects.get(username='newuser123')
         self.assertTrue(user.groups.filter(name='average_role').exists())
 
-    @patch('active_interview_app.views._ai_available', return_value=True)
+    @patch('active_interview_app.views.ai_available', return_value=True)
     @patch('active_interview_app.views.get_openai_client')
     def test_create_chat_with_ai(self, mock_client, mock_ai):
         """Test CreateChat with AI available"""
@@ -236,7 +236,7 @@ class ViewsCriticalPathsTest(TransactionTestCase):
 
         self.assertEqual(Chat.objects.count(), 1)
 
-    @patch('active_interview_app.views._ai_available', return_value=False)
+    @patch('active_interview_app.views.ai_available', return_value=False)
     def test_create_chat_without_ai(self, mock_ai):
         """Test CreateChat when AI unavailable"""
         response = self.client.post(reverse('chat-create'), {
@@ -249,7 +249,7 @@ class ViewsCriticalPathsTest(TransactionTestCase):
         # Should still create chat
         self.assertEqual(Chat.objects.count(), 1)
 
-    @patch('active_interview_app.views._ai_available', return_value=True)
+    @patch('active_interview_app.views.ai_available', return_value=True)
     @patch('active_interview_app.views.get_openai_client')
     def test_create_chat_regex_failure(self, mock_client, mock_ai):
         """Test CreateChat when regex doesn't match"""
@@ -273,7 +273,7 @@ class ViewsCriticalPathsTest(TransactionTestCase):
         chat = Chat.objects.first()
         self.assertEqual(chat.key_questions, [])
 
-    @patch('active_interview_app.views._ai_available', return_value=True)
+    @patch('active_interview_app.views.ai_available', return_value=True)
     @patch('active_interview_app.views.get_openai_client')
     def test_chat_view_post(self, mock_client, mock_ai):
         """Test ChatView POST"""
@@ -297,7 +297,7 @@ class ViewsCriticalPathsTest(TransactionTestCase):
         )
         self.assertEqual(response.status_code, 200)
 
-    @patch('active_interview_app.views._ai_available', return_value=False)
+    @patch('active_interview_app.views.ai_available', return_value=False)
     def test_chat_view_post_no_ai(self, mock_ai):
         """Test ChatView POST without AI"""
         chat = Chat.objects.create(
@@ -377,7 +377,7 @@ class ViewsCriticalPathsTest(TransactionTestCase):
         chat.refresh_from_db()
         self.assertEqual(len(chat.messages), 2)
 
-    @patch('active_interview_app.views._ai_available', return_value=True)
+    @patch('active_interview_app.views.ai_available', return_value=True)
     @patch('active_interview_app.views.get_openai_client')
     def test_key_questions_view(self, mock_client, mock_ai):
         """Test KeyQuestionsView"""
@@ -402,7 +402,7 @@ class ViewsCriticalPathsTest(TransactionTestCase):
         )
         self.assertEqual(response.status_code, 200)
 
-    @patch('active_interview_app.views._ai_available', return_value=True)
+    @patch('active_interview_app.views.ai_available', return_value=True)
     @patch('active_interview_app.views.get_openai_client')
     def test_results_chat(self, mock_client, mock_ai):
         """Test ResultsChat"""
@@ -423,7 +423,7 @@ class ViewsCriticalPathsTest(TransactionTestCase):
         response = self.client.get(reverse('chat-results', kwargs={'chat_id': chat.id}))
         self.assertEqual(response.status_code, 200)
 
-    @patch('active_interview_app.views._ai_available', return_value=False)
+    @patch('active_interview_app.views.ai_available', return_value=False)
     def test_results_chat_no_ai(self, mock_ai):
         """Test ResultsChat without AI"""
         chat = Chat.objects.create(
@@ -438,7 +438,7 @@ class ViewsCriticalPathsTest(TransactionTestCase):
         response = self.client.get(reverse('chat-results', kwargs={'chat_id': chat.id}))
         self.assertIn('unavailable', response.context['feedback'])
 
-    @patch('active_interview_app.views._ai_available', return_value=True)
+    @patch('active_interview_app.views.ai_available', return_value=True)
     @patch('active_interview_app.views.get_openai_client')
     def test_result_charts(self, mock_client, mock_ai):
         """Test ResultCharts"""
