@@ -3,7 +3,7 @@ from .models import (
     Chat, UploadedJobListing, UploadedResume,
     ExportableReport, UserProfile, RoleChangeRequest,
     DataExportRequest, DeletionRequest,
-    Tag, QuestionBank, Question, InterviewTemplate
+    Tag, QuestionBank, Question, InterviewTemplate, InvitedInterview
 )
 from .token_usage_models import TokenUsage
 from .merge_stats_models import MergeTokenStats
@@ -13,6 +13,72 @@ admin.site.register(Chat)
 admin.site.register(UploadedJobListing)
 admin.site.register(UploadedResume)
 admin.site.register(ExportableReport)
+
+
+# Invited Interview Admin - Issue #4, #134
+@admin.register(InvitedInterview)
+class InvitedInterviewAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'interviewer',
+        'candidate_email',
+        'template',
+        'scheduled_time',
+        'status',
+        'interviewer_review_status',
+        'created_at'
+    )
+    list_filter = ('status', 'interviewer_review_status', 'scheduled_time', 'created_at')
+    search_fields = (
+        'candidate_email',
+        'interviewer__username',
+        'template__name',
+        'id'
+    )
+    readonly_fields = ('id', 'created_at', 'invitation_sent_at', 'completed_at', 'reviewed_at')
+
+    fieldsets = (
+        ('Invitation Details', {
+            'fields': (
+                'id',
+                'interviewer',
+                'candidate_email',
+                'template'
+            )
+        }),
+        ('Schedule', {
+            'fields': (
+                'scheduled_time',
+                'duration_minutes'
+            )
+        }),
+        ('Status', {
+            'fields': (
+                'status',
+                'interviewer_review_status',
+                'chat'
+            )
+        }),
+        ('Review', {
+            'fields': (
+                'interviewer_feedback',
+                'reviewed_at'
+            )
+        }),
+        ('Timestamps', {
+            'fields': (
+                'created_at',
+                'invitation_sent_at',
+                'completed_at'
+            ),
+            'classes': ('collapse',)
+        })
+    )
+
+    def get_queryset(self, request):
+        """Optimize query with select_related"""
+        qs = super().get_queryset(request)
+        return qs.select_related('interviewer', 'template', 'chat')
 
 
 # RBAC Admin - Issue #69

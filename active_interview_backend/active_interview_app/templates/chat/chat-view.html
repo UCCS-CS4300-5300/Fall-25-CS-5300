@@ -9,6 +9,68 @@
   {% load static %}
   <div class="centered-container flex-grow-1 d-flex flex-column">
     <h3 class="whiteTextOverride px-3 pt-3">{{ chat.title }}</h3>
+
+    <!-- Time Remaining Banner for Invited Interviews (Issue #138) -->
+    {% if chat.interview_type == 'INVITED' and not time_expired %}
+      <div id="time-banner" class="alert alert-info mx-3 mb-0" role="alert" style="display: flex; justify-content: space-between; align-items: center;">
+        <span>
+          <i class="bi bi-clock-fill"></i>
+          <strong>Time Remaining:</strong>
+          <span id="time-display">Calculating...</span>
+        </span>
+        <small>Interview will auto-complete when time expires</small>
+      </div>
+      <script>
+        // Time tracking for invited interviews
+        const scheduledEndTime = new Date("{{ chat.scheduled_end_at|date:'c' }}");
+
+        function updateTimeDisplay() {
+          const now = new Date();
+          const timeLeft = scheduledEndTime - now;
+
+          if (timeLeft <= 0) {
+            document.getElementById('time-display').textContent = 'Time Expired';
+            document.getElementById('time-banner').classList.remove('alert-info');
+            document.getElementById('time-banner').classList.add('alert-danger');
+            // Disable input
+            document.getElementById('user-input').disabled = true;
+            document.getElementById('user-input').placeholder = 'Interview time has expired';
+            // Reload page to show completion
+            setTimeout(() => location.reload(), 2000);
+            return;
+          }
+
+          const minutes = Math.floor(timeLeft / 60000);
+          const seconds = Math.floor((timeLeft % 60000) / 1000);
+
+          document.getElementById('time-display').textContent =
+            `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+          // Change color when less than 5 minutes remain
+          if (minutes < 5) {
+            document.getElementById('time-banner').classList.remove('alert-info');
+            document.getElementById('time-banner').classList.add('alert-warning');
+          }
+
+          // Change to danger when less than 1 minute remains
+          if (minutes < 1) {
+            document.getElementById('time-banner').classList.remove('alert-warning');
+            document.getElementById('time-banner').classList.add('alert-danger');
+          }
+        }
+
+        // Update every second
+        updateTimeDisplay();
+        setInterval(updateTimeDisplay, 1000);
+      </script>
+    {% elif chat.interview_type == 'INVITED' and time_expired %}
+      <div class="alert alert-danger mx-3 mb-0" role="alert">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <strong>Interview Time Expired</strong> - This interview has been automatically completed.
+        <a href="{% url 'chat-results' chat_id=chat.id %}" class="alert-link">View Results</a>
+      </div>
+    {% endif %}
+
     <div id="chat-scroll" class="d-flex flex-column-reverse flex-grow-1 overflow-y-auto overflow-x-hidden pe-0">
       <div class="row flex-column-reverse">
         <div id="chat-messages">
@@ -43,9 +105,13 @@
     <div class="input-card card mb-3 mt-3">
       <div class="card-body">
         <div class="d-flex">
-          <textarea id="user-input" class="chat-input flex-grow-1 border-0 p-2" placeholder="Enter text here..."></textarea>
-          <button class="button-chat-send btn btn-primary ms-2" id="speech-text" onclick="speechToText()">Speak</button>
-          <button class="button-chat-send btn btn-primary ms-2" type="button" onclick="sendMessage()">Send</button>
+          <textarea id="user-input" class="chat-input flex-grow-1 border-0 p-2"
+            placeholder="{% if time_expired %}Interview time has expired{% else %}Enter text here...{% endif %}"
+            {% if time_expired %}disabled{% endif %}></textarea>
+          <button class="button-chat-send btn btn-primary ms-2" id="speech-text" onclick="speechToText()"
+            {% if time_expired %}disabled{% endif %}>Speak</button>
+          <button class="button-chat-send btn btn-primary ms-2" type="button" onclick="sendMessage()"
+            {% if time_expired %}disabled{% endif %}>Send</button>
         </div>
       </div>
     </div>
@@ -195,7 +261,7 @@
           },
           success: function(response) {
             formattedResponseMessage = DOMPurify.sanitize(response.message.replace(/(?:\r\n|\r|\n)/g, '<br>'));
-            
+
             // delete loading bubble
             $('#loading-bubble').remove();
 
@@ -209,8 +275,31 @@
                     </div>
                   </div>
                 </div>`);
-            
+
             updateScroll();
+          },
+          error: function(xhr, status, error) {
+            // Handle time expiration (Issue #138)
+            if (xhr.status === 403 && xhr.responseJSON && xhr.responseJSON.time_expired) {
+              $('#loading-bubble').remove();
+              $('#chat-messages').append(
+                `<div class="col bot-text-container">
+                  <div class="card bot-text-bubble" style="background-color: var(--bs-danger); color: white;">
+                    <div class="card-body">
+                      <p class="card-text"><i class="bi bi-exclamation-triangle-fill"></i> <strong>Interview time has expired.</strong> Your interview has been automatically completed. Redirecting to results...</p>
+                    </div>
+                  </div>
+                </div>`);
+              updateScroll();
+              // Redirect to results after 3 seconds
+              setTimeout(() => {
+                window.location.href = '{% url "chat-results" chat_id=chat.id %}';
+              }, 3000);
+            } else {
+              // Handle other errors
+              $('#loading-bubble').remove();
+              alert('An error occurred while sending your message. Please try again.');
+            }
           }
         });
       }
