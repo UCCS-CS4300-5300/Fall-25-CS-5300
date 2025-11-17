@@ -38,12 +38,15 @@ def send_invitation_email(invited_interview):
         subject = f'Interview Invitation: {invited_interview.template.name}'
 
         # Render HTML email template
-        html_message = render_to_string('emails/invitation_sent.html', {
-            'invitation': invited_interview,
-            'join_url': join_url,
-            'window_end': window_end,
-            'interviewer': invited_interview.interviewer,
-        })
+        html_message = render_to_string(
+            'emails/invitation_sent.html',
+            {
+                'invitation': invited_interview,
+                'join_url': join_url,
+                'window_end': window_end,
+                'interviewer': invited_interview.interviewer,
+            }
+        )
 
         # Create plain text version
         plain_message = strip_tags(html_message)
@@ -71,7 +74,10 @@ def send_invitation_email(invited_interview):
         # Send email
         email.send(fail_silently=False)
 
-        logger.info(f"Invitation email sent to {candidate_email} for interview {invited_interview.id}")
+        logger.info(
+            f"Invitation email sent to {candidate_email} "
+            f"for interview {invited_interview.id}"
+        )
         return True
 
     except Exception as e:
@@ -99,11 +105,17 @@ def send_completion_notification_email(invited_interview):
         subject = f'Interview Completed: {invited_interview.candidate_email}'
 
         # Render HTML email template
-        html_message = render_to_string('emails/interview_completed.html', {
-            'invitation': invited_interview,
-            'interviewer': invited_interview.interviewer,
-            'results_url': f"{settings.SITE_URL}/invitations/{invited_interview.id}/confirmation/",
-        })
+        html_message = render_to_string(
+            'emails/interview_completed.html',
+            {
+                'invitation': invited_interview,
+                'interviewer': invited_interview.interviewer,
+                'results_url': (
+                    f"{settings.SITE_URL}/invitations/"
+                    f"{invited_interview.id}/confirmation/"
+                ),
+            }
+        )
 
         # Create plain text version
         plain_message = strip_tags(html_message)
@@ -119,7 +131,10 @@ def send_completion_notification_email(invited_interview):
             fail_silently=True,
         )
 
-        logger.info(f"Completion notification sent to {interviewer_email} for interview {invited_interview.id}")
+        logger.info(
+            f"Completion notification sent to {interviewer_email} "
+            f"for interview {invited_interview.id}"
+        )
         return True
 
     except Exception as e:
@@ -146,10 +161,16 @@ def send_review_notification_email(invited_interview):
         subject = f'Interview Reviewed: {invited_interview.template.name}'
 
         # Render HTML email template
-        html_message = render_to_string('emails/interview_reviewed.html', {
-            'invitation': invited_interview,
-            'results_url': f"{settings.SITE_URL}/invitations/{invited_interview.id}/confirmation/",
-        })
+        html_message = render_to_string(
+            'emails/interview_reviewed.html',
+            {
+                'invitation': invited_interview,
+                'results_url': (
+                    f"{settings.SITE_URL}/invitations/"
+                    f"{invited_interview.id}/confirmation/"
+                ),
+            }
+        )
 
         # Create plain text version
         plain_message = strip_tags(html_message)
@@ -165,7 +186,10 @@ def send_review_notification_email(invited_interview):
             fail_silently=True,
         )
 
-        logger.info(f"Review notification sent to {candidate_email} for interview {invited_interview.id}")
+        logger.info(
+            f"Review notification sent to {candidate_email} "
+            f"for interview {invited_interview.id}"
+        )
         return True
 
     except Exception as e:
@@ -188,7 +212,10 @@ def generate_calendar_invite(invited_interview):
     try:
         # Create calendar
         cal = Calendar()
-        cal.add('prodid', '-//Active Interview Service//Interview Invitation//EN')
+        cal.add(
+            'prodid',
+            '-//Active Interview Service//Interview Invitation//EN'
+        )
         cal.add('version', '2.0')
         cal.add('method', 'REQUEST')
 
@@ -199,13 +226,18 @@ def generate_calendar_invite(invited_interview):
         event.add('summary', f'Interview: {invited_interview.template.name}')
 
         # Event description
+        interviewer_name = (
+            invited_interview.interviewer.get_full_name() or
+            invited_interview.interviewer.username
+        )
         description = (
             f"You have been invited to take an interview.\n\n"
             f"Template: {invited_interview.template.name}\n"
             f"Duration: {invited_interview.duration_minutes} minutes\n"
-            f"Interviewer: {invited_interview.interviewer.get_full_name() or invited_interview.interviewer.username}\n\n"
+            f"Interviewer: {interviewer_name}\n\n"
             f"Join Link: {invited_interview.get_join_url()}\n\n"
-            f"You can start the interview at the scheduled time and complete it within the duration window."
+            f"You can start the interview at the scheduled time and "
+            f"complete it within the duration window."
         )
         event.add('description', description)
 
@@ -213,7 +245,10 @@ def generate_calendar_invite(invited_interview):
         event.add('dtstart', invited_interview.scheduled_time)
 
         # End time (scheduled_time + duration)
-        end_time = invited_interview.scheduled_time + timedelta(minutes=invited_interview.duration_minutes)
+        end_time = (
+            invited_interview.scheduled_time +
+            timedelta(minutes=invited_interview.duration_minutes)
+        )
         event.add('dtend', end_time)
 
         # Location (virtual - join link)
@@ -226,7 +261,10 @@ def generate_calendar_invite(invited_interview):
         event.add('attendee', f'mailto:{invited_interview.candidate_email}')
 
         # Unique ID
-        event.add('uid', f'interview-{invited_interview.id}@activeinterviewservice.me')
+        event.add(
+            'uid',
+            f'interview-{invited_interview.id}@activeinterviewservice.me'
+        )
 
         # Creation timestamp
         event.add('dtstamp', timezone.now())

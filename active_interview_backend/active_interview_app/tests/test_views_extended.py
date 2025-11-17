@@ -170,7 +170,8 @@ class UploadFileViewTest(TestCase):
         self.assertRedirects(response, reverse('document-list'))
 
         # Resume should NOT be created
-        self.assertFalse(UploadedResume.objects.filter(title='Test TXT File').exists())
+        self.assertFalse(UploadedResume.objects.filter(
+            title='Test TXT File').exists())
 
     def test_upload_file_get_request(self):
         """Test GET request to upload_file returns form"""
@@ -205,7 +206,8 @@ class UploadedJobListingViewTest(TestCase):
 
         # Job listing should be created
         job_listing = UploadedJobListing.objects.get(title='Software Engineer')
-        self.assertEqual(job_listing.content, 'Software Engineer position available')
+        self.assertEqual(job_listing.content,
+                         'Software Engineer position available')
         self.assertEqual(job_listing.user, self.user)
 
     def test_post_empty_text(self):
@@ -221,7 +223,8 @@ class UploadedJobListingViewTest(TestCase):
         self.assertRedirects(response, reverse('document-list'))
 
         # Job listing should NOT be created
-        self.assertFalse(UploadedJobListing.objects.filter(title='Empty Job').exists())
+        self.assertFalse(UploadedJobListing.objects.filter(
+            title='Empty Job').exists())
 
     def test_post_empty_title(self):
         """Test POST with empty title field"""
@@ -236,7 +239,8 @@ class UploadedJobListingViewTest(TestCase):
         self.assertRedirects(response, reverse('document-list'))
 
         # Job listing should NOT be created
-        self.assertFalse(UploadedJobListing.objects.filter(content='Some job content').exists())
+        self.assertFalse(UploadedJobListing.objects.filter(
+            content='Some job content').exists())
 
 
 class UploadedResumeViewAPITest(TestCase):
@@ -502,7 +506,8 @@ class ResultChartsViewTest(TestCase):
         mock_choice2.message = mock_message2
         mock_response2.choices = [mock_choice2]
 
-        mock_client.chat.completions.create.side_effect = [mock_response1, mock_response2]
+        mock_client.chat.completions.create.side_effect = [
+            mock_response1, mock_response2]
         mock_get_client.return_value = mock_client
 
         self.client.login(username='testuser', password='testpass123')
@@ -542,7 +547,8 @@ class ResultChartsViewTest(TestCase):
         mock_choice2.message = mock_message2
         mock_response2.choices = [mock_choice2]
 
-        mock_client.chat.completions.create.side_effect = [mock_response1, mock_response2]
+        mock_client.chat.completions.create.side_effect = [
+            mock_response1, mock_response2]
         mock_get_client.return_value = mock_client
 
         self.client.login(username='testuser', password='testpass123')
@@ -605,7 +611,8 @@ class CreateChatViewExtendedTest(TestCase):
         mock_choice2.message = mock_message2
         mock_response2.choices = [mock_choice2]
 
-        mock_client.chat.completions.create.side_effect = [mock_response1, mock_response2]
+        mock_client.chat.completions.create.side_effect = [
+            mock_response1, mock_response2]
         mock_get_client.return_value = mock_client
 
         data = {

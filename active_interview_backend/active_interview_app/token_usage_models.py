@@ -26,7 +26,9 @@ class TokenUsage(models.Model):
     model_name = models.CharField(
         max_length=100,
         db_index=True,
-        help_text="AI model used (e.g., 'gpt-4o', 'claude-sonnet-4-5-20250929')"
+        help_text=(
+            "AI model used (e.g., 'gpt-4o', "
+            "'claude-sonnet-4-5-20250929')")
     )
     endpoint = models.CharField(
         max_length=255,
@@ -98,8 +100,10 @@ class TokenUsage(models.Model):
         model_costs = costs.get(self.model_name, costs['default'])
 
         # Calculate cost
-        prompt_cost = (self.prompt_tokens / 1000) * model_costs['prompt']
-        completion_cost = (self.completion_tokens / 1000) * model_costs['completion']
+        prompt_cost = ((self.prompt_tokens / 1000) *
+                       model_costs['prompt'])
+        completion_cost = ((self.completion_tokens / 1000) *
+                           model_costs['completion'])
 
         return prompt_cost + completion_cost
 
@@ -130,9 +134,12 @@ class TokenUsage(models.Model):
                 }
 
             summary['by_model'][model]['requests'] += 1
-            summary['by_model'][model]['prompt_tokens'] += record.prompt_tokens
-            summary['by_model'][model]['completion_tokens'] += record.completion_tokens
-            summary['by_model'][model]['total_tokens'] += record.total_tokens
+            summary['by_model'][model]['prompt_tokens'] += (
+                record.prompt_tokens)
+            summary['by_model'][model]['completion_tokens'] += (
+                record.completion_tokens)
+            summary['by_model'][model]['total_tokens'] += (
+                record.total_tokens)
             summary['by_model'][model]['cost'] += record.estimated_cost
 
             summary['total_tokens'] += record.total_tokens

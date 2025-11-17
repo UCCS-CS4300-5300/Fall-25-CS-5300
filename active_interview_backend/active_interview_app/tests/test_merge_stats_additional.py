@@ -39,7 +39,8 @@ class MergeTokenStatsEdgeCasesTest(TestCase):
 
         # Cumulative should not change on update (only on creation)
         # But the token totals should update
-        self.assertEqual(merge_stats.cumulative_total_tokens, initial_cumulative)
+        self.assertEqual(merge_stats.cumulative_total_tokens,
+                         initial_cumulative)
         self.assertEqual(merge_stats.cumulative_cost, initial_cost)
         # Individual totals should update
         self.assertEqual(merge_stats.claude_total_tokens, 1700)  # 1200 + 500
@@ -70,7 +71,8 @@ class MergeTokenStatsEdgeCasesTest(TestCase):
 
         # Claude: (2000/1000 * 0.003) + (1000/1000 * 0.015) = 0.006 + 0.015 = 0.021
         expected_cost = 0.021
-        self.assertAlmostEqual(merge_stats.branch_cost, expected_cost, places=4)
+        self.assertAlmostEqual(merge_stats.branch_cost,
+                               expected_cost, places=4)
 
     def test_branch_cost_only_chatgpt_tokens(self):
         """Test branch_cost with only ChatGPT tokens"""
@@ -85,7 +87,8 @@ class MergeTokenStatsEdgeCasesTest(TestCase):
 
         # ChatGPT: (2000/1000 * 0.03) + (1000/1000 * 0.06) = 0.06 + 0.06 = 0.12
         expected_cost = 0.12
-        self.assertAlmostEqual(merge_stats.branch_cost, expected_cost, places=4)
+        self.assertAlmostEqual(merge_stats.branch_cost,
+                               expected_cost, places=4)
 
     def test_cumulative_cost_decimal_conversion(self):
         """Test that cumulative_cost properly converts from float"""
@@ -259,10 +262,12 @@ class MergeTokenStatsEdgeCasesTest(TestCase):
         source_branch_field = MergeTokenStats._meta.get_field('source_branch')
         self.assertIsNotNone(source_branch_field.help_text)
 
-        merge_commit_sha_field = MergeTokenStats._meta.get_field('merge_commit_sha')
+        merge_commit_sha_field = MergeTokenStats._meta.get_field(
+            'merge_commit_sha')
         self.assertIsNotNone(merge_commit_sha_field.help_text)
 
-        cumulative_total_field = MergeTokenStats._meta.get_field('cumulative_total_tokens')
+        cumulative_total_field = MergeTokenStats._meta.get_field(
+            'cumulative_total_tokens')
         self.assertIsNotNone(cumulative_total_field.help_text)
 
     def test_cascade_deletion_behavior(self):
@@ -529,7 +534,8 @@ class MergeTokenStatsEdgeCasesTest(TestCase):
         # ChatGPT: (1000000/1000 * 0.03) + (500000/1000 * 0.06) = 30 + 30 = 60
         # Total: 70.5
         expected_cost = 70.5
-        self.assertAlmostEqual(merge_stats.branch_cost, expected_cost, places=2)
+        self.assertAlmostEqual(merge_stats.branch_cost,
+                               expected_cost, places=2)
 
     def test_unique_constraint_on_merge_commit_sha(self):
         """Test that duplicate merge_commit_sha raises IntegrityError"""

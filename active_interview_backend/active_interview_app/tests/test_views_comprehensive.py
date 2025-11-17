@@ -66,7 +66,8 @@ class RestartChatViewTest(TestCase):
             {'restart': 'true'}
         )
 
-        self.assertRedirects(response, reverse('chat-view', args=[self.chat.id]))
+        self.assertRedirects(response, reverse(
+            'chat-view', args=[self.chat.id]))
 
         # Check that chat was restarted
         self.chat.refresh_from_db()
@@ -136,7 +137,8 @@ class KeyQuestionsViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'key-questions.html')
         self.assertIn('question', response.context)
-        self.assertEqual(response.context['question']['content'], "What is Python?")
+        self.assertEqual(
+            response.context['question']['content'], "What is Python?")
 
     @patch('active_interview_app.views.get_openai_client')
     @patch('active_interview_app.views.ai_available')
@@ -271,7 +273,8 @@ class EditChatViewTest(TestCase):
             data
         )
 
-        self.assertRedirects(response, reverse('chat-view', args=[self.chat.id]))
+        self.assertRedirects(response, reverse(
+            'chat-view', args=[self.chat.id]))
 
         # Check that chat was updated
         self.chat.refresh_from_db()
@@ -395,7 +398,8 @@ class CreateChatViewComprehensiveTest(TestCase):
             mock_choice2.message = mock_message2
             mock_response2.choices = [mock_choice2]
 
-            mock_client.chat.completions.create.side_effect = [mock_response1, mock_response2]
+            mock_client.chat.completions.create.side_effect = [
+                mock_response1, mock_response2]
             mock_get_client.return_value = mock_client
 
             data = {
@@ -438,7 +442,8 @@ class CreateChatViewComprehensiveTest(TestCase):
         mock_choice2.message = mock_message2
         mock_response2.choices = [mock_choice2]
 
-        mock_client.chat.completions.create.side_effect = [mock_response1, mock_response2]
+        mock_client.chat.completions.create.side_effect = [
+            mock_response1, mock_response2]
         mock_get_client.return_value = mock_client
 
         data = {
@@ -481,7 +486,8 @@ class UploadFileViewComprehensiveTest(TestCase):
         mock_filetype.guess.return_value = mock_file_type
 
         # Mock PDF conversion to raise exception
-        mock_pymupdf.to_markdown.side_effect = Exception("PDF processing error")
+        mock_pymupdf.to_markdown.side_effect = Exception(
+            "PDF processing error")
 
         pdf_content = b'%PDF fake content'
         uploaded_file = SimpleUploadedFile(
@@ -501,7 +507,8 @@ class UploadFileViewComprehensiveTest(TestCase):
         self.assertRedirects(response, reverse('document-list'))
 
         # Resume should NOT be created
-        self.assertFalse(UploadedResume.objects.filter(title='Error PDF').exists())
+        self.assertFalse(UploadedResume.objects.filter(
+            title='Error PDF').exists())
 
     @patch('active_interview_app.views.filetype')
     def test_upload_invalid_form(self, mock_filetype):
@@ -526,7 +533,8 @@ class DocumentListViewTest(TestCase):
         from django.contrib.auth.models import Group
         Group.objects.get_or_create(name='average_role')
 
-        self.user = User.objects.create_user(username='testuser', password='testpass123')
+        self.user = User.objects.create_user(
+            username='testuser', password='testpass123')
         self.client.login(username='testuser', password='testpass123')
 
     def test_document_list_get(self):

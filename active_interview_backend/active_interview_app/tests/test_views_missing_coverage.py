@@ -50,7 +50,8 @@ class OpenAIClientTest(TestCase):
         with self.assertRaises(ValueError) as context:
             get_openai_client()
 
-        self.assertIn("Failed to initialize OpenAI client", str(context.exception))
+        self.assertIn("Failed to initialize OpenAI client",
+                      str(context.exception))
 
     @patch('active_interview_app.views.get_openai_client')
     def testai_available_returns_true(self, mock_get_client):
@@ -73,7 +74,8 @@ class OpenAIClientTest(TestCase):
         self.assertEqual(response.status_code, 503)
         data = json.loads(response.content)
         self.assertIn('error', data)
-        self.assertEqual(data['error'], 'AI features are disabled on this server.')
+        self.assertEqual(
+            data['error'], 'AI features are disabled on this server.')
 
 
 class IndexAndStaticViewsTest(TestCase):
@@ -128,7 +130,8 @@ class FileUploadEdgeCasesTest(TestCase):
 
         self.assertEqual(response.status_code, 302)
         # Should not create resume for invalid file type
-        self.assertFalse(UploadedResume.objects.filter(title='Test File').exists())
+        self.assertFalse(UploadedResume.objects.filter(
+            title='Test File').exists())
 
     @patch('active_interview_app.views.filetype.guess')
     def test_upload_file_none_filetype(self, mock_filetype):
@@ -148,7 +151,8 @@ class FileUploadEdgeCasesTest(TestCase):
         })
 
         self.assertEqual(response.status_code, 302)
-        self.assertFalse(UploadedResume.objects.filter(title='Test Unknown').exists())
+        self.assertFalse(UploadedResume.objects.filter(
+            title='Test Unknown').exists())
 
     @patch('active_interview_app.views.filetype.guess')
     @patch('active_interview_app.views.pymupdf4llm.to_markdown')
@@ -175,7 +179,8 @@ class FileUploadEdgeCasesTest(TestCase):
         })
 
         self.assertEqual(response.status_code, 302)
-        self.assertTrue(UploadedResume.objects.filter(title='My PDF Resume').exists())
+        self.assertTrue(UploadedResume.objects.filter(
+            title='My PDF Resume').exists())
         resume = UploadedResume.objects.get(title='My PDF Resume')
         self.assertEqual(resume.content, '# Resume Content')
 
@@ -203,7 +208,8 @@ class FileUploadEdgeCasesTest(TestCase):
         })
 
         self.assertEqual(response.status_code, 302)
-        self.assertFalse(UploadedResume.objects.filter(title='Bad PDF').exists())
+        self.assertFalse(UploadedResume.objects.filter(
+            title='Bad PDF').exists())
 
     def test_upload_file_invalid_form(self):
         """Test upload with invalid form data"""
@@ -325,7 +331,8 @@ class UploadedJobListingViewTest(TestCase):
 
         self.assertEqual(response.status_code, 302)
         self.assertTrue(
-            UploadedJobListing.objects.filter(title='Software Engineer').exists()
+            UploadedJobListing.objects.filter(
+                title='Software Engineer').exists()
         )
 
         job = UploadedJobListing.objects.get(title='Software Engineer')
@@ -525,7 +532,8 @@ class DeleteResumeTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 302)
-        self.assertFalse(UploadedResume.objects.filter(id=self.resume.id).exists())
+        self.assertFalse(UploadedResume.objects.filter(
+            id=self.resume.id).exists())
 
     def test_delete_resume_get_redirect(self):
         """Test GET request to delete_resume redirects without deleting"""
@@ -535,7 +543,8 @@ class DeleteResumeTest(TestCase):
 
         self.assertEqual(response.status_code, 302)
         # Resume should still exist (only POST deletes)
-        self.assertTrue(UploadedResume.objects.filter(id=self.resume.id).exists())
+        self.assertTrue(UploadedResume.objects.filter(
+            id=self.resume.id).exists())
 
 
 class DeleteJobTest(TestCase):
@@ -566,7 +575,8 @@ class DeleteJobTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 302)
-        self.assertFalse(UploadedJobListing.objects.filter(id=self.job.id).exists())
+        self.assertFalse(UploadedJobListing.objects.filter(
+            id=self.job.id).exists())
 
     def test_delete_job_get_redirect(self):
         """Test GET request to delete_job redirects"""
@@ -758,7 +768,8 @@ class ChatListViewTest(TestCase):
         response = self.client.get(reverse('chat-list'))
         self.assertEqual(response.status_code, 200)
         template_names = [t.name for t in response.templates]
-        self.assertTrue(any('chat-list.html' in name for name in template_names))
+        self.assertTrue(
+            any('chat-list.html' in name for name in template_names))
         self.assertEqual(len(response.context['owner_chats']), 1)
 
 
@@ -843,7 +854,8 @@ class UploadedJobListingViewPostTest(TestCase):
 
         self.assertEqual(response.status_code, 302)
         self.assertFalse(
-            UploadedJobListing.objects.filter(content='Some job description').exists()
+            UploadedJobListing.objects.filter(
+                content='Some job description').exists()
         )
 
     def test_upload_job_listing_whitespace_only(self):
@@ -903,6 +915,7 @@ class DocxFileUploadTest(TestCase):
         })
 
         self.assertEqual(response.status_code, 302)
-        self.assertTrue(UploadedResume.objects.filter(title='My DOCX Resume').exists())
+        self.assertTrue(UploadedResume.objects.filter(
+            title='My DOCX Resume').exists())
         resume = UploadedResume.objects.get(title='My DOCX Resume')
         self.assertEqual(resume.content, '# Resume Markdown')

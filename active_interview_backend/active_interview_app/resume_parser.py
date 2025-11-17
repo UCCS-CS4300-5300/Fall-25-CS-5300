@@ -57,7 +57,8 @@ def parse_resume_with_ai(resume_content: str) -> Dict[str, Any]:
 
     # Truncate extremely long resumes to prevent token limit issues
     if len(resume_content) > RESUME_CONTENT_LIMIT:
-        resume_content = resume_content[:RESUME_CONTENT_LIMIT] + "\n... (truncated)"
+        resume_content = resume_content[:RESUME_CONTENT_LIMIT] + \
+            "\n... (truncated)"
 
     # System prompt for structured extraction
     system_prompt = textwrap.dedent("""
@@ -140,7 +141,8 @@ def parse_resume_with_ai(resume_content: str) -> Dict[str, Any]:
         except json.JSONDecodeError as e:
             # Try to clean common JSON formatting issues
             # Remove markdown code blocks if present
-            cleaned_content = response_content.replace('```json', '').replace('```', '').strip()
+            cleaned_content = response_content.replace(
+                '```json', '').replace('```', '').strip()
             try:
                 parsed_data = json.loads(cleaned_content)
             except json.JSONDecodeError:

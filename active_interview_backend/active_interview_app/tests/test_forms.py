@@ -550,7 +550,8 @@ class InterviewTemplateFormTest(TestCase):
         }
         form = InterviewTemplateForm(data=form_data, user=self.user)
         self.assertFalse(form.is_valid())
-        self.assertIn('Difficulty percentages must sum to 100%', str(form.errors))
+        self.assertIn('Difficulty percentages must sum to 100%',
+                      str(form.errors))
 
     def test_clean_without_auto_assembly(self):
         """Test clean method when auto_assembly is disabled"""

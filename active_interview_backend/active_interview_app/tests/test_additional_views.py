@@ -183,7 +183,8 @@ class DeleteResumeViewTest(TestCase):
         # Should redirect to login
         self.assertEqual(response.status_code, 302)
         # Resume should still exist
-        self.assertTrue(UploadedResume.objects.filter(id=self.resume.id).exists())
+        self.assertTrue(UploadedResume.objects.filter(
+            id=self.resume.id).exists())
 
     def test_delete_resume_post(self):
         """Test deleting resume with POST request"""
@@ -224,7 +225,8 @@ class DeleteResumeViewTest(TestCase):
         # Should return 404
         self.assertEqual(response.status_code, 404)
         # Resume should still exist
-        self.assertTrue(UploadedResume.objects.filter(id=self.resume.id).exists())
+        self.assertTrue(UploadedResume.objects.filter(
+            id=self.resume.id).exists())
 
 
 class JobPostingDetailViewTest(TestCase):
@@ -506,8 +508,8 @@ class OpenAIClientTest(TestCase):
     @patch('active_interview_app.openai_utils.settings')
     @patch('active_interview_app.openai_utils.OpenAI')
     def test_get_openai_client_raises_error_without_key(self,
-                                                         mock_openai,
-                                                         mock_settings):
+                                                        mock_openai,
+                                                        mock_settings):
         """Test get_openai_client raises error when API key is not set"""
         from active_interview_app.openai_utils import get_openai_client
         import active_interview_app.openai_utils as openai_utils

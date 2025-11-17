@@ -73,7 +73,8 @@ class TokenUsageModelTest(TestCase):
         # GPT-4o: $0.03 per 1k prompt, $0.06 per 1k completion
         # (1000/1000 * 0.03) + (1000/1000 * 0.06) = 0.09
         expected_cost = 0.09
-        self.assertAlmostEqual(token_usage.estimated_cost, expected_cost, places=2)
+        self.assertAlmostEqual(token_usage.estimated_cost,
+                               expected_cost, places=2)
 
     def test_estimated_cost_claude(self):
         """Test cost estimation for Claude Sonnet 4.5"""
@@ -88,7 +89,8 @@ class TokenUsageModelTest(TestCase):
         # Claude: $0.003 per 1k prompt, $0.015 per 1k completion
         # (1000/1000 * 0.003) + (1000/1000 * 0.015) = 0.018
         expected_cost = 0.018
-        self.assertAlmostEqual(token_usage.estimated_cost, expected_cost, places=3)
+        self.assertAlmostEqual(token_usage.estimated_cost,
+                               expected_cost, places=3)
 
     def test_estimated_cost_unknown_model(self):
         """Test cost estimation for unknown model uses default"""
@@ -102,7 +104,8 @@ class TokenUsageModelTest(TestCase):
         )
         # Should use default GPT-4o pricing
         expected_cost = 0.09
-        self.assertAlmostEqual(token_usage.estimated_cost, expected_cost, places=2)
+        self.assertAlmostEqual(token_usage.estimated_cost,
+                               expected_cost, places=2)
 
     def test_get_branch_summary(self):
         """Test getting summary for a branch"""
@@ -139,8 +142,10 @@ class TokenUsageModelTest(TestCase):
         self.assertIn('claude-sonnet-4-5-20250929', summary['by_model'])
         self.assertEqual(summary['by_model']['gpt-4o']['requests'], 2)
         self.assertEqual(summary['by_model']['gpt-4o']['prompt_tokens'], 300)
-        self.assertEqual(summary['by_model']['gpt-4o']['completion_tokens'], 150)
-        self.assertEqual(summary['by_model']['claude-sonnet-4-5-20250929']['requests'], 1)
+        self.assertEqual(summary['by_model']['gpt-4o']
+                         ['completion_tokens'], 150)
+        self.assertEqual(summary['by_model']
+                         ['claude-sonnet-4-5-20250929']['requests'], 1)
         self.assertEqual(summary['total_tokens'], 675)
 
     def test_get_branch_summary_empty(self):
@@ -261,7 +266,8 @@ class MergeTokenStatsModelTest(TestCase):
         # ChatGPT: (1000/1000 * 0.03) + (1000/1000 * 0.06) = 0.09
         # Total: 0.108
         expected_cost = 0.108
-        self.assertAlmostEqual(merge_stats.branch_cost, expected_cost, places=3)
+        self.assertAlmostEqual(merge_stats.branch_cost,
+                               expected_cost, places=3)
 
     def test_cumulative_first_record(self):
         """Test cumulative values for first record"""
@@ -540,7 +546,8 @@ class TokenUsageEdgeCasesTest(TestCase):
         )
         # Claude Sonnet 4: $0.003 per 1k prompt, $0.015 per 1k completion
         expected_cost = 0.018
-        self.assertAlmostEqual(token_usage.estimated_cost, expected_cost, places=3)
+        self.assertAlmostEqual(token_usage.estimated_cost,
+                               expected_cost, places=3)
 
     def test_get_branch_summary_multiple_models(self):
         """Test branch summary with multiple different models"""
@@ -584,7 +591,8 @@ class TokenUsageEdgeCasesTest(TestCase):
         # Check GPT-4o stats
         self.assertEqual(summary['by_model']['gpt-4o']['requests'], 1)
         self.assertEqual(summary['by_model']['gpt-4o']['prompt_tokens'], 100)
-        self.assertEqual(summary['by_model']['gpt-4o']['completion_tokens'], 50)
+        self.assertEqual(summary['by_model']['gpt-4o']
+                         ['completion_tokens'], 50)
         self.assertEqual(summary['by_model']['gpt-4o']['total_tokens'], 150)
 
         # Check total tokens across all models
@@ -627,14 +635,16 @@ class TokenUsageEdgeCasesTest(TestCase):
         self.assertEqual(summary['total_requests'], 3)
         self.assertEqual(summary['by_model']['gpt-4o']['requests'], 3)
         self.assertEqual(summary['by_model']['gpt-4o']['prompt_tokens'], 600)
-        self.assertEqual(summary['by_model']['gpt-4o']['completion_tokens'], 300)
+        self.assertEqual(summary['by_model']['gpt-4o']
+                         ['completion_tokens'], 300)
         self.assertEqual(summary['by_model']['gpt-4o']['total_tokens'], 900)
         self.assertEqual(summary['total_tokens'], 900)
 
     def test_meta_verbose_name(self):
         """Test Meta verbose names are set correctly"""
         self.assertEqual(TokenUsage._meta.verbose_name, "Token Usage")
-        self.assertEqual(TokenUsage._meta.verbose_name_plural, "Token Usage Records")
+        self.assertEqual(TokenUsage._meta.verbose_name_plural,
+                         "Token Usage Records")
 
     def test_indexes_defined(self):
         """Test that database indexes are defined"""

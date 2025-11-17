@@ -53,7 +53,8 @@ class TokenUsageModelCoverageTest(TestCase):
     """Test all code paths in TokenUsage model"""
 
     def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='pass')
+        self.user = User.objects.create_user(
+            username='testuser', password='pass')
 
     def test_estimated_cost_gpt4o(self):
         """Test cost for gpt-4o model"""
@@ -126,7 +127,8 @@ class TokenUsageModelCoverageTest(TestCase):
         # Verify cost paths are hit
         self.assertGreater(summary['total_cost'], 0)
         self.assertGreater(summary['by_model']['gpt-4o']['cost'], 0)
-        self.assertGreater(summary['by_model']['claude-sonnet-4-5-20250929']['cost'], 0)
+        self.assertGreater(summary['by_model']
+                           ['claude-sonnet-4-5-20250929']['cost'], 0)
         self.assertEqual(summary['total_tokens'], 4500)
 
 
@@ -139,7 +141,8 @@ class ViewsBasicCoverageTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(username='viewuser', password='testpass')
+        self.user = User.objects.create_user(
+            username='viewuser', password='testpass')
         self.client.login(username='viewuser', password='testpass')
 
     def test_static_views(self):
@@ -206,7 +209,8 @@ class ViewsDocumentOperationsTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(username='docuser', password='pass')
+        self.user = User.objects.create_user(
+            username='docuser', password='pass')
         self.client.login(username='docuser', password='pass')
 
     def test_resume_detail_view(self):
@@ -221,7 +225,8 @@ class ViewsDocumentOperationsTest(TestCase):
             file=fake_file
         )
 
-        response = self.client.get(reverse('resume_detail', kwargs={'resume_id': resume.id}))
+        response = self.client.get(
+            reverse('resume_detail', kwargs={'resume_id': resume.id}))
         self.assertEqual(response.status_code, 200)
 
     def test_delete_resume(self):
@@ -238,7 +243,8 @@ class ViewsDocumentOperationsTest(TestCase):
         resume_id = resume.id
 
         # POST to delete
-        response = self.client.post(reverse('delete_resume', kwargs={'resume_id': resume_id}))
+        response = self.client.post(
+            reverse('delete_resume', kwargs={'resume_id': resume_id}))
 
         # Should redirect
         self.assertEqual(response.status_code, 302)
@@ -258,7 +264,8 @@ class ViewsDocumentOperationsTest(TestCase):
             file=fake_file
         )
 
-        response = self.client.get(reverse('job_posting_detail', kwargs={'job_id': job.id}))
+        response = self.client.get(
+            reverse('job_posting_detail', kwargs={'job_id': job.id}))
         self.assertEqual(response.status_code, 200)
 
     def test_delete_job(self):
@@ -275,7 +282,8 @@ class ViewsDocumentOperationsTest(TestCase):
         job_id = job.id
 
         # POST to delete
-        response = self.client.post(reverse('delete_job', kwargs={'job_id': job_id}))
+        response = self.client.post(
+            reverse('delete_job', kwargs={'job_id': job_id}))
 
         # Should redirect
         self.assertEqual(response.status_code, 302)
@@ -294,7 +302,8 @@ class ViewsDocumentOperationsTest(TestCase):
         self.assertEqual(response.status_code, 302)
 
         # Job listing should be created
-        self.assertTrue(UploadedJobListing.objects.filter(title='Software Engineer').exists())
+        self.assertTrue(UploadedJobListing.objects.filter(
+            title='Software Engineer').exists())
 
     def test_uploaded_job_listing_view_empty_text(self):
         """Test posting job listing with empty text"""
@@ -307,7 +316,8 @@ class ViewsDocumentOperationsTest(TestCase):
         self.assertEqual(response.status_code, 302)
 
         # Should not create job listing (line 1038-1040 in views.py)
-        self.assertFalse(UploadedJobListing.objects.filter(title='Empty Job').exists())
+        self.assertFalse(UploadedJobListing.objects.filter(
+            title='Empty Job').exists())
 
     def test_uploaded_job_listing_view_empty_title(self):
         """Test posting job listing with empty title"""
@@ -329,7 +339,8 @@ class ViewsAPITest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(username='apiuser', password='pass')
+        self.user = User.objects.create_user(
+            username='apiuser', password='pass')
         self.client.force_login(self.user)
 
     def test_uploaded_resume_view_get(self):

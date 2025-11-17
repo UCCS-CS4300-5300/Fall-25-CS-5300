@@ -14,7 +14,7 @@ class TestFileUploadUtils(TestCase):
         self.test_upload_dir = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, self.test_upload_dir)
 
-    #@override_settings(MEDIA_ROOT=property(lambda s: s.test_upload_dir))
+    # @override_settings(MEDIA_ROOT=property(lambda s: s.test_upload_dir))
     def test_successful_file_upload(self):
         """Test that files are uploaded and saved correctly"""
         # Create a test file

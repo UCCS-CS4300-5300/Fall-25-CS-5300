@@ -174,7 +174,8 @@ class ProfileViewTest(TestCase):
 
     def setUp(self):
         """Set up test data"""
-        self.user = User.objects.create_user('testuser', 'test@example.com', 'pass')
+        self.user = User.objects.create_user(
+            'testuser', 'test@example.com', 'pass')
         self.client = Client()
         self.client.force_login(self.user)
 
@@ -227,8 +228,10 @@ class ChatListViewTest(TestCase):
 
     def setUp(self):
         """Set up test data"""
-        self.user = User.objects.create_user('chatuser', 'chat@example.com', 'pass')
-        self.other_user = User.objects.create_user('other', 'other@example.com', 'pass')
+        self.user = User.objects.create_user(
+            'chatuser', 'chat@example.com', 'pass')
+        self.other_user = User.objects.create_user(
+            'other', 'other@example.com', 'pass')
         self.client = Client()
         self.client.force_login(self.user)
 
@@ -290,7 +293,8 @@ class CreateChatViewTest(TestCase):
 
     def setUp(self):
         """Set up test data"""
-        self.user = User.objects.create_user('chatcreator', 'create@example.com', 'pass')
+        self.user = User.objects.create_user(
+            'chatcreator', 'create@example.com', 'pass')
         self.client = Client()
         self.client.force_login(self.user)
 
@@ -359,8 +363,10 @@ class EditChatViewTest(TestCase):
         # Create average_role group (required by signals)
         Group.objects.get_or_create(name='average_role')
 
-        self.user = User.objects.create_user('editor', 'edit@example.com', 'pass')
-        self.other_user = User.objects.create_user('other', 'other@example.com', 'pass')
+        self.user = User.objects.create_user(
+            'editor', 'edit@example.com', 'pass')
+        self.other_user = User.objects.create_user(
+            'other', 'other@example.com', 'pass')
         self.client = Client()
         self.client.force_login(self.user)
 
@@ -378,7 +384,8 @@ class EditChatViewTest(TestCase):
             owner=self.user,
             title='Original Title',
             difficulty=5,
-            messages=[{"role": "system", "content": "System prompt with difficulty <<5>>"}],
+            messages=[
+                {"role": "system", "content": "System prompt with difficulty <<5>>"}],
             job_listing=self.job
         )
 
@@ -386,7 +393,8 @@ class EditChatViewTest(TestCase):
             owner=self.other_user,
             title='Other Chat',
             difficulty=5,
-            messages=[{"role": "system", "content": "System prompt with difficulty <<5>>"}],
+            messages=[
+                {"role": "system", "content": "System prompt with difficulty <<5>>"}],
             job_listing=self.job
         )
 
@@ -405,7 +413,8 @@ class EditChatViewTest(TestCase):
 
     def test_edit_chat_get_not_owner(self):
         """Test EditChat GET as non-owner returns 403"""
-        response = self.client.get(reverse('chat-edit', args=[self.other_chat.id]))
+        response = self.client.get(
+            reverse('chat-edit', args=[self.other_chat.id]))
 
         self.assertEqual(response.status_code, 403)
 
@@ -434,8 +443,10 @@ class DeleteChatViewTest(TestCase):
         # Create average_role group (required by signals)
         Group.objects.get_or_create(name='average_role')
 
-        self.user = User.objects.create_user('deleter', 'delete@example.com', 'pass')
-        self.other_user = User.objects.create_user('other', 'other@example.com', 'pass')
+        self.user = User.objects.create_user(
+            'deleter', 'delete@example.com', 'pass')
+        self.other_user = User.objects.create_user(
+            'other', 'other@example.com', 'pass')
         self.client = Client()
         self.client.force_login(self.user)
 
@@ -481,7 +492,8 @@ class DeleteChatViewTest(TestCase):
 
     def test_delete_chat_post_not_owner(self):
         """Test DeleteChat POST as non-owner returns 403"""
-        response = self.client.post(reverse('chat-delete', args=[self.other_chat.id]))
+        response = self.client.post(
+            reverse('chat-delete', args=[self.other_chat.id]))
 
         self.assertEqual(response.status_code, 403)
 
@@ -494,7 +506,8 @@ class DocumentViewsTest(TestCase):
 
     def setUp(self):
         """Set up test data"""
-        self.user = User.objects.create_user('docuser', 'doc@example.com', 'pass')
+        self.user = User.objects.create_user(
+            'docuser', 'doc@example.com', 'pass')
         self.client = Client()
         self.client.force_login(self.user)
 
@@ -520,7 +533,8 @@ class DocumentViewsTest(TestCase):
 
     def test_resume_detail_view(self):
         """Test resume detail view"""
-        response = self.client.get(reverse('resume_detail', args=[self.resume.id]))
+        response = self.client.get(
+            reverse('resume_detail', args=[self.resume.id]))
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'documents/resume_detail.html')
@@ -529,7 +543,8 @@ class DocumentViewsTest(TestCase):
 
     def test_job_posting_detail_view(self):
         """Test job posting detail view"""
-        response = self.client.get(reverse('job_posting_detail', args=[self.job.id]))
+        response = self.client.get(
+            reverse('job_posting_detail', args=[self.job.id]))
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'documents/job_posting_detail.html')
@@ -560,7 +575,8 @@ class DocumentViewsTest(TestCase):
 
     def test_edit_resume_get(self):
         """Test edit resume GET"""
-        response = self.client.get(reverse('edit_resume', args=[self.resume.id]))
+        response = self.client.get(
+            reverse('edit_resume', args=[self.resume.id]))
 
         self.assertEqual(response.status_code, 200)
         template_names = [t.name for t in response.templates]
@@ -587,7 +603,8 @@ class DocumentViewsTest(TestCase):
 
     def test_edit_job_posting_get(self):
         """Test edit job posting GET"""
-        response = self.client.get(reverse('edit_job_posting', args=[self.job.id]))
+        response = self.client.get(
+            reverse('edit_job_posting', args=[self.job.id]))
 
         self.assertEqual(response.status_code, 200)
         template_names = [t.name for t in response.templates]
@@ -618,7 +635,8 @@ class DocumentListViewTest(TestCase):
 
     def setUp(self):
         """Set up test data"""
-        self.user = User.objects.create_user('listuser', 'list@example.com', 'pass')
+        self.user = User.objects.create_user(
+            'listuser', 'list@example.com', 'pass')
         self.client = Client()
         self.client.force_login(self.user)
 

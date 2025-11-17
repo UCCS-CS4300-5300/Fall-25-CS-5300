@@ -76,7 +76,8 @@ class OpenAIUtilsTest(TestCase):
         with self.assertRaises(ValueError) as context:
             get_openai_client()
 
-        self.assertIn('Failed to initialize OpenAI client', str(context.exception))
+        self.assertIn('Failed to initialize OpenAI client',
+                      str(context.exception))
 
     @override_settings(OPENAI_API_KEY='test-key-123')
     @patch('active_interview_app.openai_utils.OpenAI')

@@ -115,7 +115,8 @@ class InvitationJoinViewTests(TestCase):
 
         # Should redirect to interview detail page
         self.assertEqual(response.status_code, 302)
-        expected_url = reverse('invited_interview_detail', args=[self.invitation.id])
+        expected_url = reverse('invited_interview_detail',
+                               args=[self.invitation.id])
         self.assertEqual(response.url, expected_url)
 
     def test_join_authenticated_wrong_email_shows_error(self):
@@ -160,7 +161,8 @@ class InvitationJoinViewTests(TestCase):
 
         # Should still redirect to detail (case-insensitive match)
         self.assertEqual(response.status_code, 302)
-        expected_url = reverse('invited_interview_detail', args=[self.invitation.id])
+        expected_url = reverse('invited_interview_detail',
+                               args=[self.invitation.id])
         self.assertEqual(response.url, expected_url)
 
 
@@ -260,7 +262,8 @@ class InvitedInterviewDetailViewTests(TestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'invitations/invited_interview_detail.html')
+        self.assertTemplateUsed(
+            response, 'invitations/invited_interview_detail.html')
 
         # Should have context showing cannot start
         self.assertFalse(response.context['can_start'])
@@ -519,7 +522,8 @@ class StartInvitedInterviewViewTests(TestCase):
         self.assertEqual(invitation.chat.interview_type, Chat.INVITED)
 
         # Should redirect to chat view
-        expected_url = reverse('chat-view', kwargs={'chat_id': invitation.chat.id})
+        expected_url = reverse(
+            'chat-view', kwargs={'chat_id': invitation.chat.id})
         self.assertEqual(response.url, expected_url)
 
         # Should have success message

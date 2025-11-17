@@ -74,7 +74,8 @@ class GoogleOAuthConfigTestCase(TestCase):
 
     def test_account_authentication_method(self):
         """Test that account authentication method is configured."""
-        self.assertEqual(settings.ACCOUNT_AUTHENTICATION_METHOD, 'username_email')
+        self.assertEqual(
+            settings.ACCOUNT_AUTHENTICATION_METHOD, 'username_email')
 
     def test_account_email_required(self):
         """Test that email is required for accounts."""
@@ -199,8 +200,10 @@ class GoogleOAuthURLTestCase(TestCase):
             from django.urls import get_resolver
             resolver = get_resolver()
             # Check if accounts/ prefix exists in URL patterns
-            url_patterns = [str(pattern.pattern) for pattern in resolver.url_patterns]
-            has_accounts = any('accounts/' in pattern for pattern in url_patterns)
+            url_patterns = [str(pattern.pattern)
+                            for pattern in resolver.url_patterns]
+            has_accounts = any(
+                'accounts/' in pattern for pattern in url_patterns)
             self.assertTrue(has_accounts)
         except Exception:
             # If we can't introspect, at least verify login works
@@ -217,7 +220,8 @@ class GoogleOAuthFlowTestCase(TestCase):
         self.factory = RequestFactory()
 
         # Create average_role group (required by adapter)
-        self.average_role_group, _ = Group.objects.get_or_create(name='average_role')
+        self.average_role_group, _ = Group.objects.get_or_create(
+            name='average_role')
 
         # Create a Site object for allauth
         self.site = Site.objects.get_or_create(
@@ -356,7 +360,8 @@ class GoogleOAuthFlowTestCase(TestCase):
         social_account.refresh_from_db()
 
         # Verify extra data is stored correctly
-        self.assertEqual(social_account.extra_data['email'], 'test@example.com')
+        self.assertEqual(
+            social_account.extra_data['email'], 'test@example.com')
         self.assertEqual(social_account.extra_data['name'], 'Test User')
         self.assertIn('picture', social_account.extra_data)
 
@@ -382,7 +387,8 @@ class CustomSocialAccountAdapterTestCase(TestCase):
     def setUp(self):
         """Set up test data"""
         self.factory = RequestFactory()
-        self.average_role_group, _ = Group.objects.get_or_create(name='average_role')
+        self.average_role_group, _ = Group.objects.get_or_create(
+            name='average_role')
 
     def test_new_user_creation_with_google_provider(self):
         """
@@ -390,7 +396,8 @@ class CustomSocialAccountAdapterTestCase(TestCase):
         a new User and UserProfile are created with auth_provider='google'.
         """
         # Verify no user exists with this email
-        self.assertFalse(User.objects.filter(email='newuser@example.com').exists())
+        self.assertFalse(User.objects.filter(
+            email='newuser@example.com').exists())
 
         # Create adapter and mock request
         adapter = CustomSocialAccountAdapter()
@@ -440,7 +447,8 @@ class CustomSocialAccountAdapterTestCase(TestCase):
             self.assertEqual(profile.auth_provider, 'google')
 
             # Verify user was added to average_role group
-            self.assertTrue(saved_user.groups.filter(name='average_role').exists())
+            self.assertTrue(saved_user.groups.filter(
+                name='average_role').exists())
 
     def test_adapter_populates_user_from_google_data(self):
         """Test that adapter correctly populates user fields from Google data"""
@@ -471,7 +479,8 @@ class CustomSocialAccountAdapterTestCase(TestCase):
             mock_populate.return_value = user
 
             # Call adapter method
-            populated_user = adapter.populate_user(request, mock_sociallogin, google_data)
+            populated_user = adapter.populate_user(
+                request, mock_sociallogin, google_data)
 
             # Verify user fields are populated
             self.assertEqual(populated_user.email, 'testuser@example.com')
@@ -497,7 +506,8 @@ class CustomSocialAccountAdapterTestCase(TestCase):
             saved_user = adapter.save_user(request, mock_sociallogin)
 
             # Verify user is in average_role group
-            self.assertTrue(saved_user.groups.filter(name='average_role').exists())
+            self.assertTrue(saved_user.groups.filter(
+                name='average_role').exists())
             self.assertEqual(saved_user.groups.count(), 1)
 
 
@@ -622,8 +632,10 @@ class GoogleOAuthSecurityTestCase(TestCase):
         """Test that authentication backends are in correct order."""
         backends = settings.AUTHENTICATION_BACKENDS
         # ModelBackend should come before allauth backend
-        model_backend_idx = backends.index('django.contrib.auth.backends.ModelBackend')
-        allauth_backend_idx = backends.index('allauth.account.auth_backends.AuthenticationBackend')
+        model_backend_idx = backends.index(
+            'django.contrib.auth.backends.ModelBackend')
+        allauth_backend_idx = backends.index(
+            'allauth.account.auth_backends.AuthenticationBackend')
         self.assertLess(model_backend_idx, allauth_backend_idx)
 
     def test_session_middleware_present(self):
@@ -716,7 +728,8 @@ class AllAuthModelTestCase(TestCase):
 
     def test_social_account_can_be_created(self):
         """Test that SocialAccount instances can be created."""
-        user = User.objects.create_user(username='test', email='test@example.com')
+        user = User.objects.create_user(
+            username='test', email='test@example.com')
         account = SocialAccount.objects.create(
             user=user,
             provider='google',
@@ -728,7 +741,8 @@ class AllAuthModelTestCase(TestCase):
 
     def test_social_account_user_relationship(self):
         """Test the relationship between SocialAccount and User."""
-        user = User.objects.create_user(username='test', email='test@example.com')
+        user = User.objects.create_user(
+            username='test', email='test@example.com')
         account = SocialAccount.objects.create(
             user=user,
             provider='google',

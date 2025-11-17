@@ -438,9 +438,12 @@ class InterviewTemplateModelTests(TestCase):
     def test_get_total_weight_with_sections(self):
         """Test get_total_weight calculates correctly with sections"""
         self.template.sections = [
-            {'id': '1', 'title': 'Section 1', 'content': 'Content', 'order': 0, 'weight': 30},
-            {'id': '2', 'title': 'Section 2', 'content': 'Content', 'order': 1, 'weight': 40},
-            {'id': '3', 'title': 'Section 3', 'content': 'Content', 'order': 2, 'weight': 20}
+            {'id': '1', 'title': 'Section 1',
+                'content': 'Content', 'order': 0, 'weight': 30},
+            {'id': '2', 'title': 'Section 2',
+                'content': 'Content', 'order': 1, 'weight': 40},
+            {'id': '3', 'title': 'Section 3',
+                'content': 'Content', 'order': 2, 'weight': 20}
         ]
         self.template.save()
         self.assertEqual(self.template.get_total_weight(), 90)
@@ -448,8 +451,10 @@ class InterviewTemplateModelTests(TestCase):
     def test_get_total_weight_exactly_100(self):
         """Test get_total_weight with sections totaling 100"""
         self.template.sections = [
-            {'id': '1', 'title': 'Section 1', 'content': 'Content', 'order': 0, 'weight': 50},
-            {'id': '2', 'title': 'Section 2', 'content': 'Content', 'order': 1, 'weight': 50}
+            {'id': '1', 'title': 'Section 1',
+                'content': 'Content', 'order': 0, 'weight': 50},
+            {'id': '2', 'title': 'Section 2',
+                'content': 'Content', 'order': 1, 'weight': 50}
         ]
         self.template.save()
         self.assertEqual(self.template.get_total_weight(), 100)
@@ -461,7 +466,8 @@ class InterviewTemplateModelTests(TestCase):
     def test_is_complete_false_when_under_100(self):
         """Test is_complete returns False when total weight is under 100"""
         self.template.sections = [
-            {'id': '1', 'title': 'Section 1', 'content': 'Content', 'order': 0, 'weight': 60}
+            {'id': '1', 'title': 'Section 1',
+                'content': 'Content', 'order': 0, 'weight': 60}
         ]
         self.template.save()
         self.assertFalse(self.template.is_complete())
@@ -469,9 +475,12 @@ class InterviewTemplateModelTests(TestCase):
     def test_is_complete_true_when_exactly_100(self):
         """Test is_complete returns True when total weight is exactly 100"""
         self.template.sections = [
-            {'id': '1', 'title': 'Section 1', 'content': 'Content', 'order': 0, 'weight': 40},
-            {'id': '2', 'title': 'Section 2', 'content': 'Content', 'order': 1, 'weight': 35},
-            {'id': '3', 'title': 'Section 3', 'content': 'Content', 'order': 2, 'weight': 25}
+            {'id': '1', 'title': 'Section 1',
+                'content': 'Content', 'order': 0, 'weight': 40},
+            {'id': '2', 'title': 'Section 2',
+                'content': 'Content', 'order': 1, 'weight': 35},
+            {'id': '3', 'title': 'Section 3',
+                'content': 'Content', 'order': 2, 'weight': 25}
         ]
         self.template.save()
         self.assertTrue(self.template.is_complete())
@@ -479,8 +488,10 @@ class InterviewTemplateModelTests(TestCase):
     def test_is_complete_false_when_over_100(self):
         """Test is_complete returns False when total weight exceeds 100"""
         self.template.sections = [
-            {'id': '1', 'title': 'Section 1', 'content': 'Content', 'order': 0, 'weight': 60},
-            {'id': '2', 'title': 'Section 2', 'content': 'Content', 'order': 1, 'weight': 50}
+            {'id': '1', 'title': 'Section 1',
+                'content': 'Content', 'order': 0, 'weight': 60},
+            {'id': '2', 'title': 'Section 2',
+                'content': 'Content', 'order': 1, 'weight': 50}
         ]
         self.template.save()
         self.assertFalse(self.template.is_complete())
@@ -488,7 +499,8 @@ class InterviewTemplateModelTests(TestCase):
     def test_get_status_display_wip_when_incomplete(self):
         """Test get_status_display returns 'WIP' for incomplete templates"""
         self.template.sections = [
-            {'id': '1', 'title': 'Section 1', 'content': 'Content', 'order': 0, 'weight': 50}
+            {'id': '1', 'title': 'Section 1',
+                'content': 'Content', 'order': 0, 'weight': 50}
         ]
         self.template.save()
         self.assertEqual(self.template.get_status_display(), 'WIP')
@@ -496,7 +508,8 @@ class InterviewTemplateModelTests(TestCase):
     def test_get_status_display_complete_when_100(self):
         """Test get_status_display returns 'Complete' when total weight is 100"""
         self.template.sections = [
-            {'id': '1', 'title': 'Section 1', 'content': 'Content', 'order': 0, 'weight': 100}
+            {'id': '1', 'title': 'Section 1',
+                'content': 'Content', 'order': 0, 'weight': 100}
         ]
         self.template.save()
         self.assertEqual(self.template.get_status_display(), 'Complete')
@@ -508,7 +521,8 @@ class InterviewTemplateModelTests(TestCase):
     def test_get_status_display_wip_when_over_100(self):
         """Test get_status_display returns 'WIP' even when over 100% (edge case)"""
         self.template.sections = [
-            {'id': '1', 'title': 'Section 1', 'content': 'Content', 'order': 0, 'weight': 110}
+            {'id': '1', 'title': 'Section 1',
+                'content': 'Content', 'order': 0, 'weight': 110}
         ]
         self.template.save()
         self.assertEqual(self.template.get_status_display(), 'WIP')

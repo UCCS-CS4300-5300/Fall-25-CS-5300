@@ -310,7 +310,8 @@ class CreateChat(LoginRequiredMixin, View):
 
                 # Make ai speak first
                 if not ai_available():
-                    messages.error(request, "AI features are disabled on this server.")
+                    messages.error(
+                        request, "AI features are disabled on this server.")
                     ai_message = ""
                 else:
                     response = get_openai_client().chat.completions.create(
@@ -439,7 +440,8 @@ class CreateChat(LoginRequiredMixin, View):
 
                 # Make ai speak first
                 if not ai_available():
-                    messages.error(request, "AI features are disabled on this server.")
+                    messages.error(
+                        request, "AI features are disabled on this server.")
                     ai_message = "[]"
                 else:
                     response = get_openai_client().chat.completions.create(
@@ -456,7 +458,8 @@ class CreateChat(LoginRequiredMixin, View):
                     chat.key_questions = json.loads(cleaned_message)
                 else:
                     # Fallback if regex doesn't match
-                    messages.error(request, "Failed to generate key questions. Please try again.")
+                    messages.error(
+                        request, "Failed to generate key questions. Please try again.")
                     chat.key_questions = []
 
                 chat.save()
@@ -464,7 +467,8 @@ class CreateChat(LoginRequiredMixin, View):
                 return redirect("chat-view", chat_id=chat.id)
             else:
                 # Form is invalid, render the form again with errors
-                owner_chats = Chat.objects.filter(owner=request.user).order_by('-modified_date')
+                owner_chats = Chat.objects.filter(
+                    owner=request.user).order_by('-modified_date')
                 return render(request, os.path.join('chat', 'chat-create.html'), {
                     'form': form,
                     'owner_chats': owner_chats
@@ -891,12 +895,13 @@ class ResultCharts(LoginRequiredMixin, UserPassesTestMixin, View):
             )
             ai_message = response.choices[0].message.content.strip()
             scores = [int(line.strip())
-                          for line in ai_message.splitlines() if line.strip()
-                            .isdigit()]
+                      for line in ai_message.splitlines() if line.strip()
+                      .isdigit()]
             if len(scores) == 4:
                 professionalism, subject_knowledge, clarity, overall = scores
             else:
-                professionalism, subject_knowledge, clarity, overall = [0, 0, 0, 0]
+                professionalism, subject_knowledge, clarity, overall = [
+                    0, 0, 0, 0]
 
         context = {}
         context['chat'] = chat
@@ -1086,7 +1091,7 @@ def upload_file(request):
                     if file_type.extension == 'pdf':
                         with tempfile.NamedTemporaryFile(delete=False,
                                                          suffix=".pdf")\
-                                                            as temp_file:
+                                as temp_file:
                             for chunk in uploaded_file.chunks():
                                 temp_file.write(chunk)
                             temp_file_path = temp_file.name
@@ -1097,7 +1102,7 @@ def upload_file(request):
                         # Save temporarily and load using python-docx
                         with tempfile.NamedTemporaryFile(delete=False,
                                                          suffix=".docx")\
-                                                            as temp_file:
+                                as temp_file:
                             for chunk in uploaded_file.chunks():
                                 temp_file.write(chunk)
                             temp_file_path = temp_file.name
@@ -1118,17 +1123,21 @@ def upload_file(request):
                                 instance.save()
 
                                 # Parse the resume
-                                parsed_data = parse_resume_with_ai(instance.content)
+                                parsed_data = parse_resume_with_ai(
+                                    instance.content)
 
                                 # Save parsed data
                                 instance.skills = parsed_data.get('skills', [])
-                                instance.experience = parsed_data.get('experience', [])
-                                instance.education = parsed_data.get('education', [])
+                                instance.experience = parsed_data.get(
+                                    'experience', [])
+                                instance.education = parsed_data.get(
+                                    'education', [])
                                 instance.parsing_status = 'success'
                                 instance.parsed_at = now()
                                 instance.save()
 
-                                messages.success(request, "Resume uploaded and parsed successfully!")
+                                messages.success(
+                                    request, "Resume uploaded and parsed successfully!")
                             except Exception as e:
                                 # Save error (sanitize to prevent API key exposure)
                                 error_msg = str(e)
@@ -1138,16 +1147,19 @@ def upload_file(request):
                                 instance.parsing_status = 'error'
                                 instance.parsing_error = error_msg
                                 instance.save()
-                                messages.warning(request, f"Resume uploaded but parsing failed: {error_msg}")
+                                messages.warning(
+                                    request, f"Resume uploaded but parsing failed: {error_msg}")
                         else:
                             # AI unavailable
                             instance.parsing_status = 'error'
                             instance.parsing_error = "AI service unavailable"
                             instance.save()
-                            messages.warning(request, "Resume uploaded but AI parsing is currently unavailable.")
+                            messages.warning(
+                                request, "Resume uploaded but AI parsing is currently unavailable.")
                     else:
                         # Not a resume (job listing), just show success
-                        messages.success(request, "File uploaded successfully!")
+                        messages.success(
+                            request, "File uploaded successfully!")
 
                     return redirect('document-list')
 
@@ -1180,8 +1192,8 @@ def upload_file(request):
 def edit_resume(request, resume_id):
     # Adjust model logic as needed (for resumes or job listings)
     document = get_object_or_404(UploadedResume,
-                                  id=resume_id,
-                                  user=request.user)
+                                 id=resume_id,
+                                 user=request.user)
 
     if request.method == 'POST':
         form = DocumentEditForm(request.POST, instance=document)
@@ -1359,9 +1371,11 @@ def recommend_template_for_job(job_listing):
         score = 0
 
         # Match tags (skills) - worth up to 50 points
-        template_tags = set(tag.name.lower().replace('#', '') for tag in template.tags.all())
+        template_tags = set(tag.name.lower().replace('#', '')
+                            for tag in template.tags.all())
         if template_tags:
-            job_skills = set(skill.lower() for skill in job_listing.required_skills)
+            job_skills = set(skill.lower()
+                             for skill in job_listing.required_skills)
             matching_tags = template_tags & job_skills
             score += len(matching_tags) * 10  # 10 points per matching skill
 
@@ -1543,16 +1557,19 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
 
         # Extract rationales for each score component
         rationales = self._extract_rationales_from_chat(chat, scores)
-        report.professionalism_rationale = rationales.get('professionalism', '')
-        report.subject_knowledge_rationale = rationales.get('subject_knowledge', '')
+        report.professionalism_rationale = rationales.get(
+            'professionalism', '')
+        report.subject_knowledge_rationale = rationales.get(
+            'subject_knowledge', '')
         report.clarity_rationale = rationales.get('clarity', '')
         report.overall_rationale = rationales.get('overall', '')
 
         # Calculate statistics
         chat_messages = chat.messages
-        user_messages = [msg for msg in chat_messages if msg.get('role') == 'user']
+        user_messages = [
+            msg for msg in chat_messages if msg.get('role') == 'user']
         assistant_messages = [msg for msg in chat_messages
-                             if msg.get('role') == 'assistant']
+                              if msg.get('role') == 'assistant']
 
         report.total_questions_asked = len(assistant_messages)
         report.total_responses_given = len(user_messages)
@@ -1598,14 +1615,16 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
                 )
                 ai_message = response.choices[0].message.content.strip()
                 scores = [int(line.strip())
-                              for line in ai_message.splitlines() if line.strip()
-                                .isdigit()]
+                          for line in ai_message.splitlines() if line.strip()
+                          .isdigit()]
                 if len(scores) == 4:
                     professionalism, subject_knowledge, clarity, overall = scores
                 else:
-                    professionalism, subject_knowledge, clarity, overall = [0, 0, 0, 0]
+                    professionalism, subject_knowledge, clarity, overall = [
+                        0, 0, 0, 0]
             except Exception:
-                professionalism, subject_knowledge, clarity, overall = [0, 0, 0, 0]
+                professionalism, subject_knowledge, clarity, overall = [
+                    0, 0, 0, 0]
 
         return {
             'Professionalism': professionalism,
@@ -1696,22 +1715,26 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
 
                 if line.startswith('Professionalism:'):
                     if current_section and current_text:
-                        rationales[current_section] = ' '.join(current_text).strip()
+                        rationales[current_section] = ' '.join(
+                            current_text).strip()
                     current_section = 'professionalism'
                     current_text = [line.split(':', 1)[1].strip()]
                 elif line.startswith('Subject Knowledge:'):
                     if current_section and current_text:
-                        rationales[current_section] = ' '.join(current_text).strip()
+                        rationales[current_section] = ' '.join(
+                            current_text).strip()
                     current_section = 'subject_knowledge'
                     current_text = [line.split(':', 1)[1].strip()]
                 elif line.startswith('Clarity:'):
                     if current_section and current_text:
-                        rationales[current_section] = ' '.join(current_text).strip()
+                        rationales[current_section] = ' '.join(
+                            current_text).strip()
                     current_section = 'clarity'
                     current_text = [line.split(':', 1)[1].strip()]
                 elif line.startswith('Overall:'):
                     if current_section and current_text:
-                        rationales[current_section] = ' '.join(current_text).strip()
+                        rationales[current_section] = ' '.join(
+                            current_text).strip()
                     current_section = 'overall'
                     current_text = [line.split(':', 1)[1].strip()]
                 elif current_section:
@@ -1788,7 +1811,7 @@ class ExportReportView(LoginRequiredMixin, UserPassesTestMixin, View):
             report = ExportableReport.objects.get(chat=chat)
         except ExportableReport.DoesNotExist:
             messages.warning(request,
-                           'No report exists yet. Generating one now...')
+                             'No report exists yet. Generating one now...')
             return redirect('generate_report', chat_id=chat_id)
 
         context = {
@@ -1815,7 +1838,8 @@ class DownloadPDFReportView(LoginRequiredMixin, UserPassesTestMixin, View):
         try:
             report = ExportableReport.objects.get(chat=chat)
         except ExportableReport.DoesNotExist:
-            messages.error(request, 'No report exists. Please generate one first.')
+            messages.error(
+                request, 'No report exists. Please generate one first.')
             return redirect('chat-results', chat_id=chat_id)
 
         # Generate PDF
@@ -1850,7 +1874,8 @@ class DownloadCSVReportView(LoginRequiredMixin, UserPassesTestMixin, View):
         try:
             report = ExportableReport.objects.get(chat=chat)
         except ExportableReport.DoesNotExist:
-            messages.error(request, 'No report exists. Please generate one first.')
+            messages.error(
+                request, 'No report exists. Please generate one first.')
             return redirect('chat-results', chat_id=chat_id)
 
         # Create CSV in memory
@@ -1864,7 +1889,8 @@ class DownloadCSVReportView(LoginRequiredMixin, UserPassesTestMixin, View):
         # Write Interview Details section
         writer.writerow(['Interview Details'])
         writer.writerow(['Title', chat.title])
-        writer.writerow(['Generated At', report.generated_at.strftime('%Y-%m-%d %H:%M:%S')])
+        writer.writerow(
+            ['Generated At', report.generated_at.strftime('%Y-%m-%d %H:%M:%S')])
         writer.writerow(['Difficulty', f'{chat.difficulty}/10'])
 
         # Add job listing and resume if present
@@ -1875,7 +1901,8 @@ class DownloadCSVReportView(LoginRequiredMixin, UserPassesTestMixin, View):
 
         # Add interview duration if present
         if report.interview_duration_minutes:
-            writer.writerow(['Duration', f'{report.interview_duration_minutes} minutes'])
+            writer.writerow(
+                ['Duration', f'{report.interview_duration_minutes} minutes'])
 
         writer.writerow([''])
 
@@ -1948,8 +1975,10 @@ class DownloadCSVReportView(LoginRequiredMixin, UserPassesTestMixin, View):
 
         # Write statistics
         writer.writerow(['Statistics'])
-        writer.writerow(['Total Questions Asked', report.total_questions_asked])
-        writer.writerow(['Total Responses Given', report.total_responses_given])
+        writer.writerow(
+            ['Total Questions Asked', report.total_questions_asked])
+        writer.writerow(
+            ['Total Responses Given', report.total_responses_given])
 
         # Create response
         csv_content = output.getvalue()
@@ -2190,7 +2219,8 @@ def edit_template(request, template_id):
     )
 
     if request.method == 'POST':
-        form = InterviewTemplateForm(request.POST, instance=template, user=request.user)
+        form = InterviewTemplateForm(
+            request.POST, instance=template, user=request.user)
         if form.is_valid():
             form.save()
             messages.success(
@@ -2448,7 +2478,8 @@ def request_data_export(request):
         # Check for existing pending/processing requests
         existing = DataExportRequest.objects.filter(
             user=request.user,
-            status__in=[DataExportRequest.PENDING, DataExportRequest.PROCESSING]
+            status__in=[DataExportRequest.PENDING,
+                        DataExportRequest.PROCESSING]
         ).first()
 
         if existing:
@@ -2610,7 +2641,8 @@ def confirm_account_deletion(request):
     # Verify password
     password = request.POST.get('password', '')
     if not request.user.check_password(password):
-        messages.error(request, 'Incorrect password. Account deletion cancelled.')
+        messages.error(
+            request, 'Incorrect password. Account deletion cancelled.')
         return redirect('request_account_deletion')
 
     # Create deletion audit record
@@ -2655,7 +2687,8 @@ def user_data_settings(request):
         ).order_by('-requested_at')[:3],
         'has_pending_export': DataExportRequest.objects.filter(
             user=request.user,
-            status__in=[DataExportRequest.PENDING, DataExportRequest.PROCESSING]
+            status__in=[DataExportRequest.PENDING,
+                        DataExportRequest.PROCESSING]
         ).exists(),
     }
 
@@ -2855,7 +2888,8 @@ def invitation_review(request, invitation_id):
             from .invitation_utils import send_review_notification_email
             send_review_notification_email(invitation)
 
-            messages.success(request, 'Review completed! Notification sent to candidate.')
+            messages.success(
+                request, 'Review completed! Notification sent to candidate.')
         else:
             messages.success(request, 'Feedback saved.')
 
@@ -2927,7 +2961,8 @@ def invited_interview_detail(request, invitation_id):
 
     # Verify user is the invited candidate
     if request.user.email.lower() != invitation.candidate_email.lower():
-        messages.error(request, 'You do not have permission to access this interview.')
+        messages.error(
+            request, 'You do not have permission to access this interview.')
         return redirect('index')
 
     # Calculate time-related info
@@ -3076,7 +3111,8 @@ def start_invited_interview(request, invitation_id):
 
     # Verify user is the invited candidate
     if request.user.email.lower() != invitation.candidate_email.lower():
-        messages.error(request, 'You do not have permission to start this interview.')
+        messages.error(
+            request, 'You do not have permission to start this interview.')
         return redirect('index')
 
     # Check if already started

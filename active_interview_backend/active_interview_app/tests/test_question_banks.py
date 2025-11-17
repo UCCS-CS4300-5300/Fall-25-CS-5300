@@ -486,7 +486,8 @@ class SaveAsTemplateTest(APITestCase):
             self.assertIn('content', section)
             self.assertIn('order', section)
             self.assertIn('weight', section)
-            self.assertEqual(section['order'], i, f"Section {i} should have order {i}")
+            self.assertEqual(section['order'], i,
+                             f"Section {i} should have order {i}")
             self.assertIn(f'Question {i+1}:', section['title'])
             self.assertIn(questions_data[i]['text'], section['title'])
 

@@ -289,7 +289,8 @@ class DataExportViewsTest(TestCase):
         response = self.client.post(reverse('request_data_export'))
 
         # Should create export request
-        self.assertTrue(DataExportRequest.objects.filter(user=self.user).exists())
+        self.assertTrue(DataExportRequest.objects.filter(
+            user=self.user).exists())
         request = DataExportRequest.objects.get(user=self.user)
 
         # Should redirect to status page
@@ -318,7 +319,8 @@ class DataExportViewsTest(TestCase):
         )
 
         # Should not create new request
-        self.assertEqual(DataExportRequest.objects.filter(user=self.user).count(), 1)
+        self.assertEqual(DataExportRequest.objects.filter(
+            user=self.user).count(), 1)
 
     def test_data_export_status_view(self):
         """Test viewing export status"""
@@ -360,7 +362,8 @@ class DataExportViewsTest(TestCase):
 
         # Create a mock file
         test_content = b'test zip content'
-        export.export_file.save('test.zip', io.BytesIO(test_content), save=True)
+        export.export_file.save(
+            'test.zip', io.BytesIO(test_content), save=True)
 
         response = self.client.get(
             reverse('download_data_export', kwargs={'request_id': export.id})
@@ -456,7 +459,8 @@ class AccountDeletionViewsTest(TestCase):
         self.assertTemplateUsed(response, 'user_data/deletion_complete.html')
 
         # Check deletion request created
-        self.assertTrue(DeletionRequest.objects.filter(username='testuser').exists())
+        self.assertTrue(DeletionRequest.objects.filter(
+            username='testuser').exists())
 
         # Check delete function called
         mock_delete.assert_called_once()
@@ -472,7 +476,8 @@ class AccountDeletionViewsTest(TestCase):
         self.assertRedirects(response, reverse('request_account_deletion'))
 
         # Should not create deletion request
-        self.assertFalse(DeletionRequest.objects.filter(username='testuser').exists())
+        self.assertFalse(DeletionRequest.objects.filter(
+            username='testuser').exists())
 
         # User should still exist
         self.assertTrue(User.objects.filter(username='testuser').exists())
@@ -699,7 +704,8 @@ class EmailErrorHandlingTest(TestCase):
 
         # Verify warning was logged
         mock_logger.warning.assert_called_once()
-        self.assertIn("Failed to send export notification email", str(mock_logger.warning.call_args))
+        self.assertIn("Failed to send export notification email",
+                      str(mock_logger.warning.call_args))
 
     @patch('active_interview_app.user_data_utils.send_mail')
     @patch('active_interview_app.user_data_utils.logger')
@@ -715,7 +721,8 @@ class EmailErrorHandlingTest(TestCase):
 
         # Verify warning was logged
         mock_logger.warning.assert_called_once()
-        self.assertIn("Failed to send deletion confirmation email", str(mock_logger.warning.call_args))
+        self.assertIn("Failed to send deletion confirmation email",
+                      str(mock_logger.warning.call_args))
 
     @patch('active_interview_app.user_data_utils.create_export_zip')
     @patch('active_interview_app.user_data_utils.logger')
@@ -738,7 +745,8 @@ class EmailErrorHandlingTest(TestCase):
 
         # Verify error was logged
         mock_logger.error.assert_called_once()
-        self.assertIn("Failed to process export request", str(mock_logger.error.call_args))
+        self.assertIn("Failed to process export request",
+                      str(mock_logger.error.call_args))
 
 
 class EdgeCaseTest(TestCase):

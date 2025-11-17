@@ -75,7 +75,8 @@ class InvitedInterviewPDFGenerationTests(TestCase):
             messages=[
                 {"role": "assistant", "content": "What is polymorphism?"},
                 {"role": "user", "content": "Polymorphism allows objects of different classes to be treated as objects of a common base class."},
-                {"role": "assistant", "content": "Can you explain the difference between lists and tuples in Python?"},
+                {"role": "assistant",
+                    "content": "Can you explain the difference between lists and tuples in Python?"},
                 {"role": "user", "content": "Lists are mutable while tuples are immutable."}
             ]
         )
@@ -407,4 +408,5 @@ class PDFGenerationAccessTests(TestCase):
             # Verify no interviewer section in this case
             # (since invitation was deleted, it can't find it)
         except Exception as e:
-            self.fail(f"PDF generation should handle missing invitation gracefully: {e}")
+            self.fail(
+                f"PDF generation should handle missing invitation gracefully: {e}")

@@ -28,14 +28,20 @@ class InvitedInterviewAdmin(admin.ModelAdmin):
         'interviewer_review_status',
         'created_at'
     )
-    list_filter = ('status', 'interviewer_review_status', 'scheduled_time', 'created_at')
+    list_filter = (
+        'status', 'interviewer_review_status', 'scheduled_time',
+        'created_at'
+    )
     search_fields = (
         'candidate_email',
         'interviewer__username',
         'template__name',
         'id'
     )
-    readonly_fields = ('id', 'created_at', 'invitation_sent_at', 'completed_at', 'reviewed_at')
+    readonly_fields = (
+        'id', 'created_at', 'invitation_sent_at', 'completed_at',
+        'reviewed_at'
+    )
 
     fieldsets = (
         ('Invitation Details', {
@@ -191,7 +197,9 @@ class QuestionInline(admin.TabularInline):
 
 @admin.register(QuestionBank)
 class QuestionBankAdmin(admin.ModelAdmin):
-    list_display = ('name', 'owner', 'question_count', 'created_at', 'updated_at')
+    list_display = (
+        'name', 'owner', 'question_count', 'created_at', 'updated_at'
+    )
     list_filter = ('created_at', 'updated_at')
     search_fields = ('name', 'description', 'owner__username')
     readonly_fields = ('created_at', 'updated_at')
@@ -204,8 +212,10 @@ class QuestionBankAdmin(admin.ModelAdmin):
 
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
-    list_display = ('text_preview', 'question_bank', 'difficulty', 'tag_list',
-                   'owner', 'created_at')
+    list_display = (
+        'text_preview', 'question_bank', 'difficulty', 'tag_list',
+        'owner', 'created_at'
+    )
     list_filter = ('difficulty', 'created_at', 'tags')
     search_fields = ('text', 'question_bank__name', 'owner__username')
     readonly_fields = ('created_at', 'updated_at')
@@ -222,8 +232,10 @@ class QuestionAdmin(admin.ModelAdmin):
 
 @admin.register(InterviewTemplate)
 class InterviewTemplateAdmin(admin.ModelAdmin):
-    list_display = ('name', 'user', 'use_auto_assembly', 'question_count',
-                   'tag_list', 'difficulty_distribution', 'status', 'created_at')
+    list_display = (
+        'name', 'user', 'use_auto_assembly', 'question_count',
+        'tag_list', 'difficulty_distribution', 'status', 'created_at'
+    )
     list_filter = ('use_auto_assembly', 'created_at', 'updated_at')
     search_fields = ('name', 'user__username', 'description')
     readonly_fields = ('created_at', 'updated_at')
@@ -237,10 +249,15 @@ class InterviewTemplateAdmin(admin.ModelAdmin):
             'description': 'JSON structure for template sections'
         }),
         ('Auto-Assembly Configuration', {
-            'fields': ('use_auto_assembly', 'question_banks', 'tags',
-                      'question_count', 'easy_percentage', 'medium_percentage',
-                      'hard_percentage'),
-            'description': 'Settings for automatically assembling interviews from question banks'
+            'fields': (
+                'use_auto_assembly', 'question_banks', 'tags',
+                'question_count', 'easy_percentage', 'medium_percentage',
+                'hard_percentage'
+            ),
+            'description': (
+                'Settings for automatically assembling interviews '
+                'from question banks'
+            )
         }),
         ('Metadata', {
             'fields': ('created_at', 'updated_at')
@@ -254,7 +271,10 @@ class InterviewTemplateAdmin(admin.ModelAdmin):
 
     def difficulty_distribution(self, obj):
         if obj.use_auto_assembly:
-            return f"E:{obj.easy_percentage}% M:{obj.medium_percentage}% H:{obj.hard_percentage}%"
+            return (
+                f"E:{obj.easy_percentage}% M:{obj.medium_percentage}% "
+                f"H:{obj.hard_percentage}%"
+            )
         return "N/A"
     difficulty_distribution.short_description = 'Difficulty'
 
@@ -262,10 +282,14 @@ class InterviewTemplateAdmin(admin.ModelAdmin):
         return obj.get_status_display()
     status.short_description = 'Status'
 
+
 # Token Tracking Admin
 @admin.register(TokenUsage)
 class TokenUsageAdmin(admin.ModelAdmin):
-    list_display = ('created_at', 'user', 'git_branch', 'model_name', 'endpoint', 'total_tokens', 'estimated_cost')
+    list_display = (
+        'created_at', 'user', 'git_branch', 'model_name', 'endpoint',
+        'total_tokens', 'estimated_cost'
+    )
     list_filter = ('git_branch', 'model_name', 'endpoint', 'created_at')
     search_fields = ('user__username', 'git_branch', 'endpoint')
     readonly_fields = ('created_at',)
@@ -280,10 +304,18 @@ class TokenUsageAdmin(admin.ModelAdmin):
 
 @admin.register(MergeTokenStats)
 class MergeTokenStatsAdmin(admin.ModelAdmin):
-    list_display = ('merge_date', 'source_branch', 'target_branch', 'total_tokens', 'estimated_cost', 'cumulative_total_tokens', 'cumulative_cost', 'pr_number')
+    list_display = (
+        'merge_date', 'source_branch', 'target_branch', 'total_tokens',
+        'estimated_cost', 'cumulative_total_tokens', 'cumulative_cost',
+        'pr_number'
+    )
     list_filter = ('target_branch', 'merge_date')
-    search_fields = ('source_branch', 'target_branch', 'merged_by', 'merge_commit_sha')
-    readonly_fields = ('merge_date', 'cumulative_total_tokens', 'cumulative_cost')
+    search_fields = (
+        'source_branch', 'target_branch', 'merged_by', 'merge_commit_sha'
+    )
+    readonly_fields = (
+        'merge_date', 'cumulative_total_tokens', 'cumulative_cost'
+    )
     date_hierarchy = 'merge_date'
 
     def estimated_cost(self, obj):
@@ -292,10 +324,16 @@ class MergeTokenStatsAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('Merge Information', {
-            'fields': ('source_branch', 'target_branch', 'merge_date', 'merge_commit_sha', 'merged_by', 'pr_number')
+            'fields': (
+                'source_branch', 'target_branch', 'merge_date',
+                'merge_commit_sha', 'merged_by', 'pr_number'
+            )
         }),
         ('Token Usage', {
-            'fields': ('total_tokens', 'total_prompt_tokens', 'total_completion_tokens', 'request_count')
+            'fields': (
+                'total_tokens', 'total_prompt_tokens',
+                'total_completion_tokens', 'request_count'
+            )
         }),
         ('Cumulative Totals', {
             'fields': ('cumulative_total_tokens', 'cumulative_cost'),

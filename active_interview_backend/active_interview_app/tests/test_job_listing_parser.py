@@ -348,7 +348,8 @@ class JobListingParserTests(TestCase):
         mockai_available.return_value = True
 
         mock_client = MagicMock()
-        mock_client.chat.completions.create.side_effect = Exception("API rate limit exceeded")
+        mock_client.chat.completions.create.side_effect = Exception(
+            "API rate limit exceeded")
         mock_get_client.return_value = mock_client
 
         # Act & Assert

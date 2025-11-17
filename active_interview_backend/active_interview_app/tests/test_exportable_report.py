@@ -101,7 +101,7 @@ class ExportableReportModelTest(TestCase):
 
         self.assertEqual(len(report.question_responses), 2)
         self.assertEqual(report.question_responses[0]['question'],
-                        'What is your experience?')
+                         'What is your experience?')
         self.assertEqual(report.question_responses[1]['score'], 9)
 
 
@@ -146,7 +146,8 @@ class ExportableReportViewTest(TestCase):
             response = self.client.post(url, follow=True)
 
         # Check that report was created
-        self.assertTrue(ExportableReport.objects.filter(chat=self.chat).exists())
+        self.assertTrue(ExportableReport.objects.filter(
+            chat=self.chat).exists())
         report = ExportableReport.objects.get(chat=self.chat)
 
         # Check that statistics were calculated
@@ -444,7 +445,8 @@ class ScoreWeightsAndRationalesTest(TestCase):
             overall_rationale='Solid performance with room for improvement in technical depth.'
         )
 
-        self.assertIn('professional behavior', report.professionalism_rationale)
+        self.assertIn('professional behavior',
+                      report.professionalism_rationale)
         self.assertIn('core concepts', report.subject_knowledge_rationale)
         self.assertIn('clear and concise', report.clarity_rationale)
         self.assertIn('Solid performance', report.overall_rationale)
@@ -715,7 +717,8 @@ class FinalScoreComputationTest(TestCase):
 
         # Check that all rationales are present and explain the logic
         self.assertContains(response, 'Demonstrated excellent professionalism')
-        self.assertContains(response, 'Good understanding with room for improvement')
+        self.assertContains(
+            response, 'Good understanding with room for improvement')
         self.assertContains(response, 'Clear and well-structured responses')
         self.assertContains(response, 'Strong overall performance')
 
@@ -984,7 +987,8 @@ class IntegratedUserStoriesTest(TestCase):
         self.assertEqual(results_response.status_code, 200)
 
         # Step 2: Generate detailed report (triggers score computation)
-        generate_url = reverse('generate_report', kwargs={'chat_id': self.chat.id})
+        generate_url = reverse('generate_report', kwargs={
+                               'chat_id': self.chat.id})
 
         # Mock the AI calls to avoid external API dependency
         with patch('active_interview_app.views.ai_available', return_value=True):
@@ -1022,7 +1026,8 @@ Overall: Strong overall performance with good balance across all areas.
                 self.assertEqual(generate_response.status_code, 200)
 
         # Verify report was created
-        self.assertTrue(ExportableReport.objects.filter(chat=self.chat).exists())
+        self.assertTrue(ExportableReport.objects.filter(
+            chat=self.chat).exists())
         report = ExportableReport.objects.get(chat=self.chat)
 
         # Step 3: Verify section scores are displayed (User Story 2)
@@ -1038,26 +1043,33 @@ Overall: Strong overall performance with good balance across all areas.
 
         # Step 4: Verify rationales are displayed (User Story 2)
         if report.professionalism_rationale:
-            self.assertContains(export_response, report.professionalism_rationale)
+            self.assertContains(
+                export_response, report.professionalism_rationale)
         if report.subject_knowledge_rationale:
-            self.assertContains(export_response, report.subject_knowledge_rationale)
+            self.assertContains(
+                export_response, report.subject_knowledge_rationale)
         if report.clarity_rationale:
             self.assertContains(export_response, report.clarity_rationale)
 
         # Step 5: Verify weight breakdown is shown (User Story 1)
         self.assertContains(export_response, 'How Your Score is Calculated')
-        self.assertContains(export_response, f'Weight: {report.professionalism_weight}%')
-        self.assertContains(export_response, f'Weight: {report.subject_knowledge_weight}%')
-        self.assertContains(export_response, f'Weight: {report.clarity_weight}%')
+        self.assertContains(
+            export_response, f'Weight: {report.professionalism_weight}%')
+        self.assertContains(
+            export_response, f'Weight: {report.subject_knowledge_weight}%')
+        self.assertContains(
+            export_response, f'Weight: {report.clarity_weight}%')
 
         # Step 6: Verify PDF export works (User Story 1)
-        pdf_url = reverse('download_pdf_report', kwargs={'chat_id': self.chat.id})
+        pdf_url = reverse('download_pdf_report', kwargs={
+                          'chat_id': self.chat.id})
         pdf_response = self.client.get(pdf_url)
         self.assertEqual(pdf_response.status_code, 200)
         self.assertEqual(pdf_response['Content-Type'], 'application/pdf')
 
         # Step 7: Verify CSV export works (User Story 1)
-        csv_url = reverse('download_csv_report', kwargs={'chat_id': self.chat.id})
+        csv_url = reverse('download_csv_report', kwargs={
+                          'chat_id': self.chat.id})
         csv_response = self.client.get(csv_url)
         self.assertEqual(csv_response.status_code, 200)
         self.assertEqual(csv_response['Content-Type'], 'text/csv')
@@ -1180,7 +1192,8 @@ class ScoreComputationLearningScenarioTest(TestCase):
         self.client.login(username='candidate_learner', password='testpass123')
 
         # WHEN I open my results
-        results_url = reverse('export_report', kwargs={'chat_id': completed_chat.id})
+        results_url = reverse('export_report', kwargs={
+                              'chat_id': completed_chat.id})
         response = self.client.get(results_url)
 
         # Verify the page loads successfully
@@ -1195,13 +1208,17 @@ class ScoreComputationLearningScenarioTest(TestCase):
 
         # Verify weights are displayed for each section
         self.assertContains(response, '(30% weight)')  # Professionalism weight
-        self.assertContains(response, '(40% weight)')  # Subject Knowledge weight
-        self.assertContains(response, '(30% weight)')  # Clarity weight (appears twice)
+        # Subject Knowledge weight
+        self.assertContains(response, '(40% weight)')
+        # Clarity weight (appears twice)
+        self.assertContains(response, '(30% weight)')
 
         # Verify rationales are shown for learning
         self.assertContains(response, 'Demonstrated strong professionalism')
-        self.assertContains(response, 'Exhibited excellent technical knowledge')
-        self.assertContains(response, 'Communicated ideas clearly and concisely')
+        self.assertContains(
+            response, 'Exhibited excellent technical knowledge')
+        self.assertContains(
+            response, 'Communicated ideas clearly and concisely')
 
         # AND a final weighted score
 
@@ -1213,12 +1230,15 @@ class ScoreComputationLearningScenarioTest(TestCase):
 
         # Verify the weighted calculation formula is shown
         self.assertContains(response, 'Weighted Score Calculation')
-        self.assertContains(response, '88 × 30%')  # Professionalism calculation
-        self.assertContains(response, '92 × 40%')  # Subject Knowledge calculation
+        # Professionalism calculation
+        self.assertContains(response, '88 × 30%')
+        # Subject Knowledge calculation
+        self.assertContains(response, '92 × 40%')
         self.assertContains(response, '85 × 30%')  # Clarity calculation
 
         # Verify learning guidance is present
-        self.assertContains(response, 'identify your strengths and areas for improvement')
+        self.assertContains(
+            response, 'identify your strengths and areas for improvement')
 
     def test_learning_oriented_content_present(self):
         """Test that content is oriented toward learning and improvement"""
@@ -1258,7 +1278,8 @@ class ScoreComputationLearningScenarioTest(TestCase):
 
         # Verify learning-oriented language
         self.assertContains(response, 'How Your Score is Calculated')
-        self.assertContains(response, 'Understanding how your final score was computed')
+        self.assertContains(
+            response, 'Understanding how your final score was computed')
 
         # Verify actionable feedback in rationales
         self.assertContains(response, 'room to improve')
@@ -1326,4 +1347,4 @@ class ScoreComputationLearningScenarioTest(TestCase):
 
         for element in scenario_elements:
             self.assertIn(element, response_content,
-                         f"Missing scenario element: {element}")
+                          f"Missing scenario element: {element}")

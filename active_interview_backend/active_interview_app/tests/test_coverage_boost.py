@@ -56,7 +56,8 @@ class TokenUsageCoverageBoostTest(TestCase):
     """Ensure all token usage model paths are covered"""
 
     def setUp(self):
-        self.user = User.objects.create_user(username='tokenuser', password='pass')
+        self.user = User.objects.create_user(
+            username='tokenuser', password='pass')
 
     def test_get_branch_summary_cost_paths(self):
         """Test cost calculation paths in get_branch_summary"""
@@ -83,7 +84,8 @@ class TokenUsageCoverageBoostTest(TestCase):
         # Test all paths are hit
         self.assertGreater(summary['total_cost'], 0)
         self.assertGreater(summary['by_model']['gpt-4o']['cost'], 0)
-        self.assertGreater(summary['by_model']['claude-sonnet-4-5-20250929']['cost'], 0)
+        self.assertGreater(summary['by_model']
+                           ['claude-sonnet-4-5-20250929']['cost'], 0)
         self.assertEqual(summary['total_tokens'], 4500)
 
     def test_estimated_cost_all_model_types(self):
@@ -138,7 +140,8 @@ class ViewsCriticalPathsTest(TransactionTestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(username='viewuser', password='testpass')
+        self.user = User.objects.create_user(
+            username='viewuser', password='testpass')
         self.client.login(username='viewuser', password='testpass')
 
         # Create test job listing
@@ -157,7 +160,8 @@ class ViewsCriticalPathsTest(TransactionTestCase):
         with patch('active_interview_app.openai_utils.settings') as mock_settings:
             # Test missing API key
             mock_settings.OPENAI_API_KEY = None
-            import active_interview_app.openai_utils as openai_utils; openai_utils._openai_client = None
+            import active_interview_app.openai_utils as openai_utils
+            openai_utils._openai_client = None
             with self.assertRaises(ValueError):
                 views.get_openai_client()
 
@@ -165,7 +169,8 @@ class ViewsCriticalPathsTest(TransactionTestCase):
             mock_settings.OPENAI_API_KEY = 'test-key'
             with patch('active_interview_app.openai_utils.OpenAI') as mock_openai:
                 mock_openai.return_value = MagicMock()
-                import active_interview_app.openai_utils as openai_utils; openai_utils._openai_client = None
+                import active_interview_app.openai_utils as openai_utils
+                openai_utils._openai_client = None
                 client = views.get_openai_client()
                 self.assertIsNotNone(client)
 
@@ -173,7 +178,8 @@ class ViewsCriticalPathsTest(TransactionTestCase):
             mock_settings.OPENAI_API_KEY = 'test-key'
             with patch('active_interview_app.openai_utils.OpenAI') as mock_openai:
                 mock_openai.side_effect = Exception('Init failed')
-                import active_interview_app.openai_utils as openai_utils; openai_utils._openai_client = None
+                import active_interview_app.openai_utils as openai_utils
+                openai_utils._openai_client = None
                 with self.assertRaises(ValueError):
                     views.get_openai_client()
 
@@ -225,7 +231,8 @@ class ViewsCriticalPathsTest(TransactionTestCase):
         mock_resp2.choices = [MagicMock()]
         mock_resp2.choices[0].message.content = '[{"id":0,"title":"Q","duration":60,"content":"Q1"}]'
 
-        mock_client.return_value.chat.completions.create.side_effect = [mock_resp1, mock_resp2]
+        mock_client.return_value.chat.completions.create.side_effect = [
+            mock_resp1, mock_resp2]
 
         response = self.client.post(reverse('chat-create'), {
             'create': 'true',
@@ -261,7 +268,8 @@ class ViewsCriticalPathsTest(TransactionTestCase):
         mock_resp2.choices = [MagicMock()]
         mock_resp2.choices[0].message.content = "Not valid JSON"
 
-        mock_client.return_value.chat.completions.create.side_effect = [mock_resp1, mock_resp2]
+        mock_client.return_value.chat.completions.create.side_effect = [
+            mock_resp1, mock_resp2]
 
         response = self.client.post(reverse('chat-create'), {
             'create': 'true',
@@ -388,7 +396,8 @@ class ViewsCriticalPathsTest(TransactionTestCase):
             difficulty=5,
             type='GEN',
             messages=[{"role": "system", "content": "test"}],
-            key_questions=[{"id": 0, "title": "Q", "duration": 60, "content": "Q1"}]
+            key_questions=[{"id": 0, "title": "Q",
+                            "duration": 60, "content": "Q1"}]
         )
 
         mock_resp = MagicMock()
@@ -397,7 +406,8 @@ class ViewsCriticalPathsTest(TransactionTestCase):
         mock_client.return_value.chat.completions.create.return_value = mock_resp
 
         response = self.client.post(
-            reverse('key-questions', kwargs={'chat_id': chat.id, 'question_id': 0}),
+            reverse('key-questions',
+                    kwargs={'chat_id': chat.id, 'question_id': 0}),
             {'message': 'Answer'}
         )
         self.assertEqual(response.status_code, 200)
@@ -420,7 +430,8 @@ class ViewsCriticalPathsTest(TransactionTestCase):
         mock_resp.choices[0].message.content = "Feedback"
         mock_client.return_value.chat.completions.create.return_value = mock_resp
 
-        response = self.client.get(reverse('chat-results', kwargs={'chat_id': chat.id}))
+        response = self.client.get(
+            reverse('chat-results', kwargs={'chat_id': chat.id}))
         self.assertEqual(response.status_code, 200)
 
     @patch('active_interview_app.views.ai_available', return_value=False)
@@ -435,7 +446,8 @@ class ViewsCriticalPathsTest(TransactionTestCase):
             messages=[{"role": "system", "content": "test"}]
         )
 
-        response = self.client.get(reverse('chat-results', kwargs={'chat_id': chat.id}))
+        response = self.client.get(
+            reverse('chat-results', kwargs={'chat_id': chat.id}))
         self.assertIn('unavailable', response.context['feedback'])
 
     @patch('active_interview_app.views.ai_available', return_value=True)
@@ -459,9 +471,11 @@ class ViewsCriticalPathsTest(TransactionTestCase):
         mock_resp2.choices = [MagicMock()]
         mock_resp2.choices[0].message.content = "Good"
 
-        mock_client.return_value.chat.completions.create.side_effect = [mock_resp1, mock_resp2]
+        mock_client.return_value.chat.completions.create.side_effect = [
+            mock_resp1, mock_resp2]
 
-        response = self.client.get(reverse('result-charts', kwargs={'chat_id': chat.id}))
+        response = self.client.get(
+            reverse('result-charts', kwargs={'chat_id': chat.id}))
         self.assertEqual(response.context['scores']['Professionalism'], 80)
 
     @patch('active_interview_app.views.filetype')
@@ -530,19 +544,22 @@ class ViewsCriticalPathsTest(TransactionTestCase):
 
         # Test resume_detail
         self.assertEqual(
-            self.client.get(reverse('resume_detail', kwargs={'resume_id': resume.id})).status_code,
+            self.client.get(reverse('resume_detail', kwargs={
+                            'resume_id': resume.id})).status_code,
             200
         )
 
         # Test delete_resume
-        self.client.post(reverse('delete_resume', kwargs={'resume_id': resume.id}))
+        self.client.post(
+            reverse('delete_resume', kwargs={'resume_id': resume.id}))
         self.assertFalse(UploadedResume.objects.filter(id=resume.id).exists())
 
     def test_job_operations(self):
         """Test job listing operations"""
         # Test job_posting_detail
         self.assertEqual(
-            self.client.get(reverse('job_posting_detail', kwargs={'job_id': self.job.id})).status_code,
+            self.client.get(reverse('job_posting_detail', kwargs={
+                            'job_id': self.job.id})).status_code,
             200
         )
 
@@ -558,15 +575,19 @@ class ViewsCriticalPathsTest(TransactionTestCase):
             'title': 'Title'
         })
 
-        self.assertEqual(UploadedJobListing.objects.filter(title='Title').count(), 1)
+        self.assertEqual(UploadedJobListing.objects.filter(
+            title='Title').count(), 1)
 
     def test_api_views(self):
         """Test API views"""
         # GET files_list
-        self.assertEqual(self.client.get(reverse('files_list')).status_code, 200)
+        self.assertEqual(self.client.get(
+            reverse('files_list')).status_code, 200)
 
         # GET pasted_text_list
-        self.assertEqual(self.client.get(reverse('pasted_text_list')).status_code, 200)
+        self.assertEqual(self.client.get(
+            reverse('pasted_text_list')).status_code, 200)
 
         # GET document-list
-        self.assertEqual(self.client.get(reverse('document-list')).status_code, 200)
+        self.assertEqual(self.client.get(
+            reverse('document-list')).status_code, 200)

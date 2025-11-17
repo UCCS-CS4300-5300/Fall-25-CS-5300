@@ -85,7 +85,8 @@ class InvitationModelTests(TestCase):
         """Test creating an invitation"""
         self.assertIsNotNone(self.invitation.id)
         self.assertEqual(self.invitation.interviewer, self.interviewer)
-        self.assertEqual(self.invitation.candidate_email, 'candidate@example.com')
+        self.assertEqual(self.invitation.candidate_email,
+                         'candidate@example.com')
         self.assertEqual(self.invitation.template, self.template)
         self.assertEqual(self.invitation.status, InvitedInterview.PENDING)
 
@@ -208,11 +209,13 @@ class InvitationFormTests(TestCase):
         form = InvitationCreationForm(data=form_data, user=self.interviewer)
         self.assertFalse(form.is_valid())
         # Form.clean() method raises ValidationError which appears in __all__
-        self.assertTrue('__all__' in form.errors or 'scheduled_date' in form.errors)
+        self.assertTrue(
+            '__all__' in form.errors or 'scheduled_date' in form.errors)
 
     def test_form_template_from_different_user(self):
         """Test form rejects template from different user"""
-        other_user = create_user_with_role('other', 'other@example.com', 'pass', UserProfile.INTERVIEWER)
+        other_user = create_user_with_role(
+            'other', 'other@example.com', 'pass', UserProfile.INTERVIEWER)
         other_template = InterviewTemplate.objects.create(
             user=other_user,
             name='Other Template',
@@ -355,7 +358,8 @@ class InvitationCreateViewTests(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         # Check that template field has initial value set
-        self.assertEqual(response.context['form'].fields['template'].initial, self.template)
+        self.assertEqual(
+            response.context['form'].fields['template'].initial, self.template)
 
     @patch('active_interview_app.views.send_invitation_email')
     def test_post_valid_data_creates_invitation(self, mock_send_email):
@@ -385,7 +389,8 @@ class InvitationCreateViewTests(TestCase):
         # Check invitation was created
         self.assertEqual(InvitedInterview.objects.count(), 1)
         invitation = InvitedInterview.objects.first()
-        self.assertEqual(invitation.candidate_email, 'newcandidate@example.com')
+        self.assertEqual(invitation.candidate_email,
+                         'newcandidate@example.com')
         self.assertEqual(invitation.interviewer, self.interviewer)
         self.assertEqual(invitation.template, self.template)
 
@@ -395,7 +400,8 @@ class InvitationCreateViewTests(TestCase):
         # Check redirect to confirmation
         self.assertRedirects(
             response,
-            reverse('invitation_confirmation', kwargs={'invitation_id': invitation.id})
+            reverse('invitation_confirmation', kwargs={
+                    'invitation_id': invitation.id})
         )
 
     def test_post_invalid_data_shows_errors(self):
@@ -496,7 +502,8 @@ class InvitationConfirmationViewTests(TestCase):
 
     def test_cannot_access_other_user_invitation(self):
         """Test user cannot access another user's invitation"""
-        other_user = create_user_with_role('other', 'other@example.com', 'pass', UserProfile.INTERVIEWER)
+        other_user = create_user_with_role(
+            'other', 'other@example.com', 'pass', UserProfile.INTERVIEWER)
 
         self.client.force_login(other_user)
         url = reverse('invitation_confirmation',
@@ -727,14 +734,17 @@ class CandidateInvitationsViewTests(TestCase):
         self.client.force_login(self.candidate)
 
         # Filter by pending
-        response = self.client.get(reverse('candidate_invitations') + '?status=pending')
+        response = self.client.get(
+            reverse('candidate_invitations') + '?status=pending')
         self.assertEqual(len(response.context['invitations']), 1)
         self.assertEqual(response.context['invitations'][0].status, 'pending')
 
         # Filter by completed
-        response = self.client.get(reverse('candidate_invitations') + '?status=completed')
+        response = self.client.get(
+            reverse('candidate_invitations') + '?status=completed')
         self.assertEqual(len(response.context['invitations']), 1)
-        self.assertEqual(response.context['invitations'][0].status, 'completed')
+        self.assertEqual(
+            response.context['invitations'][0].status, 'completed')
 
     def test_status_counts_correct(self):
         """Test status counts are calculated correctly"""

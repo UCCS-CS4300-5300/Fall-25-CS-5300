@@ -9,24 +9,28 @@ Usage:
 import os
 import sys
 
-# Add the parent directory to Python path so we can import active_interview_backend
+# Add the parent directory to Python path so we can import
+# active_interview_backend
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.insert(0, parent_dir)
 sys.path.insert(0, current_dir)
 
 # Setup Django environment BEFORE importing django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'active_interview_project.settings')
+os.environ.setdefault(
+    'DJANGO_SETTINGS_MODULE',
+    'active_interview_project.settings'
+)
 os.environ.setdefault('DJANGO_SECRET_KEY', 'temporary-key-for-seed-data')
 os.environ.setdefault('PROD', 'false')
 
-import django
+import django  # noqa: E402
 django.setup()
 
-from django.core.management import call_command
-from django.contrib.auth.models import User
-from django.db import connection
-from django.core.management.color import color_style
+from django.core.management import call_command  # noqa: E402
+from django.contrib.auth.models import User  # noqa: E402
+from django.db import connection  # noqa: E402
+from django.core.management.color import color_style  # noqa: E402
 
 style = color_style()
 
@@ -77,17 +81,23 @@ def set_passwords():
             user = User.objects.get(username=username)
             user.set_password(password)
             user.save()
-            print(style.SUCCESS(f"[OK] Password set for {username}"))
+            print(style.SUCCESS("[OK] Password set for {}".format(username)))
         except User.DoesNotExist:
-            print(style.ERROR(f"[FAIL] User {username} not found"))
+            print(style.ERROR("[FAIL] User {} not found".format(username)))
         except Exception as e:
-            print(style.ERROR(f"[FAIL] Failed to set password for {username}: {e}"))
+            print(
+                style.ERROR(
+                    "[FAIL] Failed to set password for {}: {}".format(
+                        username, e
+                    )
+                )
+            )
 
 
 def display_summary():
     """Display summary of loaded data."""
-    from active_interview_app.models import (
-        QuestionBank, Question, Tag, InterviewTemplate
+    from active_interview_app.models import (  # noqa: E402
+        QuestionBank, Tag, InterviewTemplate, Chat
     )
 
     print("\n" + "="*60)
@@ -98,40 +108,39 @@ def display_summary():
     users = User.objects.all().order_by('id')
     for user in users:
         role = user.profile.role if hasattr(user, 'profile') else 'unknown'
-        print(f"  - {user.username} ({role})")
-        print(f"    Email: {user.email}")
+        print("  - {} ({})".format(user.username, role))
+        print("    Email: {}".format(user.email))
         if user.username == 'admin_user':
-            print(f"    Password: admin123")
+            print("    Password: admin123")
         elif user.username == 'interviewer_jane':
-            print(f"    Password: interviewer123")
+            print("    Password: interviewer123")
         elif user.username == 'candidate_john':
-            print(f"    Password: candidate123")
+            print("    Password: candidate123")
 
     print("\n" + style.HTTP_INFO("Question Banks:"))
     for qb in QuestionBank.objects.all():
         question_count = qb.questions.count()
-        print(f"  - {qb.name} ({question_count} questions)")
+        print("  - {} ({} questions)".format(qb.name, question_count))
 
     print("\n" + style.HTTP_INFO("Tags:"))
     tags = Tag.objects.all()
-    print(f"  {', '.join(tag.name for tag in tags)}")
+    print("  {}".format(', '.join(tag.name for tag in tags)))
 
     print("\n" + style.HTTP_INFO("Interview Templates:"))
     for template in InterviewTemplate.objects.all():
         section_count = len(template.sections) if template.sections else 0
-        print(f"  - {template.name} ({section_count} sections)")
+        print("  - {} ({} sections)".format(template.name, section_count))
 
     print("\n" + style.HTTP_INFO("Completed Interviews:"))
-    from active_interview_app.models import Chat
     for chat in Chat.objects.filter(owner__username='candidate_john'):
-        print(f"  - {chat.title} ({chat.type})")
+        print("  - {} ({})".format(chat.title, chat.type))
 
     print("\n" + style.WARNING("Next Steps:"))
     print("  1. Run the development server:")
     print("     python manage.py runserver")
     print("\n  2. Login with any of the users above")
     print("\n  3. Explore the application features!")
-    print("\n" + "="*60 + "\n")
+    print("\n" + "=" * 60 + "\n")
 
 
 def main():
@@ -155,7 +164,8 @@ def main():
     if args.reset:
         confirm = input(
             style.WARNING(
-                "WARNING: This will DELETE all existing data. Continue? (yes/no): "
+                "WARNING: This will DELETE all existing data. "
+                "Continue? (yes/no): "
             )
         )
         if confirm.lower() != 'yes':

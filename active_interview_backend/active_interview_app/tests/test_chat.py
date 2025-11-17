@@ -169,13 +169,13 @@ class TestCreateChatView(TestCase):
         # Call the view with a response
         response = self.client.post(reverse('chat-create'),
                                     {
-                "title": "Example Title Strikes Back",
-                "type": Chat.GENERAL,
-                "difficulty": 5,
-                "listing_choice": generateExampleJobListing(self.user).id,
-                "resume_choice": generateExampleResume(self.user).id,
-                "create": "create"
-            }
+            "title": "Example Title Strikes Back",
+            "type": Chat.GENERAL,
+            "difficulty": 5,
+            "listing_choice": generateExampleJobListing(self.user).id,
+            "resume_choice": generateExampleResume(self.user).id,
+            "create": "create"
+        }
         )
 
         # Validate that the view is valid.  This view redirects
@@ -215,8 +215,8 @@ class TestChatView(TestCase):
         # Call view with an ai prompt
         response = self.client.post(reverse('chat-view', args=[self.chat.id]),
                                     {
-                "message": "What is pi?"
-            }
+            "message": "What is pi?"
+        }
         )
 
         # Validate that the view is valid.  This view redirects
@@ -247,10 +247,10 @@ class TestEditChatView(TestCase):
         # Call the view to update the current item's title
         response = self.client.post(reverse('chat-edit', args=[self.chat.id]),
                                     {
-                "title": "Changed Title",
-                "difficulty": 3,
-                "update": "update"
-            }
+            "title": "Changed Title",
+            "difficulty": 3,
+            "update": "update"
+        }
         )
 
         # Validate that the view is valid.  This view redirects
@@ -273,8 +273,8 @@ class TestDeleteChatView(TestCase):
         response = self.client.post(reverse('chat-delete',
                                             args=[self.chat.id]),
                                     {
-                "delete": "delete"
-            }
+            "delete": "delete"
+        }
         )
 
         # Validate that the view is valid.  This view redirects
@@ -300,8 +300,8 @@ class TestRestartChatView(TestCase):
         response = self.client.post(reverse('chat-restart',
                                             args=[self.chat.id]),
                                     {
-                "restart": "restart"
-            }
+            "restart": "restart"
+        }
         )
 
         # Validate that the view is valid.  This view redirects
@@ -352,8 +352,8 @@ class TestKeyQuestionsView(TestCase):
                                             args=[self.chat.id,
                                                   self.question["id"]]),
                                     {
-                "message": "What is pi?"
-            }
+            "message": "What is pi?"
+        }
         )
 
         # Validate that the view is valid.  This view redirects
@@ -444,7 +444,8 @@ class TestOpenAIClient(TestCase):
         with self.assertRaises(ValueError) as context:
             get_openai_client()
 
-        self.assertIn("Failed to initialize OpenAI client", str(context.exception))
+        self.assertIn("Failed to initialize OpenAI client",
+                      str(context.exception))
 
     @patch('active_interview_app.openai_utils.get_openai_client')
     def testai_available_returns_true_when_client_works(self, mock_get_client):
@@ -477,4 +478,5 @@ class TestOpenAIClient(TestCase):
         # Check response
         self.assertEqual(response.status_code, 503)
         response_data = json.loads(response.content)
-        self.assertEqual(response_data['error'], 'AI features are disabled on this server.')
+        self.assertEqual(response_data['error'],
+                         'AI features are disabled on this server.')
