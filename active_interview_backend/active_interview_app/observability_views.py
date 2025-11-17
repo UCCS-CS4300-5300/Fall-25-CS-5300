@@ -30,7 +30,7 @@ def observability_dashboard(request):
     - Error rates
     - Provider costs
 
-    Accessible at /admin/observability/
+    Accessible at /observability/
     """
     context = {
         'title': 'Observability Dashboard',

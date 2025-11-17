@@ -163,17 +163,17 @@ urlpatterns = [
          name='confirm_account_deletion'),
 
     # Observability Dashboard URLs (Issues #14, #15)
-    path('admin/observability/', observability_views.observability_dashboard,
+    path('observability/', observability_views.observability_dashboard,
          name='observability_dashboard'),
-    path('admin/observability/api/metrics/rps/',
+    path('observability/api/metrics/rps/',
          observability_views.api_metrics_rps, name='api_metrics_rps'),
-    path('admin/observability/api/metrics/latency/',
+    path('observability/api/metrics/latency/',
          observability_views.api_metrics_latency, name='api_metrics_latency'),
-    path('admin/observability/api/metrics/errors/',
+    path('observability/api/metrics/errors/',
          observability_views.api_metrics_errors, name='api_metrics_errors'),
-    path('admin/observability/api/metrics/costs/',
+    path('observability/api/metrics/costs/',
          observability_views.api_metrics_costs, name='api_metrics_costs'),
-    path('admin/observability/api/export/',
+    path('observability/api/export/',
          observability_views.api_export_metrics, name='api_export_metrics'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

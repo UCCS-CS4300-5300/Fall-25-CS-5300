@@ -67,7 +67,7 @@ Generate a shareable URL with:
 
 ## Access
 
-**URL:** `/admin/observability/`
+**URL:** `/observability/`
 
 **Requirements:**
 - Must be logged in
@@ -92,7 +92,7 @@ Generate a shareable URL with:
 - `ErrorLog` - Detailed error logging
 
 **URL Routing:** `active_interview_app/urls.py`
-- Dashboard and API endpoints registered with `/admin/observability/` prefix
+- Dashboard and API endpoints registered with `/observability/` prefix
 
 ### Frontend Components
 
@@ -111,20 +111,20 @@ Generate a shareable URL with:
 
 ### Data Flow
 
-1. User accesses dashboard at `/admin/observability/`
+1. User accesses dashboard at `/observability/`
 2. JavaScript loads and initializes Chart.js charts
 3. Parallel API calls fetch metrics for current time range:
-   - `/admin/observability/api/metrics/rps/`
-   - `/admin/observability/api/metrics/latency/`
-   - `/admin/observability/api/metrics/errors/`
-   - `/admin/observability/api/metrics/costs/`
+   - `/observability/api/metrics/rps/`
+   - `/observability/api/metrics/latency/`
+   - `/observability/api/metrics/errors/`
+   - `/observability/api/metrics/costs/`
 4. Charts update with new data
 5. Summary statistics calculated and displayed
 6. Auto-refresh (if enabled) repeats every 30 seconds
 
 ## API Endpoints
 
-### GET /admin/observability/api/metrics/rps/
+### GET /observability/api/metrics/rps/
 
 Returns requests per second data.
 
@@ -148,7 +148,7 @@ Returns requests per second data.
 }
 ```
 
-### GET /admin/observability/api/metrics/latency/
+### GET /observability/api/metrics/latency/
 
 Returns latency percentile data.
 
@@ -174,7 +174,7 @@ Returns latency percentile data.
 }
 ```
 
-### GET /admin/observability/api/metrics/errors/
+### GET /observability/api/metrics/errors/
 
 Returns error rate data.
 
@@ -200,7 +200,7 @@ Returns error rate data.
 }
 ```
 
-### GET /admin/observability/api/metrics/costs/
+### GET /observability/api/metrics/costs/
 
 Returns provider cost data.
 
@@ -228,7 +228,7 @@ Returns provider cost data.
 }
 ```
 
-### GET /admin/observability/api/export/
+### GET /observability/api/export/
 
 Exports metrics as CSV file.
 
@@ -243,7 +243,7 @@ Exports metrics as CSV file.
 ### Viewing Dashboard
 
 1. Log in as staff user
-2. Navigate to `/admin/observability/`
+2. Navigate to `/observability/`
 3. Select desired time range (default: 24 hours)
 4. View charts and summary statistics
 
