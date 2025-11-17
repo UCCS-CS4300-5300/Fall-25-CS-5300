@@ -47,9 +47,173 @@
           <button class="button-chat-send btn btn-primary ms-2" id="speech-text" onclick="speechToText()">Speak</button>
           <button class="button-chat-send btn btn-primary ms-2" type="button" onclick="sendMessage()">Send</button>
         </div>
+        <!-- Connection notification and status row -->
+        <div class="d-flex justify-content-between align-items-center mt-2">
+          <!-- Connection Dropped Notification (Inline) -->
+          <div id="connectionDroppedNotification" class="connection-notification" style="display: none;">
+            <div class="d-flex align-items-center">
+              <div class="flex-grow-1">
+                <div class="d-flex align-items-center mb-1">
+                  <i class="bi bi-wifi-off me-2"></i>
+                  <strong>Connection Lost</strong>
+                </div>
+                <p class="mb-2 small">Disconnected at <span id="connectionDropTime"></span>. Your messages will be saved locally.</p>
+                <button type="button" class="btn btn-primary btn-sm" onclick="retryConnection()">Retry</button>
+              </div>
+              <button type="button" class="btn-close ms-2" onclick="dismissConnectionNotification()" aria-label="Close"></button>
+            </div>
+          </div>
+          <!-- Connection Status Indicator -->
+          <div id="connection-status" class="connection-status">
+            <i class="bi bi-wifi connection-status-icon"></i>
+            <span class="connection-status-text">Saved by server</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
+
+  <style>
+    /* Connection Notification (Inline Alert) */
+    .connection-notification {
+      background-color: var(--surface);
+      border: 2px solid var(--warning);
+      border-radius: var(--radius);
+      padding: 0.875rem;
+      color: var(--text-primary);
+      max-width: 450px;
+      box-shadow: var(--shadow-md);
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .connection-notification i {
+      color: var(--warning);
+      font-size: 1.1rem;
+    }
+
+    .connection-notification strong {
+      color: var(--text-primary);
+      font-size: 0.95rem;
+    }
+
+    .connection-notification .small {
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+    }
+
+    .connection-notification .btn-close {
+      opacity: 0.6;
+    }
+
+    .connection-notification .btn-close:hover {
+      opacity: 1;
+    }
+
+    .connection-notification .btn-primary {
+      background-color: var(--warning);
+      border-color: var(--warning);
+      color: var(--text-white);
+      font-weight: 500;
+      font-size: 0.875rem;
+    }
+
+    .connection-notification .btn-primary:hover {
+      background-color: var(--accent-dark);
+      border-color: var(--accent-dark);
+    }
+
+    /* Connection Status Indicator */
+    .connection-status {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      font-size: 0.875rem;
+      gap: 0.5rem;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+    }
+
+    .connection-status-icon {
+      font-size: 1rem;
+      transition: color 0.3s ease;
+    }
+
+    .connection-status-text {
+      font-weight: 500;
+      transition: color 0.3s ease;
+    }
+
+    /* Online state (green) */
+    .connection-status.online .connection-status-icon {
+      color: var(--success, #2ecc71);
+    }
+
+    .connection-status.online .connection-status-text {
+      color: var(--success, #2ecc71);
+    }
+
+    /* Offline state (warning/orange) */
+    .connection-status.offline .connection-status-icon {
+      color: var(--warning, #f39c12);
+    }
+
+    .connection-status.offline .connection-status-text {
+      color: var(--warning, #f39c12);
+    }
+
+    /* Pulse animation for offline state */
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.5;
+      }
+    }
+
+    .connection-status.offline .connection-status-icon {
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    /* Sync Pending Indicator */
+    .sync-pending-indicator {
+      padding: 0.25rem 0.5rem;
+      text-align: left;
+      margin-top: 0.25rem;
+    }
+
+    .sync-pending-indicator small {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .sync-pending-indicator i {
+      animation: rotate 2s linear infinite;
+    }
+
+    @keyframes rotate {
+      from {
+        transform: rotate(0deg);
+      }
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
 {% endblock content %}
 
 {% block scripts %}
@@ -60,6 +224,301 @@
   //global variable because of everytime you click the button of speech to text it will alternate
   // and if store it in there it will not alternate
   let active_speech = false;
+  let connectionDroppedTime = null;
+  let isConnectionDropped = false;
+
+  // Answer caching configuration
+  const CACHE_KEY = 'chat_input_cache_{{ chat.id }}';
+  const PENDING_KEY = 'chat_pending_message_{{ chat.id }}';
+  const PENDING_SYNC_KEY = 'chat_pending_sync_{{ chat.id }}';
+  const CACHE_INTERVAL = 1000; // Save every 1 second
+  const SYNC_CHECK_INTERVAL = 15000; // Check for sync every 15 seconds
+
+  // Update connection status indicator
+  function updateConnectionStatus(isOnline) {
+    const statusElement = document.getElementById('connection-status');
+    const statusIcon = statusElement.querySelector('.connection-status-icon');
+    const statusText = statusElement.querySelector('.connection-status-text');
+
+    if (isOnline) {
+      statusElement.classList.remove('offline');
+      statusElement.classList.add('online');
+      statusIcon.className = 'bi bi-wifi connection-status-icon';
+      statusText.textContent = 'Saved by server';
+    } else {
+      statusElement.classList.remove('online');
+      statusElement.classList.add('offline');
+      statusIcon.className = 'bi bi-wifi-off connection-status-icon';
+      statusText.textContent = 'Saved locally';
+    }
+  }
+
+  // Function to show connection dropped notification with timestamp
+  function showConnectionDroppedModal() {
+    if (!isConnectionDropped) {
+      isConnectionDropped = true;
+      connectionDroppedTime = new Date();
+      const formattedTime = connectionDroppedTime.toLocaleString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+      document.getElementById('connectionDropTime').textContent = formattedTime;
+
+      // Update status indicator to offline IMMEDIATELY
+      updateConnectionStatus(false);
+
+      // Show the inline notification
+      document.getElementById('connectionDroppedNotification').style.display = 'block';
+    }
+  }
+
+  // Function to dismiss the connection notification
+  function dismissConnectionNotification() {
+    document.getElementById('connectionDroppedNotification').style.display = 'none';
+  }
+
+  // Function to retry connection
+  function retryConnection() {
+    // Try a simple ping to the server
+    $.ajax({
+      url: '{% url "chat-view" chat_id=chat.id %}',
+      type: 'GET',
+      timeout: 5000,
+      success: function() {
+        // Connection restored
+        isConnectionDropped = false;
+        connectionDroppedTime = null;
+        updateConnectionStatus(true);
+
+        // Hide the inline notification
+        dismissConnectionNotification();
+
+        // Show success message
+        console.log('Connection restored successfully');
+
+        // Try to sync pending messages
+        syncPendingMessages();
+      },
+      error: function() {
+        // Still no connection
+        updateConnectionStatus(false);
+        alert('Connection still unavailable. Please check your internet connection and try again.');
+      }
+    });
+  }
+
+  // Periodic heartbeat to check connection (every 5 seconds)
+  let heartbeatInterval = null;
+  function startHeartbeat() {
+    heartbeatInterval = setInterval(function() {
+      // Use a simple fetch to check server connectivity
+      fetch('{% url "chat-view" chat_id=chat.id %}', {
+        method: 'GET',
+        signal: AbortSignal.timeout(5000)
+      })
+      .then(function() {
+        // Connection is active, try to sync pending messages
+        if (isConnectionDropped) {
+          isConnectionDropped = false;
+          updateConnectionStatus(true);
+          dismissConnectionNotification();
+          syncPendingMessages();
+        }
+      })
+      .catch(function(error) {
+        // Only show notification for network errors, not other errors
+        if (error.name === 'TypeError' || error.name === 'TimeoutError') {
+          showConnectionDroppedModal();
+        }
+      });
+    }, 5000); // Check every 5 seconds
+  }
+
+  // Get pending messages from localStorage
+  function getPendingMessages() {
+    const pendingData = localStorage.getItem(PENDING_SYNC_KEY);
+    return pendingData ? JSON.parse(pendingData) : [];
+  }
+
+  // Save pending messages to localStorage
+  function savePendingMessages(messages) {
+    if (messages.length > 0) {
+      localStorage.setItem(PENDING_SYNC_KEY, JSON.stringify(messages));
+    } else {
+      localStorage.removeItem(PENDING_SYNC_KEY);
+    }
+  }
+
+  // Add a message to pending sync queue
+  function addToPendingSync(message, messageElementId) {
+    const pendingMessages = getPendingMessages();
+    pendingMessages.push({
+      message: message,
+      timestamp: Date.now(),
+      elementId: messageElementId
+    });
+    savePendingMessages(pendingMessages);
+  }
+
+  // Attempt to sync pending messages with server
+  function syncPendingMessages() {
+    const pendingMessages = getPendingMessages();
+    if (pendingMessages.length === 0) {
+      return;
+    }
+
+    console.log(`Attempting to sync ${pendingMessages.length} pending message(s)...`);
+
+    // Process messages one at a time
+    const message = pendingMessages[0];
+
+    $.ajax({
+      url: '{% url "chat-view" chat_id=chat.id %}',
+      type: 'POST',
+      data: {
+        'message': message.message,
+        csrfmiddlewaretoken: '{{ csrf_token }}'
+      },
+      timeout: 30000,
+      success: function(response) {
+        formattedResponseMessage = DOMPurify.sanitize(response.message.replace(/(?:\r\n|\r|\n)/g, '<br>'));
+
+        // Remove sync pending indicator from the message
+        $(`#${message.elementId}`).find('.sync-pending-indicator').remove();
+
+        // Show the response bubble
+        $('#chat-messages').append(
+            `<div class="col bot-text-container">
+              <div class="card bot-text-bubble">
+                <div class="card-body">
+                  <p class="card-text" id = "ai_message">${formattedResponseMessage}</p>
+                   <button class ="button-chat-send btn btn-primary ms-2" id ="text2speech_button" onclick="textToSpeech(this)">Speak</button>
+                </div>
+              </div>
+            </div>`);
+
+        // Remove this message from pending queue
+        pendingMessages.shift();
+        savePendingMessages(pendingMessages);
+
+        console.log('Message synced successfully');
+
+        // Update connection status to online
+        updateConnectionStatus(true);
+
+        updateScroll();
+
+        // If there are more messages, sync them too
+        if (pendingMessages.length > 0) {
+          setTimeout(syncPendingMessages, 1000); // Wait 1 second before next sync
+        }
+      },
+      error: function(xhr, status, error) {
+        console.log('Sync failed, will retry later');
+        // Keep the message in pending queue for next sync attempt
+        updateConnectionStatus(false);
+      }
+    });
+  }
+
+  // Start periodic sync check (every 15 seconds)
+  let syncInterval = null;
+  function startSyncCheck() {
+    syncInterval = setInterval(function() {
+      if (!isConnectionDropped) {
+        syncPendingMessages();
+      }
+    }, SYNC_CHECK_INTERVAL);
+  }
+
+  // Start heartbeat when page loads
+  $(document).ready(function() {
+    // Initialize connection status as online
+    updateConnectionStatus(true);
+
+    startHeartbeat();
+    startSyncCheck();
+    restoreCachedInput();
+    setupAutoSave();
+
+    // Check for pending messages on page load and sync if online
+    const pendingMessages = getPendingMessages();
+    if (pendingMessages.length > 0) {
+      console.log(`Found ${pendingMessages.length} pending message(s) from previous session`);
+      syncPendingMessages();
+    }
+  });
+
+  // Save user input to localStorage
+  function saveCachedInput() {
+    const userInput = $('#user-input').val();
+    if (userInput.trim() !== '') {
+      localStorage.setItem(CACHE_KEY, userInput);
+    } else {
+      localStorage.removeItem(CACHE_KEY);
+    }
+  }
+
+  // Restore cached input on page load
+  function restoreCachedInput() {
+    // First check for pending message (message that was being sent when connection dropped)
+    const pendingMessage = localStorage.getItem(PENDING_KEY);
+    if (pendingMessage) {
+      $('#user-input').val(pendingMessage);
+      console.log('Restored message that failed to send');
+    } else {
+      // Otherwise restore regular cached input
+      const cachedInput = localStorage.getItem(CACHE_KEY);
+      if (cachedInput) {
+        $('#user-input').val(cachedInput);
+        console.log('Restored unsent message from cache');
+      }
+    }
+
+    // Adjust textarea height if we restored anything
+    const restoredValue = $('#user-input').val();
+    if (restoredValue) {
+      const chatInput = document.getElementById('user-input');
+      chatInput.style.height = 'auto';
+      chatInput.style.height = chatInput.scrollHeight + 'px';
+    }
+  }
+
+  // Clear all caches after successful send
+  function clearCachedInput() {
+    localStorage.removeItem(CACHE_KEY);
+    localStorage.removeItem(PENDING_KEY);
+  }
+
+  // Save message to pending cache (called just before sending)
+  function savePendingMessage(message) {
+    localStorage.setItem(PENDING_KEY, message);
+  }
+
+  // Restore message to input field if send fails
+  function restorePendingMessage() {
+    const pendingMessage = localStorage.getItem(PENDING_KEY);
+    if (pendingMessage) {
+      $('#user-input').val(pendingMessage);
+      // Adjust textarea height
+      const chatInput = document.getElementById('user-input');
+      chatInput.style.height = 'auto';
+      chatInput.style.height = chatInput.scrollHeight + 'px';
+      // Move cursor to end
+      chatInput.focus();
+      chatInput.setSelectionRange(pendingMessage.length, pendingMessage.length);
+    }
+  }
+
+  // Setup auto-save with debounce
+  let autoSaveTimeout = null;
+  function setupAutoSave() {
+    $('#user-input').on('input', function() {
+      clearTimeout(autoSaveTimeout);
+      autoSaveTimeout = setTimeout(saveCachedInput, CACHE_INTERVAL);
+    });
+  }
 
 
     function textToSpeech(button) {
@@ -158,14 +617,22 @@
       if (userInput.trim() !== '') {
         formattedUserInput = DOMPurify.sanitize(userInput.replace(/(?:\r\n|\r|\n)/g, '<br>'));
 
+        // Save message to pending cache BEFORE clearing input
+        savePendingMessage(userInput);
+
         $('#user-input').val('');
+        // Clear regular cache (but keep pending cache until success)
+        localStorage.removeItem(CACHE_KEY);
         // Reset height to recalc scrollHeight
         chatInput.style.height = 'auto';
         chatInput.style.height = chatInput.scrollHeight + 'px';
 
+        // Generate unique ID for this message
+        const messageId = 'user-msg-' + Date.now();
+
         // Show user text bubble
         $('#chat-messages').append(
-            `<div class="col user-text-container">
+            `<div id="${messageId}" class="col user-text-container">
               <div class="card user-text-bubble">
                 <div class="card-body">
                   <p class="card-text">${formattedUserInput}</p>
@@ -182,7 +649,7 @@
               </div>
             </div>
           </div>`);
-        
+
         updateScroll();
 
         // POST the user message to the view
@@ -193,9 +660,10 @@
             'message': userInput,
             csrfmiddlewaretoken: '{{ csrf_token }}'
           },
+          timeout: 30000, // 30 second timeout
           success: function(response) {
             formattedResponseMessage = DOMPurify.sanitize(response.message.replace(/(?:\r\n|\r|\n)/g, '<br>'));
-            
+
             // delete loading bubble
             $('#loading-bubble').remove();
 
@@ -209,7 +677,57 @@
                     </div>
                   </div>
                 </div>`);
-            
+
+            // Message sent successfully - clear ALL caches including pending
+            clearCachedInput();
+
+            // Update connection status to online (in case it was offline)
+            if (isConnectionDropped) {
+              isConnectionDropped = false;
+              updateConnectionStatus(true);
+              dismissConnectionNotification();
+            }
+
+            updateScroll();
+          },
+          error: function(xhr, status, error) {
+            // Remove loading bubble
+            $('#loading-bubble').remove();
+
+            // Check if it's a network error or timeout
+            if (status === 'timeout' || status === 'error' || xhr.status === 0) {
+              // Keep the message visible but add "Sync Pending" indicator
+              $(`#${messageId}`).append(
+                  `<div class="sync-pending-indicator">
+                    <small class="text-warning">
+                      <i class="bi bi-arrow-repeat"></i> Sync Pending
+                    </small>
+                  </div>`);
+
+              // Add to pending sync queue
+              addToPendingSync(userInput, messageId);
+
+              // Clear pending message cache since we've added it to sync queue
+              localStorage.removeItem(PENDING_KEY);
+
+              // Show connection dropped notification
+              showConnectionDroppedModal();
+            } else {
+              // For non-network errors, remove the message and restore to input
+              $(`#${messageId}`).remove();
+              restorePendingMessage();
+
+              // Show generic error message in chat
+              $('#chat-messages').append(
+                  `<div class="col bot-text-container">
+                    <div class="card bot-text-bubble bg-danger bg-opacity-10">
+                      <div class="card-body">
+                        <p class="card-text text-danger">Error: Unable to send message. Your message has been restored to the input field.</p>
+                      </div>
+                    </div>
+                  </div>`);
+            }
+
             updateScroll();
           }
         });
