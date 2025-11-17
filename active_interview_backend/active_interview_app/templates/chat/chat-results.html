@@ -47,7 +47,8 @@
       max-height: max-content;
       max-width: max-content;
       flex: 0 1 auto;
-      height: 100vh
+      height: auto;
+      padding: 1rem;
     }
     #feedbackbox{
       border: solid;
@@ -69,16 +70,12 @@
       padding: var(--results-feedback-padding);
     }
     #BarChart{
-      width:100%;
-      max-width: var(--results-chart-max-width);
-      height:100%;
-      max-height: var(--results-chart-max-height);
+      width: var(--results-chart-max-width);
+      height: var(--results-chart-max-height);
     }
     #DonutChart{
-      width: auto;
-      max-width: var(--results-chart-max-width);
-      height:100%;
-      max-height: var(--results-chart-max-height);
+      width: var(--results-chart-max-width);
+      height: var(--results-chart-max-height);
     }
     h1{
       margin-bottom: var(--results-heading-margin-bottom-small);
@@ -132,11 +129,32 @@
       </div>
     </div>
     <div class="container" id="feedbackbox">
-      <h1>Feedback</h1>
+      <h1>AI Feedback</h1>
       <p id="feedbackpara">
         {{ feedback|linebreaksbr }}
       </p>
     </div>
+
+    <!-- Reviewer notes section (for invited interviews only) -->
+    {% if invitation %}
+    <div class="container" id="feedbackbox" style="margin-top: 2rem; border-color: var(--info);">
+      <h1>Interviewer Feedback</h1>
+      {% if invitation.interviewer_review_status == 'completed' %}
+        <p id="feedbackpara">
+          {{ invitation.interviewer_feedback|linebreaksbr }}
+        </p>
+        {% if invitation.reviewed_at %}
+        <p style="color: var(--text-secondary); font-size: 0.9rem; padding: 0 2em 1em 2em;">
+          Reviewed on {{ invitation.reviewed_at|date:"F d, Y \a\t g:i A" }}
+        </p>
+        {% endif %}
+      {% else %}
+        <p id="feedbackpara" style="color: var(--text-secondary); font-style: italic;">
+          Your interviewer is still reviewing your interview. You will be notified when feedback is available.
+        </p>
+      {% endif %}
+    </div>
+    {% endif %}
 
     <!-- Generate Detailed Report Button -->
     <div class="container report-button-container" style="text-align: center;">

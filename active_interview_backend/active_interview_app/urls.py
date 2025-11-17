@@ -162,19 +162,27 @@ urlpatterns = [
     path('profile/delete-account/confirm/', views.confirm_account_deletion,
          name='confirm_account_deletion'),
 
-    # Observability Dashboard URLs (Issues #14, #15)
-    path('observability/', observability_views.observability_dashboard,
-         name='observability_dashboard'),
-    path('observability/api/metrics/rps/',
-         observability_views.api_metrics_rps, name='api_metrics_rps'),
-    path('observability/api/metrics/latency/',
-         observability_views.api_metrics_latency, name='api_metrics_latency'),
-    path('observability/api/metrics/errors/',
-         observability_views.api_metrics_errors, name='api_metrics_errors'),
-    path('observability/api/metrics/costs/',
-         observability_views.api_metrics_costs, name='api_metrics_costs'),
-    path('observability/api/export/',
-         observability_views.api_export_metrics, name='api_export_metrics'),
+    # Interview Invitation urls (Issue #4, #5, #9, #134, #138)
+    path('invitations/', views.invitation_dashboard,
+         name='invitation_dashboard'),
+    path('invitations/create/', views.invitation_create,
+         name='invitation_create'),
+    path('invitations/create/<int:template_id>/', views.invitation_create,
+         name='invitation_create_from_template'),
+    path('invitations/<uuid:invitation_id>/confirmation/',
+         views.invitation_confirmation, name='invitation_confirmation'),
+    path('invitations/<uuid:invitation_id>/review/',
+         views.invitation_review, name='invitation_review'),
+
+    # Candidate Invitation Join urls (Issue #135, #136)
+    path('interview/invite/<uuid:invitation_id>/',
+         views.invitation_join, name='invitation_join'),
+    path('interview/invited/<uuid:invitation_id>/',
+         views.invited_interview_detail, name='invited_interview_detail'),
+    path('interview/invited/<uuid:invitation_id>/start/',
+         views.start_invited_interview, name='start_invited_interview'),
+    path('my-invitations/', views.candidate_invitations,
+         name='candidate_invitations'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
