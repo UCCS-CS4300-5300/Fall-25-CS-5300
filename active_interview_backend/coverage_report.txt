@@ -1,21 +1,22 @@
 Name                                                                  Stmts   Miss  Cover   Missing
 ---------------------------------------------------------------------------------------------------
 active_interview_app\adapters.py                                         34      0   100%
-active_interview_app\admin.py                                           188     21    89%   63-64, 107-108, 119, 139, 153, 157, 189, 194-196, 200, 213-215, 228, 382, 433, 473, 508
+active_interview_app\admin.py                                           198     23    88%   84-85, 129-130, 173-174, 185, 205, 219, 223, 255, 260-262, 266, 279-281, 294, 448, 499, 539, 574
 active_interview_app\apps.py                                              6      0   100%
 active_interview_app\constants.py                                         5      0   100%
 active_interview_app\decorators.py                                       59      0   100%
-active_interview_app\forms.py                                            97      0   100%
+active_interview_app\forms.py                                           160      6    96%   349-350, 358, 384-385, 415
+active_interview_app\invitation_utils.py                                 84      0   100%
 active_interview_app\job_listing_parser.py                               87      1    99%   223
 active_interview_app\management\commands\aggregate_daily_metrics.py      80      9    89%   45-48, 55-56, 196-199
 active_interview_app\management\commands\cleanup_old_metrics.py          49      9    82%   83-89, 100-106, 117-123
 active_interview_app\merge_stats_models.py                               70      0   100%
-active_interview_app\middleware.py                                       68      4    94%   62-64, 87, 155
-active_interview_app\models.py                                          257      7    97%   400, 417, 425-426, 496, 704, 749
+active_interview_app\middleware.py                                       68      3    96%   62-64, 87
+active_interview_app\models.py                                          330      6    98%   463, 471-472, 725, 933, 978
 active_interview_app\observability_models.py                            139     12    91%   52, 86, 88, 103, 121, 123, 131, 169, 171, 244, 307, 379
 active_interview_app\observability_views.py                             163     27    83%   68-69, 71-72, 90, 128-129, 131-132, 134-135, 188-189, 191-192, 194-195, 248, 250, 252, 262, 328, 335, 337, 339, 381-384
 active_interview_app\openai_utils.py                                     19      0   100%
-active_interview_app\pdf_export.py                                      165      0   100%
+active_interview_app\pdf_export.py                                      199      0   100%
 active_interview_app\permissions.py                                      33      3    91%   29, 49, 69
 active_interview_app\question_bank_views.py                             279     48    83%   72, 91, 116, 133, 201, 263-274, 279-290, 299, 337, 353, 360, 378, 384, 433, 437, 475, 543, 550, 574, 686-693, 744, 795-818, 907
 active_interview_app\resume_parser.py                                    66      9    86%   154, 167, 169, 171, 176, 186, 200, 224, 226
@@ -26,9 +27,9 @@ active_interview_app\token_usage_models.py                               45     
 active_interview_app\urls.py                                             15      0   100%
 active_interview_app\user_data_utils.py                                 184     32    83%   108, 133-134, 151, 163, 247-253, 260-268, 275, 387, 470, 477-478, 483-486, 507-517
 active_interview_app\utils.py                                            19      0   100%
-active_interview_app\views.py                                           994    146    85%   732-734, 737-763, 1036, 1049, 1068-1071, 1247-1293, 1323-1384, 1400-1403, 1598, 1878-1879, 1905, 1936, 1963, 2012-2019, 2029-2048, 2057-2075, 2085-2107, 2116-2132, 2209, 2231-2232, 2237-2241, 2255-2256, 2291, 2314-2315, 2328, 2405-2406, 2452-2453, 2534-2539
-active_interview_project\settings.py                                     70     12    83%   66-68, 140, 260, 264, 271-277
+active_interview_app\views.py                                          1204    158    87%   476-477, 503-504, 778-780, 783-818, 905-906, 1108, 1121, 1140-1143, 1319-1365, 1395-1456, 1472-1475, 1670, 1950-1951, 1977, 2008, 2035, 2101-2120, 2157-2179, 2188-2204, 2281, 2303-2304, 2309-2313, 2327-2328, 2363, 2386-2387, 2400, 2477-2478, 2524-2525, 2606-2611, 2683, 2757, 2988-2993, 3008-3010, 3149-3150
+active_interview_project\settings.py                                     70     12    83%   70-72, 145, 265, 269, 276-282
 active_interview_project\urls.py                                          7      1    86%   35
 test_observability_setup.py                                              67     13    81%   29-31, 47, 59-61, 77, 94-95, 110, 126-127
 ---------------------------------------------------------------------------------------------------
-TOTAL                                                                  3400    354    90%
+TOTAL                                                                  3874    372    90%
