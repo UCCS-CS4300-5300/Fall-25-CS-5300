@@ -908,6 +908,18 @@ class AutoAssembleInterviewView(APIView):
 
         return selected_questions
 
+    def _select_questions_disregard_difficulty(self, questions_query, question_count, randomize):
+        """
+        Select questions without considering difficulty distribution.
+        Used when disregard_difficulty flag is set to True.
+        """
+        available = list(questions_query)
+
+        if randomize:
+            return random.sample(available, question_count)
+        else:
+            return available[:question_count]
+
     def _build_response(self, title, selected_questions):
         """Build the final response with interview data."""
         return Response({
