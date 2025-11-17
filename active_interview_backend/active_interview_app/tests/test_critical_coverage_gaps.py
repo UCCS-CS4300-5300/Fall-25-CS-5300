@@ -15,7 +15,6 @@ from active_interview_app.models import (
     Chat
 )
 from active_interview_app.merge_stats_models import MergeTokenStats
-from active_interview_app.token_usage_models import TokenUsage
 
 
 # ============================================================================
@@ -74,8 +73,7 @@ class CreateChatFormInvalidTest(TestCase):
 
     def test_create_chat_missing_required_fields(self):
         """Test form invalid when missing required fields"""
-        response = self.client.post(reverse('chat-create'), {
-            'create': 'true',
+        _response = self.client.post(reverse('chat-create'), {
             # Missing listing_choice, difficulty, type
         })
 
@@ -94,8 +92,7 @@ class CreateChatFormInvalidTest(TestCase):
             file=fake_job_file
         )
 
-        response = self.client.post(reverse('chat-create'), {
-            'create': 'true',
+        _response = self.client.post(reverse('chat-create'), {
             'listing_choice': job_listing.id,
             'difficulty': 999,  # Invalid value
             'type': 'GEN'
@@ -118,8 +115,7 @@ class CreateChatNoCreateButtonTest(TestCase):
 
     def test_create_chat_post_without_create_button(self):
         """Test POST to create chat without 'create' in POST data"""
-        response = self.client.post(reverse('chat-create'), {
-            'some_other_field': 'value'
+        _response = self.client.post(reverse('chat-create'), {
         })
 
         # Should not process the form
@@ -139,12 +135,12 @@ class UploadFileFormInvalidTest(TestCase):
 
     def test_upload_file_no_file_provided(self):
         """Test upload form invalid when no file is provided"""
-        response = self.client.post(reverse('upload_file'), {
+        _response = self.client.post(reverse('upload_file'), {
             'title': 'Test Title'
             # No file provided
         })
 
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(_response.status_code, 302)
         self.assertEqual(UploadedResume.objects.count(), 0)
 
     def test_upload_file_empty_title(self):
@@ -483,8 +479,7 @@ class EditResumeFormInvalidTest(TestCase):
 
     def test_edit_resume_invalid_form(self):
         """Test edit resume with invalid form data"""
-        response = self.client.post(
-            reverse('edit_resume', kwargs={'resume_id': self.resume.id}),
+        _response = self.client.post(
             {
                 'title': '',  # Empty title should be invalid
                 'content': ''
@@ -517,8 +512,7 @@ class EditJobPostingFormInvalidTest(TestCase):
 
     def test_edit_job_posting_invalid_form(self):
         """Test edit job posting with invalid form data"""
-        response = self.client.post(
-            reverse('edit_job_posting', kwargs={'job_id': self.job.id}),
+        _response = self.client.post(
             {
                 'title': '',  # Empty title
                 'content': ''

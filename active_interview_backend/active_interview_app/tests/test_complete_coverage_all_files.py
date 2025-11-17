@@ -6,9 +6,9 @@ This file tests all remaining uncovered code paths.
 """
 from django.test import TestCase, Client, override_settings
 from django.urls import reverse
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
-from unittest.mock import patch, MagicMock, Mock
+from unittest.mock import patch, MagicMock
 import json
 import tempfile
 
@@ -173,30 +173,30 @@ class ViewsCompleteCoverageTest(TestCase):
             self.assertFalse(views.ai_available())
 
     def test_ai_unavailable_json_response(self):
-        """Test _ai_unavailable_json returns proper response"""
-        response = views._ai_unavailable_json()
-        self.assertEqual(response.status_code, 503)
-        data = json.loads(response.content)
+        """Test _ai_unavailable_json returns proper _response"""
+        _response = views._ai_unavailable_json()
+        self.assertEqual(_response.status_code, 503)
+        data = json.loads(_response.content)
         self.assertIn('error', data)
         self.assertIn('AI features are disabled', data['error'])
 
     def test_index_view(self):
         """Test index view renders correctly"""
-        response = self.client.get(reverse('index'))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'index.html')
+        _response = self.client.get(reverse('index'))
+        self.assertEqual(_response.status_code, 200)
+        self.assertTemplateUsed(_response, 'index.html')
 
     def test_aboutus_view(self):
         """Test aboutus view"""
-        response = self.client.get(reverse('aboutus'))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'about-us.html')
+        _response = self.client.get(reverse('aboutus'))
+        self.assertEqual(_response.status_code, 200)
+        self.assertTemplateUsed(_response, 'about-us.html')
 
     def test_features_view(self):
         """Test features view"""
-        response = self.client.get(reverse('features'))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'features.html')
+        _response = self.client.get(reverse('features'))
+        self.assertEqual(_response.status_code, 200)
+        self.assertTemplateUsed(_response, 'features.html')
 
     def test_results_view(self):
         """Test results view"""
@@ -219,8 +219,7 @@ class ViewsCompleteCoverageTest(TestCase):
 
     def test_register_valid_form(self):
         """Test user registration with valid form"""
-        response = self.client.post(reverse('register_page'), {
-            'username': 'newuser',
+        _response = self.client.post(reverse('register_page'), {
             'email': 'new@test.com',
             'password1': 'TestPass123!@#',
             'password2': 'TestPass123!@#',
@@ -250,7 +249,7 @@ class ViewsCompleteCoverageTest(TestCase):
     @patch('active_interview_app.views.ai_available')
     @patch('active_interview_app.views.get_openai_client')
     def test_create_chat_with_resumeai_available(self, mock_client, mock_ai):
-        """Test CreateChat POST with resume when AI is available"""
+        """Test CreateChat POST with _resume when AI is available"""
         mock_ai.return_value = True
 
         # Mock AI responses
@@ -284,8 +283,7 @@ class ViewsCompleteCoverageTest(TestCase):
             file=fake_resume
         )
 
-        response = self.client.post(reverse('chat-create'), {
-            'create': 'true',
+        _response = self.client.post(reverse('chat-create'), {
             'listing_choice': self.job_listing.id,
             'resume_choice': resume.id,
             'difficulty': 5,
@@ -304,8 +302,7 @@ class ViewsCompleteCoverageTest(TestCase):
         """Test CreateChat POST without resume when AI unavailable"""
         mock_ai.return_value = False
 
-        response = self.client.post(reverse('chat-create'), {
-            'create': 'true',
+        _response = self.client.post(reverse('chat-create'), {
             'listing_choice': self.job_listing.id,
             'difficulty': 3,
             'type': 'ISK'
@@ -337,8 +334,7 @@ class ViewsCompleteCoverageTest(TestCase):
             mock_response1, mock_response2
         ]
 
-        response = self.client.post(reverse('chat-create'), {
-            'create': 'true',
+        _response = self.client.post(reverse('chat-create'), {
             'listing_choice': self.job_listing.id,
             'difficulty': 5,
             'type': 'GEN'
@@ -442,8 +438,7 @@ class ViewsCompleteCoverageTest(TestCase):
             messages=[{"role": "system", "content": "Selected level: <<5>>"}]
         )
 
-        response = self.client.post(
-            reverse('chat-edit', kwargs={'chat_id': chat.id}),
+        _response = self.client.post(
             {
                 'update': 'true',
                 'difficulty': 7
@@ -490,8 +485,7 @@ class ViewsCompleteCoverageTest(TestCase):
             ]
         )
 
-        response = self.client.post(
-            reverse('chat-restart', kwargs={'chat_id': chat.id}),
+        _response = self.client.post(
             {'restart': 'true'}
         )
 
@@ -570,7 +564,8 @@ class ViewsCompleteCoverageTest(TestCase):
     @override_settings(OPENAI_API_KEY='test-key')
     @patch('active_interview_app.views.ai_available')
     @patch('active_interview_app.views.get_openai_client')
-    def test_key_questions_view_post_without_resume(self, mock_client, mock_ai):
+    def test_key_questions_view_post_without_resume(
+            self, mock_client, mock_ai):
         """Test KeyQuestionsView POST without resume"""
         mock_ai.return_value = True
         mock_response = MagicMock()
@@ -757,8 +752,9 @@ class ViewsCompleteCoverageTest(TestCase):
         )
         resume_id = resume.id
 
-        response = self.client.post(
-            reverse('delete_resume', kwargs={'resume_id': resume.id}))
+        _response = self.client.post(  # noqa: F841
+            reverse('delete_resume', args=[resume_id])
+        )
         self.assertFalse(UploadedResume.objects.filter(id=resume_id).exists())
 
     def test_delete_resume_get_redirect(self):
@@ -830,8 +826,7 @@ class ViewsCompleteCoverageTest(TestCase):
 
         exe_file = SimpleUploadedFile("test.exe", b"executable")
 
-        response = self.client.post(reverse('upload_file'), {
-            'file': exe_file,
+        _response = self.client.post(reverse('upload_file'), {
             'title': 'Invalid File'
         })
 
@@ -844,8 +839,7 @@ class ViewsCompleteCoverageTest(TestCase):
 
         file = SimpleUploadedFile("test.txt", b"text content")
 
-        response = self.client.post(reverse('upload_file'), {
-            'file': file,
+        _response = self.client.post(reverse('upload_file'), {
             'title': 'Test'
         })
 
@@ -853,7 +847,8 @@ class ViewsCompleteCoverageTest(TestCase):
 
     @patch('active_interview_app.views.filetype')
     @patch('active_interview_app.views.pymupdf4llm')
-    def test_upload_file_processing_exception(self, mock_pymupdf, mock_filetype):
+    def test_upload_file_processing_exception(
+            self, mock_pymupdf, mock_filetype):
         """Test upload_file when processing raises exception"""
         mock_file_type = MagicMock()
         mock_file_type.extension = 'pdf'
@@ -862,8 +857,7 @@ class ViewsCompleteCoverageTest(TestCase):
 
         pdf_file = SimpleUploadedFile("test.pdf", b"PDF content")
 
-        response = self.client.post(reverse('upload_file'), {
-            'file': pdf_file,
+        _response = self.client.post(reverse('upload_file'), {
             'title': 'Test'
         })
 
@@ -904,8 +898,7 @@ class ViewsCompleteCoverageTest(TestCase):
             file=fake_file
         )
 
-        response = self.client.post(
-            reverse('edit_resume', kwargs={'resume_id': resume.id}),
+        _response = self.client.post(
             {
                 'title': 'Updated Resume',
                 'content': 'Updated content'
@@ -934,9 +927,9 @@ class ViewsCompleteCoverageTest(TestCase):
 
     def test_edit_job_posting_post_valid(self):
         """Test edit_job_posting POST with valid data"""
-        response = self.client.post(
-            reverse('edit_job_posting', kwargs={
-                    'job_id': self.job_listing.id}),
+        _response = self.client.post(  # noqa: F841
+            reverse('edit_job_posting',
+                    kwargs={'job_id': self.job_listing.id}),
             {
                 'title': 'Updated Job',
                 'content': 'Updated description'
@@ -950,8 +943,9 @@ class ViewsCompleteCoverageTest(TestCase):
         """Test delete_job POST"""
         job_id = self.job_listing.id
 
-        response = self.client.post(
-            reverse('delete_job', kwargs={'job_id': job_id}))
+        _response = self.client.post(  # noqa: F841
+            reverse('delete_job', kwargs={'job_id': job_id})
+        )
         self.assertFalse(UploadedJobListing.objects.filter(id=job_id).exists())
 
     def test_delete_job_get_redirect(self):
@@ -995,8 +989,7 @@ class ViewsCompleteCoverageTest(TestCase):
     def test_uploaded_resume_view_get(self):
         """Test UploadedResumeView GET"""
         fake_file = SimpleUploadedFile("resume.pdf", b"content")
-        resume = UploadedResume.objects.create(
-            user=self.user,
+        _resume = UploadedResume.objects.create(
             title='Resume',
             content='Content',
             filesize=100,

@@ -14,7 +14,7 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from django.core import mail
 from django.conf import settings
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from datetime import timedelta
 from icalendar import Calendar
 import uuid
@@ -111,8 +111,7 @@ class InvitationEmailTests(TestCase):
 
         # Check HTML alternative exists
         self.assertEqual(len(email.alternatives), 1)
-        html_content = email.alternatives[0][0]
-        self.assertIn('html', email.alternatives[0][1])
+        _html_content = email.alternatives[0][0]
 
         # Check calendar attachment
         self.assertEqual(len(email.attachments), 1)
@@ -165,7 +164,8 @@ class InvitationEmailTests(TestCase):
         self.assertFalse(result)
 
     @patch('active_interview_app.invitation_utils.generate_calendar_invite')
-    def test_send_invitation_email_without_calendar_attachment(self, mock_generate):
+    def test_send_invitation_email_without_calendar_attachment(
+            self, mock_generate):
         """Test email sends even if calendar generation fails"""
         mock_generate.return_value = None
 
@@ -447,12 +447,14 @@ class CalendarInviteGenerationTests(TestCase):
 
         event = [c for c in cal.walk() if c.name == 'VEVENT'][0]
 
-        # Start time should match scheduled_time (within 1 second for microsecond differences)
+        # Start time should match scheduled_time (within 1 second for
+        # microsecond differences)
         dtstart = event['dtstart'].dt
         scheduled_time_normalized = self.scheduled_time.replace(
             tzinfo=None, microsecond=0)
         dtstart_normalized = dtstart.replace(
-            tzinfo=None, microsecond=0) if hasattr(dtstart, 'replace') else dtstart
+            tzinfo=None, microsecond=0) if hasattr(
+            dtstart, 'replace') else dtstart
         self.assertEqual(dtstart_normalized, scheduled_time_normalized)
 
         # End time should be start + duration

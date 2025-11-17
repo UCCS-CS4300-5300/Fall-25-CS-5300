@@ -213,7 +213,8 @@ class ChatViewsCoverageTest(TestCase):
 
     @patch('active_interview_app.views.ai_available')
     @patch('active_interview_app.views.get_openai_client')
-    def test_create_chat_without_resume_ai_unavailable(self, mock_client, mockai_available):
+    def test_create_chat_without_resume_ai_unavailable(
+            self, mock_client, mockai_available):
         """Test creating chat without resume when AI is unavailable"""
         mockai_available.return_value = False
 
@@ -229,7 +230,8 @@ class ChatViewsCoverageTest(TestCase):
 
     @patch('active_interview_app.views.ai_available')
     @patch('active_interview_app.views.get_openai_client')
-    def test_create_chat_key_questions_regex_fail(self, mock_client, mockai_available):
+    def test_create_chat_key_questions_regex_fail(
+            self, mock_client, mockai_available):
         """Test creating chat when key questions regex doesn't match"""
         mockai_available.return_value = True
         mock_response = MagicMock()

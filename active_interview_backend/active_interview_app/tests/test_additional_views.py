@@ -9,8 +9,7 @@ from active_interview_app.models import (
     UploadedJobListing,
     Chat
 )
-from django.core.files.uploadedfile import SimpleUploadedFile
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 
 class IndexViewTest(TestCase):
@@ -212,8 +211,7 @@ class DeleteResumeViewTest(TestCase):
 
     def test_delete_resume_different_user(self):
         """Test user cannot delete another user's resume"""
-        other_user = User.objects.create_user(
-            username='otheruser',
+        _other_user = User.objects.create_user(
             password='testpass123'
         )
         self.client.login(username='otheruser', password='testpass123')
@@ -314,8 +312,7 @@ class DeleteJobViewTest(TestCase):
 
     def test_delete_job_different_user(self):
         """Test user cannot delete another user's job"""
-        other_user = User.objects.create_user(
-            username='otheruser',
+        _other_user = User.objects.create_user(
             password='testpass123'
         )
         self.client.login(username='otheruser', password='testpass123')
@@ -448,8 +445,7 @@ class EditJobPostingViewTest(TestCase):
 
     def test_edit_job_posting_different_user(self):
         """Test user cannot edit another user's job posting"""
-        other_user = User.objects.create_user(
-            username='otheruser',
+        _other_user = User.objects.create_user(
             password='testpass123'
         )
         self.client.login(username='otheruser', password='testpass123')

@@ -9,7 +9,7 @@ from active_interview_app.models import InterviewTemplate, UserProfile
 class LoginTest(TestCase):
     def testregister(self):
         register = User.objects.create_user(username='craig', password='1')
-        self.assertTrue(register != None)
+        self.assertTrue(register is not None)
 
     def testlogin(self):
         User.objects.create_user(username='craig', password='1')
@@ -21,7 +21,7 @@ class LoginTest(TestCase):
         User.objects.create_user(username='craig', password='1')
         self.client.login(username='craig', password='1')
         logout = self.client.logout()
-        self.assertTrue(logout == None)
+        self.assertTrue(logout is None)
 
     def testfaillogin(self):
         User.objects.create_user(username='craig', password='1')
@@ -355,7 +355,8 @@ class InterviewTemplateSectionTests(TestCase):
         self.template.refresh_from_db()
         section_id = self.template.sections[0]['id']
 
-        # Try to edit first section to 80% (would total 110% with second section)
+        # Try to edit first section to 80% (would total 110% with second
+        # section)
         response = self.client.post(
             reverse('edit_section', kwargs={
                 'template_id': self.template.id,

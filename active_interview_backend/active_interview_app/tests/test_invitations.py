@@ -10,11 +10,10 @@ Covers:
 Related Issues: #4, #5, #6, #7, #8, #9, #134-141
 """
 from django.test import TestCase, Client
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils import timezone
-from django.core import mail
-from unittest.mock import patch, Mock, MagicMock
+from unittest.mock import patch
 from datetime import timedelta
 import uuid
 
@@ -137,7 +136,7 @@ class InvitationModelTests(TestCase):
 
     def test_str_representation(self):
         """Test string representation"""
-        expected = f"Test Template → candidate@example.com (pending)"
+        expected = "Test Template → candidate@example.com (pending)"
         self.assertEqual(str(self.invitation), expected)
 
 
@@ -269,7 +268,8 @@ class InvitationFormTests(TestCase):
         form = InvitationCreationForm(data=form_data, user=self.interviewer)
         self.assertFalse(form.is_valid())
         # Should have validation error for incomplete template
-        # The template won't be in the queryset, so it will fail template validation
+        # The template won't be in the queryset, so it will fail template
+        # validation
         self.assertIn('template', form.errors)
 
     def test_form_accepts_complete_template(self):
@@ -705,8 +705,7 @@ class CandidateInvitationsViewTests(TestCase):
     def test_only_shows_candidate_own_invitations(self):
         """Test view only shows invitations for candidate's email"""
         # Create another candidate
-        other_candidate = create_user_with_role(
-            'other_cand',
+        _other_candidate = create_user_with_role(
             'other@example.com',
             'pass',
             UserProfile.CANDIDATE

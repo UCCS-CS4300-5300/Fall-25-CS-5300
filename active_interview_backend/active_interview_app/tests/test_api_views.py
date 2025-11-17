@@ -420,9 +420,8 @@ class RestartChatViewTest(TestCase):
     @patch('active_interview_app.views.ai_available', return_value=False)
     def test_restart_chat_post(self, mock_ai):
         """Test POST to restart chat"""
-        response = self.client.post(reverse('chat-restart', args=[self.chat.id]), {
-            'restart': 'true'
-        })
+        response = self.client.post(
+            reverse('chat-restart', args=[self.chat.id]), {'restart': 'true'})
 
         # Should redirect
         self.assertEqual(response.status_code, 302)

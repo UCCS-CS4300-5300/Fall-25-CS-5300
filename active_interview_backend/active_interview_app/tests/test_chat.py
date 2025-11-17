@@ -363,7 +363,7 @@ class TestKeyQuestionsView(TestCase):
         # question is off topic, and should be graded poorly
         clean_response = response.content.decode('utf-8')
         print(clean_response)
-        self.assertFalse(re.search("([123]/10)", clean_response) == None)
+        self.assertFalse(re.search("([123]/10)", clean_response) is None)
 
 
 class TestOpenAIClient(TestCase):
@@ -381,7 +381,8 @@ class TestOpenAIClient(TestCase):
 
     @patch('active_interview_app.openai_utils.settings')
     @patch('active_interview_app.openai_utils.OpenAI')
-    def test_get_openai_client_creates_client(self, mock_openai_class, mock_settings):
+    def test_get_openai_client_creates_client(
+            self, mock_openai_class, mock_settings):
         """Test that get_openai_client creates and returns OpenAI client"""
         from active_interview_app.openai_utils import get_openai_client
 
@@ -399,7 +400,8 @@ class TestOpenAIClient(TestCase):
 
     @patch('active_interview_app.openai_utils.settings')
     @patch('active_interview_app.openai_utils.OpenAI')
-    def test_get_openai_client_caches_client(self, mock_openai_class, mock_settings):
+    def test_get_openai_client_caches_client(
+            self, mock_openai_class, mock_settings):
         """Test that get_openai_client caches the client (lazy loading)"""
         from active_interview_app.openai_utils import get_openai_client
 
@@ -432,7 +434,8 @@ class TestOpenAIClient(TestCase):
 
     @patch('active_interview_app.openai_utils.settings')
     @patch('active_interview_app.openai_utils.OpenAI')
-    def test_get_openai_client_initialization_failure(self, mock_openai_class, mock_settings):
+    def test_get_openai_client_initialization_failure(
+            self, mock_openai_class, mock_settings):
         """Test that get_openai_client handles OpenAI initialization failure"""
         from active_interview_app.openai_utils import get_openai_client
 

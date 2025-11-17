@@ -26,7 +26,7 @@ User = get_user_model()
 
 
 class InvitationReviewViewAccessTests(TestCase):
-    """Test access control for invitation review view"""
+    """Test access control for _invitation review view"""
 
     def setUp(self):
         self.client = Client()
@@ -65,7 +65,7 @@ class InvitationReviewViewAccessTests(TestCase):
             name='Technical Interview'
         )
 
-        # Create completed invitation with chat
+        # Create completed _invitation with chat
         self.invitation = InvitedInterview.objects.create(
             interviewer=self.interviewer,
             candidate_email='candidate@test.com',
@@ -602,8 +602,7 @@ class DashboardReviewButtonTests(TestCase):
 
     def test_pending_invitation_no_review_button(self):
         """Test that pending invitations don't show review button"""
-        invitation = InvitedInterview.objects.create(
-            interviewer=self.interviewer,
+        _invitation = InvitedInterview.objects.create(
             candidate_email='test@example.com',
             template=self.template,
             scheduled_time=timezone.now() + timedelta(hours=1),
@@ -652,8 +651,7 @@ class DashboardReviewButtonTests(TestCase):
             interview_type=Chat.INVITED
         )
 
-        invitation = InvitedInterview.objects.create(
-            interviewer=self.interviewer,
+        _invitation = InvitedInterview.objects.create(
             candidate_email='test@example.com',
             template=self.template,
             scheduled_time=timezone.now() - timedelta(hours=2),

@@ -257,13 +257,15 @@ class URLResolutionTests(TestCase):
     def test_login_url_resolves(self):
         """Test that 'login' URL name resolves."""
         url = reverse('login')
-        # allauth URLs are included first, so 'login' resolves to /accounts/login/
+        # allauth URLs are included first, so 'login' resolves to
+        # /accounts/login/
         self.assertEqual(url, '/accounts/login/')
 
     def test_logout_url_resolves(self):
         """Test that 'logout' URL name resolves."""
         url = reverse('logout')
-        # allauth URLs are included first, so 'logout' resolves to /accounts/logout/
+        # allauth URLs are included first, so 'logout' resolves to
+        # /accounts/logout/
         self.assertEqual(url, '/accounts/logout/')
 
     def test_register_url_resolves(self):

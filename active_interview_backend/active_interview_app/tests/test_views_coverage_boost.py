@@ -16,15 +16,15 @@ class GenerateReportMethodsTest(TestCase):
     """Test GenerateReportView private methods"""
 
     def setUp(self):
-        self.user = User.objects.create_user(
+        self._user = User.objects.create_user(
             username='testuser', password='pass123')
         self.chat = Chat.objects.create(
-            owner=self.user,
+            owner=self._user,
             title='Test Interview',
             difficulty=7,
             messages=[
                 {'role': 'assistant', 'content': 'Question 1?'},
-                {'role': 'user', 'content': 'Answer 1'},
+                {'role': '_user', 'content': 'Answer 1'},
                 {'role': 'assistant', 'content': 'Feedback: 8/10. Good answer.'},
                 {'role': 'assistant', 'content': 'Question 2?'},
                 {'role': 'user', 'content': 'Answer 2'}
@@ -125,10 +125,10 @@ class GenerateReportAITest(TestCase):
             with patch('active_interview_app.views.get_openai_client') as mock_client:
                 mock_client.return_value.chat.completions.create.side_effect = Exception(
                     'API Error')
-                response = self.client.post(url, follow=True)
+                _response = self.client.post(url, follow=True)
 
         # Should still create report with default values
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(_response.status_code, 200)
         report = ExportableReport.objects.get(chat=self.chat)
         self.assertEqual(report.professionalism_score, 0)
 
@@ -144,8 +144,7 @@ class GenerateReportAITest(TestCase):
         with patch('active_interview_app.views.ai_available', return_value=True):
             with patch('active_interview_app.views.get_openai_client') as mock_client:
                 mock_client.return_value.chat.completions.create.return_value = mock_response
-                response = self.client.post(url, follow=True)
-
+                _response = self.client.post(url, follow=True)
         report = ExportableReport.objects.get(chat=self.chat)
         # Should default to 0 when parsing fails
         self.assertEqual(report.professionalism_score, 0)
@@ -162,13 +161,12 @@ class GenerateReportAITest(TestCase):
         with patch('active_interview_app.views.ai_available', return_value=True):
             with patch('active_interview_app.views.get_openai_client') as mock_client:
                 mock_client.return_value.chat.completions.create.return_value = mock_response
-                response = self.client.post(url, follow=True)
-
+                _response = self.client.post(url, follow=True)
         report = ExportableReport.objects.get(chat=self.chat)
         self.assertEqual(report.professionalism_score, 0)
 
     def test_generate_report_rationale_parsing(self):
-        """Test rationale parsing from AI response"""
+        """Test rationale parsing from AI _response"""
         self.client.login(username='testuser', password='pass123')
         url = reverse('generate_report', kwargs={'chat_id': self.chat.id})
 
@@ -196,12 +194,8 @@ Overall: Great performance.
 """
 
                 mock_client.return_value.chat.completions.create.side_effect = [
-                    mock_scores,
-                    mock_feedback,
-                    mock_rationale
-                ]
-                response = self.client.post(url, follow=True)
-
+                    mock_scores, mock_feedback, mock_rationale]
+                _response = self.client.post(url, follow=True)
         report = ExportableReport.objects.get(chat=self.chat)
         self.assertIn('professional behavior',
                       report.professionalism_rationale)
@@ -240,12 +234,8 @@ Overall: Good.
 """
 
                 mock_client.return_value.chat.completions.create.side_effect = [
-                    mock_scores,
-                    mock_feedback,
-                    mock_rationale
-                ]
-                response = self.client.post(url, follow=True)
-
+                    mock_scores, mock_feedback, mock_rationale]
+                _response = self.client.post(url, follow=True)
         report = ExportableReport.objects.get(chat=self.chat)
         # Should capture multiline
         self.assertIn('posture', report.professionalism_rationale)
@@ -272,8 +262,7 @@ Overall: Good.
                     mock_feedback,
                     Exception('Rationale API error')
                 ]
-                response = self.client.post(url, follow=True)
-
+                _response = self.client.post(url, follow=True)
         report = ExportableReport.objects.get(chat=self.chat)
         # Should have fallback text
         self.assertIn('Unable to generate', report.professionalism_rationale)
@@ -312,8 +301,7 @@ class DownloadCSVTest(TestCase):
         self.chat.resume = resume
         self.chat.save()
 
-        report = ExportableReport.objects.create(
-            chat=self.chat,
+        _report = ExportableReport.objects.create(
             professionalism_score=85,
             overall_score=80,
             professionalism_rationale='Good',
@@ -334,8 +322,7 @@ class DownloadCSVTest(TestCase):
 
     def test_download_csv_score_ratings(self):
         """Test CSV includes correct score ratings"""
-        report = ExportableReport.objects.create(
-            chat=self.chat,
+        _report = ExportableReport.objects.create(
             professionalism_score=95,  # Excellent
             subject_knowledge_score=82,  # Good
             clarity_score=68,  # Fair
@@ -500,16 +487,20 @@ class UserManagementViewsTest(TestCase):
 
     def test_profile_view(self):
         """Test profile page"""
-        user = User.objects.create_user(
-            username='testuser', password='pass123')
+        _user = User.objects.create_user(  # noqa: F841
+            username='testuser',
+            password='pass123'
+        )
         self.client.login(username='testuser', password='pass123')
         response = self.client.get(reverse('profile'))
         self.assertEqual(response.status_code, 200)
 
     def test_loggedin_view(self):
         """Test logged in view"""
-        user = User.objects.create_user(
-            username='testuser', password='pass123')
+        _user = User.objects.create_user(  # noqa: F841
+            username='testuser',
+            password='pass123'
+        )
         self.client.login(username='testuser', password='pass123')
         response = self.client.get(reverse('loggedin'))
         self.assertEqual(response.status_code, 200)
@@ -526,17 +517,25 @@ class UserManagementViewsTest(TestCase):
 
     def test_view_user_profile_other(self):
         """Test viewing other user's profile without permission"""
-        user1 = User.objects.create_user(username='user1', password='pass123')
-        user2 = User.objects.create_user(username='user2', password='pass123')
+        _user1 = User.objects.create_user(  # noqa: F841
+            username='user1',
+            password='pass123'
+        )
+        _user2 = User.objects.create_user(
+            username='user2',
+            password='pass123'
+        )
         self.client.login(username='user1', password='pass123')
-        url = reverse('view_user_profile', kwargs={'user_id': user2.id})
+        url = reverse('view_user_profile', kwargs={'user_id': _user2.id})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 403)
 
     def test_view_user_profile_notfound(self):
         """Test viewing non-existent profile"""
-        user = User.objects.create_user(
-            username='testuser', password='pass123')
+        _user = User.objects.create_user(  # noqa: F841
+            username='testuser',
+            password='pass123'
+        )
         self.client.login(username='testuser', password='pass123')
         url = reverse('view_user_profile', kwargs={'user_id': 99999})
         response = self.client.get(url)

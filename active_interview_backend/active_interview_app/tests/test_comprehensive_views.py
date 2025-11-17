@@ -2,17 +2,16 @@
 Comprehensive tests for views to achieve >80% coverage.
 Tests all view functions and classes including edge cases.
 """
-from django.test import TestCase, Client, RequestFactory
+from django.test import TestCase, Client
 from django.contrib.auth.models import User, Group
 from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
-from unittest.mock import patch, Mock, MagicMock
+from unittest.mock import patch
 import json
 
 from active_interview_app.models import (
     UploadedResume, UploadedJobListing, Chat, UserProfile
 )
-from active_interview_app.forms import CreateChatForm, EditChatForm
 from active_interview_app import views
 
 
@@ -20,7 +19,7 @@ class ViewsHelperFunctionsTest(TestCase):
     """Test helper functions in views"""
 
     @patch('active_interview_app.openai_utils.settings.OPENAI_API_KEY', '')
-    def testai_available_no_api_key(self):
+    def test_ai_available_no_api_key(self):
         """Test ai_available returns False when no API key"""
         from active_interview_app import openai_utils
         # Reset the cached client
@@ -30,7 +29,7 @@ class ViewsHelperFunctionsTest(TestCase):
 
     @patch('active_interview_app.openai_utils.settings.OPENAI_API_KEY', 'test-key')
     @patch('active_interview_app.openai_utils.OpenAI')
-    def testai_available_with_api_key(self, mock_openai):
+    def test_ai_available_with_api_key(self, mock_openai):
         """Test ai_available returns True with valid API key"""
         from active_interview_app import openai_utils
         # Reset the global client
@@ -182,12 +181,12 @@ class ProfileViewTest(TestCase):
         # Create test data
         fake_resume = SimpleUploadedFile("resume.pdf", b"resume")
         self.resume = UploadedResume.objects.create(
-            user=self.user,
-            title='Test Resume',
-            content='Content',
-            filesize=100,
-            original_filename='resume.pdf',
-            file=fake_resume
+            user= self.user,
+            title= 'Test Resume',
+            content= 'Content',
+            filesize= 100,
+            original_filename= 'resume.pdf',
+            file= fake_resume
         )
 
         fake_job = SimpleUploadedFile("job.txt", b"job")
@@ -334,14 +333,14 @@ class CreateChatViewTest(TestCase):
     @patch('active_interview_app.views.ai_available', return_value=False)
     def test_create_chat_post_ai_disabled(self, mockai_available):
         """Test CreateChat POST when AI is disabled"""
-        response = self.client.post(reverse('chat-create'), {
+        _response = self.client.post(reverse('chat-create'), {
             'create': 'true',
             'title': 'Test Chat',
             'type': Chat.GENERAL,
             'difficulty': 5,
             'listing_choice': self.job.id,
             'resume_choice': self.resume.id
-        })
+        })  # noqa: F841
 
         # Should still create chat but with empty AI message
         self.assertEqual(Chat.objects.filter(title='Test Chat').count(), 1)
@@ -420,11 +419,11 @@ class EditChatViewTest(TestCase):
 
     def test_edit_chat_post_valid(self):
         """Test EditChat POST with valid data"""
-        response = self.client.post(reverse('chat-edit', args=[self.chat.id]), {
-            'update': 'true',
-            'title': 'Updated Title',
-            'difficulty': 8
-        })
+        response = self.client.post(reverse('chat-edit',
+    args=[self.chat.id]),
+    { 'update': 'true',
+    'title': 'Updated Title',
+     'difficulty': 8 })
 
         # Should redirect to chat view
         self.assertEqual(response.status_code, 302)

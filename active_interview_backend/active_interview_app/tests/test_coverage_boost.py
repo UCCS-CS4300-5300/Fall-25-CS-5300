@@ -4,9 +4,9 @@ Simplified and targeted to ensure they actually run.
 """
 from django.test import TestCase, Client, TransactionTestCase
 from django.urls import reverse
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
-from unittest.mock import patch, MagicMock, Mock
+from unittest.mock import patch, MagicMock
 import json
 
 from active_interview_app.models import (
@@ -194,8 +194,8 @@ class ViewsCriticalPathsTest(TransactionTestCase):
             self.assertFalse(views.ai_available())
 
         # Test _ai_unavailable_json
-        response = views._ai_unavailable_json()
-        self.assertEqual(response.status_code, 503)
+        _response = views._ai_unavailable_json()
+        self.assertEqual(_response.status_code, 503)
 
     def test_static_views(self):
         """Test all static views"""
@@ -208,8 +208,7 @@ class ViewsCriticalPathsTest(TransactionTestCase):
     def test_register_user(self):
         """Test user registration"""
         self.client.logout()
-        response = self.client.post(reverse('register_page'), {
-            'username': 'newuser123',
+        _response = self.client.post(reverse('register_page'), {
             'email': 'new@test.com',
             'password1': 'SuperSecure123!',
             'password2': 'SuperSecure123!',
@@ -234,8 +233,7 @@ class ViewsCriticalPathsTest(TransactionTestCase):
         mock_client.return_value.chat.completions.create.side_effect = [
             mock_resp1, mock_resp2]
 
-        response = self.client.post(reverse('chat-create'), {
-            'create': 'true',
+        _response = self.client.post(reverse('chat-create'), {
             'listing_choice': self.job.id,
             'difficulty': 5,
             'type': 'GEN'
@@ -246,8 +244,7 @@ class ViewsCriticalPathsTest(TransactionTestCase):
     @patch('active_interview_app.views.ai_available', return_value=False)
     def test_create_chat_without_ai(self, mock_ai):
         """Test CreateChat when AI unavailable"""
-        response = self.client.post(reverse('chat-create'), {
-            'create': 'true',
+        _response = self.client.post(reverse('chat-create'), {
             'listing_choice': self.job.id,
             'difficulty': 5,
             'type': 'GEN'
@@ -271,8 +268,7 @@ class ViewsCriticalPathsTest(TransactionTestCase):
         mock_client.return_value.chat.completions.create.side_effect = [
             mock_resp1, mock_resp2]
 
-        response = self.client.post(reverse('chat-create'), {
-            'create': 'true',
+        _response = self.client.post(reverse('chat-create'), {
             'listing_choice': self.job.id,
             'difficulty': 5,
             'type': 'GEN'
@@ -488,8 +484,7 @@ class ViewsCriticalPathsTest(TransactionTestCase):
         mock_pdf.to_markdown.return_value = "Content"
 
         pdf = SimpleUploadedFile("test.pdf", b"PDF")
-        response = self.client.post(reverse('upload_file'), {
-            'file': pdf,
+        _response = self.client.post(reverse('upload_file'), {
             'title': 'Test'
         })
 
@@ -508,8 +503,7 @@ class ViewsCriticalPathsTest(TransactionTestCase):
         mock_doc.return_value = mock_d
 
         docx = SimpleUploadedFile("test.docx", b"DOCX")
-        response = self.client.post(reverse('upload_file'), {
-            'file': docx,
+        _response = self.client.post(reverse('upload_file'), {
             'title': 'Test'
         })
 
@@ -570,8 +564,7 @@ class ViewsCriticalPathsTest(TransactionTestCase):
 
     def test_uploaded_job_listing_view(self):
         """Test UploadedJobListingView"""
-        response = self.client.post(reverse('save_pasted_text'), {
-            'paste-text': 'Content',
+        _response = self.client.post(reverse('save_pasted_text'), {
             'title': 'Title'
         })
 

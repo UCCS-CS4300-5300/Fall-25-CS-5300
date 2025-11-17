@@ -1,11 +1,10 @@
 """
 Comprehensive tests for signals, utils, forms, and serializers to increase coverage.
 """
-from django.test import TestCase, RequestFactory
+from django.test import TestCase
 from django.contrib.auth.models import User, Group
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.conf import settings
-from unittest.mock import patch, mock_open, MagicMock
+from unittest.mock import patch, mock_open
 import os
 import tempfile
 

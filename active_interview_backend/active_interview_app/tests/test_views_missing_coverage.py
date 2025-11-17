@@ -1,7 +1,7 @@
 """
 Tests to improve coverage for views.py - targeting specific uncovered lines
 """
-from django.test import TestCase, Client, RequestFactory
+from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -39,7 +39,8 @@ class OpenAIClientTest(TestCase):
 
     @patch('active_interview_app.openai_utils.OpenAI')
     @patch('active_interview_app.openai_utils.settings')
-    def test_get_openai_client_initialization_error(self, mock_settings, mock_openai):
+    def test_get_openai_client_initialization_error(
+            self, mock_settings, mock_openai):
         """Test get_openai_client when OpenAI initialization fails"""
         import active_interview_app.openai_utils as openai_utils
         openai_utils._openai_client = None
@@ -186,7 +187,8 @@ class FileUploadEdgeCasesTest(TestCase):
 
     @patch('active_interview_app.views.filetype.guess')
     @patch('active_interview_app.views.pymupdf4llm.to_markdown')
-    def test_upload_file_processing_error(self, mock_to_markdown, mock_filetype):
+    def test_upload_file_processing_error(
+            self, mock_to_markdown, mock_filetype):
         """Test upload when file processing raises exception"""
         mock_file_type = MagicMock()
         mock_file_type.extension = 'pdf'
@@ -885,7 +887,8 @@ class DocxFileUploadTest(TestCase):
     @patch('active_interview_app.views.filetype.guess')
     @patch('active_interview_app.views.Document')
     @patch('active_interview_app.views.md')
-    def test_upload_docx_file_success(self, mock_md, mock_document, mock_filetype):
+    def test_upload_docx_file_success(
+            self, mock_md, mock_document, mock_filetype):
         """Test successfully uploading a DOCX file"""
         # Mock filetype to return DOCX
         mock_file_type = MagicMock()

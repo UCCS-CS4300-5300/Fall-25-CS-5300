@@ -344,13 +344,10 @@ class GeneratePDFReportTest(TestCase):
                     'question': 'Describe your leadership experience',
                     'answer': 'I led a team of 10 engineers.',
                     'score': 9,
-                    'feedback': 'Great example'
-                }
-            ],
+                    'feedback': 'Great example'}],
             total_questions_asked=20,
             total_responses_given=20,
-            interview_duration_minutes=60
-        )
+            interview_duration_minutes=60)
 
         pdf_content = generate_pdf_report(report)
 
@@ -580,8 +577,7 @@ class ScoreRationalesSectionTest(TestCase):
             clarity_rationale='Communicated clearly and concisely.',
             overall_rationale='Solid performance overall with room for improvement.',
             total_questions_asked=15,
-            total_responses_given=15
-        )
+            total_responses_given=15)
 
         _, heading_style, normal_style = _create_styles()
         result = _create_score_rationales_section(

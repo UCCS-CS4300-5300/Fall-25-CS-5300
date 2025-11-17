@@ -7,7 +7,7 @@ to achieve >80% code coverage.
 
 from django.test import TestCase, RequestFactory
 from django.contrib.auth.models import User, Group
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 from active_interview_app.adapters import CustomSocialAccountAdapter
 from active_interview_app.models import UserProfile
 
@@ -26,8 +26,7 @@ class CustomSocialAccountAdapterComprehensiveTest(TestCase):
     def test_pre_social_login_with_existing_user(self):
         """Test pre_social_login when user already exists with same email"""
         # Create existing user
-        existing_user = User.objects.create_user(
-            username='existing',
+        _existing_user = User.objects.create_user(
             email='existing@example.com',
             password='testpass'
         )
@@ -163,8 +162,7 @@ class CustomSocialAccountAdapterComprehensiveTest(TestCase):
             mock_parent.return_value = existing_user
 
             # Call save_user
-            saved_user = self.adapter.save_user(request, mock_sociallogin)
-
+            _saved_user = self.adapter.save_user(request, mock_sociallogin)
             # Verify profile was updated to google
             profile.refresh_from_db()
             self.assertEqual(profile.auth_provider, 'google')

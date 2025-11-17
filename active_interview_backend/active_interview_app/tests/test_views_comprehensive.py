@@ -75,8 +75,7 @@ class RestartChatViewTest(TestCase):
 
     def test_restart_chat_requires_ownership(self):
         """Test user can only restart their own chats"""
-        other_user = User.objects.create_user(
-            username='otheruser',
+        _other_user = User.objects.create_user(
             password='testpass123'
         )
         self.client.login(username='otheruser', password='testpass123')
@@ -142,7 +141,8 @@ class KeyQuestionsViewTest(TestCase):
 
     @patch('active_interview_app.views.get_openai_client')
     @patch('active_interview_app.views.ai_available')
-    def test_key_questions_post_with_resume(self, mockai_available, mock_get_client):
+    def test_key_questions_post_with_resume(
+            self, mockai_available, mock_get_client):
         """Test POST to key questions with resume"""
         mockai_available.return_value = True
 
@@ -186,7 +186,8 @@ class KeyQuestionsViewTest(TestCase):
 
     @patch('active_interview_app.views.get_openai_client')
     @patch('active_interview_app.views.ai_available')
-    def test_key_questions_post_without_resume(self, mockai_available, mock_get_client):
+    def test_key_questions_post_without_resume(
+            self, mockai_available, mock_get_client):
         """Test POST to key questions without resume"""
         # Create chat without resume
         chat_no_resume = Chat.objects.create(
@@ -376,14 +377,19 @@ class CreateChatViewComprehensiveTest(TestCase):
 
     @patch('active_interview_app.views.get_openai_client')
     @patch('active_interview_app.views.ai_available')
-    def test_create_chat_with_resume_all_types(self, mockai_available, mock_get_client):
+    def test_create_chat_with_resume_all_types(
+            self, mockai_available, mock_get_client):
         """Test creating chat with all interview types"""
         mockai_available.return_value = True
 
         # Mock OpenAI responses
         mock_client = Mock()
 
-        for interview_type in [Chat.GENERAL, Chat.SKILLS, Chat.PERSONALITY, Chat.FINAL_SCREENING]:
+        for interview_type in [
+                Chat.GENERAL,
+                Chat.SKILLS,
+                Chat.PERSONALITY,
+                Chat.FINAL_SCREENING]:
             mock_response1 = Mock()
             mock_choice1 = Mock()
             mock_message1 = Mock()
@@ -421,7 +427,8 @@ class CreateChatViewComprehensiveTest(TestCase):
 
     @patch('active_interview_app.views.get_openai_client')
     @patch('active_interview_app.views.ai_available')
-    def test_create_chat_key_questions_no_json_match(self, mockai_available, mock_get_client):
+    def test_create_chat_key_questions_no_json_match(
+            self, mockai_available, mock_get_client):
         """Test when key questions response doesn't match JSON pattern"""
         mockai_available.return_value = True
 
@@ -455,8 +462,7 @@ class CreateChatViewComprehensiveTest(TestCase):
             'resume_choice': self.resume.id
         }
 
-        response = self.client.post(reverse('chat-create'), data)
-
+        _response = self.client.post(reverse('chat-create'), data)
         # Should still create chat but with empty key_questions
         chat = Chat.objects.get(title='Chat No JSON')
         self.assertEqual(chat.key_questions, [])

@@ -84,7 +84,7 @@ class InvitationJoinViewTests(TestCase):
         )
 
         # Create wrong user (different email)
-        self.wrong_user = User.objects.create_user(
+        self._wrong_user = User.objects.create_user(
             'wronguser',
             'wrong@example.com',
             'pass123'
@@ -98,7 +98,7 @@ class InvitationJoinViewTests(TestCase):
         # Should redirect to registration
         self.assertEqual(response.status_code, 302)
         self.assertIn('/register/', response.url)
-        self.assertIn(f'next=', response.url)
+        self.assertIn('next=', response.url)
         self.assertIn(str(self.invitation.id), response.url)
 
         # Should have info message
@@ -148,8 +148,7 @@ class InvitationJoinViewTests(TestCase):
     def test_join_email_case_insensitive(self):
         """Test email matching is case-insensitive"""
         # Create user with uppercase email
-        uppercase_user = User.objects.create_user(
-            'uppercase',
+        _uppercase_user = User.objects.create_user(
             'CANDIDATE@EXAMPLE.COM',  # Same email, different case
             'pass123'
         )
@@ -230,8 +229,7 @@ class InvitedInterviewDetailViewTests(TestCase):
         )
 
         # Create and login as wrong user
-        wrong_user = User.objects.create_user(
-            'wronguser',
+        _wrong_user = User.objects.create_user(
             'wrong@example.com',
             'pass123'
         )
@@ -434,8 +432,7 @@ class StartInvitedInterviewViewTests(TestCase):
         )
 
         # Login as wrong user
-        wrong_user = User.objects.create_user(
-            'wronguser',
+        _wrong_user = User.objects.create_user(
             'wrong@example.com',
             'pass123'
         )

@@ -18,10 +18,10 @@ configurations and settings added to the application.
 import pytest
 from django.test import TestCase, Client, RequestFactory, override_settings
 from django.contrib.auth.models import User, Group
-from django.urls import reverse, resolve
+from django.urls import reverse
 from django.conf import settings
-from unittest.mock import patch, MagicMock, Mock
-from allauth.socialaccount.models import SocialApp, SocialAccount, SocialLogin
+from unittest.mock import patch, Mock
+from allauth.socialaccount.models import SocialApp, SocialAccount
 from django.contrib.sites.models import Site
 import os
 
@@ -122,7 +122,7 @@ class GoogleOAuthConfigTestCase(TestCase):
         google_config = settings.SOCIALACCOUNT_PROVIDERS['google']
         self.assertIn('APP', google_config)
         app_config = google_config['APP']
-        self.assertIn('client_id', app_config)
+        self.assertIn('_client_id', app_config)
         self.assertIn('secret', app_config)
         self.assertIn('key', app_config)
         self.assertEqual(app_config['key'], '')
@@ -169,7 +169,8 @@ class GoogleOAuthURLTestCase(TestCase):
         """Test that login page loads socialaccount template tags."""
         response = self.client.get(reverse('login'))
         self.assertEqual(response.status_code, 200)
-        # The template should load without errors when socialaccount tags are used
+        # The template should load without errors when socialaccount tags are
+        # used
         self.assertIsNotNone(response.content)
 
     def test_login_page_has_google_button_styling(self):
@@ -373,7 +374,8 @@ class GoogleOAuthFlowTestCase(TestCase):
 
     def test_social_app_sites_relationship(self):
         """Test that SocialApp can be associated with multiple sites."""
-        # The social app created in setUp should be associated with the current site
+        # The social app created in setUp should be associated with the current
+        # site
         social_apps = SocialApp.objects.filter(sites__id=settings.SITE_ID)
         # Verify that our social app is in the filtered results
         self.assertIn(self.social_app, social_apps)
@@ -422,8 +424,8 @@ class CustomSocialAccountAdapterTestCase(TestCase):
         mock_user.last_name = ''
 
         # Test populate_user
-        populated_user = adapter.populate_user(request, mock_sociallogin,
-                                               mock_sociallogin.account.extra_data)
+        populated_user = adapter.populate_user(
+            request, mock_sociallogin, mock_sociallogin.account.extra_data)
 
         self.assertEqual(populated_user.email, 'newuser@example.com')
 
@@ -622,7 +624,7 @@ class GoogleOAuthSecurityTestCase(TestCase):
 
         # Credentials should not be hardcoded
         # They should come from environment or be empty
-        client_id = app_config.get('client_id', '')
+        _client_id = app_config.get('client_id', '')  # noqa: F841
         secret = app_config.get('secret', '')
 
         # Should not contain actual credentials in test
@@ -770,7 +772,8 @@ class EnvironmentVariablesTestCase(TestCase):
         # Should be empty string or from environment
         self.assertIsInstance(app_config['secret'], str)
 
-    @patch.dict(os.environ, {'GOOGLE_OAUTH_CLIENT_ID': 'test-id.apps.googleusercontent.com'})
+    @patch.dict(os.environ,
+                {'GOOGLE_OAUTH_CLIENT_ID': 'test-id.apps.googleusercontent.com'})
     def test_env_var_google_client_id_usage(self):
         """Test that environment variable is used for client ID."""
         # When settings are loaded, they use os.environ.get

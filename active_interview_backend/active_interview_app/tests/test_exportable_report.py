@@ -143,8 +143,7 @@ class ExportableReportViewTest(TestCase):
 
         # Mock the AI functions to avoid external API calls in tests
         with patch('active_interview_app.views.ai_available', return_value=False):
-            response = self.client.post(url, follow=True)
-
+            _response = self.client.post(url, follow=True)
         # Check that report was created
         self.assertTrue(ExportableReport.objects.filter(
             chat=self.chat).exists())
@@ -162,8 +161,7 @@ class ExportableReportViewTest(TestCase):
 
     def test_export_report_view_requires_login(self):
         """Test that viewing the export report requires login"""
-        report = ExportableReport.objects.create(
-            chat=self.chat,
+        _report = ExportableReport.objects.create(
             overall_score=80
         )
         url = reverse('export_report', kwargs={'chat_id': self.chat.id})
@@ -173,8 +171,7 @@ class ExportableReportViewTest(TestCase):
     def test_export_report_view(self):
         """Test viewing the export report page"""
         self.client.login(username='testuser', password='testpass123')
-        report = ExportableReport.objects.create(
-            chat=self.chat,
+        _report = ExportableReport.objects.create(
             overall_score=80,
             professionalism_score=85
         )
@@ -197,8 +194,7 @@ class ExportableReportViewTest(TestCase):
 
     def test_download_pdf_requires_login(self):
         """Test that downloading PDF requires login"""
-        report = ExportableReport.objects.create(
-            chat=self.chat,
+        _report = ExportableReport.objects.create(
             overall_score=80
         )
         url = reverse('download_pdf_report', kwargs={'chat_id': self.chat.id})
@@ -243,8 +239,7 @@ class ExportableReportViewTest(TestCase):
             messages=[],
             type='GEN'
         )
-        other_report = ExportableReport.objects.create(
-            chat=other_chat,
+        _other_report = ExportableReport.objects.create(
             overall_score=75
         )
 
@@ -442,8 +437,7 @@ class ScoreWeightsAndRationalesTest(TestCase):
             professionalism_rationale='The candidate demonstrated professional behavior throughout.',
             subject_knowledge_rationale='Good understanding of core concepts but needs improvement in advanced topics.',
             clarity_rationale='Communication was clear and concise.',
-            overall_rationale='Solid performance with room for improvement in technical depth.'
-        )
+            overall_rationale='Solid performance with room for improvement in technical depth.')
 
         self.assertIn('professional behavior',
                       report.professionalism_rationale)
@@ -510,8 +504,7 @@ class CSVExportTest(TestCase):
             overall_rationale='Strong overall performance.',
             feedback_text='Excellent interview performance with minor areas for improvement.',
             total_questions_asked=10,
-            total_responses_given=10
-        )
+            total_responses_given=10)
 
     def test_download_csv_requires_login(self):
         """Test that downloading CSV requires login"""
@@ -616,8 +609,7 @@ class CSVExportTest(TestCase):
             messages=[],
             type='GEN'
         )
-        other_report = ExportableReport.objects.create(
-            chat=other_chat,
+        _other_report = ExportableReport.objects.create(
             overall_score=75
         )
 
@@ -674,8 +666,7 @@ class FinalScoreComputationTest(TestCase):
             overall_rationale='Strong overall performance.',
             feedback_text='Good job overall.',
             total_questions_asked=5,
-            total_responses_given=5
-        )
+            total_responses_given=5)
 
     def test_final_score_displayed_with_weights(self):
         """Test that final score is shown with weight breakdown"""
@@ -821,7 +812,10 @@ class SectionScoresWithRationalesTest(TestCase):
         self.report = ExportableReport.objects.create(
             chat=self.chat,
             professionalism_score=85,
-            professionalism_rationale='The candidate demonstrated excellent professionalism throughout the interview, maintaining appropriate tone and demeanor.',
+            professionalism_rationale=(
+                'The candidate demonstrated excellent professionalism '
+                'throughout the interview, maintaining appropriate tone and demeanor.'
+            ),
             subject_knowledge_score=78,
             subject_knowledge_rationale='Good understanding of core concepts with some room for improvement in advanced topics.',
             clarity_score=82,
@@ -830,8 +824,7 @@ class SectionScoresWithRationalesTest(TestCase):
             overall_rationale='Overall strong performance with solid fundamentals and professional conduct.',
             feedback_text='Good job overall. Keep up the great work!',
             total_questions_asked=3,
-            total_responses_given=1
-        )
+            total_responses_given=1)
 
     def test_section_scores_displayed(self):
         """Test that all section scores are displayed on the export report page"""
@@ -925,7 +918,8 @@ class SectionScoresWithRationalesTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pdf')
 
-        # Check that PDF was generated (can't easily check content without parsing PDF)
+        # Check that PDF was generated (can't easily check content without
+        # parsing PDF)
         self.report.refresh_from_db()
         self.assertTrue(self.report.pdf_generated)
 
@@ -1017,10 +1011,7 @@ Overall: Strong overall performance with good balance across all areas.
 """
 
                 mock_client.return_value.chat.completions.create.side_effect = [
-                    mock_scores,
-                    mock_feedback,
-                    mock_rationales
-                ]
+                    mock_scores, mock_feedback, mock_rationales]
 
                 generate_response = self.client.post(generate_url, follow=True)
                 self.assertEqual(generate_response.status_code, 200)
@@ -1079,8 +1070,7 @@ Overall: Strong overall performance with good balance across all areas.
         self.client.login(username='candidate', password='testpass123')
 
         # Create report with all data
-        report = ExportableReport.objects.create(
-            chat=self.chat,
+        _report = ExportableReport.objects.create(
             professionalism_score=90,
             professionalism_weight=30,
             professionalism_rationale='Excellent professionalism demonstrated.',
@@ -1094,8 +1084,7 @@ Overall: Strong overall performance with good balance across all areas.
             overall_rationale='Excellent overall performance.',
             feedback_text='Outstanding candidate.',
             total_questions_asked=4,
-            total_responses_given=4
-        )
+            total_responses_given=4)
 
         export_url = reverse('export_report', kwargs={'chat_id': self.chat.id})
         response = self.client.get(export_url)
@@ -1171,11 +1160,13 @@ class ScoreComputationLearningScenarioTest(TestCase):
         )
 
         # Generate the report with scores and rationales
-        report = ExportableReport.objects.create(
-            chat=completed_chat,
+        _report = ExportableReport.objects.create(
             professionalism_score=88,
             professionalism_weight=30,
-            professionalism_rationale='Demonstrated strong professionalism with respectful communication and appropriate tone throughout the interview.',
+            professionalism_rationale=(
+                'Demonstrated strong professionalism with respectful '
+                'communication and appropriate tone throughout the interview.'
+            ),
             subject_knowledge_score=92,
             subject_knowledge_weight=40,
             subject_knowledge_rationale='Exhibited excellent technical knowledge with specific examples and deep understanding of core concepts.',
@@ -1186,8 +1177,7 @@ class ScoreComputationLearningScenarioTest(TestCase):
             overall_rationale='Outstanding performance demonstrating both technical competence and strong communication skills.',
             feedback_text='Excellent candidate with strong technical skills and clear communication.',
             total_questions_asked=3,
-            total_responses_given=3
-        )
+            total_responses_given=3)
 
         self.client.login(username='candidate_learner', password='testpass123')
 
@@ -1255,8 +1245,7 @@ class ScoreComputationLearningScenarioTest(TestCase):
             type='GEN'
         )
 
-        report = ExportableReport.objects.create(
-            chat=chat,
+        _report = ExportableReport.objects.create(
             professionalism_score=75,
             professionalism_weight=30,
             professionalism_rationale='Good professionalism with room to improve in maintaining consistent eye contact.',
@@ -1270,8 +1259,7 @@ class ScoreComputationLearningScenarioTest(TestCase):
             overall_rationale='Good overall performance with clear areas for growth and development.',
             feedback_text='Good effort with opportunities for improvement.',
             total_questions_asked=1,
-            total_responses_given=1
-        )
+            total_responses_given=1)
 
         url = reverse('export_report', kwargs={'chat_id': chat.id})
         response = self.client.get(url)
@@ -1304,8 +1292,7 @@ class ScoreComputationLearningScenarioTest(TestCase):
             type='GEN'
         )
 
-        report = ExportableReport.objects.create(
-            chat=chat,
+        _report = ExportableReport.objects.create(
             professionalism_score=90,
             professionalism_weight=30,
             professionalism_rationale='Excellent professionalism.',

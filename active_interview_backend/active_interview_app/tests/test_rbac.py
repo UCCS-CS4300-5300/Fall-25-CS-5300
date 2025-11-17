@@ -460,7 +460,8 @@ class RBACDecoratorTest(TestCase):
         from django.test import RequestFactory
         from active_interview_app.decorators import owner_or_privileged_required
 
-        @owner_or_privileged_required(lambda request, user_id: User.objects.get(id=user_id))
+        @owner_or_privileged_required(lambda request,
+                                      user_id: User.objects.get(id=user_id))
         def test_view(request, user_id):
             return JsonResponse({'success': True})
 
@@ -478,7 +479,8 @@ class RBACDecoratorTest(TestCase):
         from active_interview_app.decorators import owner_or_privileged_required
         from unittest.mock import PropertyMock, patch
 
-        @owner_or_privileged_required(lambda request, user_id: User.objects.get(id=user_id))
+        @owner_or_privileged_required(lambda request,
+                                      user_id: User.objects.get(id=user_id))
         def test_view(request, user_id):
             return JsonResponse({'success': True})
 
@@ -508,7 +510,8 @@ class RBACDecoratorTest(TestCase):
         from active_interview_app.decorators import owner_or_privileged_required
         from django.http import HttpResponse
 
-        @owner_or_privileged_required(lambda request, user_id: User.objects.get(id=user_id))
+        @owner_or_privileged_required(lambda request,
+                                      user_id: User.objects.get(id=user_id))
         def test_view(request, user_id):
             return HttpResponse('success')
 
@@ -525,7 +528,8 @@ class RBACDecoratorTest(TestCase):
         from active_interview_app.decorators import owner_or_privileged_required
         from django.http import HttpResponse
 
-        @owner_or_privileged_required(lambda request, user_id: User.objects.get(id=user_id))
+        @owner_or_privileged_required(lambda request,
+                                      user_id: User.objects.get(id=user_id))
         def test_view(request, user_id):
             return HttpResponse('success')
 
@@ -542,7 +546,8 @@ class RBACDecoratorTest(TestCase):
         from active_interview_app.decorators import owner_or_privileged_required
         from django.http import HttpResponse
 
-        @owner_or_privileged_required(lambda request, user_id: User.objects.get(id=user_id))
+        @owner_or_privileged_required(lambda request,
+                                      user_id: User.objects.get(id=user_id))
         def test_view(request, user_id):
             return HttpResponse('success')
 
@@ -559,7 +564,8 @@ class RBACDecoratorTest(TestCase):
         from django.test import RequestFactory
         from active_interview_app.decorators import owner_or_privileged_required
 
-        @owner_or_privileged_required(lambda request, user_id: User.objects.get(id=user_id))
+        @owner_or_privileged_required(lambda request,
+                                      user_id: User.objects.get(id=user_id))
         def test_view(request, user_id):
             return JsonResponse({'success': True})
 

@@ -69,7 +69,8 @@ class MergeTokenStatsEdgeCasesTest(TestCase):
             chatgpt_completion_tokens=0
         )
 
-        # Claude: (2000/1000 * 0.003) + (1000/1000 * 0.015) = 0.006 + 0.015 = 0.021
+        # Claude: (2000/1000 * 0.003) + (1000/1000 * 0.015) = 0.006 + 0.015 =
+        # 0.021
         expected_cost = 0.021
         self.assertAlmostEqual(merge_stats.branch_cost,
                                expected_cost, places=4)
@@ -277,9 +278,9 @@ class MergeTokenStatsEdgeCasesTest(TestCase):
             merge_commit_sha='abc123cascade',
             merged_by=self.user
         )
-
-        user_id = self.user.id
         merge_id = merge_stats.id
+
+        _user_id = self.user.id  # noqa: F841
 
         # Delete the user
         self.user.delete()
@@ -336,7 +337,6 @@ class MergeTokenStatsEdgeCasesTest(TestCase):
 
     def test_merge_date_auto_now_add(self):
         """Test that merge_date is automatically set"""
-        import datetime
         from django.utils import timezone
 
         before = timezone.now()

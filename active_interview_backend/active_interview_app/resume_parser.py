@@ -9,14 +9,15 @@ Issues: #48, #49, #50
 
 import json
 import textwrap
-from typing import Dict, List, Any
+from typing import Dict, Any
 
 # Import the OpenAI client utilities from openai_utils
 # This ensures consistent error handling and configuration
 from .openai_utils import get_openai_client, ai_available, MAX_TOKENS
 
 # Maximum characters for resume content before truncation
-# Keep first 10,000 characters (roughly 2,500 tokens) to prevent token limit issues
+# Keep first 10,000 characters (roughly 2,500 tokens) to prevent token
+# limit issues
 RESUME_CONTENT_LIMIT = 10000
 
 

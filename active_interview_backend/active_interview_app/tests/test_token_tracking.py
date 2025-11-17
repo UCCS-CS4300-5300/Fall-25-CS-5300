@@ -3,7 +3,6 @@ Comprehensive tests for token tracking models
 """
 from django.test import TestCase
 from django.contrib.auth.models import User
-from decimal import Decimal
 from active_interview_app.token_usage_models import TokenUsage
 from active_interview_app.merge_stats_models import MergeTokenStats
 
@@ -166,8 +165,7 @@ class TokenUsageModelTest(TestCase):
             prompt_tokens=100,
             completion_tokens=50
         )
-        token_id = token_usage.id
-        self.user.delete()
+        _token_id = token_usage.id
 
         token_usage.refresh_from_db()
         self.assertIsNone(token_usage.user)
@@ -369,8 +367,7 @@ class MergeTokenStatsModelTest(TestCase):
             merge_commit_sha='abc123',
             merged_by=self.user
         )
-        merge_id = merge_stats.id
-        self.user.delete()
+        _merge_id = merge_stats.id
 
         merge_stats.refresh_from_db()
         self.assertIsNone(merge_stats.merged_by)

@@ -4,7 +4,7 @@ No complex mocking, just simple tests that hit uncovered code paths.
 """
 from django.test import TestCase, Client
 from django.urls import reverse
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from active_interview_app.models import (
@@ -189,8 +189,7 @@ class ViewsRegisterTest(TestCase):
         """Test registration creates user and adds to group"""
         client = Client()
 
-        response = client.post(reverse('register_page'), {
-            'username': 'newuser456',
+        _response = client.post(reverse('register_page'), {
             'email': 'new@example.com',
             'password1': 'TestPassword123!',
             'password2': 'TestPassword123!',

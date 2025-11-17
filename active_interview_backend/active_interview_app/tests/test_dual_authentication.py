@@ -17,7 +17,7 @@ from django.contrib.auth import authenticate
 from django.urls import reverse
 from unittest.mock import Mock, patch
 
-from allauth.socialaccount.models import SocialAccount, SocialApp
+from allauth.socialaccount.models import SocialApp
 from active_interview_app.models import UserProfile
 from active_interview_app.adapters import CustomSocialAccountAdapter
 
@@ -278,7 +278,8 @@ class DualAuthenticationTestCase(TestCase):
         self.assertTrue(UserProfile.objects.filter(user=pwd_user).exists())
         self.assertTrue(UserProfile.objects.filter(user=oauth_user).exists())
 
-        # Both should have default 'local' provider (adapter changes it for OAuth)
+        # Both should have default 'local' provider (adapter changes it for
+        # OAuth)
         pwd_profile = UserProfile.objects.get(user=pwd_user)
         oauth_profile = UserProfile.objects.get(user=oauth_user)
 

@@ -8,7 +8,7 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils import timezone
 from django.core.files.uploadedfile import SimpleUploadedFile
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 import json
 import zipfile
 import io
@@ -179,8 +179,7 @@ class UserDataUtilsTest(TestCase):
 
     def test_export_user_data_with_resumes(self):
         """Test exporting user data with resumes"""
-        resume = UploadedResume.objects.create(
-            user=self.user,
+        _resume = UploadedResume.objects.create(
             title='My Resume',
             content='Resume content',
             skills=['Python', 'Django'],
@@ -196,8 +195,7 @@ class UserDataUtilsTest(TestCase):
 
     def test_export_user_data_with_interviews(self):
         """Test exporting user data with interviews"""
-        chat = Chat.objects.create(
-            owner=self.user,
+        _chat = Chat.objects.create(
             title='Test Interview',
             difficulty=5,
             messages=[
@@ -445,7 +443,8 @@ class AccountDeletionViewsTest(TestCase):
 
     @patch('active_interview_app.views.delete_user_account')
     @patch('active_interview_app.views.generate_anonymized_id')
-    def test_confirm_account_deletion_correct_password(self, mock_anon_id, mock_delete):
+    def test_confirm_account_deletion_correct_password(
+            self, mock_anon_id, mock_delete):
         """Test account deletion with correct password"""
         mock_anon_id.return_value = 'abc123'
         mock_delete.return_value = (True, None)
@@ -512,8 +511,7 @@ class DataDeletionFunctionalityTest(TestCase):
             filename='job.txt',
             content='Job content'
         )
-        chat = Chat.objects.create(
-            owner=self.user,
+        _chat = Chat.objects.create(
             title='Interview',
             messages=[{'role': 'user', 'content': 'Test'}]
         )
@@ -726,7 +724,8 @@ class EmailErrorHandlingTest(TestCase):
 
     @patch('active_interview_app.user_data_utils.create_export_zip')
     @patch('active_interview_app.user_data_utils.logger')
-    def test_export_processing_error_logging(self, mock_logger, mock_create_zip):
+    def test_export_processing_error_logging(
+            self, mock_logger, mock_create_zip):
         """Test that export processing errors are logged"""
         # Create export request
         export = DataExportRequest.objects.create(user=self.user)
@@ -822,8 +821,7 @@ class EdgeCaseTest(TestCase):
         from active_interview_app.user_data_utils import delete_user_account
 
         # Create resume with file reference
-        resume = UploadedResume.objects.create(
-            user=self.user,
+        _resume = UploadedResume.objects.create(
             title='Test Resume',
             content='Test content',
             file='uploads/test.pdf'

@@ -1,9 +1,8 @@
 import os
 import tempfile
 import shutil
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.conf import settings
 from unittest.mock import patch
 from ..utils import handle_uploaded_file
 

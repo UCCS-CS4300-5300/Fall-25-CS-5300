@@ -14,7 +14,7 @@ from docx import Document
 from .models import (
     UploadedResume, UploadedJobListing, Chat,
     ExportableReport, UserProfile, RoleChangeRequest,
-    InterviewTemplate, DataExportRequest, DeletionRequest, Tag,
+    InterviewTemplate, DataExportRequest, DeletionRequest,
     InvitedInterview
 )
 from .forms import (
@@ -29,8 +29,7 @@ from .forms import (
 )
 from .serializers import (
     UploadedResumeSerializer,
-    UploadedJobListingSerializer,
-    ExportableReportSerializer
+    UploadedJobListingSerializer
 )
 from .pdf_export import generate_pdf_report, get_score_rating
 from .resume_parser import parse_resume_with_ai
@@ -64,20 +63,21 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 
-# Import OpenAI utilities (moved to separate module to prevent circular imports)
+# Import OpenAI utilities (moved to separate module to prevent circular
+# imports)
 from .openai_utils import get_openai_client, ai_available, MAX_TOKENS
 
 # Import RBAC decorators (Issue #69)
 from .decorators import (
     admin_required,
-    admin_or_interviewer_required,
-    check_user_permission
+    admin_or_interviewer_required
 )
 
 
 def _ai_unavailable_json():
     """Return a JSON response for when AI features are disabled."""
-    return JsonResponse({'error': 'AI features are disabled on this server.'}, status=503)
+    return JsonResponse(
+        {'error': 'AI features are disabled on this server.'}, status=503)
 
 
 # Create your views here.
@@ -152,8 +152,9 @@ def results(request):
 
 @login_required
 def chat_list(request):
-    owner_chats = Chat.objects.filter(owner=request.user)\
-        .order_by('-modified_date')
+    owner_chats = Chat.objects.filter(
+        owner=request.user
+    ).order_by('-modified_date')
 
     context = {}
     context['owner_chats'] = owner_chats
@@ -163,8 +164,9 @@ def chat_list(request):
 
 class CreateChat(LoginRequiredMixin, View):
     def get(self, request):
-        owner_chats = Chat.objects.filter(owner=request.user)\
-            .order_by('-modified_date')
+        owner_chats = Chat.objects.filter(
+            owner=request.user
+        ).order_by('-modified_date')
 
         # Pre-populate form from URL parameters (Issue #53)
         job_id = request.GET.get('job_id')
@@ -220,8 +222,10 @@ class CreateChat(LoginRequiredMixin, View):
                 # Prompts are edited by ChatGPT after being written by a human
                 # developer
                 # Default message. Should only show up if something went wrong.
-                system_prompt = "An error has occurred.  Please notify the " \
-                                "user about this."
+                system_prompt = (
+                    "An error has occurred.  Please notify the user about "
+                    "this."
+                )
                 if chat.resume:  # if resume is present
                     system_prompt = textwrap.dedent("""\
                         You are a professional interviewer for a company
@@ -487,8 +491,9 @@ class ChatView(LoginRequiredMixin, UserPassesTestMixin, View):
 
     def get(self, request, chat_id):
         chat = Chat.objects.get(id=chat_id)
-        owner_chats = Chat.objects.filter(owner=request.user)\
-            .order_by('-modified_date')
+        owner_chats = Chat.objects.filter(
+            owner=request.user
+        ).order_by('-modified_date')
 
         # Check if invited interview time has expired (Issue #138)
         time_expired = False
@@ -572,8 +577,9 @@ class EditChat(LoginRequiredMixin, UserPassesTestMixin, View):
 
     def get(self, request, chat_id):
         chat = Chat.objects.get(id=chat_id)
-        owner_chats = Chat.objects.filter(owner=request.user)\
-            .order_by('-modified_date')
+        owner_chats = Chat.objects.filter(
+            owner=request.user
+        ).order_by('-modified_date')
 
         form = EditChatForm(initial=model_to_dict(chat), instance=chat)
 
@@ -595,10 +601,12 @@ class EditChat(LoginRequiredMixin, UserPassesTestMixin, View):
 
                 # replace difficulty in the messages
                 chat.difficulty = form.cleaned_data["difficulty"]
-                chat.messages[0]['content'] = \
-                    re.sub(r"<<(\d{1,2})>>",
-                           "<<"+str(chat.difficulty)+">>",
-                           chat.messages[0]['content'], 1)
+                chat.messages[0]['content'] = re.sub(
+                    r"<<(\d{1,2})>>",
+                    "<<" + str(chat.difficulty) + ">>",
+                    chat.messages[0]['content'],
+                    1
+                )
 
                 # print(chat.get_type_display())
 
@@ -606,7 +614,8 @@ class EditChat(LoginRequiredMixin, UserPassesTestMixin, View):
 
                 return redirect("chat-view", chat_id=chat.id)
 
-        # If 'update' not in request.POST or form is invalid, redirect to edit page
+        # If 'update' not in request.POST or form is invalid, redirect to edit
+        # page
         return redirect("chat-edit", chat_id=chat.id)
 
 
@@ -661,8 +670,9 @@ class KeyQuestionsView(LoginRequiredMixin, UserPassesTestMixin, View):
 
     def get(self, request, chat_id, question_id):
         chat = Chat.objects.get(id=chat_id)
-        owner_chats = Chat.objects.filter(owner=request.user)\
-            .order_by('-modified_date')
+        owner_chats = Chat.objects.filter(
+            owner=request.user
+        ).order_by('-modified_date')
         question = chat.key_questions[question_id]
 
         context = {}
@@ -814,8 +824,9 @@ class ResultsChat(LoginRequiredMixin, UserPassesTestMixin, View):
 
     def get(self, request, chat_id):
         chat = Chat.objects.get(id=chat_id)
-        owner_chats = Chat.objects.filter(owner=request.user)\
-            .order_by('-modified_date')
+        owner_chats = Chat.objects.filter(
+            owner=request.user
+        ).order_by('-modified_date')
 
         feedback_prompt = textwrap.dedent("""\
             Please provide constructive feedback to me about the
@@ -861,8 +872,9 @@ class ResultCharts(LoginRequiredMixin, UserPassesTestMixin, View):
 
     def get(self, request, chat_id):
         chat = Chat.objects.get(id=chat_id)
-        owner_chats = Chat.objects.filter(owner=request.user)\
-            .order_by('-modified_date')
+        owner_chats = Chat.objects.filter(
+            owner=request.user
+        ).order_by('-modified_date')
 
         scores_prompt = textwrap.dedent("""\
             Based on the interview so far, please rate the interviewee in the
@@ -1019,7 +1031,8 @@ def view_user_profile(request, user_id):
     )
 
     if not has_permission:
-        return HttpResponseForbidden("You don't have permission to view this profile.")
+        return HttpResponseForbidden(
+            "You don't have permission to view this profile.")
 
     # Get user's resumes and job listings
     resumes = UploadedResume.objects.filter(user=profile_user)
@@ -1089,9 +1102,10 @@ def upload_file(request):
                     instance.file = None  # Don't save the raw file to /media
 
                     if file_type.extension == 'pdf':
-                        with tempfile.NamedTemporaryFile(delete=False,
-                                                         suffix=".pdf")\
-                                as temp_file:
+                        with tempfile.NamedTemporaryFile(
+                            delete=False,
+                            suffix=".pdf"
+                        ) as temp_file:
                             for chunk in uploaded_file.chunks():
                                 temp_file.write(chunk)
                             temp_file_path = temp_file.name
@@ -1100,9 +1114,10 @@ def upload_file(request):
 
                     elif file_type.extension == 'docx':
                         # Save temporarily and load using python-docx
-                        with tempfile.NamedTemporaryFile(delete=False,
-                                                         suffix=".docx")\
-                                as temp_file:
+                        with tempfile.NamedTemporaryFile(
+                            delete=False,
+                            suffix=".docx"
+                        ) as temp_file:
                             for chunk in uploaded_file.chunks():
                                 temp_file.write(chunk)
                             temp_file_path = temp_file.name
@@ -1114,7 +1129,8 @@ def upload_file(request):
 
                     instance.save()
 
-                    # Trigger AI parsing for resumes (Issue #48: "upload triggers parsing")
+                    # Trigger AI parsing for resumes (Issue #48: "upload
+                    # triggers parsing")
                     if instance.__class__.__name__ == 'UploadedResume':
                         if ai_available():
                             try:
@@ -1139,7 +1155,8 @@ def upload_file(request):
                                 messages.success(
                                     request, "Resume uploaded and parsed successfully!")
                             except Exception as e:
-                                # Save error (sanitize to prevent API key exposure)
+                                # Save error (sanitize to prevent API key
+                                # exposure)
                                 error_msg = str(e)
                                 # Sanitize any potential API key references
                                 if "api" in error_msg.lower() and "key" in error_msg.lower():
@@ -1704,7 +1721,6 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
             }
 
             # Split by the section headers and extract content
-            sections = rationale_text.split('\n\n')
             current_section = None
             current_text = []
 
@@ -1747,14 +1763,13 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
 
             return rationales
 
-        except Exception as e:
-            # If rationale generation fails, provide fallback text
+        except Exception as _e:
+  # noqa: F841            # If rationale generation fails, provide fallback text
             return {
                 'professionalism': 'Unable to generate rationale at this time.',
                 'subject_knowledge': 'Unable to generate rationale at this time.',
                 'clarity': 'Unable to generate rationale at this time.',
-                'overall': 'Unable to generate rationale at this time.'
-            }
+                'overall': 'Unable to generate rationale at this time.'}
 
     def _extract_question_responses(self, chat):
         """
@@ -1778,8 +1793,8 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
                     }
 
                     # Try to find feedback for this Q&A if it exists
-                    if i + 2 < len(chat_messages) and \
-                       chat_messages[i + 2].get('role') == 'assistant':
+                    if (i + 2 < len(chat_messages) and
+                            chat_messages[i + 2].get('role') == 'assistant'):
                         feedback_msg = chat_messages[i + 2].get('content', '')
                         # Look for score in feedback
                         score_match = re.search(r'(\d+)/10', feedback_msg)
@@ -1889,8 +1904,8 @@ class DownloadCSVReportView(LoginRequiredMixin, UserPassesTestMixin, View):
         # Write Interview Details section
         writer.writerow(['Interview Details'])
         writer.writerow(['Title', chat.title])
-        writer.writerow(
-            ['Generated At', report.generated_at.strftime('%Y-%m-%d %H:%M:%S')])
+        writer.writerow(['Generated At',
+                         report.generated_at.strftime('%Y-%m-%d %H:%M:%S')])
         writer.writerow(['Difficulty', f'{chat.difficulty}/10'])
 
         # Add job listing and resume if present
@@ -2309,10 +2324,8 @@ def add_section(request, template_id):
 
         if new_total_weight > 100:
             messages.error(
-                request,
-                f'Cannot add section: Total weight would be {new_total_weight}%, '
-                f'which exceeds 100%. Current total: {current_total_weight}%'
-            )
+                request, f'Cannot add section: Total weight would be {new_total_weight}%, '
+                f'which exceeds 100%. Current total: {current_total_weight}%')
             return redirect('template_detail', template_id=template.id)
 
         # Determine order (append to end)
@@ -2374,11 +2387,9 @@ def edit_section(request, template_id, section_id):
         # Find and update section
         sections = template.sections if template.sections else []
         section_found = False
-        old_weight = 0
 
         for section in sections:
             if section.get('id') == section_id:
-                old_weight = section.get('weight', 0)
                 section_found = True
                 break
 
@@ -2395,10 +2406,8 @@ def edit_section(request, template_id, section_id):
 
         if new_total_weight > 100:
             messages.error(
-                request,
-                f'Cannot update section: Total weight would be {new_total_weight}%, '
-                f'which exceeds 100%. Current total (excluding this section): {current_total_weight}%'
-            )
+                request, f'Cannot update section: Total weight would be {new_total_weight}%, '
+                f'which exceeds 100%. Current total (excluding this section): {current_total_weight}%')
             return redirect('template_detail', template_id=template.id)
 
         # Update the section
@@ -2748,7 +2757,9 @@ def invitation_create(request, template_id=None):
                 )
 
             # Redirect to confirmation page
-            return redirect('invitation_confirmation', invitation_id=invitation.id)
+            return redirect(
+                'invitation_confirmation',
+                invitation_id=invitation.id)
     else:
         # GET request - show form
         form = InvitationCreationForm(
@@ -2993,7 +3004,10 @@ def invited_interview_detail(request, invitation_id):
         'now': now,
     }
 
-    return render(request, 'invitations/invited_interview_detail.html', context)
+    return render(
+        request,
+        'invitations/invited_interview_detail.html',
+        context)
 
 
 @login_required
@@ -3030,7 +3044,8 @@ def candidate_invitations(request):
         # Custom sorting for 'all' view:
         # Group by status with specific order, then sort within each group
         def sort_key(invitation):
-            # Status priority order: pending=1, completed=2, reviewed=3, expired=4
+            # Status priority order: pending=1, completed=2, reviewed=3,
+            # expired=4
             status_priority = {
                 InvitedInterview.PENDING: 1,
                 InvitedInterview.COMPLETED: 2,
@@ -3132,7 +3147,9 @@ def start_invited_interview(request, invitation_id):
                 request,
                 f'This interview cannot be started until {invitation.scheduled_time.strftime("%B %d, %Y at %I:%M %p")}.'
             )
-        return redirect('invited_interview_detail', invitation_id=invitation.id)
+        return redirect(
+            'invited_interview_detail',
+            invitation_id=invitation.id)
 
     # Create Chat session with time tracking (Issue #138)
     now = timezone.now()
@@ -3212,7 +3229,10 @@ def start_invited_interview(request, invitation_id):
     # Get AI's initial greeting
     if not ai_available():
         messages.error(request, "AI features are disabled on this server.")
-        ai_message = "Hello! I'm your interviewer today. Unfortunately, AI features are currently disabled. Please contact support."
+        ai_message = (
+            "Hello! I'm your interviewer today. Unfortunately, AI "
+            "features are currently disabled. Please contact support."
+        )
     else:
         response = get_openai_client().chat.completions.create(
             model="gpt-4o",

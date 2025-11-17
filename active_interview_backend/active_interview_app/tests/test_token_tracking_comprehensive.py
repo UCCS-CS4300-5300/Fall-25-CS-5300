@@ -275,7 +275,8 @@ class RecordTokenUsageTest(TestCase):
 
     @patch('active_interview_app.token_tracking.get_current_git_branch')
     @patch('builtins.print')
-    def test_record_token_usage_handles_exception(self, mock_print, mock_branch):
+    def test_record_token_usage_handles_exception(
+            self, mock_print, mock_branch):
         """Test that exceptions are caught and logged"""
         mock_branch.return_value = 'main'
 

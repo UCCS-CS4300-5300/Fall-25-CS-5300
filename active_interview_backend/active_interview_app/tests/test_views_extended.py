@@ -3,14 +3,14 @@ Extended comprehensive tests for views.py to maximize coverage
 """
 from django.test import TestCase, Client
 from django.urls import reverse
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User
 from active_interview_app.models import (
     UploadedResume,
     UploadedJobListing,
     Chat
 )
 from django.core.files.uploadedfile import SimpleUploadedFile
-from unittest.mock import patch, MagicMock, Mock
+from unittest.mock import patch, Mock
 from unittest import skip
 import json
 import tempfile
@@ -104,7 +104,11 @@ class UploadFileViewTest(TestCase):
     @patch('active_interview_app.views.filetype')
     @patch('active_interview_app.views.Document')
     @patch('active_interview_app.views.md')
-    def test_upload_docx_file(self, mock_md, mock_document_class, mock_filetype):
+    def test_upload_docx_file(
+            self,
+            mock_md,
+            mock_document_class,
+            mock_filetype):
         """Test uploading a DOCX file"""
         # Mock filetype detection
         mock_file_type = Mock()
@@ -384,8 +388,7 @@ class ResultsChatViewTest(TestCase):
 
     def test_results_chat_requires_ownership(self):
         """Test user can only view their own chat results"""
-        other_user = User.objects.create_user(
-            username='otheruser',
+        _other_user = User.objects.create_user(
             password='testpass123'
         )
         self.client.login(username='otheruser', password='testpass123')
@@ -486,7 +489,8 @@ class ResultChartsViewTest(TestCase):
     @skip("chat-results-charts URL not implemented yet")
     @patch('active_interview_app.views.get_openai_client')
     @patch('active_interview_app.views.ai_available')
-    def test_result_chartsai_available_valid_scores(self, mockai_available, mock_get_client):
+    def test_result_chartsai_available_valid_scores(
+            self, mockai_available, mock_get_client):
         """Test result charts with valid AI scores"""
         mockai_available.return_value = True
 
@@ -527,7 +531,8 @@ class ResultChartsViewTest(TestCase):
     @skip("chat-results-charts URL not implemented yet")
     @patch('active_interview_app.views.get_openai_client')
     @patch('active_interview_app.views.ai_available')
-    def test_result_charts_ai_invalid_scores(self, mockai_available, mock_get_client):
+    def test_result_charts_ai_invalid_scores(
+            self, mockai_available, mock_get_client):
         """Test result charts with invalid AI response"""
         mockai_available.return_value = True
 
@@ -591,7 +596,8 @@ class CreateChatViewExtendedTest(TestCase):
 
     @patch('active_interview_app.views.get_openai_client')
     @patch('active_interview_app.views.ai_available')
-    def test_create_chat_without_resumeai_available(self, mockai_available, mock_get_client):
+    def test_create_chat_without_resumeai_available(
+            self, mockai_available, mock_get_client):
         """Test creating chat without resume when AI is available"""
         mockai_available.return_value = True
 
