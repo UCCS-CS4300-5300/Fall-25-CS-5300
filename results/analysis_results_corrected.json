@@ -1,0 +1,807 @@
+{
+  "statistics": {
+    "total_sessions": 22,
+    "meaningful_sessions": 15,
+    "sessions_by_type": {
+      "test_only": 1,
+      "new": 13,
+      "exploratory": 7,
+      "refactor": 1
+    },
+    "total_edits": 200,
+    "total_test_runs": 4,
+    "test_metrics": {
+      "sessions_with_tests": 1,
+      "total_test_runs": 4,
+      "sessions_with_first_runs": 1,
+      "total_first_runs_after_edits": 3,
+      "failed_first_runs": 2,
+      "first_run_failure_rate_by_session": 100.0,
+      "first_run_failure_rate_by_run": 66.67,
+      "average_test_iterations": 4.0,
+      "regression_detection_rate": 100.0,
+      "note": "First run = first test execution after editing a test file"
+    },
+    "reprompt_metrics": {
+      "meaningful_sessions": 15,
+      "avg_reprompts_per_session": 61.67,
+      "total_reprompts": 925,
+      "reason_distribution": {
+        "errors": 20.0,
+        "refinements": 7.03,
+        "incomplete": 3.57,
+        "other": 69.41
+      },
+      "success_rate": 100.0
+    }
+  },
+  "sessions": [
+    {
+      "session_id": "0356f0df-781d-45de-9a86-18152c58bede",
+      "message_count": 40,
+      "category": "test_only",
+      "is_meaningful": true,
+      "edit_count": 1,
+      "test_edit_count": 1,
+      "test_file_edits": [
+        {
+          "message_index": 17,
+          "tool": "Write",
+          "file_path": "C:\\Users\\jacks\\CS4300 Project\\Fall-25-CS-5300\\pytest.ini",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 13,
+        "assistant_message_count": 23,
+        "reprompt_count": 12,
+        "reasons": {
+          "errors": 2,
+          "refinements": 0,
+          "incomplete": 0,
+          "other": 10
+        }
+      }
+    },
+    {
+      "session_id": "123af987-2be2-4467-a97c-609fa26818ae",
+      "message_count": 198,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 18,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 69,
+        "assistant_message_count": 119,
+        "reprompt_count": 68,
+        "reasons": {
+          "errors": 15,
+          "refinements": 2,
+          "incomplete": 2,
+          "other": 49
+        }
+      }
+    },
+    {
+      "session_id": "160c9dee-7776-4f0c-b92f-5b9b058634ca",
+      "message_count": 206,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 5,
+      "test_edit_count": 3,
+      "test_file_edits": [
+        {
+          "message_index": 43,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\jacks\\CS4300 Project\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_signals.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 51,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\jacks\\CS4300 Project\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_utils.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 56,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\jacks\\CS4300 Project\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_utils.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 63,
+        "assistant_message_count": 134,
+        "reprompt_count": 62,
+        "reasons": {
+          "errors": 12,
+          "refinements": 1,
+          "incomplete": 1,
+          "other": 48
+        }
+      }
+    },
+    {
+      "session_id": "23ab4469-2868-470b-a4fb-f2262504ede9",
+      "message_count": 74,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 15,
+      "test_edit_count": 3,
+      "test_file_edits": [
+        {
+          "message_index": 65,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\jacks\\CS4300 Project\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_connection_handling.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 69,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\jacks\\CS4300 Project\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_connection_handling.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 72,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\jacks\\CS4300 Project\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_connection_handling.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 23,
+        "assistant_message_count": 47,
+        "reprompt_count": 22,
+        "reasons": {
+          "errors": 10,
+          "refinements": 0,
+          "incomplete": 0,
+          "other": 12
+        }
+      }
+    },
+    {
+      "session_id": "23b36d4d-61e7-4f94-99d2-b394baf6e52b",
+      "message_count": 0,
+      "category": "exploratory",
+      "is_meaningful": false,
+      "edit_count": 0,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 0,
+        "assistant_message_count": 0,
+        "reprompt_count": 0,
+        "reasons": {
+          "errors": 0,
+          "refinements": 0,
+          "incomplete": 0,
+          "other": 0
+        }
+      }
+    },
+    {
+      "session_id": "30424b81-31e2-480a-8c5d-4fc2dbdc91b2",
+      "message_count": 484,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 49,
+      "test_edit_count": 12,
+      "test_file_edits": [
+        {
+          "message_index": 369,
+          "tool": "Write",
+          "file_path": "C:\\Users\\jacks\\CS4300 Project\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_connection_handling.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 375,
+          "tool": "Write",
+          "file_path": "C:\\Users\\jacks\\CS4300 Project\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_connection_frontend.test.js",
+          "is_test_file": true
+        },
+        {
+          "message_index": 380,
+          "tool": "Write",
+          "file_path": "C:\\Users\\jacks\\CS4300 Project\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\README_CONNECTION_TESTS.md",
+          "is_test_file": true
+        },
+        {
+          "message_index": 403,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\jacks\\CS4300 Project\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_connection_handling.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 406,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\jacks\\CS4300 Project\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_connection_handling.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 410,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\jacks\\CS4300 Project\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_connection_handling.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 416,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\jacks\\CS4300 Project\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_connection_handling.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 419,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\jacks\\CS4300 Project\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_connection_handling.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 440,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\jacks\\CS4300 Project\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_connection_handling.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 443,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\jacks\\CS4300 Project\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_connection_handling.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 466,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\jacks\\CS4300 Project\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_connection_handling.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 469,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\jacks\\CS4300 Project\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_connection_handling.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [
+        {
+          "test_count": 20,
+          "passed": false,
+          "failures": 1,
+          "errors": 1,
+          "output_excerpt": "Error: Exit code 1\nCreating test database for alias 'default'...\n......F....E........\n======================================================================\nERROR: testPOSTKeyQuestionsSuccess (active_interview_app.tests.test_connection_handling.TestConnectionHandlingKeyQuestions.testPOSTKeyQuestionsSuccess)\nTest successful answer submission to key question.\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.12/",
+          "failed_tests": [],
+          "error_tests": [],
+          "message_index": 431,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 20,
+          "passed": false,
+          "failures": 1,
+          "errors": 4,
+          "output_excerpt": "Error: Exit code 1\nCreating test database for alias 'default'...\n......F.EEEE........\n======================================================================\nERROR: testGETKeyQuestionsHasConnectionStatus (active_interview_app.tests.test_connection_handling.TestConnectionHandlingKeyQuestions.testGETKeyQuestionsHasConnectionStatus)\nTest that connection status indicator is present in key questions.\n----------------------------------------------------------------------\nTraceback (most recent call las",
+          "failed_tests": [],
+          "error_tests": [],
+          "message_index": 448,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 20,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "Found 20 test(s).\nSystem check identified no issues (0 silenced).\nMy detailed answer\nExcellent answer!\r\nCreating test database for alias 'default'...\n....................\n----------------------------------------------------------------------\nRan 20 tests in 16.580s\n\nOK\nDestroying test database for alias 'default'...\r",
+          "message_index": 474,
+          "command": "python manage.py test"
+        },
+        {
+          "test_count": 20,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "Found 20 test(s).\nSystem check identified no issues (0 silenced).\nMy detailed answer\nExcellent answer!\r\nCreating test database for alias 'default'...\n....................\n----------------------------------------------------------------------\nRan 20 tests in 20.587s\n\nOK\nDestroying test database for alias 'default'...\r",
+          "message_index": 478,
+          "command": "python manage.py test"
+        }
+      ],
+      "first_run_tests": [
+        {
+          "test_count": 20,
+          "passed": false,
+          "failures": 1,
+          "errors": 1,
+          "output_excerpt": "Error: Exit code 1\nCreating test database for alias 'default'...\n......F....E........\n======================================================================\nERROR: testPOSTKeyQuestionsSuccess (active_interview_app.tests.test_connection_handling.TestConnectionHandlingKeyQuestions.testPOSTKeyQuestionsSuccess)\nTest successful answer submission to key question.\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.12/",
+          "failed_tests": [],
+          "error_tests": [],
+          "message_index": 431,
+          "command": "python manage.py test",
+          "is_first_run_after_edit": true,
+          "related_edit": "C:\\Users\\jacks\\CS4300 Project\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_connection_handling.py"
+        },
+        {
+          "test_count": 20,
+          "passed": false,
+          "failures": 1,
+          "errors": 4,
+          "output_excerpt": "Error: Exit code 1\nCreating test database for alias 'default'...\n......F.EEEE........\n======================================================================\nERROR: testGETKeyQuestionsHasConnectionStatus (active_interview_app.tests.test_connection_handling.TestConnectionHandlingKeyQuestions.testGETKeyQuestionsHasConnectionStatus)\nTest that connection status indicator is present in key questions.\n----------------------------------------------------------------------\nTraceback (most recent call las",
+          "failed_tests": [],
+          "error_tests": [],
+          "message_index": 448,
+          "command": "python manage.py test",
+          "is_first_run_after_edit": true,
+          "related_edit": "C:\\Users\\jacks\\CS4300 Project\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_connection_handling.py"
+        },
+        {
+          "test_count": 20,
+          "passed": true,
+          "failures": 0,
+          "errors": 0,
+          "output_excerpt": "Found 20 test(s).\nSystem check identified no issues (0 silenced).\nMy detailed answer\nExcellent answer!\r\nCreating test database for alias 'default'...\n....................\n----------------------------------------------------------------------\nRan 20 tests in 16.580s\n\nOK\nDestroying test database for alias 'default'...\r",
+          "message_index": 474,
+          "command": "python manage.py test",
+          "is_first_run_after_edit": true,
+          "related_edit": "C:\\Users\\jacks\\CS4300 Project\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_connection_handling.py"
+        }
+      ],
+      "test_run_count": 4,
+      "reprompt_analysis": {
+        "user_message_count": 147,
+        "assistant_message_count": 324,
+        "reprompt_count": 146,
+        "reasons": {
+          "errors": 42,
+          "refinements": 5,
+          "incomplete": 4,
+          "other": 95
+        }
+      }
+    },
+    {
+      "session_id": "34fb6db9-377c-4ecd-b7f9-c5959a92c0ac",
+      "message_count": 1,
+      "category": "exploratory",
+      "is_meaningful": false,
+      "edit_count": 0,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 0,
+        "assistant_message_count": 0,
+        "reprompt_count": 0,
+        "reasons": {
+          "errors": 0,
+          "refinements": 0,
+          "incomplete": 0,
+          "other": 0
+        }
+      }
+    },
+    {
+      "session_id": "4cf4ca0b-7f58-4ebd-8f04-4857f5c5b41a",
+      "message_count": 380,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 15,
+      "test_edit_count": 1,
+      "test_file_edits": [
+        {
+          "message_index": 360,
+          "tool": "Write",
+          "file_path": "C:\\Users\\jacks\\CS4300 Project\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_interview_templates.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 140,
+        "assistant_message_count": 214,
+        "reprompt_count": 139,
+        "reasons": {
+          "errors": 17,
+          "refinements": 13,
+          "incomplete": 10,
+          "other": 99
+        }
+      }
+    },
+    {
+      "session_id": "5530606c-4bb8-48c3-b51d-c5a5fc0f081c",
+      "message_count": 211,
+      "category": "refactor",
+      "is_meaningful": true,
+      "edit_count": 11,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 64,
+        "assistant_message_count": 131,
+        "reprompt_count": 63,
+        "reasons": {
+          "errors": 12,
+          "refinements": 9,
+          "incomplete": 3,
+          "other": 39
+        }
+      }
+    },
+    {
+      "session_id": "56c094dd-d005-4f6f-bce4-2f76cbe5ac73",
+      "message_count": 154,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 14,
+      "test_edit_count": 3,
+      "test_file_edits": [
+        {
+          "message_index": 68,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\jacks\\CS4300 Project\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 78,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\jacks\\CS4300 Project\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 141,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\jacks\\CS4300 Project\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 50,
+        "assistant_message_count": 96,
+        "reprompt_count": 49,
+        "reasons": {
+          "errors": 10,
+          "refinements": 7,
+          "incomplete": 1,
+          "other": 31
+        }
+      }
+    },
+    {
+      "session_id": "62221416-e831-4d35-92d9-048ed520adcc",
+      "message_count": 1,
+      "category": "exploratory",
+      "is_meaningful": false,
+      "edit_count": 0,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 0,
+        "assistant_message_count": 0,
+        "reprompt_count": 0,
+        "reasons": {
+          "errors": 0,
+          "refinements": 0,
+          "incomplete": 0,
+          "other": 0
+        }
+      }
+    },
+    {
+      "session_id": "7ba0b6eb-9062-4e0e-a4c3-7fea6f514dbc",
+      "message_count": 196,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 9,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 64,
+        "assistant_message_count": 120,
+        "reprompt_count": 63,
+        "reasons": {
+          "errors": 11,
+          "refinements": 6,
+          "incomplete": 3,
+          "other": 43
+        }
+      }
+    },
+    {
+      "session_id": "85a8dec9-346a-4a0b-98b3-e42636eec350",
+      "message_count": 89,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 1,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 27,
+        "assistant_message_count": 57,
+        "reprompt_count": 26,
+        "reasons": {
+          "errors": 7,
+          "refinements": 3,
+          "incomplete": 1,
+          "other": 15
+        }
+      }
+    },
+    {
+      "session_id": "9ebc9fd0-df53-4e59-af01-40587007a2d1",
+      "message_count": 112,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 8,
+      "test_edit_count": 1,
+      "test_file_edits": [
+        {
+          "message_index": 62,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\jacks\\CS4300 Project\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 33,
+        "assistant_message_count": 69,
+        "reprompt_count": 32,
+        "reasons": {
+          "errors": 5,
+          "refinements": 3,
+          "incomplete": 5,
+          "other": 19
+        }
+      }
+    },
+    {
+      "session_id": "a6945719-bb27-40ca-aa8c-058b8f94dc2b",
+      "message_count": 2,
+      "category": "exploratory",
+      "is_meaningful": false,
+      "edit_count": 0,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 1,
+        "assistant_message_count": 1,
+        "reprompt_count": 0,
+        "reasons": {
+          "errors": 0,
+          "refinements": 0,
+          "incomplete": 0,
+          "other": 0
+        }
+      }
+    },
+    {
+      "session_id": "b51f915e-e936-4d5e-94b2-7675f7d96c5c",
+      "message_count": 295,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 4,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 94,
+        "assistant_message_count": 191,
+        "reprompt_count": 93,
+        "reasons": {
+          "errors": 8,
+          "refinements": 7,
+          "incomplete": 3,
+          "other": 75
+        }
+      }
+    },
+    {
+      "session_id": "c4c3d08b-f8ab-4a21-a4f8-ff7af057d7ae",
+      "message_count": 217,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 20,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 70,
+        "assistant_message_count": 136,
+        "reprompt_count": 69,
+        "reasons": {
+          "errors": 16,
+          "refinements": 3,
+          "incomplete": 0,
+          "other": 50
+        }
+      }
+    },
+    {
+      "session_id": "c8884795-33bf-42ac-a046-9c8a6af288b2",
+      "message_count": 92,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 6,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 36,
+        "assistant_message_count": 53,
+        "reprompt_count": 35,
+        "reasons": {
+          "errors": 3,
+          "refinements": 4,
+          "incomplete": 0,
+          "other": 28
+        }
+      }
+    },
+    {
+      "session_id": "cc2b0ac6-2a58-440d-bf1a-a438bbbf648c",
+      "message_count": 208,
+      "category": "exploratory",
+      "is_meaningful": false,
+      "edit_count": 0,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 61,
+        "assistant_message_count": 144,
+        "reprompt_count": 60,
+        "reasons": {
+          "errors": 15,
+          "refinements": 1,
+          "incomplete": 5,
+          "other": 39
+        }
+      }
+    },
+    {
+      "session_id": "da975168-48cf-4ffe-a14e-ec5058f571ef",
+      "message_count": 2,
+      "category": "exploratory",
+      "is_meaningful": false,
+      "edit_count": 0,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 0,
+        "assistant_message_count": 0,
+        "reprompt_count": 0,
+        "reasons": {
+          "errors": 0,
+          "refinements": 0,
+          "incomplete": 0,
+          "other": 0
+        }
+      }
+    },
+    {
+      "session_id": "efcac65f-ba37-4c26-8c65-9a4f3ab017c8",
+      "message_count": 86,
+      "category": "exploratory",
+      "is_meaningful": false,
+      "edit_count": 0,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 23,
+        "assistant_message_count": 59,
+        "reprompt_count": 22,
+        "reasons": {
+          "errors": 4,
+          "refinements": 0,
+          "incomplete": 1,
+          "other": 17
+        }
+      }
+    },
+    {
+      "session_id": "fe79fae1-8ab8-473d-8c10-1cf8d8afc923",
+      "message_count": 157,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 24,
+      "test_edit_count": 5,
+      "test_file_edits": [
+        {
+          "message_index": 35,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\jacks\\CS4300 Project\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_connection_handling.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 39,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\jacks\\CS4300 Project\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_connection_handling.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 144,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\jacks\\CS4300 Project\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_connection_handling.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 147,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\jacks\\CS4300 Project\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_connection_handling.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 150,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\jacks\\CS4300 Project\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_connection_handling.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 47,
+        "assistant_message_count": 102,
+        "reprompt_count": 46,
+        "reasons": {
+          "errors": 15,
+          "refinements": 2,
+          "incomplete": 0,
+          "other": 29
+        }
+      }
+    }
+  ]
+}
