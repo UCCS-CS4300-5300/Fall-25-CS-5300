@@ -3,6 +3,9 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.conf import settings
+from django.utils import timezone
+import uuid
 
 
 # Create your models here.
@@ -225,11 +228,54 @@ class Chat(models.Model):
     type = models.CharField(max_length=3, choices=INTERVIEW_TYPES,
                             default=GENERAL)
 
+    # Interview category: practice (self-initiated) or invited (from interviewer)
+    # Related to Issue #137 (Interview Categorization)
+    PRACTICE = 'PRACTICE'
+    INVITED = 'INVITED'
+    INTERVIEW_CATEGORY_CHOICES = [
+        (PRACTICE, 'Practice Interview'),
+        (INVITED, 'Invited Interview'),
+    ]
+    interview_type = models.CharField(
+        max_length=10,
+        choices=INTERVIEW_CATEGORY_CHOICES,
+        default=PRACTICE,
+        help_text='Whether this is a practice or invited interview'
+    )
+
+    # Time tracking for invited interviews (Issue #138)
+    # For invited interviews, track when the interview session started
+    # and when it should end based on duration limits
+    started_at = models.DateTimeField(null=True, blank=True,
+                                      help_text='Time when the interview session started')
+    scheduled_end_at = models.DateTimeField(null=True, blank=True,
+                                            help_text='Scheduled time when interview should end')
+
     # create object itself, not the field
     # all templates for documents in /documents/
     # thing that returns all user files is at views
 
     modified_date = models.DateTimeField(auto_now=True)  # date last modified
+
+    def is_time_expired(self):
+        """
+        Check if the interview time has expired.
+        Only applicable for invited interviews with scheduled end times.
+        """
+        if self.interview_type == self.INVITED and self.scheduled_end_at:
+            return timezone.now() > self.scheduled_end_at
+        return False
+
+    def time_remaining(self):
+        """
+        Get the time remaining for this interview.
+        Returns None if not applicable or already expired.
+        """
+        if self.interview_type == self.INVITED and self.scheduled_end_at:
+            now = timezone.now()
+            if now < self.scheduled_end_at:
+                return self.scheduled_end_at - now
+        return None
 
     def __str__(self):
         return self.title
@@ -424,6 +470,189 @@ class InterviewTemplate(models.Model):
         """Check if difficulty percentages sum to 100."""
         total = self.easy_percentage + self.medium_percentage + self.hard_percentage
         return total == 100
+
+
+class InvitedInterview(models.Model):
+    """
+    Represents an interview invitation sent from an interviewer to a candidate.
+
+    When an interviewer creates an invitation, they select a template,
+    specify a candidate email, and set a scheduled time and duration window.
+    The candidate receives an email with a unique join link.
+
+    Related to Issues #4, #5, #6, #8, #134-141 (Interview Invitation Workflow).
+    """
+
+    # Status choices
+    PENDING = 'pending'
+    COMPLETED = 'completed'
+    REVIEWED = 'reviewed'
+    EXPIRED = 'expired'
+
+    STATUS_CHOICES = [
+        (PENDING, 'Pending'),
+        (COMPLETED, 'Completed'),
+        (REVIEWED, 'Reviewed'),
+        (EXPIRED, 'Expired'),
+    ]
+
+    # Interviewer review status
+    REVIEW_PENDING = 'pending'
+    REVIEW_COMPLETED = 'completed'
+
+    REVIEW_STATUS_CHOICES = [
+        (REVIEW_PENDING, 'Pending Review'),
+        (REVIEW_COMPLETED, 'Review Complete'),
+    ]
+
+    # Core fields
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        help_text='Unique identifier for secure join links'
+    )
+
+    interviewer = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='sent_invitations',
+        help_text='Interviewer who sent this invitation'
+    )
+
+    candidate_email = models.EmailField(
+        help_text='Email address of the candidate'
+    )
+
+    template = models.ForeignKey(
+        InterviewTemplate,
+        on_delete=models.CASCADE,
+        related_name='invitations',
+        help_text='Interview template structure for this invitation'
+    )
+
+    # Scheduling fields
+    scheduled_time = models.DateTimeField(
+        help_text='When the interview can start'
+    )
+
+    duration_minutes = models.IntegerField(
+        default=60,
+        validators=[MinValueValidator(15), MaxValueValidator(240)],
+        help_text='Duration window for completing the interview (15-240 minutes)'
+    )
+
+    # Status tracking
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=PENDING,
+        help_text='Current status of the invitation'
+    )
+
+    interviewer_review_status = models.CharField(
+        max_length=20,
+        choices=REVIEW_STATUS_CHOICES,
+        default=REVIEW_PENDING,
+        help_text='Whether interviewer has reviewed the completed interview'
+    )
+
+    # Interview session (created when candidate starts interview)
+    chat = models.OneToOneField(
+        Chat,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='invitation',
+        help_text='The actual interview session (Chat)'
+    )
+
+    # Interviewer feedback
+    interviewer_feedback = models.TextField(
+        blank=True,
+        help_text='Feedback provided by the interviewer after review'
+    )
+
+    reviewed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='When the interviewer marked this as reviewed'
+    )
+
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    invitation_sent_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='When the invitation email was sent'
+    )
+    completed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='When the candidate completed the interview'
+    )
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['interviewer', '-created_at']),
+            models.Index(fields=['candidate_email']),
+            models.Index(fields=['status']),
+            models.Index(fields=['scheduled_time']),
+        ]
+        verbose_name = 'Invited Interview'
+        verbose_name_plural = 'Invited Interviews'
+
+    def __str__(self):
+        return f"{self.template.name} → {self.candidate_email} ({self.status})"
+
+    def get_join_url(self):
+        """Generate the full join URL for this invitation."""
+        return f"{settings.SITE_URL}/interview/invite/{self.id}/"
+
+    def get_window_end(self):
+        """Calculate when the interview window closes."""
+        from datetime import timedelta
+        return self.scheduled_time + timedelta(minutes=self.duration_minutes)
+
+    def is_accessible(self):
+        """
+        Check if the interview is currently accessible to the candidate.
+        Returns True if current time is within the valid window.
+        """
+        now = timezone.now()
+        window_end = self.get_window_end()
+
+        # If interview already started (has chat), check if it's completed
+        if self.chat:
+            return self.status != self.COMPLETED
+
+        # Otherwise, check if we're within the time window
+        return self.scheduled_time <= now <= window_end
+
+    def is_expired(self):
+        """
+        Check if the interview window has expired without being started.
+        """
+        if self.chat:  # Interview was started
+            return False
+
+        now = timezone.now()
+        window_end = self.get_window_end()
+        return now > window_end
+
+    def can_start(self):
+        """
+        Check if the candidate can start the interview now.
+        """
+        if self.chat:  # Already started
+            return False
+
+        if self.is_expired():
+            return False
+
+        now = timezone.now()
+        return now >= self.scheduled_time
 
 
 class RoleChangeRequest(models.Model):
