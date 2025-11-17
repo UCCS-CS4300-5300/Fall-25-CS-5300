@@ -373,3 +373,83 @@ class TestMessageCaching(TestCase):
         # Check that error handler restores the message
         self.assertContains(response, 'restorePendingMessage()')
         self.assertContains(response, 'restored to the input field')
+
+
+class TestSyncStatusIndicators(TestCase):
+    """Test sync status indicators (Sync Pending and Sync Successful)."""
+
+    def setUp(self):
+        """Set up test user and chat."""
+        self.user = generateConnectionTestUser()
+        self.chat = generateConnectionTestChat(self.user)
+        self.client.force_login(self.user)
+
+    def testSyncPendingIndicatorCSSPresent(self):
+        """Test that Sync Pending indicator CSS is present."""
+        url = reverse('chat-view', args=[self.chat.id])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '.sync-pending-indicator')
+        self.assertContains(response, 'Sync Pending')
+        self.assertContains(response, 'bi-arrow-repeat')
+
+    def testSyncSuccessfulIndicatorCSSPresent(self):
+        """Test that Sync Successful indicator CSS is present."""
+        url = reverse('chat-view', args=[self.chat.id])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '.sync-successful-indicator')
+        self.assertContains(response, 'Sync Successful')
+        self.assertContains(response, 'bi-check-circle-fill')
+
+    def testSyncSuccessfulFadeOutAnimation(self):
+        """Test that Sync Successful indicator has fade out animation."""
+        url = reverse('chat-view', args=[self.chat.id])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '@keyframes fadeOut')
+        self.assertContains(response, 'animation: fadeOut 3s ease-out forwards')
+
+    def testSyncSuccessfulUsesThemeColors(self):
+        """Test that Sync Successful indicator uses theme-aware colors."""
+        url = reverse('chat-view', args=[self.chat.id])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'var(--success)')
+
+    def testSyncSuccessfulReplacementLogic(self):
+        """Test that sync logic replaces pending indicator with successful indicator."""
+        url = reverse('chat-view', args=[self.chat.id])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        # Check that the sync function replaces the pending indicator
+        self.assertContains(response, '.sync-pending-indicator').remove()')
+        self.assertContains(response, '.sync-successful-indicator')
+        # Check that successful indicator is removed after 3 seconds
+        self.assertContains(response, 'setTimeout')
+        self.assertContains(response, '3000')
+
+    def testSyncPendingAddedOnNetworkError(self):
+        """Test that Sync Pending is added when network error occurs."""
+        url = reverse('chat-view', args=[self.chat.id])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        # Check that error handler adds sync pending indicator
+        self.assertContains(response, 'addToPendingSync')
+        self.assertContains(response, 'text-warning')
+
+    def testSyncIndicatorPositioning(self):
+        """Test that sync indicators are positioned correctly below messages."""
+        url = reverse('chat-view', args=[self.chat.id])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        # Check CSS positioning
+        self.assertContains(response, 'margin-top: 0.25rem')
+        self.assertContains(response, 'text-align: left')

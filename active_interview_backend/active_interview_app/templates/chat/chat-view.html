@@ -279,6 +279,35 @@
         transform: rotate(360deg);
       }
     }
+
+    /* Sync Successful Indicator */
+    .sync-successful-indicator {
+      padding: 0.25rem 0.5rem;
+      text-align: left;
+      margin-top: 0.25rem;
+      animation: fadeOut 3s ease-out forwards;
+    }
+
+    .sync-successful-indicator small {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--success);
+    }
+
+    @keyframes fadeOut {
+      0% {
+        opacity: 1;
+      }
+      70% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+      }
+    }
   </style>
 {% endblock content %}
 
@@ -450,8 +479,20 @@
       success: function(response) {
         formattedResponseMessage = DOMPurify.sanitize(response.message.replace(/(?:\r\n|\r|\n)/g, '<br>'));
 
-        // Remove sync pending indicator from the message
-        $(`#${message.elementId}`).find('.sync-pending-indicator').remove();
+        // Replace sync pending indicator with sync successful indicator
+        const messageElement = $(`#${message.elementId}`);
+        messageElement.find('.sync-pending-indicator').remove();
+        messageElement.append(
+            `<div class="sync-successful-indicator">
+              <small>
+                <i class="bi bi-check-circle-fill"></i> Sync Successful
+              </small>
+            </div>`);
+
+        // Remove the sync successful indicator after 3 seconds
+        setTimeout(function() {
+          messageElement.find('.sync-successful-indicator').remove();
+        }, 3000);
 
         // Show the response bubble
         $('#chat-messages').append(
@@ -760,8 +801,24 @@
             // Remove loading bubble
             $('#loading-bubble').remove();
 
+            // Handle time expiration (Issue #138)
+            if (xhr.status === 403 && xhr.responseJSON && xhr.responseJSON.time_expired) {
+              $('#chat-messages').append(
+                `<div class="col bot-text-container">
+                  <div class="card bot-text-bubble" style="background-color: var(--bs-danger); color: white;">
+                    <div class="card-body">
+                      <p class="card-text"><i class="bi bi-exclamation-triangle-fill"></i> <strong>Interview time has expired.</strong> Your interview has been automatically completed. Redirecting to results...</p>
+                    </div>
+                  </div>
+                </div>`);
+              updateScroll();
+              // Redirect to results after 3 seconds
+              setTimeout(() => {
+                window.location.href = '{% url "chat-results" chat_id=chat.id %}';
+              }, 3000);
+            }
             // Check if it's a network error or timeout
-            if (status === 'timeout' || status === 'error' || xhr.status === 0) {
+            else if (status === 'timeout' || status === 'error' || xhr.status === 0) {
               // Keep the message visible but add "Sync Pending" indicator
               $(`#${messageId}`).append(
                   `<div class="sync-pending-indicator">
@@ -778,6 +835,8 @@
 
               // Show connection dropped notification
               showConnectionDroppedModal();
+
+              updateScroll();
             } else {
               // For non-network errors, remove the message and restore to input
               $(`#${messageId}`).remove();
@@ -792,32 +851,8 @@
                       </div>
                     </div>
                   </div>`);
-            }
 
-
-            updateScroll();
-          },
-          error: function(xhr, status, error) {
-            // Handle time expiration (Issue #138)
-            if (xhr.status === 403 && xhr.responseJSON && xhr.responseJSON.time_expired) {
-              $('#loading-bubble').remove();
-              $('#chat-messages').append(
-                `<div class="col bot-text-container">
-                  <div class="card bot-text-bubble" style="background-color: var(--bs-danger); color: white;">
-                    <div class="card-body">
-                      <p class="card-text"><i class="bi bi-exclamation-triangle-fill"></i> <strong>Interview time has expired.</strong> Your interview has been automatically completed. Redirecting to results...</p>
-                    </div>
-                  </div>
-                </div>`);
               updateScroll();
-              // Redirect to results after 3 seconds
-              setTimeout(() => {
-                window.location.href = '{% url "chat-results" chat_id=chat.id %}';
-              }, 3000);
-            } else {
-              // Handle other errors
-              $('#loading-bubble').remove();
-              alert('An error occurred while sending your message. Please try again.');
             }
           }
         });
