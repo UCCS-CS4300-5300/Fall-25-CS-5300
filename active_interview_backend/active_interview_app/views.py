@@ -166,11 +166,40 @@ class CreateChat(LoginRequiredMixin, View):
         owner_chats = Chat.objects.filter(owner=request.user)\
             .order_by('-modified_date')
 
-        form = CreateChatForm(user=request.user)  # Pass user into chatform
+        # Pre-populate form from URL parameters (Issue #53)
+        job_id = request.GET.get('job_id')
+        template_id = request.GET.get('template_id')
 
-        context = {}
-        context['owner_chats'] = owner_chats
-        context['form'] = form
+        initial_data = {}
+
+        # Pre-select job listing if provided
+        if job_id:
+            try:
+                job_listing = UploadedJobListing.objects.get(
+                    id=job_id, user=request.user
+                )
+                initial_data['listing_choice'] = job_listing
+            except UploadedJobListing.DoesNotExist:
+                pass  # Ignore invalid job_id
+
+        # Set suggested template in context (not in form, just for display)
+        suggested_template = None
+        if template_id:
+            try:
+                suggested_template = InterviewTemplate.objects.get(
+                    id=template_id, user=request.user
+                )
+            except InterviewTemplate.DoesNotExist:
+                pass  # Ignore invalid template_id
+
+        form = CreateChatForm(user=request.user, initial=initial_data)
+
+        context = {
+            'owner_chats': owner_chats,
+            'form': form,
+            'suggested_template': suggested_template,  # Issue #53
+            'from_job_analysis': bool(job_id)  # Flag for UI
+        }
 
         return render(request, os.path.join('chat', 'chat-create.html'),
                       context)
