@@ -211,6 +211,7 @@ class DeleteResumeViewTest(TestCase):
     def test_delete_resume_different_user(self):
         """Test user cannot delete another user's resume"""
         User.objects.create_user(
+            username='otheruser',
             password='testpass123'
         )
         self.client.login(username='otheruser', password='testpass123')
@@ -312,6 +313,7 @@ class DeleteJobViewTest(TestCase):
     def test_delete_job_different_user(self):
         """Test user cannot delete another user's job"""
         User.objects.create_user(
+            username='otheruser',
             password='testpass123'
         )
         self.client.login(username='otheruser', password='testpass123')
@@ -445,6 +447,7 @@ class EditJobPostingViewTest(TestCase):
     def test_edit_job_posting_different_user(self):
         """Test user cannot edit another user's job posting"""
         User.objects.create_user(
+            username='otheruser',
             password='testpass123'
         )
         self.client.login(username='otheruser', password='testpass123')

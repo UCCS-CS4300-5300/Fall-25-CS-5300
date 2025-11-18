@@ -10,7 +10,6 @@ This test suite ensures:
 6. Existing password users can link OAuth accounts
 7. Django's User model password field works for both methods
 """
-import pytest
 from django.test import TestCase, Client, RequestFactory
 from django.contrib.auth.models import User, Group
 from django.contrib.auth import authenticate
@@ -356,7 +355,6 @@ class DatabaseSchemaTestCase(TestCase):
                           f"Table {table} should exist for OAuth support")
 
 
-@pytest.mark.django_db
 class AuthenticationIntegrationTest(TestCase):
     """Integration tests for dual authentication system"""
 

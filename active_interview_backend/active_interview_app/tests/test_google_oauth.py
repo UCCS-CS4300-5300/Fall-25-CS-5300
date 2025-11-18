@@ -15,7 +15,6 @@ Tests include:
 Coverage: This test suite ensures >80% coverage of all OAuth-related
 configurations and settings added to the application.
 """
-import pytest
 from django.test import TestCase, Client, RequestFactory, override_settings
 from django.contrib.auth.models import User, Group
 from django.urls import reverse
@@ -788,45 +787,44 @@ class EnvironmentVariablesTestCase(TestCase):
         self.assertEqual(test_secret, 'test-secret')
 
 
-@pytest.mark.django_db
-class GoogleOAuthIntegrationTest:
-    """Integration tests for Google OAuth using pytest."""
+class GoogleOAuthIntegrationTest(TestCase):
+    """Integration tests for Google OAuth using Django TestCase."""
 
-    def test_login_redirect_after_oauth(self, client):
+    def test_login_redirect_after_oauth(self):
         """Test that users are redirected correctly after OAuth login."""
         # Verify LOGIN_REDIRECT_URL is set
-        assert hasattr(settings, 'LOGIN_REDIRECT_URL')
-        assert settings.LOGIN_REDIRECT_URL is not None
+        self.assertTrue(hasattr(settings, 'LOGIN_REDIRECT_URL'))
+        self.assertIsNotNone(settings.LOGIN_REDIRECT_URL)
 
-    def test_account_logout_redirect(self, client):
+    def test_account_logout_redirect(self):
         """Test that logout redirect is configured."""
-        assert hasattr(settings, 'ACCOUNT_LOGOUT_REDIRECT_URL')
-        assert settings.ACCOUNT_LOGOUT_REDIRECT_URL == '/'
+        self.assertTrue(hasattr(settings, 'ACCOUNT_LOGOUT_REDIRECT_URL'))
+        self.assertEqual(settings.ACCOUNT_LOGOUT_REDIRECT_URL, '/')
 
-    def test_social_account_auto_signup(self, client):
+    def test_social_account_auto_signup(self):
         """Test that auto signup is enabled for social accounts."""
-        assert settings.SOCIALACCOUNT_AUTO_SIGNUP is True
+        self.assertTrue(settings.SOCIALACCOUNT_AUTO_SIGNUP)
 
-    def test_email_verification_optional(self, client):
+    def test_email_verification_optional(self):
         """Test that email verification is set to optional."""
-        assert settings.ACCOUNT_EMAIL_VERIFICATION == 'optional'
+        self.assertEqual(settings.ACCOUNT_EMAIL_VERIFICATION, 'optional')
 
-    def test_google_provider_in_settings(self, client):
+    def test_google_provider_in_settings(self):
         """Test that Google provider is configured."""
-        assert 'google' in settings.SOCIALACCOUNT_PROVIDERS
+        self.assertIn('google', settings.SOCIALACCOUNT_PROVIDERS)
 
-    def test_social_account_email_verification(self, client):
+    def test_social_account_email_verification(self):
         """Test social account email verification setting."""
-        assert settings.SOCIALACCOUNT_EMAIL_VERIFICATION == 'optional'
+        self.assertEqual(settings.SOCIALACCOUNT_EMAIL_VERIFICATION, 'optional')
 
-    def test_account_authentication_method_setting(self, client):
+    def test_account_authentication_method_setting(self):
         """Test account authentication method."""
-        assert settings.ACCOUNT_AUTHENTICATION_METHOD == 'username_email'
+        self.assertEqual(settings.ACCOUNT_AUTHENTICATION_METHOD, 'username_email')
 
-    def test_account_email_required_setting(self, client):
+    def test_account_email_required_setting(self):
         """Test that email is required."""
-        assert settings.ACCOUNT_EMAIL_REQUIRED is True
+        self.assertTrue(settings.ACCOUNT_EMAIL_REQUIRED)
 
-    def test_account_username_not_required_setting(self, client):
+    def test_account_username_not_required_setting(self):
         """Test that username is not required."""
-        assert settings.ACCOUNT_USERNAME_REQUIRED is False
+        self.assertFalse(settings.ACCOUNT_USERNAME_REQUIRED)

@@ -15,10 +15,10 @@ class GenerateReportMethodsTest(TestCase):
     """Test GenerateReportView private methods"""
 
     def setUp(self):
-        self._user = User.objects.create_user(
+        self.user = User.objects.create_user(
             username='testuser', password='pass123')
         self.chat = Chat.objects.create(
-            owner=self._user,
+            owner=self.user,
             title='Test Interview',
             difficulty=7,
             messages=[
@@ -301,6 +301,7 @@ class DownloadCSVTest(TestCase):
         self.chat.save()
 
         ExportableReport.objects.create(
+            chat=self.chat,
             professionalism_score=85,
             overall_score=80,
             professionalism_rationale='Good',
@@ -322,6 +323,7 @@ class DownloadCSVTest(TestCase):
     def test_download_csv_score_ratings(self):
         """Test CSV includes correct score ratings"""
         ExportableReport.objects.create(
+            chat=self.chat,
             professionalism_score=95,  # Excellent
             subject_knowledge_score=82,  # Good
             clarity_score=68,  # Fair

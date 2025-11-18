@@ -387,6 +387,7 @@ class ResultsChatViewTest(TestCase):
     def test_results_chat_requires_ownership(self):
         """Test user can only view their own chat results"""
         User.objects.create_user(
+            username='otheruser',
             password='testpass123'
         )
         self.client.login(username='otheruser', password='testpass123')

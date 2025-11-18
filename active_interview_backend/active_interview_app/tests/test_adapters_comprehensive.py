@@ -27,6 +27,7 @@ class CustomSocialAccountAdapterComprehensiveTest(TestCase):
         """Test pre_social_login when user already exists with same email"""
         # Create existing user
         User.objects.create_user(
+            username='existing_user',
             email='existing@example.com',
             password='testpass'
         )

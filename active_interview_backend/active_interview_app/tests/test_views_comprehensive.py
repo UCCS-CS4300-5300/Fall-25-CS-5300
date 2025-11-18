@@ -75,6 +75,7 @@ class RestartChatViewTest(TestCase):
     def test_restart_chat_requires_ownership(self):
         """Test user can only restart their own chats"""
         User.objects.create_user(
+            username='otheruser',
             password='testpass123'
         )
         self.client.login(username='otheruser', password='testpass123')

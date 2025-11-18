@@ -705,6 +705,7 @@ class CandidateInvitationsViewTests(TestCase):
         """Test view only shows invitations for candidate's email"""
         # Create another candidate
         create_user_with_role(
+            'othercandidate',
             'other@example.com',
             'pass',
             UserProfile.CANDIDATE
