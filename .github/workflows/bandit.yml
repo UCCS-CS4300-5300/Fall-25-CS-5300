@@ -1,52 +1,247 @@
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
+# Bandit Security Scanning
+# Comprehensive security scanning with SARIF upload to GitHub Security tab
+# Combines scheduled scans, manual triggers, and automatic issue creation
 
-# Bandit is a security linter designed to find common security issues in Python code.
-# This action will run Bandit on your codebase.
-# The results of the scan will be found under the Security tab of your repository.
+name: Bandit Security Scan
 
-# https://github.com/marketplace/actions/bandit-scan is ISC licensed, by abirismyname
-# https://pypi.org/project/bandit/ is Apache v2.0 licensed, by PyCQA
-
-name: Bandit
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
+    paths:
+      - '**/*.py'
+      - 'requirements.txt'
+      - 'active_interview_backend/requirements.txt'
+      - '.bandit'
   pull_request:
-    # The branches below must be a subset of the branches above
-    branches: [ "main" ]
+    branches: ["main"]
   schedule:
+    # Run weekly on Tuesdays at 22:44 UTC (original schedule from main)
     - cron: '44 22 * * 2'
+  workflow_dispatch: # Allow manual triggers
+
+permissions:
+  contents: read
+  security-events: write # Required for SARIF upload
+  issues: write # Required for creating issues
+  actions: read # Required for workflow status
+
+env:
+  PYTHON_VERSION: '3.12'
 
 jobs:
-  bandit:
-    permissions:
-      contents: read # for actions/checkout to fetch code
-      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
-      actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
-
+  bandit-scan:
+    name: Bandit Code Security Scan
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Bandit Scan
-        uses: shundor/python-bandit-scan@ab1d87dfccc5a0ffab88be3aaac6ffe35c10d6cd
-        with: # optional arguments
-          # exit with 0, even with results found
-          exit_zero: true # optional, default is DEFAULT
-          # Github token of the repository (automatically created by Github)
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information.
-          # File or directory to run bandit on
-          # path: # optional, default is .
-          # Report only issues of a given severity level or higher. Can be LOW, MEDIUM or HIGH. Default is UNDEFINED (everything)
-          # level: # optional, default is UNDEFINED
-          # Report only issues of a given confidence level or higher. Can be LOW, MEDIUM or HIGH. Default is UNDEFINED (everything)
-          # confidence: # optional, default is UNDEFINED
-          # comma-separated list of paths (glob patterns supported) to exclude from scan (note that these are in addition to the excluded paths provided in the config file) (default: .svn,CVS,.bzr,.hg,.git,__pycache__,.tox,.eggs,*.egg)
-          # excluded_paths: # optional, default is DEFAULT
-          # comma-separated list of test IDs to skip
-          # skips: # optional, default is DEFAULT
-          # path to a .bandit file that supplies command line arguments
-          # ini_path: # optional, default is DEFAULT
 
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+
+    - name: Install Security Tools
+      run: |
+        pip install --upgrade pip
+        pip install -r active_interview_backend/requirements.txt
+        pip install bandit[sarif] safety
+
+    - name: Run Safety Check (Dependency Vulnerabilities)
+      continue-on-error: true
+      run: |
+        # Text report (human-readable)
+        safety check --output safety-report.txt || true
+
+        # JSON report (for automation)
+        safety check --json --output safety-report.json || true
+
+        # Full detailed report
+        safety check --full-report --output safety-full-report.txt || true
+
+    - name: Run Bandit Scan (Code Security)
+      continue-on-error: true
+      run: |
+        bandit -r . \
+          --configfile .bandit \
+          -f sarif \
+          -o bandit-results.sarif \
+          --severity-level medium \
+          --confidence-level medium
+
+    - name: Validate SARIF Output
+      run: |
+        if [ -f bandit-results.sarif ]; then
+          echo "✅ SARIF file generated successfully"
+          echo "File size: $(wc -c < bandit-results.sarif) bytes"
+          python -m json.tool bandit-results.sarif > /dev/null && echo "✅ Valid SARIF JSON" || echo "⚠️ Invalid SARIF JSON"
+        else
+          echo "❌ SARIF file not found"
+          exit 1
+        fi
+
+    - name: Upload SARIF to GitHub Security
+      if: success()
+      uses: github/codeql-action/upload-sarif@v3
+      continue-on-error: true
+      with:
+        sarif_file: bandit-results.sarif
+        category: bandit
+        wait-for-processing: true
+
+    - name: Generate Human-Readable Reports
+      run: |
+        # JSON format
+        bandit -r . --configfile .bandit -f json -o bandit-report.json || true
+
+        # Text format
+        bandit -r . --configfile .bandit -f txt -o bandit-report.txt || true
+
+    - name: Display Security Report Summary
+      if: always()
+      run: |
+        {
+          echo '# Security Scan Results'
+          echo ''
+          echo '## 1. Dependency Vulnerabilities (Safety)'
+          echo '```'
+          cat safety-report.txt || echo "No dependency vulnerabilities found"
+          echo '```'
+          echo ''
+          echo '## 2. Code Security Issues (Bandit)'
+          echo ''
+          echo '### Scan Configuration'
+          echo '- **Severity Level:** Medium and above'
+          echo '- **Confidence Level:** Medium and above'
+          echo '- **Config File:** .bandit'
+          echo ''
+          echo '### Results'
+          echo '```'
+          cat bandit-report.txt || echo "No code security issues found"
+          echo '```'
+          echo ''
+          echo '## View Detailed Results'
+          echo '- [Security Tab](https://github.com/${{ github.repository }}/security/code-scanning?query=tool:bandit)'
+          echo '- **Artifacts Available:**'
+          echo '  - Bandit: bandit-report.json, bandit-report.txt, bandit-results.sarif'
+          echo '  - Safety: safety-report.json, safety-report.txt, safety-full-report.txt'
+        } >> $GITHUB_STEP_SUMMARY
+
+    - name: Check for Critical Issues
+      id: check_critical
+      run: |
+        if [ -f bandit-report.txt ]; then
+          HIGH_COUNT=$(grep -c "Severity: High" bandit-report.txt || echo "0")
+          echo "high_count=$HIGH_COUNT" >> $GITHUB_OUTPUT
+
+          if [ "$HIGH_COUNT" -gt 0 ]; then
+            echo "found_critical=true" >> $GITHUB_OUTPUT
+            echo "⚠️ Found $HIGH_COUNT high severity security issues"
+          else
+            echo "found_critical=false" >> $GITHUB_OUTPUT
+            echo "✅ No high severity security issues found"
+          fi
+        else
+          echo "found_critical=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Create GitHub Issue for Critical Findings
+      if: steps.check_critical.outputs.found_critical == 'true' && github.event_name == 'schedule'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const report = fs.readFileSync('bandit-report.txt', 'utf8');
+
+          // Extract high severity issues
+          const lines = report.split('\n');
+          let highIssues = [];
+          let currentIssue = [];
+          let inHighIssue = false;
+
+          for (const line of lines) {
+            if (line.includes('Severity: High')) {
+              inHighIssue = true;
+              currentIssue = [line];
+            } else if (inHighIssue) {
+              if (line.trim() === '' || line.startsWith('---')) {
+                highIssues.push(currentIssue.join('\n'));
+                currentIssue = [];
+                inHighIssue = false;
+              } else {
+                currentIssue.push(line);
+              }
+            }
+          }
+
+          const highCount = '${{ steps.check_critical.outputs.high_count }}';
+
+          const issueBody = `## 🚨 Security Scan Alert
+
+          Bandit has detected **${highCount} high severity** security issue(s) in the codebase.
+
+          ### Scan Details
+          - **Date:** ${new Date().toISOString().split('T')[0]}
+          - **Workflow Run:** [View Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          - **SARIF Report:** Available in [Security Tab](https://github.com/${{ github.repository }}/security/code-scanning?query=tool:bandit)
+
+          ### High Severity Issues
+          \`\`\`
+          ${highIssues.slice(0, 5).join('\n\n---\n\n')}
+          ${highIssues.length > 5 ? '\n\n... and ' + (highIssues.length - 5) + ' more' : ''}
+          \`\`\`
+
+          ### Action Required
+          1. Review findings in the [Security tab](https://github.com/${{ github.repository }}/security/code-scanning?query=tool:bandit)
+          2. Prioritize high severity issues
+          3. Create fix tasks or dismiss false positives
+
+          ### Resources
+          - [Bandit Documentation](https://bandit.readthedocs.io/)
+          - [Bandit Quick Reference](https://github.com/${{ github.repository }}/blob/main/docs/setup/bandit-quick-reference.md)
+          - [Security Best Practices](https://docs.djangoproject.com/en/stable/topics/security/)
+
+          ---
+          *This issue was automatically created by the scheduled security scan workflow.*`;
+
+          // Check if there's already an open issue
+          const existingIssues = await github.rest.issues.listForRepo({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            state: 'open',
+            labels: 'security,automated',
+            per_page: 10
+          });
+
+          const hasOpenSecurityIssue = existingIssues.data.some(issue =>
+            issue.title.includes('Bandit Security Scan Alert')
+          );
+
+          if (!hasOpenSecurityIssue) {
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 Bandit Security Scan Alert - ${highCount} High Severity Issue(s) Found`,
+              body: issueBody,
+              labels: ['security', 'automated', 'bandit']
+            });
+            console.log('Created new security issue');
+          } else {
+            console.log('Open security issue already exists, skipping creation');
+          }
+
+    - name: Upload Security Reports
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-scan-reports
+        path: |
+          bandit-results.sarif
+          bandit-report.json
+          bandit-report.txt
+          safety-report.txt
+          safety-report.json
+          safety-full-report.txt
+        retention-days: 90

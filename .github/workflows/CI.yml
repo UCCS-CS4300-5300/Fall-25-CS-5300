@@ -308,10 +308,17 @@ jobs:
         pip install -r active_interview_backend/requirements.txt
         pip install safety bandit[sarif]
 
-    - name: Run Safety Check
+    - name: Run Safety Check (Dependency Vulnerabilities)
       continue-on-error: true
       run: |
+        # Text report (human-readable)
         safety check --output safety-report.txt || true
+
+        # JSON report (for automation/parsing)
+        safety check --json --output safety-report.json || true
+
+        # Full scan with details
+        safety check --full-report --output safety-full-report.txt || true
 
     - name: Run Bandit Scan
       continue-on-error: true
@@ -360,6 +367,8 @@ jobs:
           bandit-results.sarif
           bandit-screen.txt
           safety-report.txt
+          safety-report.json
+          safety-full-report.txt
         retention-days: ${{ env.RETENTION_DAYS }}
 
   test:
