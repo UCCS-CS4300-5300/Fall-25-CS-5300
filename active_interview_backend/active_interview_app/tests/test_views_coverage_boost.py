@@ -23,7 +23,7 @@ class GenerateReportMethodsTest(TestCase):
             difficulty=7,
             messages=[
                 {'role': 'assistant', 'content': 'Question 1?'},
-                {'role': '_user', 'content': 'Answer 1'},
+                {'role': 'user', 'content': 'Answer 1'},
                 {'role': 'assistant', 'content': 'Feedback: 8/10. Good answer.'},
                 {'role': 'assistant', 'content': 'Question 2?'},
                 {'role': 'user', 'content': 'Answer 2'}

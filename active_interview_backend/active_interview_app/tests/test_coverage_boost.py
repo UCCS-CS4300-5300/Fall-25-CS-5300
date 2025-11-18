@@ -233,6 +233,7 @@ class ViewsCriticalPathsTest(TransactionTestCase):
             mock_resp1, mock_resp2]
 
         self.client.post(reverse('chat-create'), {
+            'create': 'true',
             'listing_choice': self.job.id,
             'difficulty': 5,
             'type': 'GEN'
@@ -244,6 +245,7 @@ class ViewsCriticalPathsTest(TransactionTestCase):
     def test_create_chat_without_ai(self, mock_ai):
         """Test CreateChat when AI unavailable"""
         self.client.post(reverse('chat-create'), {
+            'create': 'true',
             'listing_choice': self.job.id,
             'difficulty': 5,
             'type': 'GEN'
@@ -268,6 +270,7 @@ class ViewsCriticalPathsTest(TransactionTestCase):
             mock_resp1, mock_resp2]
 
         self.client.post(reverse('chat-create'), {
+            'create': 'true',
             'listing_choice': self.job.id,
             'difficulty': 5,
             'type': 'GEN'
@@ -482,8 +485,9 @@ class ViewsCriticalPathsTest(TransactionTestCase):
         mock_filetype.guess.return_value = mock_ft
         mock_pdf.to_markdown.return_value = "Content"
 
-        SimpleUploadedFile("test.pdf", b"PDF")
-        self.client.post(reverse('upload_file'), {
+        pdf = SimpleUploadedFile("test.pdf", b"PDF")
+        response = self.client.post(reverse('upload_file'), {
+            'file': pdf,
             'title': 'Test'
         })
 
@@ -501,8 +505,9 @@ class ViewsCriticalPathsTest(TransactionTestCase):
         mock_d.paragraphs = [MagicMock(text="Text")]
         mock_doc.return_value = mock_d
 
-        SimpleUploadedFile("test.docx", b"DOCX")
-        self.client.post(reverse('upload_file'), {
+        docx = SimpleUploadedFile("test.docx", b"DOCX")
+        response = self.client.post(reverse('upload_file'), {
+            'file': docx,
             'title': 'Test'
         })
 

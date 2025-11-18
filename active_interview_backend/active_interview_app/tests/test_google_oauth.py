@@ -121,7 +121,7 @@ class GoogleOAuthConfigTestCase(TestCase):
         google_config = settings.SOCIALACCOUNT_PROVIDERS['google']
         self.assertIn('APP', google_config)
         app_config = google_config['APP']
-        self.assertIn('_client_id', app_config)
+        self.assertIn('client_id', app_config)
         self.assertIn('secret', app_config)
         self.assertIn('key', app_config)
         self.assertEqual(app_config['key'], '')
@@ -623,7 +623,7 @@ class GoogleOAuthSecurityTestCase(TestCase):
 
         # Credentials should not be hardcoded
         # They should come from environment or be empty
-        _client_id = app_config.get('client_id', '')  # noqa: F841
+        client_id = app_config.get('client_id', '')
         secret = app_config.get('secret', '')
 
         # Should not contain actual credentials in test

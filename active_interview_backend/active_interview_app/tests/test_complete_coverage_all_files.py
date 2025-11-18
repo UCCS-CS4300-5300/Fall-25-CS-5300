@@ -219,6 +219,7 @@ class ViewsCompleteCoverageTest(TestCase):
     def test_register_valid_form(self):
         """Test user registration with valid form"""
         self.client.post(reverse('register_page'), {
+            'username': 'newuser',
             'email': 'new@test.com',
             'password1': 'TestPass123!@#',
             'password2': 'TestPass123!@#',
@@ -283,6 +284,7 @@ class ViewsCompleteCoverageTest(TestCase):
         )
 
         self.client.post(reverse('chat-create'), {
+            'create': 'true',
             'listing_choice': self.job_listing.id,
             'resume_choice': resume.id,
             'difficulty': 5,
@@ -302,6 +304,7 @@ class ViewsCompleteCoverageTest(TestCase):
         mock_ai.return_value = False
 
         self.client.post(reverse('chat-create'), {
+            'create': 'true',
             'listing_choice': self.job_listing.id,
             'difficulty': 3,
             'type': 'ISK'
@@ -334,6 +337,7 @@ class ViewsCompleteCoverageTest(TestCase):
         ]
 
         self.client.post(reverse('chat-create'), {
+            'create': 'true',
             'listing_choice': self.job_listing.id,
             'difficulty': 5,
             'type': 'GEN'
@@ -437,7 +441,8 @@ class ViewsCompleteCoverageTest(TestCase):
             messages=[{"role": "system", "content": "Selected level: <<5>>"}]
         )
 
-        self.client.post(
+        response = self.client.post(
+            reverse('chat-edit', kwargs={'chat_id': chat.id}),
             {
                 'update': 'true',
                 'difficulty': 7
@@ -484,7 +489,8 @@ class ViewsCompleteCoverageTest(TestCase):
             ]
         )
 
-        self.client.post(
+        response = self.client.post(
+            reverse('chat-restart', kwargs={'chat_id': chat.id}),
             {'restart': 'true'}
         )
 
@@ -897,7 +903,8 @@ class ViewsCompleteCoverageTest(TestCase):
             file=fake_file
         )
 
-        self.client.post(
+        response = self.client.post(
+            reverse('edit_resume', kwargs={'resume_id': resume.id}),
             {
                 'title': 'Updated Resume',
                 'content': 'Updated content'
