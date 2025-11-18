@@ -222,6 +222,17 @@ class ConnectionHandler {
 
   /**
    * Start periodic heartbeat to check connection
+   *
+   * Sends a lightweight GET request to the server at regular intervals (default: 5s)
+   * to detect connection loss. This approach is more reliable than relying solely on
+   * AJAX error handling, as it proactively detects connectivity issues.
+   *
+   * Behavior:
+   * - If request succeeds and connection was previously offline → restore connection
+   * - If request fails with network error (TypeError, TimeoutError) → show notification
+   * - Other errors (e.g., 500 status codes) are ignored to prevent false positives
+   *
+   * @see CONFIG.HEARTBEAT_INTERVAL for frequency configuration
    */
   startHeartbeat() {
     this.heartbeatInterval = setInterval(() => {
@@ -230,12 +241,14 @@ class ConnectionHandler {
         signal: AbortSignal.timeout(CONFIG.HEARTBEAT_INTERVAL)
       })
       .then(() => {
+        // Connection is working - restore if previously offline
         if (!this.isOnline) {
           this._handleConnectionRestored();
         }
       })
       .catch((error) => {
-        // Only show notification for network errors
+        // Only show notification for genuine network errors
+        // TypeError: network failure, TimeoutError: server unreachable
         if (error.name === 'TypeError' || error.name === 'TimeoutError') {
           this.showConnectionDroppedNotification();
         }
@@ -350,8 +363,35 @@ class ConnectionHandler {
 
   /**
    * Sync pending messages with server
-   * @param {Function} sendMessageCallback - Function to call for each message
-   * @returns {Promise} Promise that resolves when sync is complete
+   *
+   * Processes queued messages that failed to send due to connection loss.
+   * Messages are synced one at a time (FIFO order) with a delay between each
+   * to prevent overwhelming the server after reconnection.
+   *
+   * Algorithm:
+   * 1. Get pending messages from localStorage queue
+   * 2. If empty, resolve immediately (nothing to sync)
+   * 3. Take first message and attempt to send via callback
+   * 4. On success:
+   *    - Show success indicator on message UI
+   *    - Remove from queue and save updated queue
+   *    - Update connection status to online
+   *    - If more messages exist, schedule next sync after delay
+   * 5. On failure:
+   *    - Update connection status to offline
+   *    - Keep message in queue for next retry
+   *    - Throw error to caller
+   *
+   * @param {Function} sendMessageCallback - Async function to send message to server
+   *                                         Should accept message text and return Promise
+   * @returns {Promise} Promise that resolves with server response or rejects on error
+   *
+   * @example
+   * // Typical usage in chat view
+   * connectionHandler.syncPendingMessages(async (messageText) => {
+   *   const response = await $.ajax({ url: '/chat/1/', data: { message: messageText } });
+   *   return response;
+   * });
    */
   async syncPendingMessages(sendMessageCallback) {
     const pendingMessages = this.getPendingMessages();
@@ -361,23 +401,23 @@ class ConnectionHandler {
 
     console.log(`Attempting to sync ${pendingMessages.length} pending message(s)...`);
 
-    // Process messages one at a time
+    // Process messages one at a time (FIFO)
     const message = pendingMessages[0];
 
     try {
       const response = await sendMessageCallback(message.message);
 
-      // Sync successful
+      // Sync successful - update UI
       this.showSyncSuccessful(message.elementId);
 
-      // Remove from queue
+      // Remove successfully synced message from queue
       pendingMessages.shift();
       this.savePendingMessages(pendingMessages);
 
       console.log('Message synced successfully');
       this.updateConnectionStatus(true);
 
-      // If more messages, sync them with delay
+      // If more messages remain, sync them with delay to prevent server overload
       if (pendingMessages.length > 0) {
         setTimeout(() => {
           this.syncPendingMessages(sendMessageCallback);
@@ -386,6 +426,7 @@ class ConnectionHandler {
 
       return response;
     } catch (error) {
+      // Sync failed - keep message in queue for next retry
       console.log('Sync failed, will retry later');
       this.updateConnectionStatus(false);
       throw error;
@@ -409,8 +450,32 @@ class ConnectionHandler {
   }
 
   /**
-   * Restore cached input
-   * @returns {string|null} The cached input or null
+   * Restore cached input from localStorage
+   *
+   * Checks multiple cache locations with priority order to recover user's unsaved work:
+   *
+   * Priority 1: Pending message cache
+   *   - Message that was in the process of being sent when connection dropped
+   *   - Highest priority because user explicitly tried to send this
+   *
+   * Priority 2: Regular input cache
+   *   - Auto-saved draft as user types
+   *   - Lower priority as user may not have intended to send yet
+   *
+   * This ensures no user input is lost even if:
+   * - Network fails during message send
+   * - User accidentally closes browser
+   * - Session expires unexpectedly
+   *
+   * @returns {string|null} The most recent cached input, or null if no cache exists
+   *
+   * @example
+   * // Typical usage on page load
+   * const cachedInput = connectionHandler.restoreCachedInput();
+   * if (cachedInput) {
+   *   $('#user-input').val(cachedInput);
+   *   // Optionally notify user that their message was restored
+   * }
    */
   restoreCachedInput() {
     // First check for pending message (message being sent when connection dropped)
@@ -420,7 +485,7 @@ class ConnectionHandler {
       return pendingMessage;
     }
 
-    // Otherwise restore regular cached input
+    // Otherwise restore regular cached input (auto-saved draft)
     const cachedInput = localStorage.getItem(this.storageKeys.cache);
     if (cachedInput) {
       console.log('Restored unsent message from cache');
