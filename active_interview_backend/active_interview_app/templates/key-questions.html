@@ -221,300 +221,116 @@
         transform: rotate(360deg);
       }
     }
+
+    /* Sync Successful Indicator */
+    .sync-successful-indicator {
+      padding: 0.25rem 0.5rem;
+      text-align: left;
+      margin-top: 0.25rem;
+      animation: fadeOut 3s ease-out forwards;
+    }
+
+    .sync-successful-indicator small {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--success);
+    }
+
+    @keyframes fadeOut {
+      0% {
+        opacity: 1;
+      }
+      70% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+      }
+    }
   </style>
 {% endblock content %}
 
 {% block scripts %}
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.2.4/purify.min.js" integrity="sha512-Y1p/STLW/B+l+MPJ5K5OdILMwJa2gMFXXmC/qsyDuGH9uc1MZMUo6/8YQUg9Ut4ns8KGCrCtt+58UwmNFFiVvA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  {% load static %}
+  <script src="{% static 'js/connection-handler.js' %}"></script>
   <script>
-    // Connection monitoring variables
-    let connectionDroppedTime = null;
-    let isConnectionDropped = false;
 
-    // Answer caching configuration
-    const CACHE_KEY = 'key_question_cache_{{ chat.id }}_{{ question.id }}';
-    const PENDING_KEY = 'key_question_pending_{{ chat.id }}_{{ question.id }}';
-    const PENDING_SYNC_KEY = 'key_question_pending_sync_{{ chat.id }}_{{ question.id }}';
-    const CACHE_INTERVAL = 1000; // Save every 1 second
-    const SYNC_CHECK_INTERVAL = 15000; // Check for sync every 15 seconds
+  // ==========================================================================
+  // Connection Handler Integration
+  // ==========================================================================
 
-    // Update connection status indicator
-    function updateConnectionStatus(isOnline) {
-      const statusElement = document.getElementById('connection-status');
-      if (!statusElement) return; // Element may not exist after input is removed
-
-      const statusIcon = statusElement.querySelector('.connection-status-icon');
-      const statusText = statusElement.querySelector('.connection-status-text');
-
-      if (isOnline) {
-        statusElement.classList.remove('offline');
-        statusElement.classList.add('online');
-        statusIcon.className = 'bi bi-wifi connection-status-icon';
-        statusText.textContent = 'Saved by server';
-      } else {
-        statusElement.classList.remove('online');
-        statusElement.classList.add('offline');
-        statusIcon.className = 'bi bi-wifi-off connection-status-icon';
-        statusText.textContent = 'Saved locally';
-      }
+  // Initialize connection handler for this key question
+  // Use chat_id + question_id for unique storage keys
+  const connectionHandler = new ConnectionHandler({
+    chatId: '{{ chat.id }}_{{ question.id }}',
+    heartbeatUrl: '{% url "key-questions" chat_id=chat.id question_id=question.id %}',
+    onConnectionChange: function(isOnline) {
+      console.log(`Connection status changed: ${isOnline ? 'online' : 'offline'}`);
     }
+  });
 
-    // Function to show connection dropped notification with timestamp
-    function showConnectionDroppedModal() {
-      if (!isConnectionDropped) {
-        isConnectionDropped = true;
-        connectionDroppedTime = new Date();
-        const formattedTime = connectionDroppedTime.toLocaleString('en-US', {
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit'
-        });
-        document.getElementById('connectionDropTime').textContent = formattedTime;
-
-        // Update status indicator to offline IMMEDIATELY
-        updateConnectionStatus(false);
-
-        // Show the inline notification
-        document.getElementById('connectionDroppedNotification').style.display = 'block';
-      }
-    }
-
-    // Function to dismiss the connection notification
-    function dismissConnectionNotification() {
-      document.getElementById('connectionDroppedNotification').style.display = 'none';
-    }
-
-    // Function to retry connection
-    function retryConnection() {
-      // Try a simple ping to the server
-      $.ajax({
-        url: '{% url "key-questions" chat_id=chat.id question_id=question.id %}',
-        type: 'GET',
-        timeout: 5000,
-        success: function() {
-          // Connection restored
-          isConnectionDropped = false;
-          connectionDroppedTime = null;
-          updateConnectionStatus(true);
-
-          // Hide the inline notification
-          dismissConnectionNotification();
-
-          // Show success message
-          console.log('Connection restored successfully');
-
-          // Try to sync pending answers
-          syncPendingMessages();
-        },
-        error: function() {
-          // Still no connection
-          updateConnectionStatus(false);
+  // Wrapper functions for backwards compatibility with HTML onclick attributes
+  function retryConnection() {
+    connectionHandler.retryConnection()
+      .then(success => {
+        if (!success) {
           alert('Connection still unavailable. Please check your internet connection and try again.');
         }
       });
-    }
+  }
 
-    // Periodic heartbeat to check connection (every 5 seconds)
-    let heartbeatInterval = null;
-    function startHeartbeat() {
-      heartbeatInterval = setInterval(function() {
-        // Use a simple fetch to check server connectivity
-        fetch('{% url "key-questions" chat_id=chat.id question_id=question.id %}', {
-          method: 'GET',
-          signal: AbortSignal.timeout(5000)
-        })
-        .then(function() {
-          // Connection is active, try to sync pending answers
-          if (isConnectionDropped) {
-            isConnectionDropped = false;
-            updateConnectionStatus(true);
-            dismissConnectionNotification();
-            syncPendingMessages();
-          }
-        })
-        .catch(function(error) {
-          // Only show notification for network errors, not other errors
-          if (error.name === 'TypeError' || error.name === 'TimeoutError') {
-            showConnectionDroppedModal();
-          }
-        });
-      }, 5000); // Check every 5 seconds
-    }
+  function dismissConnectionNotification() {
+    connectionHandler.dismissNotification();
+  }
 
-    // Get pending messages from localStorage
-    function getPendingMessages() {
-      const pendingData = localStorage.getItem(PENDING_SYNC_KEY);
-      return pendingData ? JSON.parse(pendingData) : [];
-    }
+  // ==========================================================================
+  // Key Questions Specific Functionality
+  // ==========================================================================
 
-    // Save pending messages to localStorage
-    function savePendingMessages(messages) {
-      if (messages.length > 0) {
-        localStorage.setItem(PENDING_SYNC_KEY, JSON.stringify(messages));
-      } else {
-        localStorage.removeItem(PENDING_SYNC_KEY);
-      }
-    }
+  // Global variable for speech to text
+  let active_speech = false;
 
-    // Add an answer to pending sync queue
-    function addToPendingSync(message, messageElementId) {
-      const pendingMessages = getPendingMessages();
-      pendingMessages.push({
-        message: message,
-        timestamp: Date.now(),
-        elementId: messageElementId
-      });
-      savePendingMessages(pendingMessages);
-    }
-
-    // Attempt to sync pending answers with server
-    function syncPendingMessages() {
-      const pendingMessages = getPendingMessages();
-      if (pendingMessages.length === 0) {
-        return;
-      }
-
-      console.log(`Attempting to sync ${pendingMessages.length} pending answer(s)...`);
-
-      // Process messages one at a time
-      const message = pendingMessages[0];
-
-      $.ajax({
-        url: `{% url "key-questions" chat_id=chat.id question_id=question.id %}`,
-        type: 'POST',
-        data: {
-          'message': message.message,
-          csrfmiddlewaretoken: '{{ csrf_token }}'
-        },
-        timeout: 30000,
-        success: function(response) {
-          formattedResponseMessage = DOMPurify.sanitize(response.message.replace(/(?:\r\n|\r|\n)/g, '<br>'));
-
-          // Remove sync pending indicator from the answer
-          $(`#${message.elementId}`).find('.sync-pending-indicator').remove();
-
-          // delete loading bubble if it exists
-          $('#loading-bubble').remove();
-
-          // Show the response bubble
-          $('#chat-messages').append(
-              `<div class="col bot-text-container">
-                <div class="card bot-text-bubble">
-                  <div class="card-body">
-                    <p class="card-text" id = "ai_message">${formattedResponseMessage}</p>
-                  </div>
-                </div>
-              </div>`);
-
-          // Remove this message from pending queue
-          pendingMessages.shift();
-          savePendingMessages(pendingMessages);
-
-          console.log('Answer synced successfully');
-
-          // Update connection status to online
-          updateConnectionStatus(true);
-
-          // Add retry button to the page if not already present
-          if ($('.button-chat-send.mb-2').length === 0) {
-            $("#questions-container").append("<button class=\"button-chat-send btn btn-primary mb-2\" type=\"button\" onclick=\"location.reload()\">Retry</button>");
-          }
-
-          updateScroll();
-
-          // If there are more messages, sync them too
-          if (pendingMessages.length > 0) {
-            setTimeout(syncPendingMessages, 1000); // Wait 1 second before next sync
-          }
-        },
-        error: function(xhr, status, error) {
-          console.log('Sync failed, will retry later');
-          // Keep the message in pending queue for next sync attempt
-          updateConnectionStatus(false);
-        }
-      });
-    }
-
-    // Start periodic sync check (every 15 seconds)
-    let syncInterval = null;
-    function startSyncCheck() {
-      syncInterval = setInterval(function() {
-        if (!isConnectionDropped) {
-          syncPendingMessages();
-        }
-      }, SYNC_CHECK_INTERVAL);
-    }
-
-    // Start heartbeat when page loads
-    $(document).ready(function() {
-      // Initialize connection status as online
-      updateConnectionStatus(true);
-
-      startHeartbeat();
-      startSyncCheck();
-      restoreCachedInput();
-      setupAutoSave();
-
-      // Check for pending answers on page load and sync if online
-      const pendingMessages = getPendingMessages();
-      if (pendingMessages.length > 0) {
-        console.log(`Found ${pendingMessages.length} pending answer(s) from previous session`);
-        syncPendingMessages();
-      }
+  // Setup auto-save for user input
+  let autoSaveTimeout = null;
+  function setupAutoSave() {
+    $('#user-input').on('input', function() {
+      clearTimeout(autoSaveTimeout);
+      autoSaveTimeout = setTimeout(() => {
+        connectionHandler.saveCachedInput($('#user-input').val());
+      }, CONFIG.CACHE_SAVE_INTERVAL);
     });
+  }
 
-    // Save user input to localStorage
-    function saveCachedInput() {
-      const userInput = $('#user-input').val();
-      if (userInput.trim() !== '') {
-        localStorage.setItem(CACHE_KEY, userInput);
-      } else {
-        localStorage.removeItem(CACHE_KEY);
+  // Initialize on document ready
+  $(document).ready(function() {
+    // Start connection monitoring
+    connectionHandler.start();
+
+    // Setup input auto-save
+    setupAutoSave();
+
+    // Restore cached input if any
+    const cachedInput = connectionHandler.restoreCachedInput();
+    if (cachedInput) {
+      $('#user-input').val(cachedInput);
+      // Adjust textarea height
+      const chatInput = document.getElementById('user-input');
+      if (chatInput) {
+        chatInput.style.height = 'auto';
+        chatInput.style.height = chatInput.scrollHeight + 'px';
       }
     }
+  });
 
-    // Restore cached input on page load
-    function restoreCachedInput() {
-      // First check for pending message (answer that was being sent when connection dropped)
-      const pendingMessage = localStorage.getItem(PENDING_KEY);
-      if (pendingMessage) {
-        $('#user-input').val(pendingMessage);
-        console.log('Restored answer that failed to send');
-      } else {
-        // Otherwise restore regular cached input
-        const cachedInput = localStorage.getItem(CACHE_KEY);
-        if (cachedInput) {
-          $('#user-input').val(cachedInput);
-          console.log('Restored unsent answer from cache');
-        }
-      }
-
-      // Adjust textarea height if we restored anything
-      const restoredValue = $('#user-input').val();
-      if (restoredValue) {
-        const chatInput = document.getElementById('user-input');
-        if (chatInput) {
-          chatInput.style.height = 'auto';
-          chatInput.style.height = chatInput.scrollHeight + 'px';
-        }
-      }
-    }
-
-    // Clear all caches after successful send
-    function clearCachedInput() {
-      localStorage.removeItem(CACHE_KEY);
-      localStorage.removeItem(PENDING_KEY);
-    }
-
-    // Save answer to pending cache (called just before sending)
-    function savePendingMessage(message) {
-      localStorage.setItem(PENDING_KEY, message);
-    }
-
-    // Restore answer to input field if send fails
-    function restorePendingMessage() {
-      const pendingMessage = localStorage.getItem(PENDING_KEY);
+  // Restore answer to input field if send fails (key-questions specific)
+  // This function recreates the entire input card if it was removed
+  function restorePendingMessage() {
+    const pendingMessage = localStorage.getItem(connectionHandler.storageKeys.pending);
       if (pendingMessage) {
         // Re-enable input card if it was removed
         if ($('#inputCard').length === 0) {
@@ -551,7 +367,7 @@
             </div>
           `);
           // Set status to offline since we're restoring after an error
-          updateConnectionStatus(false);
+          connectionHandler.updateConnectionStatus(false);
           setupAutoSave(); // Re-setup auto-save for new input field
         }
 
@@ -566,15 +382,6 @@
           chatInput.setSelectionRange(pendingMessage.length, pendingMessage.length);
         }
       }
-    }
-
-    // Setup auto-save with debounce
-    let autoSaveTimeout = null;
-    function setupAutoSave() {
-      $('#user-input').on('input', function() {
-        clearTimeout(autoSaveTimeout);
-        autoSaveTimeout = setTimeout(saveCachedInput, CACHE_INTERVAL);
-      });
     }
 
     var start = Date.now();
@@ -717,14 +524,14 @@
     function sendMessage() {
       var userInput = $('#user-input').val();
       if (userInput.trim() !== '') {
-        formattedUserInput = DOMPurify.sanitize(userInput.replace(/(?:\r\n|\r|\n)/g, '<br>'));
+        const sanitizedUserInput = DOMPurify.sanitize(userInput.replace(/(?:\r\n|\r|\n)/g, '<br>'));
 
         // Save answer to pending cache BEFORE clearing input
-        savePendingMessage(userInput);
+        connectionHandler.savePendingMessage(userInput);
 
         $('#user-input').val('');
         // Clear regular cache (but keep pending cache until success)
-        localStorage.removeItem(CACHE_KEY);
+        localStorage.removeItem(connectionHandler.storageKeys.cache);
         // Reset height to recalc scrollHeight
         chatInput.style.height = 'auto';
         chatInput.style.height = chatInput.scrollHeight + 'px';
@@ -740,7 +547,7 @@
             `<div id="${messageId}" class="col user-text-container">
               <div class="card user-text-bubble">
                 <div class="card-body">
-                  <p class="card-text">${formattedUserInput}</p>
+                  <p class="card-text">${sanitizedUserInput}</p>
                 </div>
               </div>
             </div>`);
@@ -765,9 +572,9 @@
             'message': userInput,
             csrfmiddlewaretoken: '{{ csrf_token }}'
           },
-          timeout: 30000, // 30 second timeout
+          timeout: CONFIG.AJAX_TIMEOUT,
           success: function(response) {
-            formattedResponseMessage = DOMPurify.sanitize(response.message.replace(/(?:\r\n|\r|\n)/g, '<br>'));
+            const sanitizedResponseMessage = DOMPurify.sanitize(response.message.replace(/(?:\r\n|\r|\n)/g, '<br>'));
 
             // delete loading bubble
             $('#loading-bubble').remove();
@@ -777,20 +584,17 @@
                 `<div class="col bot-text-container">
                   <div class="card bot-text-bubble">
                     <div class="card-body">
-                      <p class="card-text" id = "ai_message">${formattedResponseMessage}</p>
+                      <p class="card-text" id = "ai_message">${sanitizedResponseMessage}</p>
                     </div>
                   </div>
                 </div>`);
 
             // Answer sent successfully - clear ALL caches including pending
-            clearCachedInput();
+            connectionHandler.clearAllCaches();
 
-            // Update connection status to online (in case it was offline)
-            if (isConnectionDropped) {
-              isConnectionDropped = false;
-              updateConnectionStatus(true);
-              dismissConnectionNotification();
-            }
+            // Update connection status to online and dismiss notification
+            connectionHandler.updateConnectionStatus(true);
+            connectionHandler.dismissNotification();
 
             // add retry button to the page
             $("#questions-container").append("<button class=\"button-chat-send btn btn-primary mb-2\" type=\"button\" onclick=\"location.reload()\">Retry</button>");
@@ -804,21 +608,16 @@
             // Check if it's a network error or timeout
             if (status === 'timeout' || status === 'error' || xhr.status === 0) {
               // Keep the answer visible but add "Sync Pending" indicator
-              $(`#${messageId}`).append(
-                  `<div class="sync-pending-indicator">
-                    <small class="text-warning">
-                      <i class="bi bi-arrow-repeat"></i> Sync Pending
-                    </small>
-                  </div>`);
+              connectionHandler.addSyncPendingIndicator(messageId);
 
               // Add to pending sync queue
-              addToPendingSync(userInput, messageId);
+              connectionHandler.addToPendingSync(userInput, messageId);
 
               // Clear pending message cache since we've added it to sync queue
-              localStorage.removeItem(PENDING_KEY);
+              connectionHandler.clearPendingMessage();
 
               // Show connection dropped notification
-              showConnectionDroppedModal();
+              connectionHandler.showConnectionDroppedNotification();
             } else {
               // For non-network errors, remove the answer and restore to input
               $(`#${messageId}`).remove();
@@ -840,6 +639,84 @@
         });
       }
     }
+
+  // Custom sync function for key questions that shows AI responses
+  function syncKeyQuestionAnswer(messageText) {
+    return new Promise((resolve, reject) => {
+      $.ajax({
+        url: '{% url "key-questions" chat_id=chat.id question_id=question.id %}',
+        type: 'POST',
+        data: {
+          'message': messageText,
+          csrfmiddlewaretoken: '{{ csrf_token }}'
+        },
+        timeout: CONFIG.AJAX_TIMEOUT,
+        success: function(response) {
+          resolve(response);
+        },
+        error: function(xhr, status, error) {
+          reject(new Error(`Sync failed: ${status}`));
+        }
+      });
+    });
+  }
+
+  // Override the connection handler's sync to use our custom logic for key questions
+  connectionHandler.syncPendingMessages = async function() {
+    const pendingMessages = this.getPendingMessages();
+    if (pendingMessages.length === 0) {
+      return Promise.resolve();
+    }
+
+    console.log(`Attempting to sync ${pendingMessages.length} pending answer(s)...`);
+
+    const message = pendingMessages[0];
+
+    try {
+      const response = await syncKeyQuestionAnswer(message.message);
+      const sanitizedAiResponse = DOMPurify.sanitize(response.message.replace(/(?:\r\n|\r|\n)/g, '<br>'));
+
+      // Show sync successful
+      connectionHandler.showSyncSuccessful(message.elementId);
+
+      // delete loading bubble if it exists
+      $('#loading-bubble').remove();
+
+      // Show the AI response bubble
+      $('#chat-messages').append(
+          `<div class="col bot-text-container">
+            <div class="card bot-text-bubble">
+              <div class="card-body">
+                <p class="card-text" id="ai_message">${sanitizedAiResponse}</p>
+              </div>
+            </div>
+          </div>`);
+
+      // Add retry button to the page if not already present
+      if ($('.button-chat-send.mb-2').length === 0) {
+        $("#questions-container").append("<button class=\"button-chat-send btn btn-primary mb-2\" type=\"button\" onclick=\"location.reload()\">Retry</button>");
+      }
+
+      // Remove from queue
+      pendingMessages.shift();
+      this.savePendingMessages(pendingMessages);
+
+      console.log('Answer synced successfully');
+      this.updateConnectionStatus(true);
+      updateScroll();
+
+      // If more messages, sync them
+      if (pendingMessages.length > 0) {
+        setTimeout(() => this.syncPendingMessages(), CONFIG.SYNC_RETRY_DELAY);
+      }
+
+      return response;
+    } catch (error) {
+      console.log('Sync failed, will retry later');
+      this.updateConnectionStatus(false);
+      throw error;
+    }
+  };
 
     // send text on enter
     $('#user-input').on('keypress', function(e) {
