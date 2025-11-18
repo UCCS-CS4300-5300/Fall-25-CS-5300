@@ -2,52 +2,53 @@
 CLAUDE CODE SESSION ANALYSIS REPORT
 ======================================================================
 
-Generated: 2025-11-15 13:14:53
+Generated: 2025-11-18 10:37:25
 Mode: Incremental (merged with existing data)
 
-Total Sessions: 62
-Meaningful Work Sessions: 23
-Total Code Edits: 381
-Total Test Runs: 62
+Total Sessions: 88
+Meaningful Work Sessions: 19
+Total Code Edits: 263
+Total Test Runs: 11
 
 ----------------------------------------------------------------------
 SESSION CATEGORIZATION
 ----------------------------------------------------------------------
-New: 10 (16.1%)
-Refactor: 13 (21.0%)
-Exploratory: 10 (16.1%)
+Test_only: 1 (1.1%)
+New: 17 (19.3%)
+Exploratory: 7 (8.0%)
+Refactor: 1 (1.1%)
 
 ----------------------------------------------------------------------
 Q1.2: TEST FAILURE ANALYSIS
 ----------------------------------------------------------------------
-Sessions with Tests: 21
-Total Test Runs: 92
+Sessions with Tests: 23
+Total Test Runs: 103
 
 FIRST RUN ANALYSIS (after test file edits):
-  Sessions with First Runs: 13
-  Total First Runs: 34
-  Failed First Runs: 20
-  First Run Failure Rate (by session): 84.62%
-  First Run Failure Rate (by run): 58.82%
+  Sessions with First Runs: 15
+  Total First Runs: 38
+  Failed First Runs: 22
+  First Run Failure Rate (by session): 80.0%
+  First Run Failure Rate (by run): 57.89%
 
 ITERATION ANALYSIS:
-  Average Test Iterations: 4.38
-  Regression Detection Rate: 42.86%
+  Average Test Iterations: 4.48
+  Regression Detection Rate: 47.83%
 
 Note: First run = first test execution after editing a test file
 
 ----------------------------------------------------------------------
 Q2.1/Q2.2: REPROMPT ANALYSIS
 ----------------------------------------------------------------------
-Meaningful Sessions: 39
-Avg Reprompts/Session: 107.9
-Total Reprompts: 4208
+Meaningful Sessions: 58
+Avg Reprompts/Session: 96.6
+Total Reprompts: 5603
 Success Rate: 100.0%
 
 Reason Distribution:
-  Errors: 17.11%
-  Refinements: 7.82%
-  Incomplete: 2.26%
-  Other: 72.81%
+  Errors: 19.69%
+  Refinements: 7.21%
+  Incomplete: 2.5%
+  Other: 70.61%
 
 ======================================================================
