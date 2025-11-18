@@ -177,6 +177,7 @@ class UserDataUtilsTest(TestCase):
     def test_export_user_data_with_resumes(self):
         """Test exporting user data with resumes"""
         UploadedResume.objects.create(
+            user=self.user,
             title='My Resume',
             content='Resume content',
             skills=['Python', 'Django'],
@@ -193,6 +194,7 @@ class UserDataUtilsTest(TestCase):
     def test_export_user_data_with_interviews(self):
         """Test exporting user data with interviews"""
         Chat.objects.create(
+            owner=self.user,
             title='Test Interview',
             difficulty=5,
             messages=[
@@ -509,6 +511,7 @@ class DataDeletionFunctionalityTest(TestCase):
             content='Job content'
         )
         Chat.objects.create(
+            owner=self.user,
             title='Interview',
             messages=[{'role': 'user', 'content': 'Test'}]
         )
@@ -819,6 +822,7 @@ class EdgeCaseTest(TestCase):
 
         # Create resume with file reference
         UploadedResume.objects.create(
+            user=self.user,
             title='Test Resume',
             content='Test content',
             file='uploads/test.pdf'
