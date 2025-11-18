@@ -428,7 +428,7 @@ class TestSyncStatusIndicators(TestCase):
 
         self.assertEqual(response.status_code, 200)
         # Check that the sync function replaces the pending indicator
-        self.assertContains(response, '.sync-pending-indicator').remove()')
+        self.assertContains(response, "sync-pending-indicator').remove()")
         self.assertContains(response, '.sync-successful-indicator')
         # Check that successful indicator is removed after 3 seconds
         self.assertContains(response, 'setTimeout')
