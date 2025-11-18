@@ -267,8 +267,14 @@
       font-weight: 500;
     }
 
-    .sync-pending-indicator i {
+    /* Icon rotation for pending sync - uses bi-arrow-repeat icon */
+    .sync-pending-indicator i.bi-arrow-repeat {
       animation: rotate 2s linear infinite;
+    }
+
+    /* Text warning color for pending sync */
+    .sync-pending-indicator .text-warning {
+      color: var(--warning, #f39c12);
     }
 
     @keyframes rotate {
@@ -294,6 +300,11 @@
       gap: 0.25rem;
       font-size: 0.8rem;
       font-weight: 500;
+      color: var(--success);
+    }
+
+    /* Success icon - uses bi-check-circle-fill icon */
+    .sync-successful-indicator i.bi-check-circle-fill {
       color: var(--success);
     }
 
@@ -591,6 +602,8 @@
                 chatInput.style.height = chatInput.scrollHeight + 'px';
                 chatInput.focus();
                 chatInput.setSelectionRange(cachedMessage.length, cachedMessage.length);
+                // Clear from localStorage after restoring
+                localStorage.removeItem(pendingMsg);
               }
 
               // Show generic error message in chat
