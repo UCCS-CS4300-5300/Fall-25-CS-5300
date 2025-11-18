@@ -345,34 +345,41 @@ class TestMessageCaching(TestCase):
         self.client.force_login(self.user)
 
     def testAutoSaveConfiguration(self):
-        """Test that auto-save is configured."""
+        """Test that auto-save is configured via connection handler."""
         url = reverse('chat-view', args=[self.chat.id])
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200)
+        # Check for setupAutoSave function (still in template)
         self.assertContains(response, 'setupAutoSave')
-        self.assertContains(response, 'CACHE_INTERVAL')
-        self.assertContains(response, '1000')  # 1 second interval
+        # Check for CONFIG usage (from connection-handler.js)
+        self.assertContains(response, 'CONFIG')
+        self.assertContains(response, 'connectionHandler.saveCachedInput')
 
     def testLocalStorageOperationsPresent(self):
-        """Test that localStorage operations are configured."""
+        """Test that localStorage operations are available via connection handler."""
         url = reverse('chat-view', args=[self.chat.id])
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'localStorage.setItem')
-        self.assertContains(response, 'localStorage.getItem')
+        # LocalStorage operations are now in connection-handler.js module
+        # Check that the module is included and connectionHandler is used
+        self.assertContains(response, 'connection-handler.js')
+        self.assertContains(response, 'connectionHandler')
+        # Some localStorage operations still exist in template (e.g., for cache removal)
         self.assertContains(response, 'localStorage.removeItem')
 
     def testPendingMessageProtection(self):
-        """Test that pending message protection is configured."""
+        """Test that pending message protection is configured via connection handler."""
         url = reverse('chat-view', args=[self.chat.id])
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'savePendingMessage')
-        self.assertContains(response, 'restorePendingMessage')
-        self.assertContains(response, 'PENDING_KEY')
+        # These methods are now part of connectionHandler
+        self.assertContains(response, 'connectionHandler.savePendingMessage')
+        self.assertContains(response, 'connectionHandler.clearPendingMessage')
+        # Check that connectionHandler has storage keys
+        self.assertContains(response, 'connectionHandler')
 
     def testMessageRestorationOnError(self):
         """Test that messages are restored on send error."""
@@ -380,9 +387,10 @@ class TestMessageCaching(TestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200)
-        # Check that error handler restores the message
-        self.assertContains(response, 'restorePendingMessage()')
+        # Check that error messages mention restoration
         self.assertContains(response, 'restored to the input field')
+        # Check that there's error handling in sendMessage
+        self.assertContains(response, 'error: function')
 
 
 class TestSyncStatusIndicators(TestCase):
@@ -395,23 +403,27 @@ class TestSyncStatusIndicators(TestCase):
         self.client.force_login(self.user)
 
     def testSyncPendingIndicatorCSSPresent(self):
-        """Test that Sync Pending indicator CSS is present."""
+        """Test that Sync Pending indicator CSS and logic are present."""
         url = reverse('chat-view', args=[self.chat.id])
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200)
+        # CSS is still in the template
         self.assertContains(response, '.sync-pending-indicator')
-        self.assertContains(response, 'Sync Pending')
+        # Logic is now in connection-handler.js via connectionHandler methods
+        self.assertContains(response, 'connectionHandler.addSyncPendingIndicator')
         self.assertContains(response, 'bi-arrow-repeat')
 
     def testSyncSuccessfulIndicatorCSSPresent(self):
-        """Test that Sync Successful indicator CSS is present."""
+        """Test that Sync Successful indicator CSS and logic are present."""
         url = reverse('chat-view', args=[self.chat.id])
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200)
+        # CSS is still in the template
         self.assertContains(response, '.sync-successful-indicator')
-        self.assertContains(response, 'Sync Successful')
+        # Logic is now in connection-handler.js via connectionHandler methods
+        self.assertContains(response, 'connectionHandler.showSyncSuccessful')
         self.assertContains(response, 'bi-check-circle-fill')
 
     def testSyncSuccessfulFadeOutAnimation(self):
@@ -437,12 +449,12 @@ class TestSyncStatusIndicators(TestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200)
-        # Check that the sync function replaces the pending indicator
-        self.assertContains(response, "sync-pending-indicator').remove()")
+        # Check that the custom sync override uses connectionHandler methods
+        self.assertContains(response, 'connectionHandler.showSyncSuccessful')
         self.assertContains(response, '.sync-successful-indicator')
-        # Check that successful indicator is removed after 3 seconds
-        self.assertContains(response, 'setTimeout')
-        self.assertContains(response, '3000')
+        # The timeout logic is now in connection-handler.js
+        # Check that we're calling the method from our custom sync function
+        self.assertContains(response, 'connectionHandler.syncPendingMessages')
 
     def testSyncPendingAddedOnNetworkError(self):
         """Test that Sync Pending is added when network error occurs."""
@@ -450,8 +462,9 @@ class TestSyncStatusIndicators(TestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200)
-        # Check that error handler adds sync pending indicator
-        self.assertContains(response, 'addToPendingSync')
+        # Check that error handler adds sync pending indicator via connectionHandler
+        self.assertContains(response, 'connectionHandler.addToPendingSync')
+        self.assertContains(response, 'connectionHandler.addSyncPendingIndicator')
         self.assertContains(response, 'text-warning')
 
     def testSyncIndicatorPositioning(self):

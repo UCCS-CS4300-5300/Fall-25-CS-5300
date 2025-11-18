@@ -666,7 +666,7 @@
       this.savePendingMessages(pendingMessages);
 
       console.log('Message synced successfully');
-      this.updateConnectionStatus(true);
+      connectionHandler.updateConnectionStatus(true);
       updateScroll();
 
       // If more messages, sync them
@@ -677,7 +677,7 @@
       return response;
     } catch (error) {
       console.log('Sync failed, will retry later');
-      this.updateConnectionStatus(false);
+      connectionHandler.updateConnectionStatus(false);
       throw error;
     }
   };
