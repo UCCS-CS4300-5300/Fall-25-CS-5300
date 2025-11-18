@@ -286,6 +286,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: [lint]
     if: always()
+    permissions:
+      contents: read
+      security-events: write
 
     steps:
     - name: Checkout code
@@ -303,30 +306,60 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r active_interview_backend/requirements.txt
-        pip install safety bandit
+        pip install safety bandit[sarif]
 
-    - name: Run Security Checks
+    - name: Run Safety Check
+      continue-on-error: true
+      run: |
+        safety check --output safety-report.txt || true
+
+    - name: Run Bandit Scan
+      continue-on-error: true
+      run: |
+        # Generate SARIF for GitHub Security
+        bandit -r . --configfile .bandit -f sarif -o bandit-results.sarif || true
+        # Generate human-readable report
+        bandit -r . --configfile .bandit -f json -o bandit-report.json || true
+        bandit -r . --configfile .bandit -f screen -o bandit-screen.txt || true
+
+    - name: Upload SARIF to GitHub Security
+      if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+      uses: github/codeql-action/upload-sarif@v3
+      continue-on-error: true
+      with:
+        sarif_file: bandit-results.sarif
+        category: bandit
+
+    - name: Display Security Report Summary
+      if: always()
       run: |
         {
           echo '# Security Scan Results'
           echo '## Safety Check (Dependency Vulnerabilities)'
           echo '```'
-          safety check || true
+          cat safety-report.txt || echo "Safety check failed or no issues found"
           echo '```'
           echo ''
           echo '## Bandit Scan (Code Security Issues)'
           echo '```'
-          bandit -r . --exclude './.git,./active_interview_backend/active_interview_app/tests' -f screen || true
+          cat bandit-screen.txt || echo "Bandit scan failed or no issues found"
           echo '```'
+          echo ''
+          echo '## View Detailed Results'
+          echo '- [Security Tab](https://github.com/${{ github.repository }}/security/code-scanning)'
+          echo '- Artifacts: bandit-report.json, safety-report.txt'
         } >> $GITHUB_STEP_SUMMARY
-        bandit -r . --exclude './.git,./active_interview_backend/active_interview_app/tests' -f json -o bandit-report.json || true
 
     - name: Upload Security Reports
       if: always()
       uses: actions/upload-artifact@v4
       with:
         name: security-reports
-        path: bandit-report.json
+        path: |
+          bandit-report.json
+          bandit-results.sarif
+          bandit-screen.txt
+          safety-report.txt
         retention-days: ${{ env.RETENTION_DAYS }}
 
   test:
