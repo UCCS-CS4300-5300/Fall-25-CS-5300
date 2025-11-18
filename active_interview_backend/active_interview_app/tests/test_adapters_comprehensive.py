@@ -26,7 +26,7 @@ class CustomSocialAccountAdapterComprehensiveTest(TestCase):
     def test_pre_social_login_with_existing_user(self):
         """Test pre_social_login when user already exists with same email"""
         # Create existing user
-        _existing_user = User.objects.create_user(
+        User.objects.create_user(
             email='existing@example.com',
             password='testpass'
         )
@@ -162,7 +162,7 @@ class CustomSocialAccountAdapterComprehensiveTest(TestCase):
             mock_parent.return_value = existing_user
 
             # Call save_user
-            _saved_user = self.adapter.save_user(request, mock_sociallogin)
+            self.adapter.save_user(request, mock_sociallogin)
             # Verify profile was updated to google
             profile.refresh_from_db()
             self.assertEqual(profile.auth_provider, 'google')

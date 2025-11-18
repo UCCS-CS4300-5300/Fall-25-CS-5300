@@ -30,12 +30,10 @@ from .models import (
     Chat,
     DataExportRequest,
     DeletionRequest,
-    ExportableReport,
     InterviewTemplate,
     RoleChangeRequest,
     UploadedJobListing,
-    UploadedResume,
-    UserProfile
+    UploadedResume
 )
 
 # Configure logger

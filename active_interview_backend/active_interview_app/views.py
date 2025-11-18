@@ -1763,8 +1763,8 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
 
             return rationales
 
-        except Exception as _e:
-  # noqa: F841            # If rationale generation fails, provide fallback text
+        except Exception:
+            # If rationale generation fails, provide fallback text
             return {
                 'professionalism': 'Unable to generate rationale at this time.',
                 'subject_knowledge': 'Unable to generate rationale at this time.',

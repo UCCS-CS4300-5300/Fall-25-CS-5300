@@ -9,7 +9,6 @@ from django.urls import reverse
 from django.utils import timezone
 from django.core.files.uploadedfile import SimpleUploadedFile
 from unittest.mock import patch
-import json
 import zipfile
 import io
 
@@ -19,9 +18,7 @@ from active_interview_app.models import (
     UploadedResume,
     UploadedJobListing,
     Chat,
-    ExportableReport,
-    UserProfile,
-    InterviewTemplate
+    ExportableReport
 )
 from active_interview_app.user_data_utils import (
     generate_anonymized_id,
@@ -179,7 +176,7 @@ class UserDataUtilsTest(TestCase):
 
     def test_export_user_data_with_resumes(self):
         """Test exporting user data with resumes"""
-        _resume = UploadedResume.objects.create(
+        UploadedResume.objects.create(
             title='My Resume',
             content='Resume content',
             skills=['Python', 'Django'],
@@ -195,7 +192,7 @@ class UserDataUtilsTest(TestCase):
 
     def test_export_user_data_with_interviews(self):
         """Test exporting user data with interviews"""
-        _chat = Chat.objects.create(
+        Chat.objects.create(
             title='Test Interview',
             difficulty=5,
             messages=[
@@ -511,7 +508,7 @@ class DataDeletionFunctionalityTest(TestCase):
             filename='job.txt',
             content='Job content'
         )
-        _chat = Chat.objects.create(
+        Chat.objects.create(
             title='Interview',
             messages=[{'role': 'user', 'content': 'Test'}]
         )
@@ -821,7 +818,7 @@ class EdgeCaseTest(TestCase):
         from active_interview_app.user_data_utils import delete_user_account
 
         # Create resume with file reference
-        _resume = UploadedResume.objects.create(
+        UploadedResume.objects.create(
             title='Test Resume',
             content='Test content',
             file='uploads/test.pdf'

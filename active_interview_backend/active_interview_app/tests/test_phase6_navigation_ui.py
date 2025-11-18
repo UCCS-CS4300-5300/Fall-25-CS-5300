@@ -14,7 +14,7 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from active_interview_app.models import (
-    UserProfile, Chat, InterviewTemplate, InvitedInterview
+    UserProfile, Chat, InterviewTemplate
 )
 from django.utils import timezone
 from datetime import timedelta

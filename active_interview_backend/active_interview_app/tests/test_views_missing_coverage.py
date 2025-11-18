@@ -7,7 +7,6 @@ from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from unittest.mock import patch, MagicMock
 import json
-import tempfile
 
 from active_interview_app.models import (
     UploadedResume,

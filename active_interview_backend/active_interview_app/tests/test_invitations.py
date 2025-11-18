@@ -20,7 +20,6 @@ import uuid
 from active_interview_app.models import (
     InvitedInterview,
     InterviewTemplate,
-    Chat,
     UserProfile
 )
 from active_interview_app.forms import InvitationCreationForm
@@ -705,7 +704,7 @@ class CandidateInvitationsViewTests(TestCase):
     def test_only_shows_candidate_own_invitations(self):
         """Test view only shows invitations for candidate's email"""
         # Create another candidate
-        _other_candidate = create_user_with_role(
+        create_user_with_role(
             'other@example.com',
             'pass',
             UserProfile.CANDIDATE

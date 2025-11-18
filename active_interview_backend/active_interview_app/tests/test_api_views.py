@@ -7,12 +7,8 @@ from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
 from unittest.mock import patch, Mock
 import json
-import io
 
 from active_interview_app.models import UploadedResume, UploadedJobListing, Chat
-from active_interview_app.views import (
-    UploadedResumeView, UploadedJobListingView, upload_file
-)
 
 
 class UploadedResumeViewTest(TestCase):

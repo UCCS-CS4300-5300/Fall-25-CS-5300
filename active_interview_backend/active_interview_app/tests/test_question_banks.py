@@ -398,7 +398,7 @@ class TagManagementTest(APITestCase):
         """Test merging multiple tags"""
         tag1 = Tag.objects.create(name="#sql")
         tag2 = Tag.objects.create(name="#database")
-        _tag3 = Tag.objects.create(name="#rdbms")
+        Tag.objects.create(name="#rdbms")
         # Create questions with these tags
         bank = QuestionBank.objects.create(name="Test", owner=self.user)
         q1 = Question.objects.create(

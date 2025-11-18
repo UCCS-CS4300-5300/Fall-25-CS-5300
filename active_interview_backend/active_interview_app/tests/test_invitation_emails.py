@@ -111,7 +111,7 @@ class InvitationEmailTests(TestCase):
 
         # Check HTML alternative exists
         self.assertEqual(len(email.alternatives), 1)
-        _html_content = email.alternatives[0][0]
+        email.alternatives[0][0]
 
         # Check calendar attachment
         self.assertEqual(len(email.attachments), 1)

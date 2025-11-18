@@ -73,7 +73,7 @@ class CreateChatFormInvalidTest(TestCase):
 
     def test_create_chat_missing_required_fields(self):
         """Test form invalid when missing required fields"""
-        _response = self.client.post(reverse('chat-create'), {
+        self.client.post(reverse('chat-create'), {
             # Missing listing_choice, difficulty, type
         })
 
@@ -92,7 +92,7 @@ class CreateChatFormInvalidTest(TestCase):
             file=fake_job_file
         )
 
-        _response = self.client.post(reverse('chat-create'), {
+        self.client.post(reverse('chat-create'), {
             'listing_choice': job_listing.id,
             'difficulty': 999,  # Invalid value
             'type': 'GEN'
@@ -115,7 +115,7 @@ class CreateChatNoCreateButtonTest(TestCase):
 
     def test_create_chat_post_without_create_button(self):
         """Test POST to create chat without 'create' in POST data"""
-        _response = self.client.post(reverse('chat-create'), {
+        self.client.post(reverse('chat-create'), {
         })
 
         # Should not process the form
@@ -479,7 +479,7 @@ class EditResumeFormInvalidTest(TestCase):
 
     def test_edit_resume_invalid_form(self):
         """Test edit resume with invalid form data"""
-        _response = self.client.post(
+        self.client.post(
             {
                 'title': '',  # Empty title should be invalid
                 'content': ''
@@ -512,7 +512,7 @@ class EditJobPostingFormInvalidTest(TestCase):
 
     def test_edit_job_posting_invalid_form(self):
         """Test edit job posting with invalid form data"""
-        _response = self.client.post(
+        self.client.post(
             {
                 'title': '',  # Empty title
                 'content': ''

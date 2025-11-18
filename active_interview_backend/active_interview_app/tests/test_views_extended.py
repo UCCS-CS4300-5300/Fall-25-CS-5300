@@ -13,8 +13,6 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from unittest.mock import patch, Mock
 from unittest import skip
 import json
-import tempfile
-import os
 
 
 class RegisterViewTest(TestCase):
@@ -388,7 +386,7 @@ class ResultsChatViewTest(TestCase):
 
     def test_results_chat_requires_ownership(self):
         """Test user can only view their own chat results"""
-        _other_user = User.objects.create_user(
+        User.objects.create_user(
             password='testpass123'
         )
         self.client.login(username='otheruser', password='testpass123')

@@ -10,7 +10,7 @@ from unittest.mock import patch
 import json
 
 from active_interview_app.models import (
-    UploadedResume, UploadedJobListing, Chat, UserProfile
+    UploadedResume, UploadedJobListing, Chat
 )
 from active_interview_app import views
 
@@ -181,12 +181,12 @@ class ProfileViewTest(TestCase):
         # Create test data
         fake_resume = SimpleUploadedFile("resume.pdf", b"resume")
         self.resume = UploadedResume.objects.create(
-            user= self.user,
-            title= 'Test Resume',
-            content= 'Content',
-            filesize= 100,
-            original_filename= 'resume.pdf',
-            file= fake_resume
+            user=self.user,
+            title='Test Resume',
+            content='Content',
+            filesize=100,
+            original_filename='resume.pdf',
+            file=fake_resume
         )
 
         fake_job = SimpleUploadedFile("job.txt", b"job")
@@ -333,7 +333,7 @@ class CreateChatViewTest(TestCase):
     @patch('active_interview_app.views.ai_available', return_value=False)
     def test_create_chat_post_ai_disabled(self, mockai_available):
         """Test CreateChat POST when AI is disabled"""
-        _response = self.client.post(reverse('chat-create'), {
+        self.client.post(reverse('chat-create'), {
             'create': 'true',
             'title': 'Test Chat',
             'type': Chat.GENERAL,
@@ -419,11 +419,14 @@ class EditChatViewTest(TestCase):
 
     def test_edit_chat_post_valid(self):
         """Test EditChat POST with valid data"""
-        response = self.client.post(reverse('chat-edit',
-    args=[self.chat.id]),
-    { 'update': 'true',
-    'title': 'Updated Title',
-     'difficulty': 8 })
+        response = self.client.post(
+            reverse('chat-edit', args=[self.chat.id]),
+            {
+                'update': 'true',
+                'title': 'Updated Title',
+                'difficulty': 8
+            }
+        )
 
         # Should redirect to chat view
         self.assertEqual(response.status_code, 302)

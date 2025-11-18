@@ -10,7 +10,6 @@ from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from unittest.mock import patch, MagicMock
 import json
-import tempfile
 
 from active_interview_app.models import (
     UploadedResume,
@@ -219,7 +218,7 @@ class ViewsCompleteCoverageTest(TestCase):
 
     def test_register_valid_form(self):
         """Test user registration with valid form"""
-        _response = self.client.post(reverse('register_page'), {
+        self.client.post(reverse('register_page'), {
             'email': 'new@test.com',
             'password1': 'TestPass123!@#',
             'password2': 'TestPass123!@#',
@@ -283,7 +282,7 @@ class ViewsCompleteCoverageTest(TestCase):
             file=fake_resume
         )
 
-        _response = self.client.post(reverse('chat-create'), {
+        self.client.post(reverse('chat-create'), {
             'listing_choice': self.job_listing.id,
             'resume_choice': resume.id,
             'difficulty': 5,
@@ -302,7 +301,7 @@ class ViewsCompleteCoverageTest(TestCase):
         """Test CreateChat POST without resume when AI unavailable"""
         mock_ai.return_value = False
 
-        _response = self.client.post(reverse('chat-create'), {
+        self.client.post(reverse('chat-create'), {
             'listing_choice': self.job_listing.id,
             'difficulty': 3,
             'type': 'ISK'
@@ -334,7 +333,7 @@ class ViewsCompleteCoverageTest(TestCase):
             mock_response1, mock_response2
         ]
 
-        _response = self.client.post(reverse('chat-create'), {
+        self.client.post(reverse('chat-create'), {
             'listing_choice': self.job_listing.id,
             'difficulty': 5,
             'type': 'GEN'
@@ -438,7 +437,7 @@ class ViewsCompleteCoverageTest(TestCase):
             messages=[{"role": "system", "content": "Selected level: <<5>>"}]
         )
 
-        _response = self.client.post(
+        self.client.post(
             {
                 'update': 'true',
                 'difficulty': 7
@@ -485,7 +484,7 @@ class ViewsCompleteCoverageTest(TestCase):
             ]
         )
 
-        _response = self.client.post(
+        self.client.post(
             {'restart': 'true'}
         )
 
@@ -824,9 +823,9 @@ class ViewsCompleteCoverageTest(TestCase):
         mock_file_type.extension = 'exe'
         mock_filetype.guess.return_value = mock_file_type
 
-        exe_file = SimpleUploadedFile("test.exe", b"executable")
+        SimpleUploadedFile("test.exe", b"executable")
 
-        _response = self.client.post(reverse('upload_file'), {
+        self.client.post(reverse('upload_file'), {
             'title': 'Invalid File'
         })
 
@@ -837,9 +836,9 @@ class ViewsCompleteCoverageTest(TestCase):
         """Test upload_file when filetype.guess returns None"""
         mock_filetype.guess.return_value = None
 
-        file = SimpleUploadedFile("test.txt", b"text content")
+        SimpleUploadedFile("test.txt", b"text content")
 
-        _response = self.client.post(reverse('upload_file'), {
+        self.client.post(reverse('upload_file'), {
             'title': 'Test'
         })
 
@@ -855,9 +854,9 @@ class ViewsCompleteCoverageTest(TestCase):
         mock_filetype.guess.return_value = mock_file_type
         mock_pymupdf.to_markdown.side_effect = Exception('Processing error')
 
-        pdf_file = SimpleUploadedFile("test.pdf", b"PDF content")
+        SimpleUploadedFile("test.pdf", b"PDF content")
 
-        _response = self.client.post(reverse('upload_file'), {
+        self.client.post(reverse('upload_file'), {
             'title': 'Test'
         })
 
@@ -898,7 +897,7 @@ class ViewsCompleteCoverageTest(TestCase):
             file=fake_file
         )
 
-        _response = self.client.post(
+        self.client.post(
             {
                 'title': 'Updated Resume',
                 'content': 'Updated content'
@@ -989,7 +988,7 @@ class ViewsCompleteCoverageTest(TestCase):
     def test_uploaded_resume_view_get(self):
         """Test UploadedResumeView GET"""
         fake_file = SimpleUploadedFile("resume.pdf", b"content")
-        _resume = UploadedResume.objects.create(
+        UploadedResume.objects.create(
             title='Resume',
             content='Content',
             filesize=100,

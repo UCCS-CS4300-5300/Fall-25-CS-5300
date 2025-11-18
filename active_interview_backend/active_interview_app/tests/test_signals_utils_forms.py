@@ -5,8 +5,6 @@ from django.test import TestCase
 from django.contrib.auth.models import User, Group
 from django.core.files.uploadedfile import SimpleUploadedFile
 from unittest.mock import patch, mock_open
-import os
-import tempfile
 
 from active_interview_app.models import (
     UserProfile, UploadedResume, UploadedJobListing, Chat

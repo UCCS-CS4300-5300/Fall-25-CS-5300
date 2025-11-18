@@ -13,7 +13,6 @@ from active_interview_app.models import (
 )
 from unittest.mock import patch, Mock
 import json
-import re
 
 
 class AboutUsViewTest(TestCase):
@@ -75,7 +74,7 @@ class RestartChatViewTest(TestCase):
 
     def test_restart_chat_requires_ownership(self):
         """Test user can only restart their own chats"""
-        _other_user = User.objects.create_user(
+        User.objects.create_user(
             password='testpass123'
         )
         self.client.login(username='otheruser', password='testpass123')
@@ -462,7 +461,7 @@ class CreateChatViewComprehensiveTest(TestCase):
             'resume_choice': self.resume.id
         }
 
-        _response = self.client.post(reverse('chat-create'), data)
+        self.client.post(reverse('chat-create'), data)
         # Should still create chat but with empty key_questions
         chat = Chat.objects.get(title='Chat No JSON')
         self.assertEqual(chat.key_questions, [])

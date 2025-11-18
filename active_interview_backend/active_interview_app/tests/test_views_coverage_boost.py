@@ -3,7 +3,6 @@ Tests to boost views.py coverage to >80%
 Focuses on untested methods and code paths
 """
 
-import json
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.urls import reverse
@@ -125,10 +124,10 @@ class GenerateReportAITest(TestCase):
             with patch('active_interview_app.views.get_openai_client') as mock_client:
                 mock_client.return_value.chat.completions.create.side_effect = Exception(
                     'API Error')
-                _response = self.client.post(url, follow=True)
+                response = self.client.post(url, follow=True)
 
         # Should still create report with default values
-        self.assertEqual(_response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
         report = ExportableReport.objects.get(chat=self.chat)
         self.assertEqual(report.professionalism_score, 0)
 
@@ -144,7 +143,7 @@ class GenerateReportAITest(TestCase):
         with patch('active_interview_app.views.ai_available', return_value=True):
             with patch('active_interview_app.views.get_openai_client') as mock_client:
                 mock_client.return_value.chat.completions.create.return_value = mock_response
-                _response = self.client.post(url, follow=True)
+                self.client.post(url, follow=True)
         report = ExportableReport.objects.get(chat=self.chat)
         # Should default to 0 when parsing fails
         self.assertEqual(report.professionalism_score, 0)
@@ -161,7 +160,7 @@ class GenerateReportAITest(TestCase):
         with patch('active_interview_app.views.ai_available', return_value=True):
             with patch('active_interview_app.views.get_openai_client') as mock_client:
                 mock_client.return_value.chat.completions.create.return_value = mock_response
-                _response = self.client.post(url, follow=True)
+                self.client.post(url, follow=True)
         report = ExportableReport.objects.get(chat=self.chat)
         self.assertEqual(report.professionalism_score, 0)
 
@@ -195,7 +194,7 @@ Overall: Great performance.
 
                 mock_client.return_value.chat.completions.create.side_effect = [
                     mock_scores, mock_feedback, mock_rationale]
-                _response = self.client.post(url, follow=True)
+                self.client.post(url, follow=True)
         report = ExportableReport.objects.get(chat=self.chat)
         self.assertIn('professional behavior',
                       report.professionalism_rationale)
@@ -235,7 +234,7 @@ Overall: Good.
 
                 mock_client.return_value.chat.completions.create.side_effect = [
                     mock_scores, mock_feedback, mock_rationale]
-                _response = self.client.post(url, follow=True)
+                self.client.post(url, follow=True)
         report = ExportableReport.objects.get(chat=self.chat)
         # Should capture multiline
         self.assertIn('posture', report.professionalism_rationale)
@@ -262,7 +261,7 @@ Overall: Good.
                     mock_feedback,
                     Exception('Rationale API error')
                 ]
-                _response = self.client.post(url, follow=True)
+                self.client.post(url, follow=True)
         report = ExportableReport.objects.get(chat=self.chat)
         # Should have fallback text
         self.assertIn('Unable to generate', report.professionalism_rationale)
@@ -301,7 +300,7 @@ class DownloadCSVTest(TestCase):
         self.chat.resume = resume
         self.chat.save()
 
-        _report = ExportableReport.objects.create(
+        ExportableReport.objects.create(
             professionalism_score=85,
             overall_score=80,
             professionalism_rationale='Good',
@@ -322,7 +321,7 @@ class DownloadCSVTest(TestCase):
 
     def test_download_csv_score_ratings(self):
         """Test CSV includes correct score ratings"""
-        _report = ExportableReport.objects.create(
+        ExportableReport.objects.create(
             professionalism_score=95,  # Excellent
             subject_knowledge_score=82,  # Good
             clarity_score=68,  # Fair

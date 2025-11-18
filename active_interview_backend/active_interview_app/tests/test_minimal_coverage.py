@@ -9,8 +9,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 
 from active_interview_app.models import (
     UploadedResume,
-    UploadedJobListing,
-    Chat
+    UploadedJobListing
 )
 from active_interview_app.merge_stats_models import MergeTokenStats
 from active_interview_app.token_usage_models import TokenUsage
@@ -189,7 +188,7 @@ class ViewsRegisterTest(TestCase):
         """Test registration creates user and adds to group"""
         client = Client()
 
-        _response = client.post(reverse('register_page'), {
+        client.post(reverse('register_page'), {
             'email': 'new@example.com',
             'password1': 'TestPassword123!',
             'password2': 'TestPassword123!',

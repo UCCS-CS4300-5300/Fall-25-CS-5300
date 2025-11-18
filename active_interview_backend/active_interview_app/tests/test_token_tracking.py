@@ -165,7 +165,7 @@ class TokenUsageModelTest(TestCase):
             prompt_tokens=100,
             completion_tokens=50
         )
-        _token_id = token_usage.id
+        token_usage.id
 
         token_usage.refresh_from_db()
         self.assertIsNone(token_usage.user)
@@ -367,7 +367,7 @@ class MergeTokenStatsModelTest(TestCase):
             merge_commit_sha='abc123',
             merged_by=self.user
         )
-        _merge_id = merge_stats.id
+        merge_stats.id
 
         merge_stats.refresh_from_db()
         self.assertIsNone(merge_stats.merged_by)
