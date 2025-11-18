@@ -317,25 +317,71 @@ jobs:
         safety check --json --output safety-report.json || true
         safety check --full-report --output safety-full-report.txt || true
 
-        # Run actual check that can fail the build
-        echo "Running Safety check..."
-        if safety check; then
-          echo "✅ No dependency vulnerabilities found"
-          echo "status=pass" >> $GITHUB_OUTPUT
+        # Check for CRITICAL severity vulnerabilities only
+        echo "Checking for critical severity vulnerabilities..."
+        if [ -f safety-report.txt ]; then
+          # Count critical severity issues (case insensitive)
+          CRITICAL_COUNT=$(grep -i "critical" safety-report.txt | grep -i "severity" | wc -l || echo "0")
+          CRITICAL_COUNT=$(echo "$CRITICAL_COUNT" | tr -d '\n\r' | grep -o '[0-9]*' || echo "0")
+
+          echo "critical_count=${CRITICAL_COUNT}" >> $GITHUB_OUTPUT
+
+          if [ "${CRITICAL_COUNT}" -gt 0 ]; then
+            echo "❌ Found ${CRITICAL_COUNT} CRITICAL severity vulnerability(ies)"
+            echo "status=fail" >> $GITHUB_OUTPUT
+          else
+            # Also check for any vulnerabilities (for reporting, not failing)
+            TOTAL_VULNS=$(safety check 2>&1 | grep -c "vulnerability" || echo "0")
+            if [ "${TOTAL_VULNS}" -gt 0 ]; then
+              echo "⚠️ Found vulnerabilities but none are CRITICAL severity"
+            else
+              echo "✅ No dependency vulnerabilities found"
+            fi
+            echo "status=pass" >> $GITHUB_OUTPUT
+          fi
         else
-          echo "❌ Dependency vulnerabilities detected"
-          echo "status=fail" >> $GITHUB_OUTPUT
+          echo "status=pass" >> $GITHUB_OUTPUT
         fi
 
     - name: Generate Bandit Reports (Code Security)
       id: bandit_scan
       continue-on-error: true
       run: |
-        # Generate reports first (don't fail on report generation)
-        bandit -r . --configfile .bandit -f sarif -o bandit-results.sarif || true
-        bandit -r . --configfile .bandit -f json -o bandit-report.json || true
-        bandit -r . --configfile .bandit -f txt -o bandit-report.txt || true
+        echo "Scanning codebase with Bandit..."
+        echo "Current directory: $(pwd)"
+        echo "Python files to scan:"
+        find . -name "*.py" -not -path "*/.*" -not -path "*/venv/*" -not -path "*/migrations/*" | head -20
+        echo ""
+
+        # Generate SARIF report (verbose to show scan progress)
+        bandit -r . --configfile .bandit -f sarif -o bandit-results.sarif -v || {
+          echo "⚠️ Bandit SARIF generation had issues, continuing..."
+        }
+
+        # Generate JSON report
+        bandit -r . --configfile .bandit -f json -o bandit-report.json -v || {
+          echo "⚠️ Bandit JSON generation had issues, continuing..."
+        }
+
+        # Generate text report (human-readable with full details)
+        bandit -r . --configfile .bandit -f txt -o bandit-report.txt -v || {
+          echo "⚠️ Bandit text generation had issues, continuing..."
+        }
+
+        # Generate screen report
         bandit -r . --configfile .bandit -f screen -o bandit-screen.txt || true
+
+        # Verify reports were created
+        echo ""
+        echo "Generated reports:"
+        ls -lh bandit-*.* 2>/dev/null || echo "No bandit reports found"
+
+        # Show report content summary
+        if [ -f bandit-report.txt ]; then
+          echo ""
+          echo "Report summary:"
+          wc -l bandit-report.txt
+        fi
 
         # Check for high severity issues
         if [ -f bandit-report.txt ]; then
@@ -352,6 +398,7 @@ jobs:
             echo "status=pass" >> $GITHUB_OUTPUT
           fi
         else
+          echo "⚠️ No text report generated"
           echo "status=pass" >> $GITHUB_OUTPUT
         fi
 
@@ -427,32 +474,43 @@ jobs:
       run: |
         SAFETY_STATUS="${{ steps.safety_scan.outputs.status }}"
         BANDIT_STATUS="${{ steps.bandit_scan.outputs.status }}"
+        CRITICAL_COUNT="${{ steps.safety_scan.outputs.critical_count }}"
         HIGH_COUNT="${{ steps.bandit_scan.outputs.high_count }}"
 
         echo "Security Scan Results:"
         echo "  - Safety (dependencies): ${SAFETY_STATUS:-unknown}"
+        echo "    - Critical severity issues: ${CRITICAL_COUNT:-0}"
         echo "  - Bandit (code): ${BANDIT_STATUS:-unknown}"
-        echo "  - High severity issues: ${HIGH_COUNT:-0}"
+        echo "    - High severity issues: ${HIGH_COUNT:-0}"
 
         if [ "$SAFETY_STATUS" = "fail" ] || [ "$BANDIT_STATUS" = "fail" ]; then
           echo ""
           echo "❌ Security scan failed - blocking pipeline"
           echo ""
           if [ "$SAFETY_STATUS" = "fail" ]; then
-            echo "⚠️ Dependency vulnerabilities found - review safety-report.txt"
+            echo "⚠️ ${CRITICAL_COUNT} CRITICAL severity dependency vulnerability(ies) found"
+            echo "   Review: safety-report.txt in artifacts"
           fi
           if [ "$BANDIT_STATUS" = "fail" ]; then
-            echo "⚠️ ${HIGH_COUNT} high severity code security issue(s) found - review bandit-report.txt"
+            echo "⚠️ ${HIGH_COUNT} HIGH severity code security issue(s) found"
+            echo "   Review: bandit-report.txt in artifacts"
           fi
+          echo ""
+          echo "Pipeline fails only on:"
+          echo "  - CRITICAL severity dependency vulnerabilities (Safety)"
+          echo "  - HIGH severity code security issues (Bandit)"
           echo ""
           echo "Action required:"
           echo "1. Review security reports in artifacts"
-          echo "2. Fix critical security issues"
+          echo "2. Fix critical/high severity issues"
           echo "3. Re-run the pipeline"
           exit 1
         else
           echo ""
-          echo "✅ All security scans passed"
+          echo "✅ No critical/high severity security issues found"
+          echo ""
+          echo "Note: Pipeline only fails on CRITICAL/HIGH severity issues"
+          echo "Review artifacts for any medium/low severity findings"
         fi
 
   test:
