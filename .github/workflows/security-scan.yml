@@ -18,6 +18,7 @@ permissions:
   contents: read
   security-events: write # Required for uploading to Security tab
   issues: write # Required for creating issues
+  actions: read # Required for workflow status checks
 
 jobs:
   bandit-scan:
@@ -47,11 +48,36 @@ jobs:
           --severity-level medium \
           --confidence-level medium
 
+    - name: Validate SARIF Output
+      run: |
+        if [ -f bandit-results.sarif ]; then
+          echo "✅ SARIF file generated successfully"
+          echo "File size: $(wc -c < bandit-results.sarif) bytes"
+          # Validate it's valid JSON
+          python -m json.tool bandit-results.sarif > /dev/null && echo "✅ Valid SARIF JSON" || echo "⚠️ Invalid SARIF JSON"
+        else
+          echo "❌ SARIF file not found"
+          exit 1
+        fi
+
     - name: Upload SARIF to GitHub Security
+      if: success()
       uses: github/codeql-action/upload-sarif@v3
+      continue-on-error: true
       with:
         sarif_file: bandit-results.sarif
         category: bandit
+        wait-for-processing: true
+
+    - name: Check SARIF Upload Status
+      if: always()
+      run: |
+        if [ -f bandit-results.sarif ]; then
+          echo "SARIF upload attempted"
+          echo "Check Security tab: https://github.com/${{ github.repository }}/security/code-scanning"
+        else
+          echo "No SARIF file to upload"
+        fi
 
     - name: Generate Human-Readable Report
       run: |

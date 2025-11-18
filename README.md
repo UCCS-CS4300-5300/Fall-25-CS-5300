@@ -1,5 +1,9 @@
 # Active Interview Service
 
+[![CI/CD Pipeline](https://github.com/UCCS-CS4300-5300/Fall-25-CS-5300/actions/workflows/CI.yml/badge.svg)](https://github.com/UCCS-CS4300-5300/Fall-25-CS-5300/actions/workflows/CI.yml)
+[![Security Scan](https://github.com/UCCS-CS4300-5300/Fall-25-CS-5300/actions/workflows/security-scan.yml/badge.svg)](https://github.com/UCCS-CS4300-5300/Fall-25-CS-5300/actions/workflows/security-scan.yml)
+[![Code Scanning](https://img.shields.io/badge/Code%20Scanning-Enabled-brightgreen)](https://github.com/UCCS-CS4300-5300/Fall-25-CS-5300/security/code-scanning)
+
 AI-powered interview practice platform to help job seekers prepare for technical interviews with personalized feedback and scoring.
 
 ## Overview
