@@ -51,6 +51,64 @@
     color: var(--text-primary) !important;
   }
 
+  /* Error modal styling for dark mode compatibility */
+  .error-modal-header {
+    background-color: var(--error) !important;
+    color: var(--text-white) !important;
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .error-modal-body .alert-danger {
+    background-color: var(--surface) !important;
+    border: 2px solid var(--error) !important;
+    color: var(--text-primary) !important;
+  }
+
+  .error-modal-body .alert-danger .alert-heading {
+    color: var(--error) !important;
+  }
+
+  .error-modal-body .alert-info {
+    background-color: var(--surface-hover) !important;
+    border: 1px solid var(--info) !important;
+    color: var(--text-primary) !important;
+  }
+
+  .error-modal-body .table {
+    color: var(--text-primary);
+    background-color: var(--surface);
+  }
+
+  .error-modal-body .table thead {
+    background-color: var(--surface-hover) !important;
+    color: var(--text-primary) !important;
+  }
+
+  .error-modal-body .table-bordered {
+    border-color: var(--border) !important;
+  }
+
+  .error-modal-body .table-bordered th,
+  .error-modal-body .table-bordered td {
+    border-color: var(--border-light) !important;
+  }
+
+  .error-modal-body .table-danger {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+  }
+
+  [data-theme="dark"] .error-modal-body .table-danger {
+    background-color: rgba(220, 53, 69, 0.2) !important;
+  }
+
+  .error-modal-body .text-danger {
+    color: var(--error) !important;
+  }
+
+  .error-modal-body .text-success {
+    color: var(--success) !important;
+  }
+
   .question-bank-card:hover {
     box-shadow: var(--shadow-md);
   }
@@ -420,20 +478,27 @@
             </div>
           </div>
 
-          <div class="mb-3">
+          <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="disregardDifficulty">
+            <label class="form-check-label" for="disregardDifficulty">
+              Disregard difficulty (select questions randomly regardless of difficulty level)
+            </label>
+          </div>
+
+          <div class="mb-3" id="difficultyDistributionSection">
             <label class="form-label">Difficulty Distribution (%)</label>
             <div class="row">
               <div class="col-md-4">
                 <label for="easyPercentage" class="form-label">Easy</label>
-                <input type="number" class="form-control" id="easyPercentage" min="0" max="100" value="30" required>
+                <input type="number" class="form-control" id="easyPercentage" min="0" max="100" value="30">
               </div>
               <div class="col-md-4">
                 <label for="mediumPercentage" class="form-label">Medium</label>
-                <input type="number" class="form-control" id="mediumPercentage" min="0" max="100" value="50" required>
+                <input type="number" class="form-control" id="mediumPercentage" min="0" max="100" value="50">
               </div>
               <div class="col-md-4">
                 <label for="hardPercentage" class="form-label">Hard</label>
-                <input type="number" class="form-control" id="hardPercentage" min="0" max="100" value="20" required>
+                <input type="number" class="form-control" id="hardPercentage" min="0" max="100" value="20">
               </div>
             </div>
             <small class="text-muted">Percentages should total 100%</small>
@@ -489,14 +554,14 @@
 <div class="modal fade" id="validationErrorModal" tabindex="-1">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
-      <div class="modal-header bg-danger text-white">
+      <div class="modal-header error-modal-header">
         <h5 class="modal-title">
           <i class="bi bi-exclamation-triangle-fill me-2"></i>
           Unable to Assemble Interview
         </h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body error-modal-body">
         <div class="alert alert-danger mb-3">
           <h6 class="alert-heading" id="errorMainMessage">Error Message</h6>
           <p class="mb-0" id="errorDescription"></p>
@@ -506,7 +571,7 @@
           <h6 class="mb-3">Question Availability Breakdown:</h6>
           <div class="table-responsive">
             <table class="table table-bordered">
-              <thead class="table-light">
+              <thead>
                 <tr>
                   <th>Difficulty</th>
                   <th>Requested</th>
@@ -644,8 +709,14 @@
 
   // Create new question bank
   function createQuestionBank() {
-    const name = document.getElementById('bankName').value;
-    const description = document.getElementById('bankDescription').value;
+    const name = document.getElementById('bankName').value.trim();
+    const description = document.getElementById('bankDescription').value.trim();
+
+    // Validation
+    if (!name) {
+      showNotification('Please enter a name for the question bank', 'warning');
+      return;
+    }
 
     fetch('/api/question-banks/', {
       method: 'POST',
@@ -655,15 +726,59 @@
       },
       body: JSON.stringify({ name, description })
     })
-    .then(response => response.json())
+    .then(response => {
+      if (!response.ok) {
+        // Handle error responses
+        return response.json().then(errorData => {
+          throw { status: response.status, data: errorData };
+        });
+      }
+      return response.json();
+    })
     .then(data => {
-      bootstrap.Modal.getInstance(document.getElementById('createBankModal')).hide();
+      // Close modal
+      const modalElement = document.getElementById('createBankModal');
+      const modalInstance = bootstrap.Modal.getInstance(modalElement);
+      if (modalInstance) {
+        modalInstance.hide();
+      }
+
+      // Reset form
       document.getElementById('createBankForm').reset();
+
+      // Show success message
+      showNotification('Question bank created successfully!', 'success');
+
+      // Reload question banks
       loadQuestionBanks();
     })
     .catch(error => {
       console.error('Error creating question bank:', error);
-      showNotification('Failed to create question bank. Please try again.', 'error');
+
+      // Show specific error message if available
+      let errorMessage = 'Failed to create question bank. Please try again.';
+
+      if (error.status === 403) {
+        // Permission denied
+        errorMessage = 'Access denied. This feature is only available to Interviewers and Admins.';
+      } else if (error.status === 401) {
+        // Not authenticated
+        errorMessage = 'Please log in to create question banks.';
+      } else if (error.data) {
+        // Check for specific field errors
+        if (error.data.name) {
+          errorMessage = error.data.name[0]; // Display first error for name field
+        } else if (error.data.error) {
+          errorMessage = error.data.error;
+        } else if (error.data.detail) {
+          errorMessage = error.data.detail;
+        }
+      }
+
+      // Clean up modal backdrop if error occurs
+      cleanupModalBackdrops();
+
+      showNotification(errorMessage, 'error');
     });
   }
 
@@ -676,6 +791,10 @@
       .then(data => {
         document.getElementById('viewBankTitle').textContent = data.name;
         displayQuestions(data.questions);
+
+        // Clean up any stray backdrops before showing modal
+        cleanupModalBackdrops();
+
         new bootstrap.Modal(document.getElementById('viewBankModal')).show();
       })
       .catch(error => {
@@ -745,6 +864,21 @@
       }
     }
     return cookieValue;
+  }
+
+  // Cleanup function to remove any stray modal backdrops
+  function cleanupModalBackdrops() {
+    // Remove any leftover modal backdrops
+    document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+      backdrop.remove();
+    });
+    // Remove modal-open class from body if no modals are actually open
+    const openModals = document.querySelectorAll('.modal.show');
+    if (openModals.length === 0) {
+      document.body.classList.remove('modal-open');
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    }
   }
 
   // Track selected tags
@@ -887,11 +1021,21 @@
     })
     .then(response => response.json())
     .then(data => {
-      // Close add question modal
-      bootstrap.Modal.getInstance(document.getElementById('addQuestionModal')).hide();
+      // Get the add question modal
+      const addQuestionModalEl = document.getElementById('addQuestionModal');
+      const addQuestionModal = bootstrap.Modal.getInstance(addQuestionModalEl);
 
-      // Reload the question bank to show the new question
-      viewQuestionBank(currentBankId);
+      // Wait for the modal to be fully hidden before showing the view modal
+      addQuestionModalEl.addEventListener('hidden.bs.modal', function reloadBank() {
+        // Remove this event listener after it fires once
+        addQuestionModalEl.removeEventListener('hidden.bs.modal', reloadBank);
+
+        // Reload the question bank to show the new question
+        viewQuestionBank(currentBankId);
+      });
+
+      // Close add question modal
+      addQuestionModal.hide();
     })
     .catch(error => {
       console.error('Error saving question:', error);
@@ -929,6 +1073,20 @@
     autoAssembleModal.addEventListener('show.bs.modal', function() {
       loadAutoAssembleTags();
       loadQuestionBanksForSelect();
+    });
+
+    // Handle disregard difficulty checkbox
+    const disregardDifficultyCheckbox = document.getElementById('disregardDifficulty');
+    const difficultySection = document.getElementById('difficultyDistributionSection');
+
+    disregardDifficultyCheckbox.addEventListener('change', function() {
+      if (this.checked) {
+        // Hide difficulty distribution section
+        difficultySection.style.display = 'none';
+      } else {
+        // Show difficulty distribution section
+        difficultySection.style.display = 'block';
+      }
     });
   });
 
@@ -1010,6 +1168,7 @@
   function assembleInterview() {
     const title = document.getElementById('interviewTitle').value.trim();
     const questionCount = parseInt(document.getElementById('questionCount').value);
+    const disregardDifficulty = document.getElementById('disregardDifficulty').checked;
     const easyPercentage = parseInt(document.getElementById('easyPercentage').value);
     const mediumPercentage = parseInt(document.getElementById('mediumPercentage').value);
     const hardPercentage = parseInt(document.getElementById('hardPercentage').value);
@@ -1027,10 +1186,13 @@
       return;
     }
 
-    const totalPercentage = easyPercentage + mediumPercentage + hardPercentage;
-    if (totalPercentage !== 100) {
-      showNotification(`Difficulty percentages must total 100% (currently ${totalPercentage}%)`, 'warning');
-      return;
+    // Only validate difficulty percentages if not disregarding difficulty
+    if (!disregardDifficulty) {
+      const totalPercentage = easyPercentage + mediumPercentage + hardPercentage;
+      if (totalPercentage !== 100) {
+        showNotification(`Difficulty percentages must total 100% (currently ${totalPercentage}%)`, 'warning');
+        return;
+      }
     }
 
     // Build request data
@@ -1038,13 +1200,18 @@
       title: title,
       tag_ids: autoAssembleSelectedTagIds,
       question_count: questionCount,
-      difficulty_distribution: {
+      randomize: randomize,
+      disregard_difficulty: disregardDifficulty
+    };
+
+    // Only include difficulty distribution if not disregarding difficulty
+    if (!disregardDifficulty) {
+      requestData.difficulty_distribution = {
         easy: easyPercentage,
         medium: mediumPercentage,
         hard: hardPercentage
-      },
-      randomize: randomize
-    };
+      };
+    }
 
     if (questionBankId) {
       requestData.question_bank_id = parseInt(questionBankId);
@@ -1211,9 +1378,13 @@
     // Reset randomize checkbox
     document.getElementById('randomizeQuestions').checked = true;
 
+    // Reset disregard difficulty checkbox and show difficulty section
+    document.getElementById('disregardDifficulty').checked = false;
+    document.getElementById('difficultyDistributionSection').style.display = 'block';
+
     // Clear selected tags
     autoAssembleSelectedTagIds = [];
-    displayAutoAssembleSelectedTags();
+    updateAutoAssembleSelectedTagsDisplay();
   }
 
   // Show notification modal

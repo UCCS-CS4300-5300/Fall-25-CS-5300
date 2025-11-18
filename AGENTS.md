@@ -268,18 +268,25 @@ active_interview_backend/
 
 ### Models
 - User (Django built-in)
-- UploadedResume
-- UploadedJobListing
+- UploadedResume (AI-powered resume parsing)
+- UploadedJobListing (AI-powered job listing parsing with template recommendations)
 - Chat (interview sessions)
 - ExportableReport
+- InterviewTemplate (customizable interview structures)
 
 **Full reference:** [Models Documentation](docs/architecture/models.md)
 
 ### OpenAI Integration
 - Model: GPT-4o
 - Max tokens: 15,000
-- Client initialized at module level in `views.py`
+- Client initialized via `get_openai_client()` in `openai_utils.py`
 - System prompts generated dynamically
+- Used for: Chat interviews, resume parsing, job listing parsing
+
+**Key AI Services:**
+- **Resume Parsing** (`resume_parser.py`) - Extract skills, experience, education
+- **Job Listing Parsing** (`job_listing_parser.py`) - Extract required skills, seniority level, requirements, recommend templates (Issues #21, #51, #52, #53)
+- **Interview AI** (`views.py`) - Generate interview questions and feedback
 
 **Details:** [Architecture Overview - OpenAI Integration](docs/architecture/overview.md#openai-integration)
 

@@ -118,47 +118,128 @@ resume = UploadedResume.objects.create(
 
 ### UploadedJobListing
 
-**Location:** `active_interview_app/models.py`
+**Location:** `active_interview_app/models.py:104-184`
 
-Stores job posting documents with extracted text.
+**Issues:** [#21](https://github.com/UCCS-CS4300-5300/Fall-25-CS-5300/issues/21), [#51](https://github.com/UCCS-CS4300-5300/Fall-25-CS-5300/issues/51), [#52](https://github.com/UCCS-CS4300-5300/Fall-25-CS-5300/issues/52), [#53](https://github.com/UCCS-CS4300-5300/Fall-25-CS-5300/issues/53)
 
-**Fields:**
+Stores job posting documents with AI-powered parsing of requirements, skills, and seniority level.
+
+**Core Fields:**
 
 | Field | Type | Description | Constraints |
 |-------|------|-------------|-------------|
 | `user` | ForeignKey(User) | Job listing owner | CASCADE |
-| `title` | CharField(100) | User-defined title | Required |
-| `file` | FileField | Uploaded file (optional) | blank=True, null=True |
-| `text_content` | TextField | Job description text | Optional, blank=True |
-| `uploaded_at` | DateTimeField | Upload timestamp | auto_now_add=True |
+| `title` | CharField(255) | User-defined or extracted title | Optional |
+| `filename` | CharField(255) | Original filename | Required |
+| `file` | FileField | Uploaded file (optional) | upload_to='uploads/' |
+| `content` | TextField | Job description text | Required |
+| `created_at` | DateTimeField | Upload timestamp | auto_now_add=True |
+
+**AI-Parsed Fields (Issues #51, #52):**
+
+| Field | Type | Description | Structure |
+|-------|------|-------------|-----------|
+| `required_skills` | JSONField | Extracted skills | List: `["Python", "Django", "5+ years"]` |
+| `seniority_level` | CharField(50) | Detected seniority | Choices: entry/mid/senior/lead/executive |
+| `requirements` | JSONField | Structured requirements | See structure below |
+| `recommended_template` | ForeignKey(InterviewTemplate) | Auto-recommended template | SET_NULL, optional (Issue #53) |
+
+**Parsing Metadata:**
+
+| Field | Type | Description | Constraints |
+|-------|------|-------------|-------------|
+| `parsing_status` | CharField(20) | AI parsing status | Choices: pending/in_progress/success/error |
+| `parsing_error` | TextField | Error message if failed | Optional |
+| `parsed_at` | DateTimeField | Parsing completion time | Optional |
+
+**Seniority Level Choices:**
+- `entry` - Entry Level (0-2 years)
+- `mid` - Mid Level (2-5 years)
+- `senior` - Senior (5-8 years)
+- `lead` - Lead/Principal (8-12 years)
+- `executive` - Executive/Director (12+ years)
+
+**Requirements JSON Structure:**
+```json
+{
+  "education": ["Bachelor's in Computer Science", "Master's preferred"],
+  "years_experience": "5+",
+  "certifications": ["AWS Certified", "PMP"],
+  "responsibilities": [
+    "Lead backend development projects",
+    "Mentor junior developers",
+    "Design scalable systems"
+  ]
+}
+```
 
 **Methods:**
 - `__str__()` - Returns title
 
 **Creation Methods:**
-- **File upload:** Upload PDF/DOCX file
+- **File upload:** Upload PDF/DOCX/TXT file (content auto-extracted)
 - **Paste text:** Directly paste job description (no file)
+- **Auto-parsing:** AI parsing triggered automatically after creation
+
+**AI Parsing Service:**
+- **Module:** `job_listing_parser.py`
+- **Model:** OpenAI GPT-4o
+- **Extracts:** Required skills, seniority level, structured requirements
+- **Recommends:** Best matching interview template based on seniority
 
 **Deletion Behavior:**
 - When user is deleted: Job listing is deleted (CASCADE)
+- When recommended template deleted: Set to NULL (SET_NULL)
 
-**Example:**
+**Example (Manual Creation):**
 ```python
 # Via file upload
 job = UploadedJobListing.objects.create(
     user=user,
+    filename="senior_dev_role.txt",
     title="Senior Django Developer",
     file=uploaded_file,
-    text_content="Extracted job text..."
+    content="Extracted job text...",
+    parsing_status='pending'
 )
 
 # Via text paste
 job = UploadedJobListing.objects.create(
     user=user,
+    filename="",
     title="Senior Django Developer",
-    text_content="Pasted job description..."
+    content="Pasted job description...",
+    parsing_status='pending'
 )
 ```
+
+**Example (After AI Parsing):**
+```python
+# Get parsed job listing
+job = UploadedJobListing.objects.get(id=1)
+
+# Access parsed data
+print(job.required_skills)
+# ['Python', 'Django', 'PostgreSQL', '5+ years experience']
+
+print(job.seniority_level)
+# 'senior'
+
+print(job.requirements)
+# {
+#   'education': ["Bachelor's in CS"],
+#   'years_experience': '5+',
+#   'certifications': ['AWS'],
+#   'responsibilities': ['Lead projects', 'Mentor developers']
+# }
+
+print(job.recommended_template.name)
+# 'Senior System Design'
+```
+
+**Related Documentation:**
+- [Job Listing Ingestion Feature Guide](../features/job-listing-ingestion.md)
+- [API Reference - Job Listing Endpoints](api.md#job-listing-endpoints)
 
 ---
 
@@ -313,6 +394,101 @@ report = ExportableReport.objects.create(
     total_responses_given=10
 )
 ```
+
+---
+
+### InterviewTemplate
+
+**Location:** `active_interview_app/models.py:285-353`
+
+**Issues:** [#53](https://github.com/UCCS-CS4300-5300/Fall-25-CS-5300/issues/53), [#124](https://github.com/UCCS-CS4300-5300/Fall-25-CS-5300/issues/124)
+
+Stores customizable interview templates with question banks, tags, and difficulty distribution.
+
+**Fields:**
+
+| Field | Type | Description | Constraints |
+|-------|------|-------------|-------------|
+| `user` | ForeignKey(User) | Template owner | CASCADE |
+| `name` | CharField(200) | Template name | Required |
+| `description` | TextField | Template description | Optional |
+| `difficulty` | IntegerField | Overall difficulty (1-5) | validators=[1-5] |
+| `question_count` | IntegerField | Number of questions | validators=[1-50] |
+| `easy_percentage` | IntegerField | % easy questions | validators=[0-100], default=33 |
+| `medium_percentage` | IntegerField | % medium questions | validators=[0-100], default=34 |
+| `hard_percentage` | IntegerField | % hard questions | validators=[0-100], default=33 |
+| `tags` | ManyToManyField(Tag) | Template tags | Optional |
+| `question_banks` | ManyToManyField(QuestionBank) | Associated banks | Optional |
+| `created_at` | DateTimeField | Creation time | auto_now_add=True |
+| `updated_at` | DateTimeField | Last update | auto_now=True |
+
+**Difficulty Levels:**
+- `1` - Very Easy (Entry level, basic questions)
+- `2` - Easy (Junior level)
+- `3` - Medium (Mid-level, standard technical)
+- `4` - Hard (Senior level, complex scenarios)
+- `5` - Very Hard (Lead/Principal, system design)
+
+**Difficulty Distribution:**
+- Percentages must sum to 100 (validated via `validate_difficulty_distribution()`)
+- Default: 33% easy, 34% medium, 33% hard
+- Can be customized per template
+
+**Methods:**
+- `__str__()` - Returns template name
+- `validate_difficulty_distribution()` - Checks percentages sum to 100
+- `to_dict()` - Returns JSON-serializable dictionary
+
+**Deletion Behavior:**
+- When user deleted: Template deleted (CASCADE)
+- When tag deleted: Relationship removed (ManyToMany)
+- When question bank deleted: Relationship removed (ManyToMany)
+- When template deleted: Job listings with this recommendation set to NULL (SET_NULL)
+
+**Example:**
+```python
+from active_interview_app.models import InterviewTemplate, Tag, QuestionBank
+
+# Create template
+template = InterviewTemplate.objects.create(
+    user=user,
+    name="Senior System Design",
+    description="Advanced system design interview for senior engineers",
+    difficulty=4,
+    question_count=15,
+    easy_percentage=20,
+    medium_percentage=40,
+    hard_percentage=40
+)
+
+# Add tags
+backend_tag = Tag.objects.get(name="Backend")
+python_tag = Tag.objects.get(name="Python")
+template.tags.add(backend_tag, python_tag)
+
+# Add question banks
+system_design_bank = QuestionBank.objects.get(name="System Design")
+template.question_banks.add(system_design_bank)
+
+# Validate distribution
+assert template.validate_difficulty_distribution()  # Should be True
+```
+
+**Usage in Job Listing Recommendations:**
+
+Templates are automatically recommended based on job listing seniority:
+
+| Seniority Level | Recommended Difficulty |
+|-----------------|------------------------|
+| Entry | 1-2 (Easy) |
+| Mid | 2-3 (Medium) |
+| Senior | 3-4 (Hard) |
+| Lead | 4-5 (Very Hard) |
+| Executive | 3-5 (Hard to Very Hard) |
+
+**Related Documentation:**
+- [Template Management Feature Guide](../features/template-management.md)
+- [Job Listing Ingestion Feature Guide](../features/job-listing-ingestion.md)
 
 ---
 
@@ -589,7 +765,10 @@ for error in server_errors:
      │
      ├─────< UploadedResume
      │
-     ├─────< UploadedJobListing
+     ├─────< UploadedJobListing ──> InterviewTemplate (recommended_template, optional)
+     │
+     ├─────< InterviewTemplate ────< Tag (ManyToMany)
+     │       │                  └───< QuestionBank (ManyToMany)
      │
      ├─────< Chat ──────< ExportableReport (OneToOne)
      │       │
@@ -607,12 +786,16 @@ for error in server_errors:
 |--------|-------|----------|
 | User | UploadedResume | CASCADE (delete resume) |
 | User | UploadedJobListing | CASCADE (delete job) |
+| User | InterviewTemplate | CASCADE (delete template) |
 | User | Chat | CASCADE (delete chat) |
 | User | TokenUsage | SET_NULL (keep record) |
 | User | MergeTokenStats | SET_NULL (keep record) |
 | Chat | ExportableReport | CASCADE (delete report) |
 | UploadedResume | Chat | SET_NULL (keep chat, remove link) |
 | UploadedJobListing | Chat | SET_NULL (keep chat, remove link) |
+| InterviewTemplate | UploadedJobListing | SET_NULL (keep job listing, remove recommendation) |
+| Tag | InterviewTemplate | REMOVE (ManyToMany, keep both) |
+| QuestionBank | InterviewTemplate | REMOVE (ManyToMany, keep both) |
 
 ---
 
@@ -661,8 +844,12 @@ All models registered in Django admin (`admin.py`):
 
 **Registered models:**
 - User (Django default)
+- UserProfile
 - UploadedResume
 - UploadedJobListing
+- InterviewTemplate
+- Tag
+- QuestionBank
 - Chat
 - ExportableReport
 - TokenUsage
@@ -671,6 +858,8 @@ All models registered in Django admin (`admin.py`):
 - DailyMetricsSummary
 - ProviderCostDaily
 - ErrorLog
+- InvitedInterview
+- RoleChangeRequest
 
 **Admin features:**
 - List views with filters
