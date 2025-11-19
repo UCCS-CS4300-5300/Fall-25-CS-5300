@@ -230,7 +230,7 @@ class InvitedInterviewDetailViewTests(TestCase):
         )
 
         # Create and login as wrong user
-        _wrong_user = User.objects.create_user(
+        _wrong_user = User.objects.create_user(  # noqa: F841
             'wronguser',
             'wrong@example.com',
             'pass123'
@@ -434,7 +434,7 @@ class StartInvitedInterviewViewTests(TestCase):
         )
 
         # Login as wrong user
-        _wrong_user = User.objects.create_user(
+        _wrong_user = User.objects.create_user(  # noqa: F841
             'wronguser',
             'wrong@example.com',
             'pass123'
