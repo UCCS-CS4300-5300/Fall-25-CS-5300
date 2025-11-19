@@ -1,15 +1,15 @@
 {
   "statistics": {
-    "total_sessions": 88,
-    "meaningful_sessions": 19,
+    "total_sessions": 132,
+    "meaningful_sessions": 41,
     "sessions_by_type": {
-      "test_only": 1,
-      "new": 17,
-      "exploratory": 7,
-      "refactor": 1
+      "refactor": 17,
+      "new": 21,
+      "test_only": 3,
+      "exploratory": 3
     },
-    "total_edits": 263,
-    "total_test_runs": 11,
+    "total_edits": 880,
+    "total_test_runs": 0,
     "test_metrics": {
       "sessions_with_tests": 23,
       "total_test_runs": 103,
@@ -23,14 +23,14 @@
       "note": "First run = first test execution after editing a test file"
     },
     "reprompt_metrics": {
-      "meaningful_sessions": 58,
-      "avg_reprompts_per_session": 96.6,
-      "total_reprompts": 5603,
+      "meaningful_sessions": 99,
+      "avg_reprompts_per_session": 93.88,
+      "total_reprompts": 9294,
       "reason_distribution": {
-        "errors": 19.69,
-        "refinements": 7.21,
-        "incomplete": 2.5,
-        "other": 70.61
+        "errors": 21.06,
+        "refinements": 6.15,
+        "incomplete": 2.64,
+        "other": 70.15
       },
       "success_rate": 100.0
     }
@@ -4953,6 +4953,2684 @@
           "refinements": 2,
           "incomplete": 0,
           "other": 29
+        }
+      }
+    },
+    {
+      "session_id": "05626cf5-8896-4f08-bf09-31d77da7bf5a",
+      "message_count": 194,
+      "category": "refactor",
+      "is_meaningful": true,
+      "edit_count": 8,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 83,
+        "assistant_message_count": 96,
+        "reprompt_count": 82,
+        "reasons": {
+          "errors": 13,
+          "refinements": 0,
+          "incomplete": 3,
+          "other": 66
+        }
+      }
+    },
+    {
+      "session_id": "0e93c330-95e9-41a8-85fd-0e731413054c",
+      "message_count": 143,
+      "category": "refactor",
+      "is_meaningful": true,
+      "edit_count": 5,
+      "test_edit_count": 2,
+      "test_file_edits": [
+        {
+          "message_index": 58,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_complete_coverage.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 137,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_critical_coverage_gaps.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 52,
+        "assistant_message_count": 81,
+        "reprompt_count": 51,
+        "reasons": {
+          "errors": 20,
+          "refinements": 1,
+          "incomplete": 5,
+          "other": 25
+        }
+      }
+    },
+    {
+      "session_id": "131c84e9-d58a-4470-baac-806813b23203",
+      "message_count": 81,
+      "category": "refactor",
+      "is_meaningful": true,
+      "edit_count": 3,
+      "test_edit_count": 1,
+      "test_file_edits": [
+        {
+          "message_index": 68,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_dual_authentication.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 31,
+        "assistant_message_count": 45,
+        "reprompt_count": 30,
+        "reasons": {
+          "errors": 6,
+          "refinements": 1,
+          "incomplete": 1,
+          "other": 22
+        }
+      }
+    },
+    {
+      "session_id": "149ba1fa-4e33-46df-afa0-df4beac09c68",
+      "message_count": 213,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 24,
+      "test_edit_count": 1,
+      "test_file_edits": [
+        {
+          "message_index": 113,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_exportable_report.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 69,
+        "assistant_message_count": 136,
+        "reprompt_count": 68,
+        "reasons": {
+          "errors": 9,
+          "refinements": 4,
+          "incomplete": 3,
+          "other": 52
+        }
+      }
+    },
+    {
+      "session_id": "18cd23e8-901d-4e52-b34a-0c70a1161d8d",
+      "message_count": 224,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 12,
+      "test_edit_count": 1,
+      "test_file_edits": [
+        {
+          "message_index": 131,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_google_oauth.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 87,
+        "assistant_message_count": 121,
+        "reprompt_count": 86,
+        "reasons": {
+          "errors": 12,
+          "refinements": 3,
+          "incomplete": 2,
+          "other": 69
+        }
+      }
+    },
+    {
+      "session_id": "2035a343-8e10-42fe-be98-6e7db4ef4941",
+      "message_count": 822,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 49,
+      "test_edit_count": 2,
+      "test_file_edits": [
+        {
+          "message_index": 737,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\token_metrics\\backend\\tests\\test_report_metrics.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 742,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\token_metrics\\backend\\tests\\test_import_token_usage.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 250,
+        "assistant_message_count": 523,
+        "reprompt_count": 249,
+        "reasons": {
+          "errors": 60,
+          "refinements": 9,
+          "incomplete": 13,
+          "other": 167
+        }
+      }
+    },
+    {
+      "session_id": "2042afbb-7872-4788-9b59-df62c031547c",
+      "message_count": 252,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 12,
+      "test_edit_count": 11,
+      "test_file_edits": [
+        {
+          "message_index": 84,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_coverage_boost.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 89,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_coverage_boost.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 162,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_coverage_boost.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 168,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_coverage_boost.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 183,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_coverage_boost.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 213,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_coverage_boost.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 217,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_coverage_boost.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 220,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_coverage_boost.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 237,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_coverage_boost.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 240,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_coverage_boost.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 243,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_coverage_boost.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 72,
+        "assistant_message_count": 171,
+        "reprompt_count": 71,
+        "reasons": {
+          "errors": 24,
+          "refinements": 0,
+          "incomplete": 0,
+          "other": 47
+        }
+      }
+    },
+    {
+      "session_id": "23430257-9bae-44c3-8314-e27ae8b14bea",
+      "message_count": 296,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 31,
+      "test_edit_count": 2,
+      "test_file_edits": [
+        {
+          "message_index": 255,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_auth_navigation.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 262,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\temp\\AUTH_TESTING_GUIDE.md",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 115,
+        "assistant_message_count": 155,
+        "reprompt_count": 114,
+        "reasons": {
+          "errors": 12,
+          "refinements": 9,
+          "incomplete": 0,
+          "other": 93
+        }
+      }
+    },
+    {
+      "session_id": "2c9d1aa5-0471-4943-9571-a182684c583b",
+      "message_count": 260,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 28,
+      "test_edit_count": 8,
+      "test_file_edits": [
+        {
+          "message_index": 94,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_google_oauth.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 122,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_google_oauth.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 124,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_google_oauth.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 126,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_google_oauth.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 128,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_google_oauth.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 130,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_google_oauth.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 132,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_google_oauth.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 138,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\TEST_COVERAGE_SUMMARY.md",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 99,
+        "assistant_message_count": 139,
+        "reprompt_count": 98,
+        "reasons": {
+          "errors": 12,
+          "refinements": 2,
+          "incomplete": 2,
+          "other": 82
+        }
+      }
+    },
+    {
+      "session_id": "2ebbe556-b7fc-433e-bf41-60f1518e5934",
+      "message_count": 79,
+      "category": "test_only",
+      "is_meaningful": true,
+      "edit_count": 2,
+      "test_edit_count": 2,
+      "test_file_edits": [
+        {
+          "message_index": 50,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_missing_coverage.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 56,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_merge_stats_additional.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 30,
+        "assistant_message_count": 43,
+        "reprompt_count": 29,
+        "reasons": {
+          "errors": 11,
+          "refinements": 1,
+          "incomplete": 0,
+          "other": 17
+        }
+      }
+    },
+    {
+      "session_id": "34e6687c-49b3-4612-9d2a-0f4cff1dc202",
+      "message_count": 1,
+      "category": "exploratory",
+      "is_meaningful": false,
+      "edit_count": 0,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 0,
+        "assistant_message_count": 0,
+        "reprompt_count": 0,
+        "reasons": {
+          "errors": 0,
+          "refinements": 0,
+          "incomplete": 0,
+          "other": 0
+        }
+      }
+    },
+    {
+      "session_id": "369152df-c49d-4134-8f3e-1fce0c4ba2c3",
+      "message_count": 48,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 6,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 13,
+        "assistant_message_count": 29,
+        "reprompt_count": 12,
+        "reasons": {
+          "errors": 2,
+          "refinements": 0,
+          "incomplete": 0,
+          "other": 10
+        }
+      }
+    },
+    {
+      "session_id": "372cfbb8-6c95-4172-a454-ef88f6e0ab3a",
+      "message_count": 249,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 22,
+      "test_edit_count": 1,
+      "test_file_edits": [
+        {
+          "message_index": 194,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_oauth.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 79,
+        "assistant_message_count": 153,
+        "reprompt_count": 78,
+        "reasons": {
+          "errors": 19,
+          "refinements": 7,
+          "incomplete": 0,
+          "other": 52
+        }
+      }
+    },
+    {
+      "session_id": "3a03b28d-b5c1-430c-b425-bb5da80a28f0",
+      "message_count": 35,
+      "category": "exploratory",
+      "is_meaningful": false,
+      "edit_count": 0,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 14,
+        "assistant_message_count": 18,
+        "reprompt_count": 13,
+        "reasons": {
+          "errors": 3,
+          "refinements": 0,
+          "incomplete": 1,
+          "other": 9
+        }
+      }
+    },
+    {
+      "session_id": "3fa4a17d-bf62-4daf-8233-dcea21f4a940",
+      "message_count": 149,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 11,
+      "test_edit_count": 10,
+      "test_file_edits": [
+        {
+          "message_index": 28,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_coverage_boost.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 33,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_coverage_boost.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 40,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_coverage_boost.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 99,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\run_test.bat",
+          "is_test_file": true
+        },
+        {
+          "message_index": 103,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\run_all_tests.bat",
+          "is_test_file": true
+        },
+        {
+          "message_index": 124,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\pytest.ini",
+          "is_test_file": true
+        },
+        {
+          "message_index": 132,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\run_test.bat",
+          "is_test_file": true
+        },
+        {
+          "message_index": 135,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\run_all_tests.bat",
+          "is_test_file": true
+        },
+        {
+          "message_index": 140,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\conftest.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 145,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\run_all_project_tests.bat",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 39,
+        "assistant_message_count": 97,
+        "reprompt_count": 38,
+        "reasons": {
+          "errors": 10,
+          "refinements": 0,
+          "incomplete": 4,
+          "other": 24
+        }
+      }
+    },
+    {
+      "session_id": "41ea5d44-dd2b-491f-b02f-3f9bea42a565",
+      "message_count": 175,
+      "category": "refactor",
+      "is_meaningful": true,
+      "edit_count": 4,
+      "test_edit_count": 3,
+      "test_file_edits": [
+        {
+          "message_index": 54,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_complete_coverage_all_files.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 106,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_coverage_boost.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 142,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_minimal_coverage.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 64,
+        "assistant_message_count": 95,
+        "reprompt_count": 63,
+        "reasons": {
+          "errors": 22,
+          "refinements": 3,
+          "incomplete": 5,
+          "other": 33
+        }
+      }
+    },
+    {
+      "session_id": "422aef07-b9e6-42af-84c6-46a2fe75352d",
+      "message_count": 40,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 2,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 14,
+        "assistant_message_count": 22,
+        "reprompt_count": 13,
+        "reasons": {
+          "errors": 7,
+          "refinements": 0,
+          "incomplete": 0,
+          "other": 6
+        }
+      }
+    },
+    {
+      "session_id": "426f1870-219b-4a7b-99e0-44254e419122",
+      "message_count": 98,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 12,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 27,
+        "assistant_message_count": 58,
+        "reprompt_count": 26,
+        "reasons": {
+          "errors": 5,
+          "refinements": 1,
+          "incomplete": 0,
+          "other": 20
+        }
+      }
+    },
+    {
+      "session_id": "465eeb0a-8849-4266-b86b-e486d2e80df6",
+      "message_count": 195,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 16,
+      "test_edit_count": 2,
+      "test_file_edits": [
+        {
+          "message_index": 143,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\test_fix_site.bat",
+          "is_test_file": true
+        },
+        {
+          "message_index": 191,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\temp\\test_theme_detection.html",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 68,
+        "assistant_message_count": 104,
+        "reprompt_count": 67,
+        "reasons": {
+          "errors": 8,
+          "refinements": 4,
+          "incomplete": 0,
+          "other": 55
+        }
+      }
+    },
+    {
+      "session_id": "4f2017e0-8d66-46bb-8914-63e6ec179bae",
+      "message_count": 75,
+      "category": "test_only",
+      "is_meaningful": true,
+      "edit_count": 3,
+      "test_edit_count": 3,
+      "test_file_edits": [
+        {
+          "message_index": 39,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_merge_stats_additional.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 44,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_token_tracking.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 54,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_missing_coverage.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 29,
+        "assistant_message_count": 42,
+        "reprompt_count": 28,
+        "reasons": {
+          "errors": 11,
+          "refinements": 1,
+          "incomplete": 0,
+          "other": 16
+        }
+      }
+    },
+    {
+      "session_id": "56c4a53c-2f81-45c2-a8b0-362fc598006e",
+      "message_count": 413,
+      "category": "refactor",
+      "is_meaningful": true,
+      "edit_count": 26,
+      "test_edit_count": 14,
+      "test_file_edits": [
+        {
+          "message_index": 68,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_final_coverage_boost.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 82,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_final_coverage_boost.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 118,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_coverage_boost.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 125,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_pdf_coverage_boost.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 129,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_pdf_coverage_boost.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 183,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_pdf_coverage_boost.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 186,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_pdf_coverage_boost.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 189,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_coverage_boost.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 212,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_coverage_boost.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 371,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_coverage_boost.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 388,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_coverage_boost.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 391,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_coverage_boost.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 394,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_coverage_boost.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 397,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_coverage_boost.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 136,
+        "assistant_message_count": 260,
+        "reprompt_count": 135,
+        "reasons": {
+          "errors": 34,
+          "refinements": 7,
+          "incomplete": 4,
+          "other": 90
+        }
+      }
+    },
+    {
+      "session_id": "5d397567-c752-45a6-be02-35ba8fa945b5",
+      "message_count": 158,
+      "category": "refactor",
+      "is_meaningful": true,
+      "edit_count": 13,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 62,
+        "assistant_message_count": 80,
+        "reprompt_count": 61,
+        "reasons": {
+          "errors": 15,
+          "refinements": 1,
+          "incomplete": 0,
+          "other": 45
+        }
+      }
+    },
+    {
+      "session_id": "5f81415c-ce92-4a5b-adb3-f70716f0674f",
+      "message_count": 160,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 17,
+      "test_edit_count": 1,
+      "test_file_edits": [
+        {
+          "message_index": 96,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\token_metrics\\TEST_TOKEN_TRACKING.md",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 61,
+        "assistant_message_count": 83,
+        "reprompt_count": 60,
+        "reasons": {
+          "errors": 17,
+          "refinements": 3,
+          "incomplete": 0,
+          "other": 40
+        }
+      }
+    },
+    {
+      "session_id": "64d3a89d-354d-45d6-a112-4772114dea15",
+      "message_count": 312,
+      "category": "refactor",
+      "is_meaningful": true,
+      "edit_count": 20,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 93,
+        "assistant_message_count": 198,
+        "reprompt_count": 92,
+        "reasons": {
+          "errors": 18,
+          "refinements": 10,
+          "incomplete": 3,
+          "other": 61
+        }
+      }
+    },
+    {
+      "session_id": "64ef8f34-f207-4b7d-9eeb-c9ae80b1f20d",
+      "message_count": 404,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 50,
+      "test_edit_count": 7,
+      "test_file_edits": [
+        {
+          "message_index": 339,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_openai_utils.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 344,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_pdf_export_comprehensive.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 353,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_utils_comprehensive.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 357,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_token_tracking_comprehensive.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 384,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_pdf_export_comprehensive.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 388,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_pdf_export_comprehensive.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 400,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_adapters_comprehensive.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 139,
+        "assistant_message_count": 225,
+        "reprompt_count": 138,
+        "reasons": {
+          "errors": 28,
+          "refinements": 1,
+          "incomplete": 6,
+          "other": 103
+        }
+      }
+    },
+    {
+      "session_id": "67a9602c-4427-4262-b872-890be1c1a9ff",
+      "message_count": 866,
+      "category": "refactor",
+      "is_meaningful": true,
+      "edit_count": 52,
+      "test_edit_count": 12,
+      "test_file_edits": [
+        {
+          "message_index": 115,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_observability_metrics.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 127,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_observability_metrics.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 179,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_observability_metrics.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 182,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_observability_metrics.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 185,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_observability_metrics.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 241,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_observability_metrics.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 297,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_observability_metrics.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 381,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_observability_dashboard.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 503,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\test_observability_setup.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 515,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\test_observability_setup.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 535,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_observability_dashboard.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 589,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_observability_dashboard.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 252,
+        "assistant_message_count": 556,
+        "reprompt_count": 251,
+        "reasons": {
+          "errors": 90,
+          "refinements": 8,
+          "incomplete": 2,
+          "other": 151
+        }
+      }
+    },
+    {
+      "session_id": "6f2173d3-9fdd-4461-9eeb-6b1f25353fbf",
+      "message_count": 105,
+      "category": "refactor",
+      "is_meaningful": true,
+      "edit_count": 1,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 38,
+        "assistant_message_count": 53,
+        "reprompt_count": 37,
+        "reasons": {
+          "errors": 13,
+          "refinements": 0,
+          "incomplete": 0,
+          "other": 24
+        }
+      }
+    },
+    {
+      "session_id": "75ccffe2-fa1c-4829-9bf5-3d0858dcbe4c",
+      "message_count": 62,
+      "category": "refactor",
+      "is_meaningful": true,
+      "edit_count": 3,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 23,
+        "assistant_message_count": 34,
+        "reprompt_count": 22,
+        "reasons": {
+          "errors": 3,
+          "refinements": 1,
+          "incomplete": 0,
+          "other": 18
+        }
+      }
+    },
+    {
+      "session_id": "808e4f16-54e8-45df-9d05-af099ace3a27",
+      "message_count": 76,
+      "category": "test_only",
+      "is_meaningful": true,
+      "edit_count": 1,
+      "test_edit_count": 1,
+      "test_file_edits": [
+        {
+          "message_index": 49,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_adapters_comprehensive.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 29,
+        "assistant_message_count": 43,
+        "reprompt_count": 28,
+        "reasons": {
+          "errors": 12,
+          "refinements": 0,
+          "incomplete": 0,
+          "other": 16
+        }
+      }
+    },
+    {
+      "session_id": "865f6a14-33d6-4da7-a5f2-f3bfed7a7e4d",
+      "message_count": 156,
+      "category": "refactor",
+      "is_meaningful": true,
+      "edit_count": 3,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 62,
+        "assistant_message_count": 84,
+        "reprompt_count": 61,
+        "reasons": {
+          "errors": 7,
+          "refinements": 1,
+          "incomplete": 2,
+          "other": 51
+        }
+      }
+    },
+    {
+      "session_id": "90fc258e-b933-4c5c-84e7-26876ceeeed8",
+      "message_count": 178,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 13,
+      "test_edit_count": 1,
+      "test_file_edits": [
+        {
+          "message_index": 95,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_observability_metrics.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 57,
+        "assistant_message_count": 106,
+        "reprompt_count": 56,
+        "reasons": {
+          "errors": 17,
+          "refinements": 0,
+          "incomplete": 2,
+          "other": 37
+        }
+      }
+    },
+    {
+      "session_id": "954298ba-b957-4cdf-82b0-d2743675ac7b",
+      "message_count": 169,
+      "category": "refactor",
+      "is_meaningful": true,
+      "edit_count": 13,
+      "test_edit_count": 6,
+      "test_file_edits": [
+        {
+          "message_index": 51,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\run_test.bat",
+          "is_test_file": true
+        },
+        {
+          "message_index": 56,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\run_test.bat",
+          "is_test_file": true
+        },
+        {
+          "message_index": 66,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\run_all_tests.bat",
+          "is_test_file": true
+        },
+        {
+          "message_index": 67,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\run_all_project_tests.bat",
+          "is_test_file": true
+        },
+        {
+          "message_index": 118,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\pytest.ini",
+          "is_test_file": true
+        },
+        {
+          "message_index": 125,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\reset_test_db.bat",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 49,
+        "assistant_message_count": 104,
+        "reprompt_count": 48,
+        "reasons": {
+          "errors": 20,
+          "refinements": 1,
+          "incomplete": 5,
+          "other": 22
+        }
+      }
+    },
+    {
+      "session_id": "a9678b67-e516-4270-a197-4872b7fad744",
+      "message_count": 53,
+      "category": "refactor",
+      "is_meaningful": true,
+      "edit_count": 6,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 16,
+        "assistant_message_count": 31,
+        "reprompt_count": 15,
+        "reasons": {
+          "errors": 3,
+          "refinements": 1,
+          "incomplete": 0,
+          "other": 11
+        }
+      }
+    },
+    {
+      "session_id": "c2d5ece9-2835-4af6-9ac2-1b71b2394b4a",
+      "message_count": 324,
+      "category": "refactor",
+      "is_meaningful": true,
+      "edit_count": 30,
+      "test_edit_count": 28,
+      "test_file_edits": [
+        {
+          "message_index": 166,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_models.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 171,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_forms.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 179,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_serializers.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 185,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_additional_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 197,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\run_tests_with_coverage.bat",
+          "is_test_file": true
+        },
+        {
+          "message_index": 201,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\TESTING_IMPROVEMENTS.md",
+          "is_test_file": true
+        },
+        {
+          "message_index": 233,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_token_tracking.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 242,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_extended.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 248,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\TESTING_IMPROVEMENTS.md",
+          "is_test_file": true
+        },
+        {
+          "message_index": 250,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\TESTING_IMPROVEMENTS.md",
+          "is_test_file": true
+        },
+        {
+          "message_index": 252,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\TESTING_IMPROVEMENTS.md",
+          "is_test_file": true
+        },
+        {
+          "message_index": 254,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\TESTING_IMPROVEMENTS.md",
+          "is_test_file": true
+        },
+        {
+          "message_index": 256,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\TESTING_IMPROVEMENTS.md",
+          "is_test_file": true
+        },
+        {
+          "message_index": 258,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\TESTING_IMPROVEMENTS.md",
+          "is_test_file": true
+        },
+        {
+          "message_index": 260,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\TESTING_IMPROVEMENTS.md",
+          "is_test_file": true
+        },
+        {
+          "message_index": 280,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_extended.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 282,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_extended.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 284,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_extended.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 287,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_extended.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 289,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_extended.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 291,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_extended.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 293,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_extended.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 295,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_extended.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 297,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_extended.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 303,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_extended.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 310,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_comprehensive.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 313,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\TESTING_IMPROVEMENTS.md",
+          "is_test_file": true
+        },
+        {
+          "message_index": 320,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\QUICK_TEST_GUIDE.md",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 128,
+        "assistant_message_count": 180,
+        "reprompt_count": 127,
+        "reasons": {
+          "errors": 34,
+          "refinements": 5,
+          "incomplete": 1,
+          "other": 87
+        }
+      }
+    },
+    {
+      "session_id": "ca6735b2-ec59-4f45-a8cf-429308035e01",
+      "message_count": 673,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 93,
+      "test_edit_count": 14,
+      "test_file_edits": [
+        {
+          "message_index": 118,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_token_tracker_module.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 124,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_openai_utils_extended.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 132,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_token_scripts.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 148,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\docs\\TOKEN_TRACKING_TESTS.md",
+          "is_test_file": true
+        },
+        {
+          "message_index": 160,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\run-tests-with-coverage.bat",
+          "is_test_file": true
+        },
+        {
+          "message_index": 164,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\run-token-tests.bat",
+          "is_test_file": true
+        },
+        {
+          "message_index": 167,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\run-token-tests.sh",
+          "is_test_file": true
+        },
+        {
+          "message_index": 370,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\test-auto-track.bat",
+          "is_test_file": true
+        },
+        {
+          "message_index": 449,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\test-complete-system.bat",
+          "is_test_file": true
+        },
+        {
+          "message_index": 495,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\token_metrics\\backend\\tests\\test_export_import.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 499,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\token_metrics\\backend\\tests\\test_report_metrics.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 503,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\token_metrics\\backend\\tests\\conftest.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 507,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\token_metrics\\run-tests.bat",
+          "is_test_file": true
+        },
+        {
+          "message_index": 510,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\token_metrics\\pytest.ini",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 226,
+        "assistant_message_count": 333,
+        "reprompt_count": 225,
+        "reasons": {
+          "errors": 40,
+          "refinements": 6,
+          "incomplete": 14,
+          "other": 165
+        }
+      }
+    },
+    {
+      "session_id": "dd65ce70-7ce5-4b2e-aa5d-2ad5b8e19dfc",
+      "message_count": 459,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 23,
+      "test_edit_count": 17,
+      "test_file_edits": [
+        {
+          "message_index": 76,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_exportable_report.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 122,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_exportable_report.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 131,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_exportable_report.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 157,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_exportable_report.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 174,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_exportable_report.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 180,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_exportable_report.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 188,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_exportable_report.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 194,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_exportable_report.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 206,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_exportable_report.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 215,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_exportable_report.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 345,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_pdf_export_comprehensive.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 349,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_pdf_export_comprehensive.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 352,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_pdf_export_comprehensive.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 366,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_report_coverage.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 434,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_pdf_coverage_boost.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 438,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_coverage_boost.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 445,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_report_coverage.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 151,
+        "assistant_message_count": 286,
+        "reprompt_count": 150,
+        "reasons": {
+          "errors": 14,
+          "refinements": 13,
+          "incomplete": 12,
+          "other": 111
+        }
+      }
+    },
+    {
+      "session_id": "e1935e78-2dd1-47b4-9716-36e6cd2074c4",
+      "message_count": 240,
+      "category": "refactor",
+      "is_meaningful": true,
+      "edit_count": 28,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 76,
+        "assistant_message_count": 128,
+        "reprompt_count": 75,
+        "reasons": {
+          "errors": 9,
+          "refinements": 1,
+          "incomplete": 2,
+          "other": 63
+        }
+      }
+    },
+    {
+      "session_id": "ea0e2ecd-58fb-4493-b72c-869734e26c93",
+      "message_count": 523,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 55,
+      "test_edit_count": 6,
+      "test_file_edits": [
+        {
+          "message_index": 111,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\scripts\\test-security-scan.sh",
+          "is_test_file": true
+        },
+        {
+          "message_index": 115,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\scripts\\test-security-scan.ps1",
+          "is_test_file": true
+        },
+        {
+          "message_index": 181,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\test-bandit-reports.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 188,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\test-bandit-reports.ps1",
+          "is_test_file": true
+        },
+        {
+          "message_index": 198,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\TESTING_BANDIT_SETUP.md",
+          "is_test_file": true
+        },
+        {
+          "message_index": 252,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\testing\\README.md",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 149,
+        "assistant_message_count": 325,
+        "reprompt_count": 148,
+        "reasons": {
+          "errors": 52,
+          "refinements": 11,
+          "incomplete": 0,
+          "other": 85
+        }
+      }
+    },
+    {
+      "session_id": "eff5aaf9-0f52-4068-afd6-8963bfd33315",
+      "message_count": 1299,
+      "category": "refactor",
+      "is_meaningful": true,
+      "edit_count": 131,
+      "test_edit_count": 108,
+      "test_file_edits": [
+        {
+          "message_index": 124,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_signals_utils_forms.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 125,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_signals_utils_forms.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 139,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_comprehensive_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 142,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_comprehensive_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 143,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_comprehensive_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 148,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_comprehensive_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 153,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_comprehensive_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 157,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_comprehensive_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 166,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_comprehensive_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 169,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_comprehensive_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 170,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_comprehensive_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 171,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_comprehensive_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 172,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_comprehensive_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 180,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_comprehensive_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 183,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_api_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 187,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_api_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 220,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_api_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 225,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_api_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 228,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_api_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 234,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_api_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 238,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_api_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 247,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_api_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 251,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_api_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 260,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_api_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 263,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_complete_coverage.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 264,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_missing_coverage.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 271,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_complete_coverage.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 274,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_missing_coverage.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 280,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_complete_coverage.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 294,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_comprehensive_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 295,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_comprehensive_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 300,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_comprehensive_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 312,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_comprehensive_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 319,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_critical_coverage_gaps.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 338,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_google_oauth.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 347,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_google_oauth.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 387,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_minimal_coverage.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 399,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_complete_coverage.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 411,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_coverage_boost.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 413,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_complete_coverage_all_files.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 419,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_complete_coverage_all_files.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 441,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_additional_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 447,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_comprehensive.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 450,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_comprehensive_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 459,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_auth_navigation.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 460,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_auth_navigation.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 476,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_comprehensive_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 484,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_critical_coverage_gaps.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 528,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_google_oauth.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 554,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_auth_navigation.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 556,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_auth_navigation.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 558,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_auth_navigation.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 560,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_auth_navigation.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 562,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_auth_navigation.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 564,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_auth_navigation.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 570,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_auth_navigation.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 572,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_auth_navigation.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 574,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_auth_navigation.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 576,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_auth_navigation.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 578,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_auth_navigation.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 580,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_auth_navigation.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 585,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_auth_navigation.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 587,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_auth_navigation.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 611,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_auth_navigation.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 613,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_auth_navigation.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 615,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_auth_navigation.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 620,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_auth_navigation.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 640,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_api_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 647,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_comprehensive_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 651,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_comprehensive_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 655,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_comprehensive_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 659,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_comprehensive_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 663,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_comprehensive_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 667,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_comprehensive_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 675,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_upload.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 699,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_google_oauth.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 704,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_google_oauth.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 742,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_comprehensive_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 744,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_comprehensive_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 755,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_comprehensive_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 757,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_comprehensive_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 785,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_api_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 790,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_api_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 795,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_api_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 831,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_api_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 834,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_api_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 836,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_api_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 838,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_api_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 844,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_comprehensive_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 846,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_comprehensive_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 879,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_api_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 900,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_api_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 930,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_comprehensive_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 945,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_comprehensive_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 951,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_api_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 960,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_api_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 1003,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_comprehensive.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 1008,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_comprehensive.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 1012,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_comprehensive.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 1017,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_complete_coverage.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 1028,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_comprehensive.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 1036,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_comprehensive.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 1037,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_comprehensive.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 1038,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_comprehensive.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 1039,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_comprehensive.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 1040,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_comprehensive.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 1041,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_views_comprehensive.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 1294,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_google_oauth.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 476,
+        "assistant_message_count": 748,
+        "reprompt_count": 475,
+        "reasons": {
+          "errors": 88,
+          "refinements": 29,
+          "incomplete": 11,
+          "other": 347
+        }
+      }
+    },
+    {
+      "session_id": "f6c9694e-41ea-4e91-b4d5-d1896a6bc0f7",
+      "message_count": 239,
+      "category": "refactor",
+      "is_meaningful": true,
+      "edit_count": 21,
+      "test_edit_count": 5,
+      "test_file_edits": [
+        {
+          "message_index": 179,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_google_oauth.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 213,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_signals_utils_forms.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 220,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_comprehensive_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 224,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_api_views.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 234,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\TESTING_COVERAGE.md",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 87,
+        "assistant_message_count": 128,
+        "reprompt_count": 86,
+        "reasons": {
+          "errors": 19,
+          "refinements": 1,
+          "incomplete": 1,
+          "other": 65
+        }
+      }
+    },
+    {
+      "session_id": "fb6b34e1-20b8-483d-8cab-735a1b133036",
+      "message_count": 226,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 14,
+      "test_edit_count": 4,
+      "test_file_edits": [
+        {
+          "message_index": 109,
+          "tool": "Write",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_password_change.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 133,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_password_change.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 144,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_password_change.py",
+          "is_test_file": true
+        },
+        {
+          "message_index": 148,
+          "tool": "Edit",
+          "file_path": "C:\\Users\\j`\\Git-Repos\\Fall-25-CS-5300\\active_interview_backend\\active_interview_app\\tests\\test_password_change.py",
+          "is_test_file": true
+        }
+      ],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 70,
+        "assistant_message_count": 136,
+        "reprompt_count": 69,
+        "reasons": {
+          "errors": 22,
+          "refinements": 10,
+          "incomplete": 1,
+          "other": 36
+        }
+      }
+    },
+    {
+      "session_id": "98a6100e-b31e-4a16-8eb3-d3642df6b95f",
+      "message_count": 232,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 9,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 68,
+        "assistant_message_count": 147,
+        "reprompt_count": 67,
+        "reasons": {
+          "errors": 21,
+          "refinements": 8,
+          "incomplete": 1,
+          "other": 37
+        }
+      }
+    },
+    {
+      "session_id": "b89dab8f-f022-4636-ae29-b6488fb85c39",
+      "message_count": 114,
+      "category": "exploratory",
+      "is_meaningful": false,
+      "edit_count": 0,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 39,
+        "assistant_message_count": 70,
+        "reprompt_count": 38,
+        "reasons": {
+          "errors": 13,
+          "refinements": 5,
+          "incomplete": 0,
+          "other": 20
+        }
+      }
+    },
+    {
+      "session_id": "c23d3ba6-ddbd-456a-9520-64b3b7886eff",
+      "message_count": 230,
+      "category": "new",
+      "is_meaningful": true,
+      "edit_count": 8,
+      "test_edit_count": 0,
+      "test_file_edits": [],
+      "test_runs": [],
+      "first_run_tests": [],
+      "test_run_count": 0,
+      "reprompt_analysis": {
+        "user_message_count": 63,
+        "assistant_message_count": 144,
+        "reprompt_count": 62,
+        "reasons": {
+          "errors": 15,
+          "refinements": 4,
+          "incomplete": 0,
+          "other": 43
         }
       }
     }
