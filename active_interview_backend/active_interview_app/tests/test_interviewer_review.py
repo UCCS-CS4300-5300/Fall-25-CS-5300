@@ -603,6 +603,7 @@ class DashboardReviewButtonTests(TestCase):
     def test_pending_invitation_no_review_button(self):
         """Test that pending invitations don't show review button"""
         InvitedInterview.objects.create(
+            interviewer=self.interviewer,
             candidate_email='test@example.com',
             template=self.template,
             scheduled_time=timezone.now() + timedelta(hours=1),
@@ -652,6 +653,7 @@ class DashboardReviewButtonTests(TestCase):
         )
 
         InvitedInterview.objects.create(
+            interviewer=self.interviewer,
             candidate_email='test@example.com',
             template=self.template,
             scheduled_time=timezone.now() - timedelta(hours=2),

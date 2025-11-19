@@ -441,7 +441,7 @@ class ViewsCompleteCoverageTest(TestCase):
             messages=[{"role": "system", "content": "Selected level: <<5>>"}]
         )
 
-        response = self.client.post(
+        _response = self.client.post(  # noqa: F841
             reverse('chat-edit', kwargs={'chat_id': chat.id}),
             {
                 'update': 'true',
@@ -489,7 +489,7 @@ class ViewsCompleteCoverageTest(TestCase):
             ]
         )
 
-        response = self.client.post(
+        _response = self.client.post(  # noqa: F841
             reverse('chat-restart', kwargs={'chat_id': chat.id}),
             {'restart': 'true'}
         )
@@ -903,7 +903,7 @@ class ViewsCompleteCoverageTest(TestCase):
             file=fake_file
         )
 
-        response = self.client.post(
+        _response = self.client.post(  # noqa: F841
             reverse('edit_resume', kwargs={'resume_id': resume.id}),
             {
                 'title': 'Updated Resume',
@@ -996,6 +996,7 @@ class ViewsCompleteCoverageTest(TestCase):
         """Test UploadedResumeView GET"""
         fake_file = SimpleUploadedFile("resume.pdf", b"content")
         UploadedResume.objects.create(
+            user=self.user,
             title='Resume',
             content='Content',
             filesize=100,

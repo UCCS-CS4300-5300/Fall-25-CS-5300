@@ -165,7 +165,7 @@ class TokenUsageModelTest(TestCase):
             prompt_tokens=100,
             completion_tokens=50
         )
-        token_id = token_usage.id
+        _token_id = token_usage.id  # noqa: F841
         self.user.delete()
 
         token_usage.refresh_from_db()
@@ -368,7 +368,7 @@ class MergeTokenStatsModelTest(TestCase):
             merge_commit_sha='abc123',
             merged_by=self.user
         )
-        merge_id = merge_stats.id
+        _merge_id = merge_stats.id  # noqa: F841
         self.user.delete()
 
         merge_stats.refresh_from_db()

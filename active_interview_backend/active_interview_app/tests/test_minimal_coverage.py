@@ -189,6 +189,7 @@ class ViewsRegisterTest(TestCase):
         client = Client()
 
         client.post(reverse('register_page'), {
+            'username': 'newuser456',
             'email': 'new@example.com',
             'password1': 'TestPassword123!',
             'password2': 'TestPassword123!',

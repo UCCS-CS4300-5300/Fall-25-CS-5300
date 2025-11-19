@@ -148,7 +148,7 @@ class InvitationJoinViewTests(TestCase):
     def test_join_email_case_insensitive(self):
         """Test email matching is case-insensitive"""
         # Create user with uppercase email
-        uppercase_user = User.objects.create_user(
+        uppercase_user = User.objects.create_user(  # noqa: F841
             'uppercase',
             'CANDIDATE@EXAMPLE.COM',  # Same email, different case
             'pass123'
@@ -230,7 +230,7 @@ class InvitedInterviewDetailViewTests(TestCase):
         )
 
         # Create and login as wrong user
-        wrong_user = User.objects.create_user(
+        _wrong_user = User.objects.create_user(
             'wronguser',
             'wrong@example.com',
             'pass123'
@@ -434,7 +434,7 @@ class StartInvitedInterviewViewTests(TestCase):
         )
 
         # Login as wrong user
-        wrong_user = User.objects.create_user(
+        _wrong_user = User.objects.create_user(
             'wronguser',
             'wrong@example.com',
             'pass123'

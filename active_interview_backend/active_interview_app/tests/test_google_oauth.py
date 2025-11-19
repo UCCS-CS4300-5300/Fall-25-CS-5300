@@ -623,7 +623,7 @@ class GoogleOAuthSecurityTestCase(TestCase):
 
         # Credentials should not be hardcoded
         # They should come from environment or be empty
-        client_id = app_config.get('client_id', '')
+        _client_id = app_config.get('client_id', '')  # noqa: F841
         secret = app_config.get('secret', '')
 
         # Should not contain actual credentials in test

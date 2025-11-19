@@ -208,6 +208,7 @@ class ViewsCriticalPathsTest(TransactionTestCase):
         """Test user registration"""
         self.client.logout()
         self.client.post(reverse('register_page'), {
+            'username': 'newuser123',
             'email': 'new@test.com',
             'password1': 'SuperSecure123!',
             'password2': 'SuperSecure123!',
@@ -486,7 +487,7 @@ class ViewsCriticalPathsTest(TransactionTestCase):
         mock_pdf.to_markdown.return_value = "Content"
 
         pdf = SimpleUploadedFile("test.pdf", b"PDF")
-        response = self.client.post(reverse('upload_file'), {
+        _response = self.client.post(reverse('upload_file'), {  # noqa: F841
             'file': pdf,
             'title': 'Test'
         })
@@ -506,7 +507,7 @@ class ViewsCriticalPathsTest(TransactionTestCase):
         mock_doc.return_value = mock_d
 
         docx = SimpleUploadedFile("test.docx", b"DOCX")
-        response = self.client.post(reverse('upload_file'), {
+        _response = self.client.post(reverse('upload_file'), {  # noqa: F841
             'file': docx,
             'title': 'Test'
         })
@@ -569,6 +570,7 @@ class ViewsCriticalPathsTest(TransactionTestCase):
     def test_uploaded_job_listing_view(self):
         """Test UploadedJobListingView"""
         self.client.post(reverse('save_pasted_text'), {
+            'paste-text': 'Job description content',
             'title': 'Title'
         })
 

@@ -161,6 +161,7 @@ class ExportableReportViewTest(TestCase):
     def test_export_report_view_requires_login(self):
         """Test that viewing the export report requires login"""
         ExportableReport.objects.create(
+            chat=self.chat,
             overall_score=80
         )
         url = reverse('export_report', kwargs={'chat_id': self.chat.id})
@@ -171,6 +172,7 @@ class ExportableReportViewTest(TestCase):
         """Test viewing the export report page"""
         self.client.login(username='testuser', password='testpass123')
         ExportableReport.objects.create(
+            chat=self.chat,
             overall_score=80,
             professionalism_score=85
         )
@@ -194,6 +196,7 @@ class ExportableReportViewTest(TestCase):
     def test_download_pdf_requires_login(self):
         """Test that downloading PDF requires login"""
         ExportableReport.objects.create(
+            chat=self.chat,
             overall_score=80
         )
         url = reverse('download_pdf_report', kwargs={'chat_id': self.chat.id})
@@ -239,6 +242,7 @@ class ExportableReportViewTest(TestCase):
             type='GEN'
         )
         ExportableReport.objects.create(
+            chat=other_chat,
             overall_score=75
         )
 
@@ -609,6 +613,7 @@ class CSVExportTest(TestCase):
             type='GEN'
         )
         ExportableReport.objects.create(
+            chat=other_chat,
             overall_score=75
         )
 
@@ -1070,6 +1075,7 @@ Overall: Strong overall performance with good balance across all areas.
 
         # Create report with all data
         ExportableReport.objects.create(
+            chat=self.chat,
             professionalism_score=90,
             professionalism_weight=30,
             professionalism_rationale='Excellent professionalism demonstrated.',
@@ -1160,6 +1166,7 @@ class ScoreComputationLearningScenarioTest(TestCase):
 
         # Generate the report with scores and rationales
         ExportableReport.objects.create(
+            chat=completed_chat,
             professionalism_score=88,
             professionalism_weight=30,
             professionalism_rationale=(
@@ -1245,6 +1252,7 @@ class ScoreComputationLearningScenarioTest(TestCase):
         )
 
         ExportableReport.objects.create(
+            chat=chat,
             professionalism_score=75,
             professionalism_weight=30,
             professionalism_rationale='Good professionalism with room to improve in maintaining consistent eye contact.',
@@ -1292,6 +1300,7 @@ class ScoreComputationLearningScenarioTest(TestCase):
         )
 
         ExportableReport.objects.create(
+            chat=chat,
             professionalism_score=90,
             professionalism_weight=30,
             professionalism_rationale='Excellent professionalism.',
