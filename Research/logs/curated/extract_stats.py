@@ -36,6 +36,7 @@ def calculate_stats(logs: List[Dict]) -> Dict:
     if not logs:
         return {}
 
+    total_tests_all_seq = 0
     total_sequences = len(logs)
     total_iterations = sum(log['summary']['total_iterations'] for log in logs)
 
@@ -46,6 +47,7 @@ def calculate_stats(logs: List[Dict]) -> Dict:
     for log in logs:
         first_iteration = log['iterations'][0]
         total_tests = first_iteration['total_tests']
+        total_tests_all_seq += total_tests
 
         if total_tests > 0:
             failure_rate = (first_iteration['failed'] / total_tests) * 100
@@ -62,6 +64,7 @@ def calculate_stats(logs: List[Dict]) -> Dict:
 
     return {
         'total_sequences': total_sequences,
+        'total_tests_all_sequences':total_tests_all_seq,
         'avg_iterations': round(avg_iterations, 2),
         'avg_first_run_failure_rate': round(avg_first_run_failure, 2),
         'total_regressions': total_regressions,
@@ -135,6 +138,7 @@ def main():
     print("AGGREGATE STATISTICS")
     print("="*70)
     print(f"\nTotal test sequences analyzed: {stats['total_sequences']}")
+    print(f"\nTotal test from all sequences: {stats['total_tests_all_sequences']}")
     print(f"Average iterations per sequence: {stats['avg_iterations']}")
     print(f"Average first-run failure rate: {stats['avg_first_run_failure_rate']}%")
     print(f"Success rate (all tests passed): {stats['success_rate']}%")
