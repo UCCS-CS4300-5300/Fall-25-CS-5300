@@ -984,3 +984,11 @@ class Question(models.Model):
 # Import token tracking models (must be at end to avoid circular imports)
 from .token_usage_models import TokenUsage  # noqa: E402, F401
 from .merge_stats_models import MergeTokenStats  # noqa: E402, F401
+
+# Import observability models (Issues #14, #15)
+from .observability_models import (  # noqa: E402, F401
+    RequestMetric,
+    DailyMetricsSummary,
+    ProviderCostDaily,
+    ErrorLog
+)
