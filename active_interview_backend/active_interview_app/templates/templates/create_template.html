@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}
+  AIS - Create Interview Template
+{% endblock title %}
+
+{% block content %}
+  <style>
+    .centered-container {
+      padding: 2rem 1.5rem;
+    }
+
+    .create-template-page {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      color: var(--text-primary);
+    }
+
+    .create-template-page h1 {
+      font-size: 40px;
+      text-align: center;
+      color: var(--text-primary);
+    }
+
+    .centered-container .card {
+      background-color: var(--surface) !important;
+      border: 2px solid var(--border) !important;
+      border-radius: 2rem;
+    }
+
+    .form-label {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+    }
+
+    .form-control {
+      font-size: 18px;
+      background-color: var(--surface) !important;
+      color: var(--text-primary) !important;
+      border: 1px solid var(--border) !important;
+    }
+
+    .form-control:focus {
+      background-color: var(--surface) !important;
+      color: var(--text-primary) !important;
+      border-color: var(--primary) !important;
+      box-shadow: 0 0 0 0.2rem rgba(31, 123, 166, 0.25);
+    }
+
+    .form-text {
+      color: var(--text-secondary) !important;
+    }
+
+    .alert {
+      background-color: var(--surface) !important;
+      border: 2px solid var(--error) !important;
+      color: var(--error) !important;
+    }
+
+    .text-danger {
+      color: var(--error) !important;
+    }
+
+    .text-muted {
+      color: var(--text-secondary) !important;
+    }
+
+    .btn-lg {
+      font-size: 20px;
+      padding: 0.75rem 2rem;
+    }
+
+    .btn-secondary {
+      background-color: var(--text-secondary) !important;
+      border-color: var(--text-secondary) !important;
+      color: var(--text-white) !important;
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--text-light) !important;
+      border-color: var(--text-light) !important;
+    }
+  </style>
+
+  <div class="centered-container">
+    <div class="card p-4 my-5">
+      <div class="create-template-page">
+        <div class="row mb-4">
+          <h1>Create Interview Template</h1>
+        </div>
+
+        <form method="post">
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+              {{ form.non_field_errors }}
+            </div>
+          {% endif %}
+
+          <div class="mb-4">
+            <label for="{{ form.name.id_for_label }}" class="form-label">
+              Template Name <span class="text-danger">*</span>
+            </label>
+            {{ form.name }}
+            {% if form.name.errors %}
+              <div class="text-danger mt-2">
+                {{ form.name.errors }}
+              </div>
+            {% endif %}
+            <small class="form-text text-muted">
+              Give your template a descriptive name (e.g., "Technical Interview", "Behavioral Interview")
+            </small>
+          </div>
+
+          <div class="mb-4">
+            <label for="{{ form.description.id_for_label }}" class="form-label">
+              Description (Optional)
+            </label>
+            {{ form.description }}
+            {% if form.description.errors %}
+              <div class="text-danger mt-2">
+                {{ form.description.errors }}
+              </div>
+            {% endif %}
+            <small class="form-text text-muted">
+              Optional: Describe the purpose of this template
+            </small>
+          </div>
+
+          <div class="row mt-4">
+            <div class="col text-center">
+              <button type="submit" class="btn btn-primary btn-lg">
+                <i class="bi bi-check-circle"></i> Create Template
+              </button>
+              <a href="{% url 'template_list' %}" class="btn btn-secondary btn-lg ms-2">
+                <i class="bi bi-x-circle"></i> Cancel
+              </a>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock content %}

@@ -15,6 +15,44 @@
   <link rel="stylesheet" type="text/css" href="{% static 'css/main.css' %}">
   <link rel="shortcut icon" type="image/png" href="{% static 'images/favicon.png' %}">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    /* Global messages styling */
+    .messages-container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .messages-container .alert {
+      border-radius: var(--radius);
+      font-weight: 500;
+    }
+
+    /* Map Django message tags to Bootstrap alert classes */
+    .alert-success {
+      background-color: var(--surface);
+      color: var(--success);
+      border: 2px solid var(--success);
+    }
+
+    .alert-error,
+    .alert-danger {
+      background-color: var(--surface);
+      color: var(--error);
+      border: 2px solid var(--error);
+    }
+
+    .alert-info {
+      background-color: var(--surface);
+      color: var(--info);
+      border: 2px solid var(--info);
+    }
+
+    .alert-warning {
+      background-color: var(--surface);
+      color: var(--warning);
+      border: 2px solid var(--warning);
+    }
+  </style>
 </head>
 <body class="d-flex flex-column pt-66">
   <div class="container-fluid h-100">
@@ -22,6 +60,19 @@
       <div class="col h-100 px-0">
         <div class="content-container h-100 d-flex flex-column">
           {% include "components/navbar.html" %}
+
+          <!-- Global Messages Display -->
+          {% if messages %}
+            <div class="messages-container px-3 pt-3">
+              {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                  {{ message }}
+                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+
           <!-- <div class="inner-chat-container flex-grow-1 d-flex flex-column">
           </div> -->
           {% block content %}
@@ -38,6 +89,9 @@
 
   <!-- Add bootstrap scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Theme toggle script -->
+  <script type="text/javascript" src="{% static 'js/theme.js' %}"></script>
 
   {% block scripts %}
   <script  type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>

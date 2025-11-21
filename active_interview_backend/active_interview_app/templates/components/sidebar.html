@@ -1,5 +1,5 @@
 <div class="chat-sidebar d-flex flex-column flex-grow-1">
-  <div class="overflow-y-auto vh-100 px-3 w-100">
+  <div class="overflow-y-auto px-3 w-100 sidebar-content">
     {% comment %} <a href="{% url "chat-create" %}" class="full-block-link">
       <div class="button-card card mb-3 mt-3">
         <div class="card-body">
@@ -11,43 +11,94 @@
       New Interview
     </a>
     <hr class="white-break">
-    {% for owner_chat in owner_chats %}
-      <div class="chat-card card mb-3 mt-3">
-        <div class="d-flex">
-          <a role="button" class="chat-card-button full-block-link btn btn-dark flex-grow-1 rounded-0 rounded-start {% if chat.id == owner_chat.id %}active{% endif %}" href="{% url 'chat-view' chat_id=owner_chat.id %}">
-            <p class="chat-card-text card-text text-start m-0">{{ owner_chat.title }}</p>
-          </a>
-          <div class="d-flex flex-shrink-0">
-            <div class="btn-group dropend" data-bs-theme="dark">
-              <button type="button" class="{% if chat.id == owner_chat.id %}active-sidebar-dropdown{% else %}chat-card-button{% endif %} sidebar-dropend btn btn-dark dropdown-toggle dropdown-toggle-split rounded-0 rounded-end" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false">
-                <span class="visually-hidden">Toggle Dropend</span>
-              </button>
-              <ul class="sidebar-dropdown-menu dropdown-menu">
-                <li><a class="sidebar-dropdown-item dropdown-item" href="{% url 'chat-edit' chat_id=owner_chat.id %}">Edit</a></li>
-                <li>
-                  <a class="sidebar-dropdown-item dropdown-item" href="{% url 'chat-results' chat_id=owner_chat.id %}">
-                    <span class="d-block w-100 h-100" data-bs-toggle="modal" data-bs-target="#resultsLoadingModal">
-                      Results
-                    </span>
-                  </a>
-                </li>
-                <li><a class="sidebar-dropdown-item dropdown-item" href="{% url 'key-questions' chat_id=owner_chat.id question_id=0 %}">Key Questions</a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li>
-                  <a class="sidebar-dropdown-item dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#restartChatModal" data-chat-title="{{ owner_chat.title }}" data-chat-link="{% url 'chat-restart' chat_id=owner_chat.id %}">
-                    Restart
-                  </a>
-                </li>
-                <li>
-                  <a class="sidebar-dropdown-item dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#deleteChatModal" data-chat-title="{{ owner_chat.title }}" data-chat-link="{% url 'chat-delete' chat_id=owner_chat.id %}">
-                    Delete
-                  </a>
-                </li>
-              </ul>
+
+    <!-- Practice Interviews Section -->
+    {% with practice_chats=owner_chats|dictsort:"interview_type" %}
+      {% for owner_chat in practice_chats %}
+        {% if owner_chat.interview_type == 'PRACTICE' %}
+          {% if forloop.first %}
+            <h6 class="text-muted px-2 mt-3 mb-2" style="font-size: 0.85rem; font-weight: 600;">Practice Interviews</h6>
+          {% endif %}
+          <div class="chat-card card mb-3">
+            <div class="d-flex">
+              <a role="button" class="chat-card-button full-block-link btn btn-dark flex-grow-1 rounded-0 rounded-start {% if chat.id == owner_chat.id %}active{% endif %}" href="{% url 'chat-view' chat_id=owner_chat.id %}">
+                <p class="chat-card-text card-text text-start m-0">{{ owner_chat.title }}</p>
+              </a>
+              <div class="d-flex flex-shrink-0">
+                <div class="btn-group dropend">
+                  <button type="button" class="{% if chat.id == owner_chat.id %}active-sidebar-dropdown{% else %}chat-card-button{% endif %} sidebar-dropend btn btn-dark dropdown-toggle dropdown-toggle-split rounded-0 rounded-end" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false">
+                    <span class="visually-hidden">Toggle Dropend</span>
+                  </button>
+                  <ul class="sidebar-dropdown-menu dropdown-menu">
+                    <li><a class="sidebar-dropdown-item dropdown-item" href="{% url 'chat-edit' chat_id=owner_chat.id %}">Edit</a></li>
+                    <li>
+                      <a class="sidebar-dropdown-item dropdown-item" href="{% url 'chat-results' chat_id=owner_chat.id %}">
+                        <span class="d-block w-100 h-100" data-bs-toggle="modal" data-bs-target="#resultsLoadingModal">
+                          Results
+                        </span>
+                      </a>
+                    </li>
+                    <li><a class="sidebar-dropdown-item dropdown-item" href="{% url 'key-questions' chat_id=owner_chat.id question_id=0 %}">Key Questions</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                      <a class="sidebar-dropdown-item dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#restartChatModal" data-chat-title="{{ owner_chat.title }}" data-chat-link="{% url 'chat-restart' chat_id=owner_chat.id %}">
+                        Restart
+                      </a>
+                    </li>
+                    <li>
+                      <a class="sidebar-dropdown-item dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#deleteChatModal" data-chat-title="{{ owner_chat.title }}" data-chat-link="{% url 'chat-delete' chat_id=owner_chat.id %}">
+                        Delete
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-    {% endfor %}
+        {% endif %}
+      {% endfor %}
+    {% endwith %}
+
+    <!-- Invited Interviews Section -->
+    {% with invited_chats=owner_chats|dictsort:"interview_type" %}
+      {% for owner_chat in invited_chats %}
+        {% if owner_chat.interview_type == 'INVITED' %}
+          {% if forloop.first %}
+            <h6 class="text-muted px-2 mt-4 mb-2" style="font-size: 0.85rem; font-weight: 600;">Invited Interviews</h6>
+          {% endif %}
+          <div class="chat-card card mb-3">
+            <div class="d-flex">
+              <a role="button" class="chat-card-button full-block-link btn btn-dark flex-grow-1 rounded-0 rounded-start {% if chat.id == owner_chat.id %}active{% endif %}" href="{% url 'chat-view' chat_id=owner_chat.id %}">
+                <div class="d-flex align-items-center justify-content-between w-100">
+                  <p class="chat-card-text card-text text-start m-0">{{ owner_chat.title }}</p>
+                  <span class="badge rounded-pill ms-2" style="background-color: var(--info); color: var(--text-white); font-size: 0.65rem;">Invited</span>
+                </div>
+              </a>
+              <div class="d-flex flex-shrink-0">
+                <div class="btn-group dropend">
+                  <button type="button" class="{% if chat.id == owner_chat.id %}active-sidebar-dropdown{% else %}chat-card-button{% endif %} sidebar-dropend btn btn-dark dropdown-toggle dropdown-toggle-split rounded-0 rounded-end" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false">
+                    <span class="visually-hidden">Toggle Dropend</span>
+                  </button>
+                  <ul class="sidebar-dropdown-menu dropdown-menu">
+                    <li><a class="sidebar-dropdown-item dropdown-item" href="{% url 'chat-results' chat_id=owner_chat.id %}">
+                      <span class="d-block w-100 h-100" data-bs-toggle="modal" data-bs-target="#resultsLoadingModal">
+                        Results
+                      </span>
+                    </a></li>
+                    <li><a class="sidebar-dropdown-item dropdown-item" href="{% url 'key-questions' chat_id=owner_chat.id question_id=0 %}">Key Questions</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                      <a class="sidebar-dropdown-item dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#deleteChatModal" data-chat-title="{{ owner_chat.title }}" data-chat-link="{% url 'chat-delete' chat_id=owner_chat.id %}">
+                        Delete
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+      {% endfor %}
+    {% endwith %}
   </div>
 </div>

@@ -47,7 +47,9 @@ PROD = os.environ.get("PROD", "true").lower() == "true"
 DEBUG = not PROD
 
 ALLOWED_HOSTS = [
-    'app.activeinterviewservice.me',
+    'activeinterviewservice.app',
+    'www.activeinterviewservice.app',
+    'app.activeinterviewservice.me',  # Keep old domain for transition
     'localhost',
     '127.0.0.1',
     '.railway.app',
@@ -57,23 +59,40 @@ ALLOWED_HOSTS = [
 CSRF_TRUSTED_ORIGINS = [
     'https://*.railway.app',
     'https://*.up.railway.app',
-    'https://app.activeinterviewservice.me',
+    'https://activeinterviewservice.app',
+    'https://www.activeinterviewservice.app',
+    'https://app.activeinterviewservice.me',  # Keep old domain for transition
 ]
+
+# Proxy/HTTPS configuration for Railway
+if PROD:
+    # Tell Django to trust the X-Forwarded-Proto header from Railway's proxy
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    # Force allauth to use HTTPS for OAuth callbacks
+    ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'
 
 # Application definition
 
 INSTALLED_APPS = [
-    'active_interview_app',
+    'active_interview_app.apps.ActiveInterviewAppConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',  # Required for allauth
     'bootstrap5',
     'rest_framework',
     'filetype',
+    # Django allauth - provides OAuth authentication (Google login)
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
 ]
+
+SITE_ID = 1
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -84,6 +103,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',  # Required for allauth
+    'active_interview_app.middleware.MetricsMiddleware',  # Issues #14, #15 - Observability metrics collection
 ]
 
 ROOT_URLCONF = 'active_interview_project.urls'
@@ -110,12 +131,20 @@ WSGI_APPLICATION = 'active_interview_project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+# Use PostgreSQL on Railway (via DATABASE_URL env var), SQLite for local development
 DATABASES = {
     'default': dj_database_url.config(
         default='sqlite:///' + os.path.join(BASE_DIR, 'db', 'db.sqlite3'),
-        conn_max_age=600
+        conn_max_age=600,
+        conn_health_checks=True,
     )
 }
+
+# PostgreSQL SSL configuration for production
+if PROD and DATABASES['default']['ENGINE'] == 'django.db.backends.postgresql':
+    DATABASES['default']['OPTIONS'] = {
+        'sslmode': 'require',
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -154,7 +183,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 
@@ -186,5 +215,72 @@ LOGGING = {
     },
 }
 
-# WhiteNoise configuration for serving static files
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# Authentication backends
+AUTHENTICATION_BACKENDS = [
+    # Needed to login by username in Django admin, regardless of `allauth`
+    'django.contrib.auth.backends.ModelBackend',
+    # `allauth` specific authentication methods, such as login by e-mail
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+# Django-allauth configuration
+ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_EMAIL_VERIFICATION = 'optional'  # Can be 'mandatory', 'optional', or 'none'
+ACCOUNT_USERNAME_REQUIRED = False
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_EMAIL_VERIFICATION = 'optional'
+SOCIALACCOUNT_ADAPTER = 'active_interview_app.adapters.CustomSocialAccountAdapter'
+
+# Login/Logout redirects
+LOGIN_URL = '/accounts/login/'  # allauth login URL
+LOGIN_REDIRECT_URL = '/testlogged/'  # Where to redirect after successful login
+ACCOUNT_LOGOUT_REDIRECT_URL = '/'  # Where to redirect after logout
+
+# Google OAuth settings
+GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_OAUTH_CLIENT_ID', '')
+GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_OAUTH_CLIENT_SECRET', '')
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        },
+        'APP': {
+            'client_id': GOOGLE_CLIENT_ID,
+            'secret': GOOGLE_CLIENT_SECRET,
+            'key': ''
+        }
+    }
+}
+import sys
+# Use regular storage during tests to avoid manifest issues
+if 'test' in sys.argv or 'pytest' in sys.modules:
+    STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+else:
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Site URL for emails, invitations, and exports (Issue #4, #8, #63, #64, #139)
+if PROD:
+    SITE_URL = 'https://activeinterviewservice.app'
+else:
+    SITE_URL = 'http://localhost:8000'
+
+# Email configuration for invitation and export notifications (Issue #4, #8, #64, #139)
+if PROD:
+    # Production email settings (configure with your email provider)
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+    EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
+    EMAIL_USE_TLS = True
+    EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+    EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+    DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@activeinterviewservice.app')
+else:
+    # Development: Use console backend (prints emails to console)
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    DEFAULT_FROM_EMAIL = 'noreply@activeinterviewservice.app'

@@ -17,10 +17,19 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
 
+    # Django allauth URLs for OAuth authentication (must come before app urls to properly handle /accounts/ routes)
+    path('accounts/', include('allauth.urls')),
+
     # add app urls
     path('', include('active_interview_app.urls')),
 ]
+
+# Serve media files in development
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

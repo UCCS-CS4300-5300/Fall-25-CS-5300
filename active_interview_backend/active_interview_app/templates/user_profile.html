@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}
+  AIS - User Profile
+{% endblock title %}
+
+{% block content %}
+  <!-- All styles moved to main.css Profile & User Pages section -->
+
+  <div class="profile-page">
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1>User Profile</h1>
+      <div class="username">{{ profile_user.username }}</div>
+    </div>
+
+    <!-- Two Column Layout -->
+    <div class="profile-layout">
+      <!-- Left Column: User Info & Role -->
+      <div class="left-column">
+        <div class="profile-section">
+          <h2>User Information</h2>
+
+          <!-- User Details -->
+          <div class="user-info-grid">
+            <div class="info-item">
+              <div class="info-label">Username</div>
+              <div class="info-value">{{ profile_user.username }}</div>
+            </div>
+
+            {% if profile_user.email %}
+            <div class="info-item">
+              <div class="info-label">Email</div>
+              <div class="info-value">{{ profile_user.email }}</div>
+            </div>
+            {% endif %}
+
+            {% if profile_user.first_name %}
+            <div class="info-item">
+              <div class="info-label">First Name</div>
+              <div class="info-value">{{ profile_user.first_name }}</div>
+            </div>
+            {% endif %}
+
+            {% if profile_user.last_name %}
+            <div class="info-item">
+              <div class="info-label">Last Name</div>
+              <div class="info-value">{{ profile_user.last_name }}</div>
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- Role Information -->
+          <div class="role-info">
+            <div>
+              <strong>Current Role:</strong>
+              <span class="role-badge {{ profile_user.profile.role }}">
+                {{ profile_user.profile.role|title }}
+              </span>
+            </div>
+
+            {% if is_own_profile %}
+              <div class="mt-1rem">
+                <a href="{% url 'profile' %}" class="btn-go-to-profile">
+                  Go to My Profile
+                </a>
+                <p class="help-text">
+                  To edit your profile, manage resumes, or request role changes.
+                </p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Documents -->
+      <div class="right-column">
+        <!-- Resumes Section -->
+        <div class="profile-section">
+          <h2>Uploaded Resumes</h2>
+      {% if resumes|length == 0 %}
+        <div class="empty-state">
+          <p>No resumes uploaded yet</p>
+        </div>
+      {% else %}
+        <ul class="document-list">
+          {% for document in resumes %}
+            {% if document.title and document.title != "1" %}
+            <li class="document-item">
+              <span class="document-name">
+                {% if document.title and document.title != "1" %}
+                  {{ document.title }}
+                {% elif document.file %}
+                  {{ document.original_filename }}
+                {% endif %}
+              </span>
+              <div class="document-actions">
+                <a href="{% url 'resume_detail' resume_id=document.id %}">View</a>
+              </div>
+            </li>
+            {% endif %}
+          {% endfor %}
+        </ul>
+          {% endif %}
+        </div>
+
+        <!-- Job Listings Section -->
+        <div class="profile-section">
+          <h2>Uploaded Job Listings</h2>
+          {% if job_listings|length == 0 %}
+            <div class="empty-state">
+              <p>No job listings uploaded yet</p>
+            </div>
+          {% else %}
+            <ul class="document-list">
+              {% for job in job_listings %}
+                <li class="document-item">
+                  <span class="document-name">{{ job.title }}</span>
+                  <div class="document-actions">
+                    <a href="{% url 'job_posting_detail' job_id=job.id %}">View</a>
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %}

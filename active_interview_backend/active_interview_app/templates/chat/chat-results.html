@@ -10,12 +10,30 @@
     <script type="text/javascript" src="/static/js/charts.js" defer></script>
   </head>
   <style>
-    .h1{
-      margin-left: auto; 
-      margin-right: auto; 
-      margin-top: 2%;
-      margin-bottom: 5%;
-      color: #4482a6;
+    /* Results page specific variables */
+    :root {
+      --results-heading-margin-top: 2%;
+      --results-heading-margin-bottom: 5%;
+      --results-margin-top: 5%;
+      --results-border-radius: 15px;
+      --results-border-width: 3px;
+      --results-chart-max-width: 500px;
+      --results-chart-max-height: 450px;
+      --results-feedback-max-width: 800px;
+      --results-feedback-padding: 2em;
+      --results-canvas-border-radius: 10px;
+      --results-canvas-padding: 10px;
+      --results-button-margin-top: 3rem;
+      --results-button-margin-bottom: 2rem;
+      --results-heading-margin-bottom-small: 1%;
+    }
+
+    .results-page-heading {
+      margin-left: auto;
+      margin-right: auto;
+      margin-top: var(--results-heading-margin-top);
+      margin-bottom: var(--results-heading-margin-bottom);
+      color: var(--primary);
       font-family: Verdana, Geneva, Tahoma, sans-serif;
     }
     .container{
@@ -29,44 +47,79 @@
       max-height: max-content;
       max-width: max-content;
       flex: 0 1 auto;
-      height: 100vh
+      height: auto;
+      padding: 1rem;
     }
     #feedbackbox{
       border: solid;
-      border-radius: 15px;
-      border-width: 3px;
-      border-color: lightblue;
+      border-radius: var(--results-border-radius);
+      border-width: var(--results-border-width);
+      border-color: var(--primary-lighter);
+      background-color: var(--surface);
       max-width: fit-content;
       height: fit-content;
-      margin-top: 5%;
+      margin-top: var(--results-margin-top);
       flex-direction: column;
       justify-content: center;
     }
     #feedbackpara{
       font-family: Verdana, Geneva, Tahoma, sans-serif;
-      color: #4482a6;
+      color: var(--text-primary);
       font-size: large;
-      max-width: 800px;
-      padding: 2em;
+      max-width: var(--results-feedback-max-width);
+      padding: var(--results-feedback-padding);
     }
     #BarChart{
-      width:100%; 
-      max-width:500px; 
-      height:100%; 
-      max-height: 450px;
+      width: var(--results-chart-max-width);
+      height: var(--results-chart-max-height);
     }
     #DonutChart{
-      width: auto;
-      max-width:500px; 
-      height:100%; 
-      max-height: 450px;
+      width: var(--results-chart-max-width);
+      height: var(--results-chart-max-height);
     }
     h1{
-      margin-bottom: 1%;
+      margin-bottom: var(--results-heading-margin-bottom-small);
+      color: var(--text-primary);
+    }
+
+    .report-button-container {
+      justify-content: center;
+      margin-top: var(--results-button-margin-top);
+      margin-bottom: var(--results-button-margin-bottom);
+    }
+
+    /* Light mode styles (default) */
+    canvas {
+      background-color: var(--surface);
+      border: 2px solid var(--border-light);
+      border-radius: var(--results-canvas-border-radius);
+      padding: var(--results-canvas-padding);
+    }
+
+    /* Dark mode support - uses data-theme attribute for consistency */
+    [data-theme="dark"] .results-page-heading,
+    [data-theme="dark"] h1 {
+      color: var(--text-primary);
+    }
+
+    [data-theme="dark"] #feedbackbox {
+      border-color: var(--primary-light);
+      background-color: var(--surface);
+    }
+
+    [data-theme="dark"] #feedbackpara {
+      color: var(--text-primary);
+    }
+
+    [data-theme="dark"] canvas {
+      background-color: var(--surface);
+      border-color: var(--border);
+      border-radius: var(--results-canvas-border-radius);
+      padding: var(--results-canvas-padding);
     }
   </style>
   <div id="content-scroll" class="d-flex flex-column overflow-y-auto overflow-x-hidden pe-0">
-    <h1 class="h1">Interview Results</h1>
+    <h1 class="results-page-heading">Interview Results</h1>
     <div class="container">
       <div class="flex-box">
         <canvas id="BarChart"></canvas>
@@ -76,10 +129,76 @@
       </div>
     </div>
     <div class="container" id="feedbackbox">
-      <h1>Feedback</h1>
+      <h1>AI Feedback</h1>
       <p id="feedbackpara">
         {{ feedback|linebreaksbr }}
       </p>
     </div>
+
+    <!-- Reviewer notes section (for invited interviews only) -->
+    {% if invitation %}
+    <div class="container" id="feedbackbox" style="margin-top: 2rem; border-color: var(--info);">
+      <h1>Interviewer Feedback</h1>
+      {% if invitation.interviewer_review_status == 'completed' %}
+        <p id="feedbackpara">
+          {{ invitation.interviewer_feedback|linebreaksbr }}
+        </p>
+        {% if invitation.reviewed_at %}
+        <p style="color: var(--text-secondary); font-size: 0.9rem; padding: 0 2em 1em 2em;">
+          Reviewed on {{ invitation.reviewed_at|date:"F d, Y \a\t g:i A" }}
+        </p>
+        {% endif %}
+      {% else %}
+        <p id="feedbackpara" style="color: var(--text-secondary); font-style: italic;">
+          Your interviewer is still reviewing your interview. You will be notified when feedback is available.
+        </p>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Generate Detailed Report Button -->
+    <div class="container report-button-container" style="text-align: center;">
+      <form method="POST" action="{% url 'generate_report' chat.id %}" id="generate_report" aria-label="Generate interview report form" onsubmit="return showReportSpinner()">
+        {% csrf_token %}
+        <button
+          type="submit"
+          class="btn btn-primary btn-lg"
+          id="generateReportBtn"
+          style="padding: 1rem 2rem; font-size: 1rem;"
+          title="Generate a comprehensive report with detailed section scores, rationales, and export options (PDF/CSV)"
+          aria-label="Generate and download detailed interview report with section scores">
+          <span class="loading-spinner-button"
+                id="reportSpinner"
+                role="status"
+                aria-hidden="true"
+                style="display:none;"></span>
+          <span id="reportBtnText">Generate Detailed Report</span>
+        </button>
+        <p style="color: var(--text-secondary, #777); margin-top: 0.75rem; font-size: 0.85rem; font-style: italic; max-width: 600px; margin-left: auto; margin-right: auto;">
+          Includes section scores, rationales, and export options (PDF/CSV)
+        </p>
+      </form>
+    </div>
   </div>
+
+  <script>
+    /**
+     * Show loading spinner when generating detailed report
+     * Provides visual feedback during AI processing
+     * Issues: #130 (loading indicators)
+     */
+    function showReportSpinner() {
+      const button = document.getElementById('generateReportBtn');
+      const spinner = document.getElementById('reportSpinner');
+      const buttonText = document.getElementById('reportBtnText');
+
+      // Show spinner and update button state
+      spinner.style.display = 'inline-block';
+      buttonText.textContent = 'Generating Report...';
+      button.disabled = true;
+
+      // Allow form submission to proceed
+      return true;
+    }
+  </script>
 {% endblock content %}

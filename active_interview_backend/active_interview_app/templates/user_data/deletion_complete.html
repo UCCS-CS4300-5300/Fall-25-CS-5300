@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account Deleted - Active Interview Service</title>
+
+  {% load static %}
+  <link rel="stylesheet" type="text/css" href="{% static 'css/main.css' %}">
+  <link rel="shortcut icon" type="image/png" href="{% static 'images/favicon.png' %}">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body style="background-color: var(--background);">
+  <div class="container-page container-narrow" style="display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem 1rem;">
+    <div class="box box-section text-center">
+      <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="var(--success)" class="bi bi-check-circle mb-4" viewBox="0 0 16 16">
+        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+        <path d="m10.97 4.97-.02.022-3.473 4.425-2.093-2.094a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05"/>
+      </svg>
+
+      <h1 style="color: var(--success); margin-bottom: 1rem;">Account Successfully Deleted</h1>
+      <p class="text-secondary-color mb-4">
+        Your account has been permanently deleted from Active Interview Service.
+      </p>
+
+      <div class="box" style="background: var(--surface); border: 2px solid var(--border); padding: 1.5rem; margin-bottom: 1.5rem; text-align: left;">
+        <h3 class="text-lg text-bold mb-3">What was deleted:</h3>
+        <ul class="mb-3">
+          <li>Your profile and account information</li>
+          <li>All resumes and uploaded documents</li>
+          <li>Interview transcripts and recordings</li>
+          <li>All personally identifiable information</li>
+        </ul>
+
+        <h3 class="text-lg text-bold mb-3">What was retained:</h3>
+        <ul class="mb-0">
+          <li>Anonymized interview statistics (for analytics)</li>
+          <li>Deletion audit record (for legal compliance)</li>
+        </ul>
+      </div>
+
+      <div class="box box-info mb-4">
+        <p class="text-sm mb-2">
+          <strong>📧 Confirmation Email</strong>
+        </p>
+        <p class="text-sm mb-0">
+          A confirmation email has been sent to the email address associated with your account.
+        </p>
+      </div>
+
+      <div class="box" style="background: var(--surface-hover); border: 2px solid var(--border); padding: 1.5rem; margin-bottom: 1.5rem;">
+        <p class="text-sm mb-2">
+          <strong>Account: {{ username }}</strong>
+        </p>
+        <p class="text-sm text-secondary-color mb-0">
+          This account has been permanently removed and can no longer be accessed.
+        </p>
+      </div>
+
+      <div class="d-flex flex-column gap-2 align-items-center">
+        <a href="{% url 'index' %}" class="btn btn-primary">
+          Return to Homepage
+        </a>
+
+        <p class="text-sm text-secondary-color mt-3 mb-0">
+          Thank you for using Active Interview Service.<br>
+          We're sorry to see you go.
+        </p>
+      </div>
+
+      <div class="box" style="background: var(--surface); border: 2px solid var(--info); padding: 1rem; margin-top: 2rem;">
+        <p class="text-sm mb-0">
+          <strong>Want to return?</strong> You're always welcome to create a new account
+          if you'd like to use our service again in the future.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+  <script type="text/javascript" src="{% static 'js/theme.js' %}"></script>
+
+  <style>
+    .box-section {
+      background: var(--surface-hover);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 3rem 2rem;
+      max-width: 700px;
+      width: 100%;
+    }
+
+    .box-info {
+      background: var(--surface);
+      border: 2px solid var(--info);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+    }
+
+    h3 {
+      color: var(--text-primary);
+      font-size: 1.125rem;
+      font-weight: 600;
+    }
+
+    ul {
+      padding-left: 1.5rem;
+      color: var(--text-primary);
+    }
+
+    ul li {
+      margin-bottom: 0.5rem;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: var(--text-white);
+      border: none;
+      padding: 0.75rem 2rem;
+      border-radius: var(--radius);
+      font-weight: 500;
+      text-decoration: none;
+      display: inline-block;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-light);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow);
+    }
+  </style>
+</body>
+</html>

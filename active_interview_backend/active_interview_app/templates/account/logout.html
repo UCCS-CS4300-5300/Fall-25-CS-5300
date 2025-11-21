@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}
+  AIS - Sign Out
+{% endblock title %}
+
+{% block content %}
+<body>
+  <style>
+    .logout-confirm-page {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 60vh;
+      padding: 3rem 1rem;
+    }
+
+    .logout-confirm-page h2 {
+      color: var(--text-primary);
+      margin-bottom: 1.5rem;
+      font-size: 2.5rem;
+      font-weight: 700;
+    }
+
+    .logout-confirmation {
+      background-color: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      max-width: 500px;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+
+    .logout-confirmation p {
+      font-size: 1.1rem;
+      margin: 0;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .logout-confirmation p:nth-of-type(2) {
+      margin-top: 1rem;
+      font-size: 1rem;
+      color: var(--text-secondary);
+      font-weight: 400;
+    }
+
+    .logout-confirmation strong {
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .action-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      max-width: 400px;
+      width: 100%;
+    }
+
+    .action-buttons form {
+      width: 100%;
+    }
+
+    .action-buttons .btn {
+      width: 100%;
+      padding: 12px 24px;
+      text-decoration: none;
+      font-weight: 600;
+      border-radius: var(--radius);
+    }
+
+    .action-buttons .btn-danger {
+      background-color: var(--error);
+      border: 2px solid var(--error);
+      color: var(--text-white);
+    }
+
+    .action-buttons .btn-danger:hover {
+      background-color: #c0392b;
+      border-color: #c0392b;
+      color: var(--text-white);
+    }
+
+    .action-buttons .btn-secondary {
+      background-color: var(--surface);
+      border: 2px solid var(--border);
+      color: var(--text-primary);
+      display: block;
+      text-align: center;
+    }
+
+    .action-buttons .btn-secondary:hover {
+      background-color: var(--surface-hover);
+      border-color: var(--primary);
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+
+    /* Responsive: side by side on larger screens */
+    @media (min-width: 576px) {
+      .action-buttons {
+        flex-direction: row;
+      }
+      .action-buttons form,
+      .action-buttons .btn {
+        flex: 1;
+      }
+    }
+  </style>
+
+  <div class="container">
+    <div class="logout-confirm-page">
+      <h2>Sign Out</h2>
+
+      <div class="logout-confirmation">
+        <p>Are you sure you want to sign out?</p>
+        {% if user.is_authenticated %}
+          <p>Currently logged in as <strong>{{ user.username }}</strong></p>
+        {% endif %}
+      </div>
+
+      <div class="action-buttons">
+        <form method="post">
+          {% csrf_token %}
+          {% if redirect_field_value %}
+            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
+          {% endif %}
+          <button type="submit" class="btn btn-danger w-100">Yes, Sign Out</button>
+        </form>
+        <a href="{% url 'index' %}" class="btn btn-secondary">Cancel</a>
+      </div>
+    </div>
+  </div>
+</body>
+{% endblock content %}

@@ -371,19 +371,19 @@ class TestOpenAIClient(TestCase):
 
     def setUp(self):
         # Reset the global client before each test
-        import active_interview_app.views as views
-        views._openai_client = None
+        import active_interview_app.openai_utils as openai_utils
+        openai_utils._openai_client = None
 
     def tearDown(self):
         # Reset the global client after each test
-        import active_interview_app.views as views
-        views._openai_client = None
+        import active_interview_app.openai_utils as openai_utils
+        openai_utils._openai_client = None
 
-    @patch('active_interview_app.views.settings')
-    @patch('active_interview_app.views.OpenAI')
+    @patch('active_interview_app.openai_utils.settings')
+    @patch('active_interview_app.openai_utils.OpenAI')
     def test_get_openai_client_creates_client(self, mock_openai_class, mock_settings):
         """Test that get_openai_client creates and returns OpenAI client"""
-        from active_interview_app.views import get_openai_client
+        from active_interview_app.openai_utils import get_openai_client
 
         # Setup mock
         mock_settings.OPENAI_API_KEY = "test-api-key"
@@ -397,11 +397,11 @@ class TestOpenAIClient(TestCase):
         mock_openai_class.assert_called_once_with(api_key="test-api-key")
         self.assertEqual(client, mock_client_instance)
 
-    @patch('active_interview_app.views.settings')
-    @patch('active_interview_app.views.OpenAI')
+    @patch('active_interview_app.openai_utils.settings')
+    @patch('active_interview_app.openai_utils.OpenAI')
     def test_get_openai_client_caches_client(self, mock_openai_class, mock_settings):
         """Test that get_openai_client caches the client (lazy loading)"""
-        from active_interview_app.views import get_openai_client
+        from active_interview_app.openai_utils import get_openai_client
 
         # Setup mock
         mock_settings.OPENAI_API_KEY = "test-api-key"
@@ -416,10 +416,10 @@ class TestOpenAIClient(TestCase):
         mock_openai_class.assert_called_once_with(api_key="test-api-key")
         self.assertEqual(client1, client2)
 
-    @patch('active_interview_app.views.settings')
+    @patch('active_interview_app.openai_utils.settings')
     def test_get_openai_client_missing_api_key(self, mock_settings):
         """Test that get_openai_client raises error when API key is missing"""
-        from active_interview_app.views import get_openai_client
+        from active_interview_app.openai_utils import get_openai_client
 
         # Setup mock with no API key
         mock_settings.OPENAI_API_KEY = None
@@ -430,11 +430,11 @@ class TestOpenAIClient(TestCase):
 
         self.assertIn("OPENAI_API_KEY is not set", str(context.exception))
 
-    @patch('active_interview_app.views.settings')
-    @patch('active_interview_app.views.OpenAI')
+    @patch('active_interview_app.openai_utils.settings')
+    @patch('active_interview_app.openai_utils.OpenAI')
     def test_get_openai_client_initialization_failure(self, mock_openai_class, mock_settings):
         """Test that get_openai_client handles OpenAI initialization failure"""
-        from active_interview_app.views import get_openai_client
+        from active_interview_app.openai_utils import get_openai_client
 
         # Setup mock
         mock_settings.OPENAI_API_KEY = "test-api-key"
@@ -446,27 +446,27 @@ class TestOpenAIClient(TestCase):
 
         self.assertIn("Failed to initialize OpenAI client", str(context.exception))
 
-    @patch('active_interview_app.views.get_openai_client')
-    def test_ai_available_returns_true_when_client_works(self, mock_get_client):
-        """Test that _ai_available returns True when client is available"""
-        from active_interview_app.views import _ai_available
+    @patch('active_interview_app.openai_utils.get_openai_client')
+    def testai_available_returns_true_when_client_works(self, mock_get_client):
+        """Test that ai_available returns True when client is available"""
+        from active_interview_app.openai_utils import ai_available
 
         # Setup mock to return successfully
         mock_get_client.return_value = MagicMock()
 
         # Should return True
-        self.assertTrue(_ai_available())
+        self.assertTrue(ai_available())
 
-    @patch('active_interview_app.views.get_openai_client')
-    def test_ai_available_returns_false_on_error(self, mock_get_client):
-        """Test that _ai_available returns False when client fails"""
-        from active_interview_app.views import _ai_available
+    @patch('active_interview_app.openai_utils.get_openai_client')
+    def testai_available_returns_false_on_error(self, mock_get_client):
+        """Test that ai_available returns False when client fails"""
+        from active_interview_app.openai_utils import ai_available
 
         # Setup mock to raise error
         mock_get_client.side_effect = ValueError("API key missing")
 
         # Should return False
-        self.assertFalse(_ai_available())
+        self.assertFalse(ai_available())
 
     def test_ai_unavailable_json(self):
         """Test that _ai_unavailable_json returns proper error response"""

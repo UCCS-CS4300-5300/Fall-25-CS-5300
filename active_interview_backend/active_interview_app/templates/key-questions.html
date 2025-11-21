@@ -5,14 +5,7 @@
 {% endblock title %}
 
 {% block content %}
-<style>
-  .progress{
-    height: 20px;
-  }
-  #timer-bar{
-     width: 100%;
-  }
-</style>
+  <!-- All styles moved to main.css Chat Input, Pagination, and Progress Components sections -->
   {% load static %}
   <div id="questions-container" class="centered-container flex-grow-1 d-flex flex-column">
     <nav aria-label="Page navigation example">
@@ -32,7 +25,7 @@
         </li> {% endcomment %}
       </ul>
     </nav>
-    <h3 class="text-white">{{ question.title }}</h3>
+    <h3 class="whiteTextOverride">{{ question.title }}</h3>
     <div id="chat-scroll" class="d-flex flex-column-reverse flex-grow-1 overflow-y-auto overflow-x-hidden pe-0">
       <div class="row flex-column-reverse">
         <div id="chat-messages">
@@ -56,7 +49,7 @@
     <div id="inputCard" class="input-card card mb-3 mt-3">
       <div class="card-body">
         <div class="d-flex">
-          <textarea id="user-input" class="chat-input flex-grow-1 border-0 p-2" placeholder="Enter text here..." style="resize: none;"></textarea>
+          <textarea id="user-input" class="chat-input flex-grow-1 border-0 p-2" placeholder="Enter text here..."></textarea>
           {% comment %} <button class="button-chat-send btn btn-primary ms-2" id = "speech-text" onclick="speechToText()">Speak</button> {% endcomment %}
           {% comment %} <button class="button-chat-send btn btn-primary ms-2" type="button" onclick="location.reload()">Retry</button> {% endcomment %}
           <button class="button-chat-send btn btn-primary ms-2" type="button" onclick="sendMessage()">Send</button>
@@ -236,7 +229,7 @@
           `<div id="loading-bubble" class="col bot-text-container">
             <div class="card bot-text-bubble">
               <div class="card-body">
-                <img src={% static 'images/loading.gif' %} alt="Loading..." style="width: 24px; height: 24px;">
+                <img src={% static 'images/loading.gif' %} alt="Loading..." class="loading-gif">
               </div>
             </div>
           </div>`);

@@ -26,9 +26,9 @@ with open(sys.argv[1], 'r') as diff_file:
 
 # Provide project context here
 project_context = """
-These code changes are for a Django web app. The app is deployed with
-docker-compose and Nginx on DigitalOcean. The app is an active interview
-service which uses the ChatGPT API to create a dynamic interview chat
+These code changes are for a Django web app. The app is deployed
+using a Dockerfile to Railway. The app is an active interview
+service which uses the ChatGPT API to create a dynamic interview chats
 for job-seekers.
 """.strip()
 
@@ -39,8 +39,84 @@ significant issues or AI_REVIEW_SUCCESS if the code is acceptable.
 
 {project_context}
 
-Review the following code changes for best practices, security vulnerabilities,
-and potential bugs and provide feedback.  Please include a summary section.
+Review the following code changes comprehensively and provide detailed feedback.
+Please organize your review into the following sections:
+
+## 1. CODE SMELLS
+Identify common code smells such as:
+- Duplicated code
+- Long methods/functions (>50 lines)
+- Large classes (too many responsibilities)
+- Long parameter lists
+- Dead/unused code
+- Magic numbers and hardcoded values
+- Inappropriate naming conventions
+- Feature envy or data clumps
+
+## 2. SECURITY VULNERABILITIES
+Check for security issues including:
+- OWASP Top 10 vulnerabilities (SQL injection, XSS, CSRF, etc.)
+- Insecure authentication/authorization
+- Exposed secrets or sensitive data
+- Insecure dependencies
+- Path traversal vulnerabilities
+- Command injection risks
+- Unsafe deserialization
+- Security misconfigurations
+
+## 3. CODE QUALITY & MAINTAINABILITY
+Assess:
+- Code complexity (cyclomatic complexity)
+- Readability and clarity
+- Adherence to DRY (Don't Repeat Yourself)
+- SOLID principles compliance
+- Separation of concerns
+- Proper error handling
+- Resource management (memory leaks, file handles, connections)
+- Code organization and structure
+
+## 4. BEST PRACTICES & STANDARDS
+Evaluate:
+- Django best practices
+- Python PEP 8 style guide compliance
+- REST API design principles
+- Database query optimization
+- Proper use of Django ORM
+- Template security practices
+- Static file handling
+- Environment variable usage
+
+## 5. PERFORMANCE CONCERNS
+Look for:
+- N+1 query problems
+- Missing database indexes
+- Inefficient algorithms
+- Memory-intensive operations
+- Unnecessary database calls
+- Missing caching opportunities
+- Large file handling issues
+
+## 6. TESTING & DOCUMENTATION
+Check for:
+- Missing test coverage for new features
+- Inadequate edge case testing
+- Missing docstrings/comments
+- Unclear function/class documentation
+- Missing type hints (where applicable)
+
+## 7. ACCESSIBILITY & UX
+If frontend changes:
+- WCAG compliance issues
+- Missing ARIA labels
+- Keyboard navigation problems
+- Color contrast issues
+
+## 8. SUMMARY
+Provide a brief overall assessment with:
+- Critical issues that must be fixed
+- Important suggestions for improvement
+- Nice-to-have enhancements
+- Overall code quality rating (1-10)
 
 ```
 {diff}

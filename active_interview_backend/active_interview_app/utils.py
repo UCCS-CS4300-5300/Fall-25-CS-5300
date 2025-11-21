@@ -28,6 +28,3 @@ def handle_uploaded_file(f):
         logger.error(f"Unexpected error while saving file: {e}")
         raise ValueError(
             "An unexpected error occurred. Please try again later.")
-
-
-handle_uploaded_file()
