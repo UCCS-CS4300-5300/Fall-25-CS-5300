@@ -419,7 +419,7 @@ class EditResumeViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'documents/edit_document.html')
-        self.assertFormError(response, 'form', 'title',
+        self.assertFormError(response.context['form'], 'title',
                              'This field is required.')
 
 

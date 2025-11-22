@@ -545,18 +545,25 @@ class ChatView(LoginRequiredMixin, UserPassesTestMixin, View):
         if not ai_available():
             return _ai_unavailable_json()
 
-        response = get_openai_client().chat.completions.create(
-            model="gpt-4o",
-            messages=new_messages,
-            max_tokens=MAX_TOKENS
-        )
-        ai_message = response.choices[0].message.content
-        new_messages.append({"role": "assistant", "content": ai_message})
+        try:
+            response = get_openai_client().chat.completions.create(
+                model="gpt-4o",
+                messages=new_messages,
+                max_tokens=MAX_TOKENS
+            )
+            ai_message = response.choices[0].message.content
+            new_messages.append({"role": "assistant", "content": ai_message})
 
-        chat.messages = new_messages
-        chat.save()
+            chat.messages = new_messages
+            chat.save()
 
-        return JsonResponse({'message': ai_message})
+            return JsonResponse({'message': ai_message})
+        except Exception as e:
+            # Handle AI service exceptions gracefully
+            return JsonResponse({
+                'error': 'AI service unavailable',
+                'message': str(e)
+            }, status=503)
 
 
 class EditChat(LoginRequiredMixin, UserPassesTestMixin, View):

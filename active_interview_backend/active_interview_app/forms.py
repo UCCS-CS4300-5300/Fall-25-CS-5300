@@ -7,7 +7,8 @@ from django.utils import timezone
 from datetime import timedelta
 
 # Form field constants
-TITLE_MAX_LENGTH_SHORT = 32
+TITLE_MAX_LENGTH_SHORT = 48
+TITLE_MAX_LENGTH_JOB = 100
 TITLE_MAX_LENGTH = 255
 TEXTAREA_ROWS_DEFAULT = 15
 TEXTAREA_ROWS_SMALL = 4
@@ -43,14 +44,14 @@ class DocumentEditForm(forms.ModelForm):
 
 
 class JobPostingEditForm(forms.ModelForm):
-    title = forms.CharField(required=True, max_length=TITLE_MAX_LENGTH_SHORT)
+    title = forms.CharField(required=True, max_length=TITLE_MAX_LENGTH_JOB)
     content = forms.CharField(required=True, widget=forms.Textarea(attrs={'class': 'form-control', 'rows': TEXTAREA_ROWS_DEFAULT}))
 
     class Meta:
         model = UploadedJobListing
         fields = ['title', 'content']
         widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control', 'maxlength': str(TITLE_MAX_LENGTH_SHORT)}),
+            'title': forms.TextInput(attrs={'class': 'form-control', 'maxlength': str(TITLE_MAX_LENGTH_JOB)}),
         }
 
 
@@ -100,7 +101,7 @@ class InterviewTemplateForm(ModelForm):
     """
     name = forms.CharField(
         required=True,
-        max_length=TITLE_MAX_LENGTH,
+        max_length=TITLE_MAX_LENGTH_SHORT,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
             'placeholder': 'e.g., Technical Interview, Behavioral Interview'
