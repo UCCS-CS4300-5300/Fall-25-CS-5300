@@ -17,7 +17,9 @@ class IsAdminOrInterviewer(permissions.BasePermission):
     Used for question bank and interview template features that
     should only be accessible to interviewers and admins.
     """
-    message = 'Access denied. This feature is only available to Interviewers and Admins.'
+    message = (
+        'Access denied. This feature is only available to '
+        'Interviewers and Admins.')
 
     def has_permission(self, request, view):
         # Check if user is authenticated

@@ -1,5 +1,6 @@
 """
-Merge token statistics models for tracking cumulative token usage across branches.
+Merge token statistics models for tracking cumulative token usage
+across branches.
 """
 from decimal import Decimal
 from django.db import models
@@ -128,9 +129,10 @@ class MergeTokenStats(models.Model):
         verbose_name_plural = "Merge Token Statistics"
 
     def __str__(self):
+        date_str = self.merge_date.strftime('%Y-%m-%d')
         return (
             f"{self.source_branch} → {self.target_branch} - "
-            f"{self.total_tokens} tokens ({self.merge_date.strftime('%Y-%m-%d')})"
+            f"{self.total_tokens} tokens ({date_str})"
         )
 
     @property
@@ -153,23 +155,47 @@ class MergeTokenStats(models.Model):
     def save(self, *args, **kwargs):
         """Calculate totals and update cumulative values before saving."""
         # Calculate this branch's totals
-        self.claude_total_tokens = self.claude_prompt_tokens + self.claude_completion_tokens
-        self.chatgpt_total_tokens = self.chatgpt_prompt_tokens + self.chatgpt_completion_tokens
+        self.claude_total_tokens = (
+            self.claude_prompt_tokens + self.claude_completion_tokens
+        )
+        self.chatgpt_total_tokens = (
+            self.chatgpt_prompt_tokens + self.chatgpt_completion_tokens
+        )
 
-        self.total_prompt_tokens = self.claude_prompt_tokens + self.chatgpt_prompt_tokens
-        self.total_completion_tokens = self.claude_completion_tokens + self.chatgpt_completion_tokens
-        self.total_tokens = self.total_prompt_tokens + self.total_completion_tokens
-        self.request_count = self.claude_request_count + self.chatgpt_request_count
+        self.total_prompt_tokens = (
+            self.claude_prompt_tokens + self.chatgpt_prompt_tokens
+        )
+        self.total_completion_tokens = (
+            self.claude_completion_tokens + self.chatgpt_completion_tokens
+        )
+        self.total_tokens = (
+            self.total_prompt_tokens + self.total_completion_tokens
+        )
+        self.request_count = (
+            self.claude_request_count + self.chatgpt_request_count
+        )
 
         # Update cumulative totals
         if self.pk is None:  # Only update cumulative on creation
-            previous = MergeTokenStats.objects.order_by('-merge_date').first()
+            previous = (
+                MergeTokenStats.objects.order_by('-merge_date').first()
+            )
 
             if previous:
-                self.cumulative_claude_tokens = previous.cumulative_claude_tokens + self.claude_total_tokens
-                self.cumulative_chatgpt_tokens = previous.cumulative_chatgpt_tokens + self.chatgpt_total_tokens
-                self.cumulative_total_tokens = previous.cumulative_total_tokens + self.total_tokens
-                self.cumulative_cost = previous.cumulative_cost + Decimal(str(self.branch_cost))
+                self.cumulative_claude_tokens = (
+                    previous.cumulative_claude_tokens +
+                    self.claude_total_tokens
+                )
+                self.cumulative_chatgpt_tokens = (
+                    previous.cumulative_chatgpt_tokens +
+                    self.chatgpt_total_tokens
+                )
+                self.cumulative_total_tokens = (
+                    previous.cumulative_total_tokens + self.total_tokens
+                )
+                self.cumulative_cost = (
+                    previous.cumulative_cost + Decimal(str(self.branch_cost))
+                )
             else:
                 self.cumulative_claude_tokens = self.claude_total_tokens
                 self.cumulative_chatgpt_tokens = self.chatgpt_total_tokens
@@ -179,10 +205,12 @@ class MergeTokenStats(models.Model):
         super().save(*args, **kwargs)
 
     @classmethod
-    def create_from_branch(cls, branch_name, commit_sha, merged_by=None, pr_number=None):
+    def create_from_branch(
+        cls, branch_name, commit_sha, merged_by=None, pr_number=None
+    ):
         """
-        Create a merge statistics record by aggregating TokenUsage records for a branch.
-        Separates Claude and ChatGPT tokens.
+        Create a merge statistics record by aggregating TokenUsage
+        records for a branch. Separates Claude and ChatGPT tokens.
         """
         from .token_usage_models import TokenUsage
 

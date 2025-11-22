@@ -10,14 +10,13 @@ This test suite ensures:
 6. Existing password users can link OAuth accounts
 7. Django's User model password field works for both methods
 """
-import pytest
 from django.test import TestCase, Client, RequestFactory
 from django.contrib.auth.models import User, Group
 from django.contrib.auth import authenticate
 from django.urls import reverse
 from unittest.mock import Mock, patch
 
-from allauth.socialaccount.models import SocialAccount, SocialApp
+from allauth.socialaccount.models import SocialApp
 from active_interview_app.models import UserProfile
 from active_interview_app.adapters import CustomSocialAccountAdapter
 
@@ -31,7 +30,8 @@ class DualAuthenticationTestCase(TestCase):
         self.factory = RequestFactory()
 
         # Create average_role group (required by both auth methods)
-        self.average_role_group = Group.objects.get_or_create(name='average_role')[0]
+        self.average_role_group = Group.objects.get_or_create(name='average_role')[
+            0]
 
         # Create mock SocialApp for Google OAuth
         self.social_app = SocialApp.objects.create(
@@ -277,12 +277,14 @@ class DualAuthenticationTestCase(TestCase):
         self.assertTrue(UserProfile.objects.filter(user=pwd_user).exists())
         self.assertTrue(UserProfile.objects.filter(user=oauth_user).exists())
 
-        # Both should have default 'local' provider (adapter changes it for OAuth)
+        # Both should have default 'local' provider (adapter changes it for
+        # OAuth)
         pwd_profile = UserProfile.objects.get(user=pwd_user)
         oauth_profile = UserProfile.objects.get(user=oauth_user)
 
         self.assertEqual(pwd_profile.auth_provider, 'local')
-        self.assertEqual(oauth_profile.auth_provider, 'local')  # Default until adapter updates it
+        # Default until adapter updates it
+        self.assertEqual(oauth_profile.auth_provider, 'local')
 
 
 class DatabaseSchemaTestCase(TestCase):
@@ -350,10 +352,9 @@ class DatabaseSchemaTestCase(TestCase):
 
         for table in expected_tables:
             self.assertIn(table, tables,
-                         f"Table {table} should exist for OAuth support")
+                          f"Table {table} should exist for OAuth support")
 
 
-@pytest.mark.django_db
 class AuthenticationIntegrationTest(TestCase):
     """Integration tests for dual authentication system"""
 
@@ -398,7 +399,8 @@ class AuthenticationIntegrationTest(TestCase):
 
         # Should have both backends
         self.assertIn('django.contrib.auth.backends.ModelBackend', backends)
-        self.assertIn('allauth.account.auth_backends.AuthenticationBackend', backends)
+        self.assertIn(
+            'allauth.account.auth_backends.AuthenticationBackend', backends)
 
     def test_oauth_apps_installed(self):
         """Test that OAuth apps are installed"""
@@ -416,4 +418,4 @@ class AuthenticationIntegrationTest(TestCase):
 
         for app in required_apps:
             self.assertIn(app, installed_apps,
-                         f"{app} should be installed for OAuth support")
+                          f"{app} should be installed for OAuth support")

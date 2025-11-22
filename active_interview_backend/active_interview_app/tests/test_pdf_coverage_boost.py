@@ -24,7 +24,8 @@ class PDFRationalesSectionTest(TestCase):
     """Test _create_score_rationales_section"""
 
     def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='pass123')
+        self.user = User.objects.create_user(
+            username='testuser', password='pass123')
         self.chat = Chat.objects.create(
             owner=self.user,
             title='Test',
@@ -48,7 +49,8 @@ class PDFRationalesSectionTest(TestCase):
         )
 
         _, heading_style, normal_style = _create_styles()
-        result = _create_score_rationales_section(report, heading_style, normal_style)
+        result = _create_score_rationales_section(
+            report, heading_style, normal_style)
 
         self.assertIsInstance(result, list)
         self.assertGreater(len(result), 0)
@@ -61,7 +63,8 @@ class PDFRationalesSectionTest(TestCase):
         )
 
         _, heading_style, normal_style = _create_styles()
-        result = _create_score_rationales_section(report, heading_style, normal_style)
+        result = _create_score_rationales_section(
+            report, heading_style, normal_style)
 
         self.assertIsInstance(result, list)
         self.assertEqual(len(result), 0)
@@ -81,7 +84,8 @@ class PDFRationalesSectionTest(TestCase):
         )
 
         _, heading_style, normal_style = _create_styles()
-        result = _create_score_rationales_section(report, heading_style, normal_style)
+        result = _create_score_rationales_section(
+            report, heading_style, normal_style)
 
         self.assertIsInstance(result, list)
         self.assertGreater(len(result), 0)
@@ -91,7 +95,8 @@ class PDFRecommendedExercisesTest(TestCase):
     """Test _create_recommended_exercises_section"""
 
     def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='pass123')
+        self.user = User.objects.create_user(
+            username='testuser', password='pass123')
         self.chat = Chat.objects.create(
             owner=self.user,
             title='Test',
@@ -111,7 +116,8 @@ class PDFRecommendedExercisesTest(TestCase):
         )
 
         _, heading_style, normal_style = _create_styles()
-        result = _create_recommended_exercises_section(report, heading_style, normal_style)
+        result = _create_recommended_exercises_section(
+            report, heading_style, normal_style)
 
         self.assertIsInstance(result, list)
         self.assertGreater(len(result), 0)
@@ -127,7 +133,8 @@ class PDFRecommendedExercisesTest(TestCase):
         )
 
         _, heading_style, normal_style = _create_styles()
-        result = _create_recommended_exercises_section(report, heading_style, normal_style)
+        result = _create_recommended_exercises_section(
+            report, heading_style, normal_style)
 
         self.assertIsInstance(result, list)
         self.assertGreater(len(result), 0)
@@ -143,7 +150,8 @@ class PDFRecommendedExercisesTest(TestCase):
         )
 
         _, heading_style, normal_style = _create_styles()
-        result = _create_recommended_exercises_section(report, heading_style, normal_style)
+        result = _create_recommended_exercises_section(
+            report, heading_style, normal_style)
 
         self.assertIsInstance(result, list)
         self.assertGreater(len(result), 0)
@@ -159,7 +167,8 @@ class PDFRecommendedExercisesTest(TestCase):
         )
 
         _, heading_style, normal_style = _create_styles()
-        result = _create_recommended_exercises_section(report, heading_style, normal_style)
+        result = _create_recommended_exercises_section(
+            report, heading_style, normal_style)
 
         self.assertIsInstance(result, list)
         self.assertGreater(len(result), 0)
@@ -175,7 +184,8 @@ class PDFRecommendedExercisesTest(TestCase):
         )
 
         _, heading_style, normal_style = _create_styles()
-        result = _create_recommended_exercises_section(report, heading_style, normal_style)
+        result = _create_recommended_exercises_section(
+            report, heading_style, normal_style)
 
         self.assertIsInstance(result, list)
         self.assertGreater(len(result), 0)
@@ -191,7 +201,8 @@ class PDFRecommendedExercisesTest(TestCase):
         )
 
         _, heading_style, normal_style = _create_styles()
-        result = _create_recommended_exercises_section(report, heading_style, normal_style)
+        result = _create_recommended_exercises_section(
+            report, heading_style, normal_style)
 
         self.assertIsInstance(result, list)
         self.assertGreater(len(result), 0)
@@ -207,7 +218,8 @@ class PDFRecommendedExercisesTest(TestCase):
         )
 
         _, heading_style, normal_style = _create_styles()
-        result = _create_recommended_exercises_section(report, heading_style, normal_style)
+        result = _create_recommended_exercises_section(
+            report, heading_style, normal_style)
 
         self.assertIsInstance(result, list)
         self.assertGreater(len(result), 0)
@@ -217,7 +229,8 @@ class PDFGenerationTest(TestCase):
     """Test generate_pdf_report function"""
 
     def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='pass123')
+        self.user = User.objects.create_user(
+            username='testuser', password='pass123')
 
     def test_generate_pdf_with_all_data(self):
         """Test PDF generation with all fields populated"""
@@ -399,7 +412,8 @@ class PDFSectionsTest(TestCase):
     """Test individual PDF section creation functions"""
 
     def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='pass123')
+        self.user = User.objects.create_user(
+            username='testuser', password='pass123')
         self.chat = Chat.objects.create(
             owner=self.user,
             title='Test',
@@ -465,7 +479,8 @@ class PDFSectionsTest(TestCase):
         )
 
         _, heading_style, normal_style = _create_styles()
-        result = _create_performance_scores_section(report, heading_style, normal_style)
+        result = _create_performance_scores_section(
+            report, heading_style, normal_style)
 
         self.assertIsInstance(result, list)
         self.assertGreater(len(result), 0)
@@ -480,7 +495,8 @@ class PDFSectionsTest(TestCase):
         )
 
         _, heading_style, normal_style = _create_styles()
-        result = _create_performance_scores_section(report, heading_style, normal_style)
+        result = _create_performance_scores_section(
+            report, heading_style, normal_style)
 
         self.assertIsInstance(result, list)
         self.assertGreater(len(result), 0)

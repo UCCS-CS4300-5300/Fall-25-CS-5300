@@ -131,7 +131,8 @@ WSGI_APPLICATION = 'active_interview_project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-# Use PostgreSQL on Railway (via DATABASE_URL env var), SQLite for local development
+# Use PostgreSQL on Railway (via DATABASE_URL env var),
+# SQLite for local development
 DATABASES = {
     'default': dj_database_url.config(
         default='sqlite:///' + os.path.join(BASE_DIR, 'db', 'db.sqlite3'),
@@ -226,15 +227,18 @@ AUTHENTICATION_BACKENDS = [
 # Django-allauth configuration
 ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
 ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_EMAIL_VERIFICATION = 'optional'  # Can be 'mandatory', 'optional', or 'none'
+# Can be 'mandatory', 'optional', or 'none'
+ACCOUNT_EMAIL_VERIFICATION = 'optional'
 ACCOUNT_USERNAME_REQUIRED = False
 SOCIALACCOUNT_AUTO_SIGNUP = True
 SOCIALACCOUNT_EMAIL_VERIFICATION = 'optional'
-SOCIALACCOUNT_ADAPTER = 'active_interview_app.adapters.CustomSocialAccountAdapter'
+SOCIALACCOUNT_ADAPTER = (
+    'active_interview_app.adapters.CustomSocialAccountAdapter')
 
 # Login/Logout redirects
 LOGIN_URL = '/accounts/login/'  # allauth login URL
-LOGIN_REDIRECT_URL = '/testlogged/'  # Where to redirect after successful login
+# Where to redirect after successful login
+LOGIN_REDIRECT_URL = '/testlogged/'
 ACCOUNT_LOGOUT_REDIRECT_URL = '/'  # Where to redirect after logout
 
 # Google OAuth settings
@@ -257,20 +261,26 @@ SOCIALACCOUNT_PROVIDERS = {
         }
     }
 }
-import sys
+
+import sys  # noqa: E402
+
 # Use regular storage during tests to avoid manifest issues
 if 'test' in sys.argv or 'pytest' in sys.modules:
-    STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+    STATICFILES_STORAGE = (
+        'django.contrib.staticfiles.storage.StaticFilesStorage')
 else:
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+    STATICFILES_STORAGE = (
+        'whitenoise.storage.CompressedManifestStaticFilesStorage')
 
-# Site URL for emails, invitations, and exports (Issue #4, #8, #63, #64, #139)
+# Site URL for emails, invitations, and exports
+# (Issue #4, #8, #63, #64, #139)
 if PROD:
     SITE_URL = 'https://activeinterviewservice.app'
 else:
     SITE_URL = 'http://localhost:8000'
 
-# Email configuration for invitation and export notifications (Issue #4, #8, #64, #139)
+# Email configuration for invitation and export notifications
+# (Issue #4, #8, #64, #139)
 if PROD:
     # Production email settings (configure with your email provider)
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -279,7 +289,8 @@ if PROD:
     EMAIL_USE_TLS = True
     EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
     EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
-    DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@activeinterviewservice.app')
+    DEFAULT_FROM_EMAIL = os.environ.get(
+        'DEFAULT_FROM_EMAIL', 'noreply@activeinterviewservice.app')
 else:
     # Development: Use console backend (prints emails to console)
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

@@ -398,8 +398,7 @@ class TagManagementTest(APITestCase):
         """Test merging multiple tags"""
         tag1 = Tag.objects.create(name="#sql")
         tag2 = Tag.objects.create(name="#database")
-        tag3 = Tag.objects.create(name="#rdbms")
-
+        Tag.objects.create(name="#rdbms")
         # Create questions with these tags
         bank = QuestionBank.objects.create(name="Test", owner=self.user)
         q1 = Question.objects.create(
@@ -486,7 +485,8 @@ class SaveAsTemplateTest(APITestCase):
             self.assertIn('content', section)
             self.assertIn('order', section)
             self.assertIn('weight', section)
-            self.assertEqual(section['order'], i, f"Section {i} should have order {i}")
+            self.assertEqual(section['order'], i,
+                             f"Section {i} should have order {i}")
             self.assertIn(f'Question {i+1}:', section['title'])
             self.assertIn(questions_data[i]['text'], section['title'])
 

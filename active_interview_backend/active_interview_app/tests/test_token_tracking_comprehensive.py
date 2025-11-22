@@ -184,7 +184,8 @@ class RecordTokenUsageTest(TestCase):
 
         # Verify all models were recorded
         self.assertEqual(TokenUsage.objects.filter(user=self.user).count(), 3)
-        recorded_models = set(TokenUsage.objects.values_list('model_name', flat=True))
+        recorded_models = set(
+            TokenUsage.objects.values_list('model_name', flat=True))
         self.assertEqual(recorded_models, set(models))
 
     @patch('active_interview_app.token_tracking.get_current_git_branch')
@@ -250,7 +251,8 @@ class RecordTokenUsageTest(TestCase):
         )
 
         # No usage should be recorded
-        self.assertEqual(TokenUsage.objects.filter(endpoint='disabled_endpoint').count(), 0)
+        self.assertEqual(TokenUsage.objects.filter(
+            endpoint='disabled_endpoint').count(), 0)
 
     @patch('active_interview_app.token_tracking.get_current_git_branch')
     def test_record_token_usage_missing_usage_attribute(self, mock_branch):
@@ -268,11 +270,13 @@ class RecordTokenUsageTest(TestCase):
         )
 
         # No usage should be recorded
-        self.assertEqual(TokenUsage.objects.filter(endpoint='no_usage').count(), 0)
+        self.assertEqual(TokenUsage.objects.filter(
+            endpoint='no_usage').count(), 0)
 
     @patch('active_interview_app.token_tracking.get_current_git_branch')
     @patch('builtins.print')
-    def test_record_token_usage_handles_exception(self, mock_print, mock_branch):
+    def test_record_token_usage_handles_exception(
+            self, mock_print, mock_branch):
         """Test that exceptions are caught and logged"""
         mock_branch.return_value = 'main'
 
@@ -484,8 +488,10 @@ class TokenTrackingIntegrationTest(TestCase):
 
     def setUp(self):
         """Set up test users"""
-        self.user1 = User.objects.create_user(username='user1', password='pass1')
-        self.user2 = User.objects.create_user(username='user2', password='pass2')
+        self.user1 = User.objects.create_user(
+            username='user1', password='pass1')
+        self.user2 = User.objects.create_user(
+            username='user2', password='pass2')
 
     @patch('active_interview_app.token_tracking.get_current_git_branch')
     def test_multiple_users_token_tracking(self, mock_branch):
@@ -519,7 +525,8 @@ class TokenTrackingIntegrationTest(TestCase):
         self.assertEqual(TokenUsage.objects.filter(user=self.user2).count(), 2)
 
         # Verify total tokens for user1
-        user1_total = sum(TokenUsage.objects.filter(user=self.user1).values_list('total_tokens', flat=True))
+        user1_total = sum(TokenUsage.objects.filter(
+            user=self.user1).values_list('total_tokens', flat=True))
         self.assertEqual(user1_total, 150 + 300 + 450)  # 900
 
     @patch('active_interview_app.token_tracking.get_current_git_branch')
@@ -536,8 +543,10 @@ class TokenTrackingIntegrationTest(TestCase):
             mock_response.usage.prompt_tokens = 100
             mock_response.usage.completion_tokens = 50
 
-            record_openai_usage(self.user1, f'{branch}_endpoint', mock_response)
+            record_openai_usage(
+                self.user1, f'{branch}_endpoint', mock_response)
 
         # Verify all branches were recorded
-        recorded_branches = set(TokenUsage.objects.values_list('git_branch', flat=True))
+        recorded_branches = set(
+            TokenUsage.objects.values_list('git_branch', flat=True))
         self.assertEqual(recorded_branches, set(branches))

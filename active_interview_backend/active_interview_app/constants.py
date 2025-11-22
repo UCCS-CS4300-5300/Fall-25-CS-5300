@@ -4,11 +4,13 @@ Centralizes hardcoded values for better maintainability.
 """
 
 # Data Export Configuration
-EXPORT_EXPIRATION_DAYS = 7  # Number of days before export download link expires
+# Number of days before export download link expires
+EXPORT_EXPIRATION_DAYS = 7
 EXPORT_FILE_PREFIX = 'user_data'  # Prefix for exported ZIP filenames
 
 # Email Configuration
-EMAIL_FAIL_SILENTLY = True  # Don't raise exceptions on email failures in development
+# Don't raise exceptions on email failures in development
+EMAIL_FAIL_SILENTLY = True
 
 # File Size Units
 FILE_SIZE_UNITS = ['B', 'KB', 'MB', 'GB', 'TB']

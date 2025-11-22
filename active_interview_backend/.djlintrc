@@ -1,0 +1,16 @@
+{
+  "indent": 2,
+  "max_line_length": 120,
+  "format_css": true,
+  "format_js": true,
+  "ignore": "H030,H031",
+  "per_file_ignores": [
+    {
+      "emails/*.html": ["H021"]
+    },
+    {
+      "user_data/deletion_complete.html": ["H021"]  
+    }
+  ],
+  "exclude": "migrations/,venv/,env/,myenv/,__pycache__/"
+}

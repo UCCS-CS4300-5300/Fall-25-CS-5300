@@ -8,10 +8,9 @@ from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.urls import reverse
 from active_interview_app.models import (
-    Chat, ExportableReport, UploadedJobListing, UploadedResume
+    Chat, ExportableReport
 )
 from active_interview_app.pdf_export import generate_pdf_report, get_score_rating
-import json
 
 
 class ExportableReportModelTest(TestCase):
@@ -101,7 +100,7 @@ class ExportableReportModelTest(TestCase):
 
         self.assertEqual(len(report.question_responses), 2)
         self.assertEqual(report.question_responses[0]['question'],
-                        'What is your experience?')
+                         'What is your experience?')
         self.assertEqual(report.question_responses[1]['score'], 9)
 
 
@@ -143,10 +142,10 @@ class ExportableReportViewTest(TestCase):
 
         # Mock the AI functions to avoid external API calls in tests
         with patch('active_interview_app.views.ai_available', return_value=False):
-            response = self.client.post(url, follow=True)
-
+            self.client.post(url, follow=True)
         # Check that report was created
-        self.assertTrue(ExportableReport.objects.filter(chat=self.chat).exists())
+        self.assertTrue(ExportableReport.objects.filter(
+            chat=self.chat).exists())
         report = ExportableReport.objects.get(chat=self.chat)
 
         # Check that statistics were calculated
@@ -161,7 +160,7 @@ class ExportableReportViewTest(TestCase):
 
     def test_export_report_view_requires_login(self):
         """Test that viewing the export report requires login"""
-        report = ExportableReport.objects.create(
+        ExportableReport.objects.create(
             chat=self.chat,
             overall_score=80
         )
@@ -172,7 +171,7 @@ class ExportableReportViewTest(TestCase):
     def test_export_report_view(self):
         """Test viewing the export report page"""
         self.client.login(username='testuser', password='testpass123')
-        report = ExportableReport.objects.create(
+        ExportableReport.objects.create(
             chat=self.chat,
             overall_score=80,
             professionalism_score=85
@@ -196,7 +195,7 @@ class ExportableReportViewTest(TestCase):
 
     def test_download_pdf_requires_login(self):
         """Test that downloading PDF requires login"""
-        report = ExportableReport.objects.create(
+        ExportableReport.objects.create(
             chat=self.chat,
             overall_score=80
         )
@@ -242,7 +241,7 @@ class ExportableReportViewTest(TestCase):
             messages=[],
             type='GEN'
         )
-        other_report = ExportableReport.objects.create(
+        ExportableReport.objects.create(
             chat=other_chat,
             overall_score=75
         )
@@ -441,10 +440,10 @@ class ScoreWeightsAndRationalesTest(TestCase):
             professionalism_rationale='The candidate demonstrated professional behavior throughout.',
             subject_knowledge_rationale='Good understanding of core concepts but needs improvement in advanced topics.',
             clarity_rationale='Communication was clear and concise.',
-            overall_rationale='Solid performance with room for improvement in technical depth.'
-        )
+            overall_rationale='Solid performance with room for improvement in technical depth.')
 
-        self.assertIn('professional behavior', report.professionalism_rationale)
+        self.assertIn('professional behavior',
+                      report.professionalism_rationale)
         self.assertIn('core concepts', report.subject_knowledge_rationale)
         self.assertIn('clear and concise', report.clarity_rationale)
         self.assertIn('Solid performance', report.overall_rationale)
@@ -508,8 +507,7 @@ class CSVExportTest(TestCase):
             overall_rationale='Strong overall performance.',
             feedback_text='Excellent interview performance with minor areas for improvement.',
             total_questions_asked=10,
-            total_responses_given=10
-        )
+            total_responses_given=10)
 
     def test_download_csv_requires_login(self):
         """Test that downloading CSV requires login"""
@@ -614,7 +612,7 @@ class CSVExportTest(TestCase):
             messages=[],
             type='GEN'
         )
-        other_report = ExportableReport.objects.create(
+        ExportableReport.objects.create(
             chat=other_chat,
             overall_score=75
         )
@@ -672,8 +670,7 @@ class FinalScoreComputationTest(TestCase):
             overall_rationale='Strong overall performance.',
             feedback_text='Good job overall.',
             total_questions_asked=5,
-            total_responses_given=5
-        )
+            total_responses_given=5)
 
     def test_final_score_displayed_with_weights(self):
         """Test that final score is shown with weight breakdown"""
@@ -715,7 +712,8 @@ class FinalScoreComputationTest(TestCase):
 
         # Check that all rationales are present and explain the logic
         self.assertContains(response, 'Demonstrated excellent professionalism')
-        self.assertContains(response, 'Good understanding with room for improvement')
+        self.assertContains(
+            response, 'Good understanding with room for improvement')
         self.assertContains(response, 'Clear and well-structured responses')
         self.assertContains(response, 'Strong overall performance')
 
@@ -818,7 +816,10 @@ class SectionScoresWithRationalesTest(TestCase):
         self.report = ExportableReport.objects.create(
             chat=self.chat,
             professionalism_score=85,
-            professionalism_rationale='The candidate demonstrated excellent professionalism throughout the interview, maintaining appropriate tone and demeanor.',
+            professionalism_rationale=(
+                'The candidate demonstrated excellent professionalism '
+                'throughout the interview, maintaining appropriate tone and demeanor.'
+            ),
             subject_knowledge_score=78,
             subject_knowledge_rationale='Good understanding of core concepts with some room for improvement in advanced topics.',
             clarity_score=82,
@@ -827,8 +828,7 @@ class SectionScoresWithRationalesTest(TestCase):
             overall_rationale='Overall strong performance with solid fundamentals and professional conduct.',
             feedback_text='Good job overall. Keep up the great work!',
             total_questions_asked=3,
-            total_responses_given=1
-        )
+            total_responses_given=1)
 
     def test_section_scores_displayed(self):
         """Test that all section scores are displayed on the export report page"""
@@ -922,7 +922,8 @@ class SectionScoresWithRationalesTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pdf')
 
-        # Check that PDF was generated (can't easily check content without parsing PDF)
+        # Check that PDF was generated (can't easily check content without
+        # parsing PDF)
         self.report.refresh_from_db()
         self.assertTrue(self.report.pdf_generated)
 
@@ -984,7 +985,8 @@ class IntegratedUserStoriesTest(TestCase):
         self.assertEqual(results_response.status_code, 200)
 
         # Step 2: Generate detailed report (triggers score computation)
-        generate_url = reverse('generate_report', kwargs={'chat_id': self.chat.id})
+        generate_url = reverse('generate_report', kwargs={
+                               'chat_id': self.chat.id})
 
         # Mock the AI calls to avoid external API dependency
         with patch('active_interview_app.views.ai_available', return_value=True):
@@ -1013,16 +1015,14 @@ Overall: Strong overall performance with good balance across all areas.
 """
 
                 mock_client.return_value.chat.completions.create.side_effect = [
-                    mock_scores,
-                    mock_feedback,
-                    mock_rationales
-                ]
+                    mock_scores, mock_feedback, mock_rationales]
 
                 generate_response = self.client.post(generate_url, follow=True)
                 self.assertEqual(generate_response.status_code, 200)
 
         # Verify report was created
-        self.assertTrue(ExportableReport.objects.filter(chat=self.chat).exists())
+        self.assertTrue(ExportableReport.objects.filter(
+            chat=self.chat).exists())
         report = ExportableReport.objects.get(chat=self.chat)
 
         # Step 3: Verify section scores are displayed (User Story 2)
@@ -1038,26 +1038,33 @@ Overall: Strong overall performance with good balance across all areas.
 
         # Step 4: Verify rationales are displayed (User Story 2)
         if report.professionalism_rationale:
-            self.assertContains(export_response, report.professionalism_rationale)
+            self.assertContains(
+                export_response, report.professionalism_rationale)
         if report.subject_knowledge_rationale:
-            self.assertContains(export_response, report.subject_knowledge_rationale)
+            self.assertContains(
+                export_response, report.subject_knowledge_rationale)
         if report.clarity_rationale:
             self.assertContains(export_response, report.clarity_rationale)
 
         # Step 5: Verify weight breakdown is shown (User Story 1)
         self.assertContains(export_response, 'How Your Score is Calculated')
-        self.assertContains(export_response, f'Weight: {report.professionalism_weight}%')
-        self.assertContains(export_response, f'Weight: {report.subject_knowledge_weight}%')
-        self.assertContains(export_response, f'Weight: {report.clarity_weight}%')
+        self.assertContains(
+            export_response, f'Weight: {report.professionalism_weight}%')
+        self.assertContains(
+            export_response, f'Weight: {report.subject_knowledge_weight}%')
+        self.assertContains(
+            export_response, f'Weight: {report.clarity_weight}%')
 
         # Step 6: Verify PDF export works (User Story 1)
-        pdf_url = reverse('download_pdf_report', kwargs={'chat_id': self.chat.id})
+        pdf_url = reverse('download_pdf_report', kwargs={
+                          'chat_id': self.chat.id})
         pdf_response = self.client.get(pdf_url)
         self.assertEqual(pdf_response.status_code, 200)
         self.assertEqual(pdf_response['Content-Type'], 'application/pdf')
 
         # Step 7: Verify CSV export works (User Story 1)
-        csv_url = reverse('download_csv_report', kwargs={'chat_id': self.chat.id})
+        csv_url = reverse('download_csv_report', kwargs={
+                          'chat_id': self.chat.id})
         csv_response = self.client.get(csv_url)
         self.assertEqual(csv_response.status_code, 200)
         self.assertEqual(csv_response['Content-Type'], 'text/csv')
@@ -1067,7 +1074,7 @@ Overall: Strong overall performance with good balance across all areas.
         self.client.login(username='candidate', password='testpass123')
 
         # Create report with all data
-        report = ExportableReport.objects.create(
+        ExportableReport.objects.create(
             chat=self.chat,
             professionalism_score=90,
             professionalism_weight=30,
@@ -1082,8 +1089,7 @@ Overall: Strong overall performance with good balance across all areas.
             overall_rationale='Excellent overall performance.',
             feedback_text='Outstanding candidate.',
             total_questions_asked=4,
-            total_responses_given=4
-        )
+            total_responses_given=4)
 
         export_url = reverse('export_report', kwargs={'chat_id': self.chat.id})
         response = self.client.get(export_url)
@@ -1159,11 +1165,14 @@ class ScoreComputationLearningScenarioTest(TestCase):
         )
 
         # Generate the report with scores and rationales
-        report = ExportableReport.objects.create(
+        ExportableReport.objects.create(
             chat=completed_chat,
             professionalism_score=88,
             professionalism_weight=30,
-            professionalism_rationale='Demonstrated strong professionalism with respectful communication and appropriate tone throughout the interview.',
+            professionalism_rationale=(
+                'Demonstrated strong professionalism with respectful '
+                'communication and appropriate tone throughout the interview.'
+            ),
             subject_knowledge_score=92,
             subject_knowledge_weight=40,
             subject_knowledge_rationale='Exhibited excellent technical knowledge with specific examples and deep understanding of core concepts.',
@@ -1174,13 +1183,13 @@ class ScoreComputationLearningScenarioTest(TestCase):
             overall_rationale='Outstanding performance demonstrating both technical competence and strong communication skills.',
             feedback_text='Excellent candidate with strong technical skills and clear communication.',
             total_questions_asked=3,
-            total_responses_given=3
-        )
+            total_responses_given=3)
 
         self.client.login(username='candidate_learner', password='testpass123')
 
         # WHEN I open my results
-        results_url = reverse('export_report', kwargs={'chat_id': completed_chat.id})
+        results_url = reverse('export_report', kwargs={
+                              'chat_id': completed_chat.id})
         response = self.client.get(results_url)
 
         # Verify the page loads successfully
@@ -1195,13 +1204,17 @@ class ScoreComputationLearningScenarioTest(TestCase):
 
         # Verify weights are displayed for each section
         self.assertContains(response, '(30% weight)')  # Professionalism weight
-        self.assertContains(response, '(40% weight)')  # Subject Knowledge weight
-        self.assertContains(response, '(30% weight)')  # Clarity weight (appears twice)
+        # Subject Knowledge weight
+        self.assertContains(response, '(40% weight)')
+        # Clarity weight (appears twice)
+        self.assertContains(response, '(30% weight)')
 
         # Verify rationales are shown for learning
         self.assertContains(response, 'Demonstrated strong professionalism')
-        self.assertContains(response, 'Exhibited excellent technical knowledge')
-        self.assertContains(response, 'Communicated ideas clearly and concisely')
+        self.assertContains(
+            response, 'Exhibited excellent technical knowledge')
+        self.assertContains(
+            response, 'Communicated ideas clearly and concisely')
 
         # AND a final weighted score
 
@@ -1213,12 +1226,15 @@ class ScoreComputationLearningScenarioTest(TestCase):
 
         # Verify the weighted calculation formula is shown
         self.assertContains(response, 'Weighted Score Calculation')
-        self.assertContains(response, '88 × 30%')  # Professionalism calculation
-        self.assertContains(response, '92 × 40%')  # Subject Knowledge calculation
+        # Professionalism calculation
+        self.assertContains(response, '88 × 30%')
+        # Subject Knowledge calculation
+        self.assertContains(response, '92 × 40%')
         self.assertContains(response, '85 × 30%')  # Clarity calculation
 
         # Verify learning guidance is present
-        self.assertContains(response, 'identify your strengths and areas for improvement')
+        self.assertContains(
+            response, 'identify your strengths and areas for improvement')
 
     def test_learning_oriented_content_present(self):
         """Test that content is oriented toward learning and improvement"""
@@ -1235,7 +1251,7 @@ class ScoreComputationLearningScenarioTest(TestCase):
             type='GEN'
         )
 
-        report = ExportableReport.objects.create(
+        ExportableReport.objects.create(
             chat=chat,
             professionalism_score=75,
             professionalism_weight=30,
@@ -1250,15 +1266,15 @@ class ScoreComputationLearningScenarioTest(TestCase):
             overall_rationale='Good overall performance with clear areas for growth and development.',
             feedback_text='Good effort with opportunities for improvement.',
             total_questions_asked=1,
-            total_responses_given=1
-        )
+            total_responses_given=1)
 
         url = reverse('export_report', kwargs={'chat_id': chat.id})
         response = self.client.get(url)
 
         # Verify learning-oriented language
         self.assertContains(response, 'How Your Score is Calculated')
-        self.assertContains(response, 'Understanding how your final score was computed')
+        self.assertContains(
+            response, 'Understanding how your final score was computed')
 
         # Verify actionable feedback in rationales
         self.assertContains(response, 'room to improve')
@@ -1283,7 +1299,7 @@ class ScoreComputationLearningScenarioTest(TestCase):
             type='GEN'
         )
 
-        report = ExportableReport.objects.create(
+        ExportableReport.objects.create(
             chat=chat,
             professionalism_score=90,
             professionalism_weight=30,
@@ -1326,4 +1342,4 @@ class ScoreComputationLearningScenarioTest(TestCase):
 
         for element in scenario_elements:
             self.assertIn(element, response_content,
-                         f"Missing scenario element: {element}")
+                          f"Missing scenario element: {element}")

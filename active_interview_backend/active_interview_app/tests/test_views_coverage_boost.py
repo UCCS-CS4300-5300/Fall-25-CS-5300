@@ -3,7 +3,6 @@ Tests to boost views.py coverage to >80%
 Focuses on untested methods and code paths
 """
 
-import json
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.urls import reverse
@@ -16,7 +15,8 @@ class GenerateReportMethodsTest(TestCase):
     """Test GenerateReportView private methods"""
 
     def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='pass123')
+        self.user = User.objects.create_user(
+            username='testuser', password='pass123')
         self.chat = Chat.objects.create(
             owner=self.user,
             title='Test Interview',
@@ -95,7 +95,8 @@ class GenerateReportAITest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(username='testuser', password='pass123')
+        self.user = User.objects.create_user(
+            username='testuser', password='pass123')
         self.job = UploadedJobListing.objects.create(
             user=self.user,
             title='Job',
@@ -121,7 +122,8 @@ class GenerateReportAITest(TestCase):
 
         with patch('active_interview_app.views.ai_available', return_value=True):
             with patch('active_interview_app.views.get_openai_client') as mock_client:
-                mock_client.return_value.chat.completions.create.side_effect = Exception('API Error')
+                mock_client.return_value.chat.completions.create.side_effect = Exception(
+                    'API Error')
                 response = self.client.post(url, follow=True)
 
         # Should still create report with default values
@@ -141,8 +143,7 @@ class GenerateReportAITest(TestCase):
         with patch('active_interview_app.views.ai_available', return_value=True):
             with patch('active_interview_app.views.get_openai_client') as mock_client:
                 mock_client.return_value.chat.completions.create.return_value = mock_response
-                response = self.client.post(url, follow=True)
-
+                self.client.post(url, follow=True)
         report = ExportableReport.objects.get(chat=self.chat)
         # Should default to 0 when parsing fails
         self.assertEqual(report.professionalism_score, 0)
@@ -159,13 +160,12 @@ class GenerateReportAITest(TestCase):
         with patch('active_interview_app.views.ai_available', return_value=True):
             with patch('active_interview_app.views.get_openai_client') as mock_client:
                 mock_client.return_value.chat.completions.create.return_value = mock_response
-                response = self.client.post(url, follow=True)
-
+                self.client.post(url, follow=True)
         report = ExportableReport.objects.get(chat=self.chat)
         self.assertEqual(report.professionalism_score, 0)
 
     def test_generate_report_rationale_parsing(self):
-        """Test rationale parsing from AI response"""
+        """Test rationale parsing from AI _response"""
         self.client.login(username='testuser', password='pass123')
         url = reverse('generate_report', kwargs={'chat_id': self.chat.id})
 
@@ -193,14 +193,11 @@ Overall: Great performance.
 """
 
                 mock_client.return_value.chat.completions.create.side_effect = [
-                    mock_scores,
-                    mock_feedback,
-                    mock_rationale
-                ]
-                response = self.client.post(url, follow=True)
-
+                    mock_scores, mock_feedback, mock_rationale]
+                self.client.post(url, follow=True)
         report = ExportableReport.objects.get(chat=self.chat)
-        self.assertIn('professional behavior', report.professionalism_rationale)
+        self.assertIn('professional behavior',
+                      report.professionalism_rationale)
         self.assertIn('knowledge base', report.subject_knowledge_rationale)
         self.assertIn('Clear communication', report.clarity_rationale)
         self.assertIn('Great performance', report.overall_rationale)
@@ -236,12 +233,8 @@ Overall: Good.
 """
 
                 mock_client.return_value.chat.completions.create.side_effect = [
-                    mock_scores,
-                    mock_feedback,
-                    mock_rationale
-                ]
-                response = self.client.post(url, follow=True)
-
+                    mock_scores, mock_feedback, mock_rationale]
+                self.client.post(url, follow=True)
         report = ExportableReport.objects.get(chat=self.chat)
         # Should capture multiline
         self.assertIn('posture', report.professionalism_rationale)
@@ -268,8 +261,7 @@ Overall: Good.
                     mock_feedback,
                     Exception('Rationale API error')
                 ]
-                response = self.client.post(url, follow=True)
-
+                self.client.post(url, follow=True)
         report = ExportableReport.objects.get(chat=self.chat)
         # Should have fallback text
         self.assertIn('Unable to generate', report.professionalism_rationale)
@@ -280,7 +272,8 @@ class DownloadCSVTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(username='testuser', password='pass123')
+        self.user = User.objects.create_user(
+            username='testuser', password='pass123')
         self.chat = Chat.objects.create(
             owner=self.user,
             title='Test Interview',
@@ -307,7 +300,7 @@ class DownloadCSVTest(TestCase):
         self.chat.resume = resume
         self.chat.save()
 
-        report = ExportableReport.objects.create(
+        ExportableReport.objects.create(
             chat=self.chat,
             professionalism_score=85,
             overall_score=80,
@@ -329,7 +322,7 @@ class DownloadCSVTest(TestCase):
 
     def test_download_csv_score_ratings(self):
         """Test CSV includes correct score ratings"""
-        report = ExportableReport.objects.create(
+        ExportableReport.objects.create(
             chat=self.chat,
             professionalism_score=95,  # Excellent
             subject_knowledge_score=82,  # Good
@@ -376,7 +369,8 @@ class ChatManagementViewsTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(username='testuser', password='pass123')
+        self.user = User.objects.create_user(
+            username='testuser', password='pass123')
 
     def test_chat_list_view(self):
         """Test chat list"""
@@ -494,21 +488,28 @@ class UserManagementViewsTest(TestCase):
 
     def test_profile_view(self):
         """Test profile page"""
-        user = User.objects.create_user(username='testuser', password='pass123')
+        _user = User.objects.create_user(  # noqa: F841
+            username='testuser',
+            password='pass123'
+        )
         self.client.login(username='testuser', password='pass123')
         response = self.client.get(reverse('profile'))
         self.assertEqual(response.status_code, 200)
 
     def test_loggedin_view(self):
         """Test logged in view"""
-        user = User.objects.create_user(username='testuser', password='pass123')
+        _user = User.objects.create_user(  # noqa: F841
+            username='testuser',
+            password='pass123'
+        )
         self.client.login(username='testuser', password='pass123')
         response = self.client.get(reverse('loggedin'))
         self.assertEqual(response.status_code, 200)
 
     def test_view_user_profile_own(self):
         """Test viewing own profile"""
-        user = User.objects.create_user(username='testuser', password='pass123')
+        user = User.objects.create_user(
+            username='testuser', password='pass123')
         self.client.login(username='testuser', password='pass123')
         url = reverse('view_user_profile', kwargs={'user_id': user.id})
         response = self.client.get(url)
@@ -517,16 +518,25 @@ class UserManagementViewsTest(TestCase):
 
     def test_view_user_profile_other(self):
         """Test viewing other user's profile without permission"""
-        user1 = User.objects.create_user(username='user1', password='pass123')
-        user2 = User.objects.create_user(username='user2', password='pass123')
+        _user1 = User.objects.create_user(  # noqa: F841
+            username='user1',
+            password='pass123'
+        )
+        _user2 = User.objects.create_user(
+            username='user2',
+            password='pass123'
+        )
         self.client.login(username='user1', password='pass123')
-        url = reverse('view_user_profile', kwargs={'user_id': user2.id})
+        url = reverse('view_user_profile', kwargs={'user_id': _user2.id})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 403)
 
     def test_view_user_profile_notfound(self):
         """Test viewing non-existent profile"""
-        user = User.objects.create_user(username='testuser', password='pass123')
+        _user = User.objects.create_user(  # noqa: F841
+            username='testuser',
+            password='pass123'
+        )
         self.client.login(username='testuser', password='pass123')
         url = reverse('view_user_profile', kwargs={'user_id': 99999})
         response = self.client.get(url)
@@ -538,7 +548,8 @@ class DocumentViewsTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(username='testuser', password='pass123')
+        self.user = User.objects.create_user(
+            username='testuser', password='pass123')
 
     def test_resume_detail(self):
         """Test resume detail view"""
@@ -691,7 +702,8 @@ class ResultViewsTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(username='testuser', password='pass123')
+        self.user = User.objects.create_user(
+            username='testuser', password='pass123')
 
     @patch('active_interview_app.views.ai_available', return_value=False)
     def test_results_chat_ai_unavailable(self, mock_ai):
@@ -707,7 +719,8 @@ class ResultViewsTest(TestCase):
         url = reverse('chat-results', kwargs={'chat_id': chat.id})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertIn('AI features are currently unavailable', response.context['feedback'])
+        self.assertIn('AI features are currently unavailable',
+                      response.context['feedback'])
 
     @patch('active_interview_app.views.ai_available', return_value=False)
     def test_result_charts_ai_unavailable(self, mock_ai):
@@ -731,7 +744,8 @@ class KeyQuestionsViewTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(username='testuser', password='pass123')
+        self.user = User.objects.create_user(
+            username='testuser', password='pass123')
 
     def test_key_questions_get(self):
         """Test key questions GET"""
@@ -741,10 +755,12 @@ class KeyQuestionsViewTest(TestCase):
             difficulty=5,
             messages=[],
             type='GEN',
-            key_questions=[{'id': 0, 'title': 'Q1', 'content': 'Question?', 'duration': 60}]
+            key_questions=[{'id': 0, 'title': 'Q1',
+                            'content': 'Question?', 'duration': 60}]
         )
         self.client.login(username='testuser', password='pass123')
-        url = reverse('key-questions', kwargs={'chat_id': chat.id, 'question_id': 0})
+        url = reverse('key-questions',
+                      kwargs={'chat_id': chat.id, 'question_id': 0})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
@@ -766,7 +782,8 @@ class KeyQuestionsViewTest(TestCase):
             key_questions=[{'id': 0, 'content': 'Q?', 'duration': 60}]
         )
         self.client.login(username='testuser', password='pass123')
-        url = reverse('key-questions', kwargs={'chat_id': chat.id, 'question_id': 0})
+        url = reverse('key-questions',
+                      kwargs={'chat_id': chat.id, 'question_id': 0})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
@@ -781,7 +798,8 @@ class KeyQuestionsViewTest(TestCase):
             key_questions=[{'id': 0, 'content': 'Q?', 'duration': 60}]
         )
         self.client.login(username='testuser', password='pass123')
-        url = reverse('key-questions', kwargs={'chat_id': chat.id, 'question_id': 0})
+        url = reverse('key-questions',
+                      kwargs={'chat_id': chat.id, 'question_id': 0})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
@@ -804,9 +822,10 @@ class KeyQuestionsViewTest(TestCase):
             key_questions=[{'id': 0, 'content': 'Q?', 'duration': 60}]
         )
         self.client.login(username='testuser', password='pass123')
-        url = reverse('key-questions', kwargs={'chat_id': chat.id, 'question_id': 0})
+        url = reverse('key-questions',
+                      kwargs={'chat_id': chat.id, 'question_id': 0})
         response = self.client.post(url, {'message': 'Answer'},
-                                   HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+                                    HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         self.assertEqual(response.status_code, 503)
 
 
@@ -815,7 +834,8 @@ class ChatViewPostTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(username='testuser', password='pass123')
+        self.user = User.objects.create_user(
+            username='testuser', password='pass123')
 
     @patch('active_interview_app.views.ai_available', return_value=False)
     def test_chat_view_post_ai_unavailable(self, mock_ai):
@@ -830,7 +850,7 @@ class ChatViewPostTest(TestCase):
         self.client.login(username='testuser', password='pass123')
         url = reverse('chat-view', kwargs={'chat_id': chat.id})
         response = self.client.post(url, {'message': 'Hello'},
-                                   HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+                                    HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         self.assertEqual(response.status_code, 503)
 
 
@@ -839,7 +859,8 @@ class CreateChatViewTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(username='testuser', password='pass123')
+        self.user = User.objects.create_user(
+            username='testuser', password='pass123')
 
     def test_create_chat_get(self):
         """Test CreateChat GET"""
@@ -859,7 +880,8 @@ class CreateChatViewTest(TestCase):
 
         mock_questions_response = MagicMock()
         mock_questions_response.choices = [MagicMock()]
-        mock_questions_response.choices[0].message.content = '[{"id": 0, "title": "Q1", "content": "Question?", "duration": 60}]'
+        mock_questions_response.choices[
+            0].message.content = '[{"id": 0, "title": "Q1", "content": "Question?", "duration": 60}]'
 
         mock_client.return_value.chat.completions.create.side_effect = [
             mock_response,
@@ -903,7 +925,8 @@ class CreateChatViewTest(TestCase):
 
         mock_questions_response = MagicMock()
         mock_questions_response.choices = [MagicMock()]
-        mock_questions_response.choices[0].message.content = '[{"id": 0, "title": "Q1", "content": "Question?", "duration": 60}]'
+        mock_questions_response.choices[
+            0].message.content = '[{"id": 0, "title": "Q1", "content": "Question?", "duration": 60}]'
 
         mock_client.return_value.chat.completions.create.side_effect = [
             mock_response,
@@ -932,7 +955,8 @@ class UploadFileViewTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(username='testuser', password='pass123')
+        self.user = User.objects.create_user(
+            username='testuser', password='pass123')
 
     def test_upload_file_get(self):
         """Test upload file GET"""
@@ -946,7 +970,8 @@ class ExportViewsTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(username='testuser', password='pass123')
+        self.user = User.objects.create_user(
+            username='testuser', password='pass123')
         self.chat = Chat.objects.create(
             owner=self.user,
             title='Test',
@@ -996,7 +1021,8 @@ class APIViewsTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(username='testuser', password='pass123')
+        self.user = User.objects.create_user(
+            username='testuser', password='pass123')
 
     def test_job_listing_list_get(self):
         """Test JobListingList GET"""

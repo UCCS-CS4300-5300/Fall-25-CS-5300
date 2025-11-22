@@ -33,7 +33,7 @@
       </ul>
     </div>
 
-    <form method="POST" action="{% url 'confirm_account_deletion' %}">
+    <form method="post" action="{% url 'confirm_account_deletion' %}">
       {% csrf_token %}
 
       <div class="mb-4">

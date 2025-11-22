@@ -43,7 +43,8 @@ class PasswordChangeTestCase(TestCase):
         response = self.client.get(self.password_change_url)
 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'registration/password_change_form.html')
+        self.assertTemplateUsed(
+            response, 'registration/password_change_form.html')
 
     def test_successful_password_change(self):
         """Test that users can successfully change their password."""
@@ -118,7 +119,8 @@ class PasswordChangeTestCase(TestCase):
         response = self.client.get(self.password_change_done_url)
 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'registration/password_change_done.html')
+        self.assertTemplateUsed(
+            response, 'registration/password_change_done.html')
 
     def test_profile_page_contains_password_change_link(self):
         """Test that profile page has a link to password change."""

@@ -35,7 +35,8 @@ class IsAdminOrInterviewerTest(TestCase):
 
     def test_interviewer_user_has_permission(self):
         """Test that interviewer users are granted permission"""
-        user = User.objects.create_user(username='interviewer', password='test')
+        user = User.objects.create_user(
+            username='interviewer', password='test')
         user.profile.role = UserProfile.INTERVIEWER
         user.profile.save()
 
@@ -108,7 +109,8 @@ class IsAdminTest(TestCase):
 
     def test_interviewer_user_denied(self):
         """Test that interviewer users are denied"""
-        user = User.objects.create_user(username='interviewer', password='test')
+        user = User.objects.create_user(
+            username='interviewer', password='test')
         user.profile.role = UserProfile.INTERVIEWER
         user.profile.save()
 
@@ -174,27 +176,32 @@ class IsOwnerOrPrivilegedTest(TestCase):
         admin.profile.role = UserProfile.ADMIN
         admin.profile.save()
 
-        other_user = User.objects.create_user(username='other', password='test')
+        other_user = User.objects.create_user(
+            username='other', password='test')
         obj = QuestionBank.objects.create(name='Test Bank', owner=other_user)
 
         request = self.factory.get('/')
         request.user = admin
 
-        self.assertTrue(self.permission.has_object_permission(request, self.view, obj))
+        self.assertTrue(self.permission.has_object_permission(
+            request, self.view, obj))
 
     def test_interviewer_can_access_any_object(self):
         """Test that interviewer users can access any object"""
-        interviewer = User.objects.create_user(username='interviewer', password='test')
+        interviewer = User.objects.create_user(
+            username='interviewer', password='test')
         interviewer.profile.role = UserProfile.INTERVIEWER
         interviewer.profile.save()
 
-        other_user = User.objects.create_user(username='other', password='test')
+        other_user = User.objects.create_user(
+            username='other', password='test')
         obj = QuestionBank.objects.create(name='Test Bank', owner=other_user)
 
         request = self.factory.get('/')
         request.user = interviewer
 
-        self.assertTrue(self.permission.has_object_permission(request, self.view, obj))
+        self.assertTrue(self.permission.has_object_permission(
+            request, self.view, obj))
 
     def test_owner_can_access_own_object_with_owner_attr(self):
         """Test that users can access objects they own (owner attribute)"""
@@ -207,7 +214,8 @@ class IsOwnerOrPrivilegedTest(TestCase):
         request = self.factory.get('/')
         request.user = user
 
-        self.assertTrue(self.permission.has_object_permission(request, self.view, obj))
+        self.assertTrue(self.permission.has_object_permission(
+            request, self.view, obj))
 
     def test_owner_can_access_own_object_with_user_attr(self):
         """Test that users can access objects they own (user attribute)"""
@@ -223,7 +231,8 @@ class IsOwnerOrPrivilegedTest(TestCase):
         request = self.factory.get('/')
         request.user = user
 
-        self.assertTrue(self.permission.has_object_permission(request, self.view, obj))
+        self.assertTrue(self.permission.has_object_permission(
+            request, self.view, obj))
 
     def test_candidate_cannot_access_others_object(self):
         """Test that candidate users cannot access other users' objects"""
@@ -231,13 +240,15 @@ class IsOwnerOrPrivilegedTest(TestCase):
         user.profile.role = UserProfile.CANDIDATE
         user.profile.save()
 
-        other_user = User.objects.create_user(username='other', password='test')
+        other_user = User.objects.create_user(
+            username='other', password='test')
         obj = QuestionBank.objects.create(name='Other Bank', owner=other_user)
 
         request = self.factory.get('/')
         request.user = user
 
-        self.assertFalse(self.permission.has_object_permission(request, self.view, obj))
+        self.assertFalse(self.permission.has_object_permission(
+            request, self.view, obj))
 
     def test_unauthenticated_user_denied(self):
         """Test that unauthenticated users are denied"""
@@ -247,7 +258,8 @@ class IsOwnerOrPrivilegedTest(TestCase):
         request = self.factory.get('/')
         request.user = Mock(is_authenticated=False)
 
-        self.assertFalse(self.permission.has_object_permission(request, self.view, obj))
+        self.assertFalse(self.permission.has_object_permission(
+            request, self.view, obj))
 
     def test_user_without_profile_denied(self):
         """Test that users without profile are denied"""
@@ -263,7 +275,8 @@ class IsOwnerOrPrivilegedTest(TestCase):
         request = self.factory.get('/')
         request.user = user
 
-        self.assertFalse(self.permission.has_object_permission(request, self.view, obj))
+        self.assertFalse(self.permission.has_object_permission(
+            request, self.view, obj))
 
     def test_none_user_denied(self):
         """Test that None user is denied"""
@@ -273,7 +286,8 @@ class IsOwnerOrPrivilegedTest(TestCase):
         request = self.factory.get('/')
         request.user = None
 
-        self.assertFalse(self.permission.has_object_permission(request, self.view, obj))
+        self.assertFalse(self.permission.has_object_permission(
+            request, self.view, obj))
 
     def test_object_without_owner_or_user_denied(self):
         """Test that objects without owner or user attribute are denied for candidates"""
@@ -287,7 +301,8 @@ class IsOwnerOrPrivilegedTest(TestCase):
         request = self.factory.get('/')
         request.user = user
 
-        self.assertFalse(self.permission.has_object_permission(request, self.view, obj))
+        self.assertFalse(self.permission.has_object_permission(
+            request, self.view, obj))
 
     def test_permission_message(self):
         """Test that permission has appropriate message"""

@@ -1,18 +1,24 @@
 """
 Script to check if there are any pending migrations
 """
+from io import StringIO
+from django.core.management import call_command
+import django
 import os
 import sys
 
 # Setup Django
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'active_interview_backend'))
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'active_interview_project.settings')
+sys.path.insert(
+    0,
+    os.path.join(
+        os.path.dirname(__file__),
+        'active_interview_backend'))
+os.environ.setdefault(
+    'DJANGO_SETTINGS_MODULE',
+    'active_interview_project.settings')
 
-import django
 django.setup()
 
-from django.core.management import call_command
-from io import StringIO
 
 # Capture output
 output = StringIO()

@@ -15,7 +15,6 @@ import zipfile
 from datetime import timedelta
 
 from django.conf import settings
-from django.contrib.auth.models import User
 from django.core.files.base import ContentFile
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
@@ -31,12 +30,10 @@ from .models import (
     Chat,
     DataExportRequest,
     DeletionRequest,
-    ExportableReport,
     InterviewTemplate,
     RoleChangeRequest,
     UploadedJobListing,
-    UploadedResume,
-    UserProfile
+    UploadedResume
 )
 
 # Configure logger
@@ -193,7 +190,8 @@ def create_csv_from_list(data_list, fieldnames):
         str: CSV formatted string
     """
     output = io.StringIO()
-    writer = csv.DictWriter(output, fieldnames=fieldnames, extrasaction='ignore')
+    writer = csv.DictWriter(
+        output, fieldnames=fieldnames, extrasaction='ignore')
     writer.writeheader()
     writer.writerows(data_list)
     return output.getvalue()
@@ -230,9 +228,15 @@ def create_export_zip(user):
 
         # Add resumes as CSV
         if user_data['resumes']:
-            resume_fieldnames = ['id', 'title', 'original_filename', 'uploaded_at',
-                                 'filesize', 'parsing_status']
-            resumes_csv = create_csv_from_list(user_data['resumes'], resume_fieldnames)
+            resume_fieldnames = [
+                'id',
+                'title',
+                'original_filename',
+                'uploaded_at',
+                'filesize',
+                'parsing_status']
+            resumes_csv = create_csv_from_list(
+                user_data['resumes'], resume_fieldnames)
             zip_file.writestr('resumes.csv', resumes_csv)
 
             # Add individual resume contents
@@ -245,7 +249,8 @@ def create_export_zip(user):
         # Add job listings as CSV
         if user_data['job_listings']:
             job_fieldnames = ['id', 'title', 'filename', 'created_at']
-            jobs_csv = create_csv_from_list(user_data['job_listings'], job_fieldnames)
+            jobs_csv = create_csv_from_list(
+                user_data['job_listings'], job_fieldnames)
             zip_file.writestr('job_listings.csv', jobs_csv)
 
             # Add individual job listing contents
@@ -257,9 +262,16 @@ def create_export_zip(user):
 
         # Add interviews as CSV
         if user_data['interviews']:
-            interview_fieldnames = ['id', 'title', 'type', 'difficulty',
-                                   'modified_date', 'resume_title', 'job_listing_title']
-            interviews_csv = create_csv_from_list(user_data['interviews'], interview_fieldnames)
+            interview_fieldnames = [
+                'id',
+                'title',
+                'type',
+                'difficulty',
+                'modified_date',
+                'resume_title',
+                'job_listing_title']
+            interviews_csv = create_csv_from_list(
+                user_data['interviews'], interview_fieldnames)
             zip_file.writestr('interviews.csv', interviews_csv)
 
             # Add detailed interview transcripts
@@ -347,8 +359,7 @@ def process_export_request(export_request):
     except Exception as e:
         logger.error(
             f"Failed to process export request {export_request.id} for user {export_request.user.username}: {e}",
-            exc_info=True
-        )
+            exc_info=True)
         export_request.status = DataExportRequest.FAILED
         export_request.error_message = str(e)
         export_request.save()
@@ -384,13 +395,13 @@ def send_export_ready_email(export_request):
             html_message=html_message,
             fail_silently=EMAIL_FAIL_SILENTLY,
         )
-        logger.info(f"Export notification email sent to {user.email} for request {export_request.id}")
+        logger.info(
+            f"Export notification email sent to {user.email} for request {export_request.id}")
     except Exception as e:
         # Log error but don't fail the export process
         logger.warning(
             f"Failed to send export notification email to {user.email} for request {export_request.id}: {e}",
-            exc_info=True
-        )
+            exc_info=True)
 
 
 def anonymize_user_interviews(user):
@@ -404,7 +415,7 @@ def anonymize_user_interviews(user):
     Returns:
         int: Number of interviews anonymized
     """
-    anonymized_id = generate_anonymized_id(user)
+    _anonymized_id = generate_anonymized_id(user)  # noqa: F841
     count = 0
 
     for chat in Chat.objects.filter(owner=user):
@@ -457,7 +468,8 @@ def delete_user_account(user, deletion_request=None):
     try:
         # Count items for audit trail
         resume_count = UploadedResume.objects.filter(user=user).count()
-        job_listing_count = UploadedJobListing.objects.filter(user=user).count()
+        job_listing_count = UploadedJobListing.objects.filter(
+            user=user).count()
 
         # Anonymize interviews (soft delete - keep scores for analytics)
         interview_count = anonymize_user_interviews(user)
@@ -559,9 +571,9 @@ The AIS Team
             [email],
             fail_silently=EMAIL_FAIL_SILENTLY,
         )
-        logger.info(f"Deletion confirmation email sent to {email} for user {username}")
+        logger.info(
+            f"Deletion confirmation email sent to {email} for user {username}")
     except Exception as e:
         logger.warning(
             f"Failed to send deletion confirmation email to {email} for user {username}: {e}",
-            exc_info=True
-        )
+            exc_info=True)

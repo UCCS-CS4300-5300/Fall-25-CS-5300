@@ -239,7 +239,8 @@ class ChatViewDurationEnforcementGETTests(TestCase):
 
         # Should show interview page
         self.assertEqual(response.status_code, 200)
-        # Template path may vary by OS (chat/chat-view.html or chat\chat-view.html)
+        # Template path may vary by OS (chat/chat-view.html or
+        # chat\chat-view.html)
         template_names = [t.name for t in response.templates]
         self.assertTrue(
             any('chat-view.html' in name for name in template_names),
@@ -397,7 +398,8 @@ class ChatViewDurationEnforcementPOSTTests(TestCase):
         )
 
     @patch('active_interview_app.views.get_openai_client')
-    def test_post_invited_chat_not_expired_processes_normally(self, mock_client):
+    def test_post_invited_chat_not_expired_processes_normally(
+            self, mock_client):
         """Test POST on non-expired invited interview processes normally"""
         # Mock OpenAI response
         mock_ai_client = MagicMock()
@@ -480,7 +482,8 @@ class ChatViewDurationEnforcementPOSTTests(TestCase):
         self.assertIsNotNone(response)
 
         # Note: Auto-completion happens in GET before POST is processed
-        # So we test the POST expiration check separately (it prevents AI interaction)
+        # So we test the POST expiration check separately (it prevents AI
+        # interaction)
 
     def test_post_practice_interview_no_expiration_check(self):
         """Test POST on practice interview doesn't check expiration"""
@@ -499,7 +502,8 @@ class ChatViewDurationEnforcementPOSTTests(TestCase):
         url = reverse('chat-view', kwargs={'chat_id': chat.id})
 
         # Should work (practice interviews don't expire)
-        # Note: Will fail without OpenAI mock, but expiration logic happens first
+        # Note: Will fail without OpenAI mock, but expiration logic happens
+        # first
         with patch('active_interview_app.views.get_openai_client') as mock_client:
             mock_ai_client = MagicMock()
             mock_response = MagicMock()

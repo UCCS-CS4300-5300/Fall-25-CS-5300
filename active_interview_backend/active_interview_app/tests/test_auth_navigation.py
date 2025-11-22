@@ -5,7 +5,6 @@ This module tests that all authentication-related pages have correct links
 and that users are redirected to the intended pages.
 """
 
-import pytest
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -257,13 +256,15 @@ class URLResolutionTests(TestCase):
     def test_login_url_resolves(self):
         """Test that 'login' URL name resolves."""
         url = reverse('login')
-        # allauth URLs are included first, so 'login' resolves to /accounts/login/
+        # allauth URLs are included first, so 'login' resolves to
+        # /accounts/login/
         self.assertEqual(url, '/accounts/login/')
 
     def test_logout_url_resolves(self):
         """Test that 'logout' URL name resolves."""
         url = reverse('logout')
-        # allauth URLs are included first, so 'logout' resolves to /accounts/logout/
+        # allauth URLs are included first, so 'logout' resolves to
+        # /accounts/logout/
         self.assertEqual(url, '/accounts/logout/')
 
     def test_register_url_resolves(self):
@@ -287,23 +288,22 @@ class URLResolutionTests(TestCase):
         self.assertEqual(url, '/testlogged/')
 
 
-@pytest.mark.django_db
-class SettingsConfigurationTests:
+class SettingsConfigurationTests(TestCase):
     """Test that authentication settings are configured correctly."""
 
     def test_login_url_setting(self):
         """Test that LOGIN_URL is set correctly."""
-        assert settings.LOGIN_URL == '/accounts/login/'
+        self.assertEqual(settings.LOGIN_URL, '/accounts/login/')
 
     def test_login_redirect_url_setting(self):
         """Test that LOGIN_REDIRECT_URL is set correctly."""
-        assert settings.LOGIN_REDIRECT_URL == '/testlogged/'
+        self.assertEqual(settings.LOGIN_REDIRECT_URL, '/testlogged/')
 
     def test_logout_redirect_url_setting(self):
         """Test that ACCOUNT_LOGOUT_REDIRECT_URL is set correctly."""
-        assert settings.ACCOUNT_LOGOUT_REDIRECT_URL == '/'
+        self.assertEqual(settings.ACCOUNT_LOGOUT_REDIRECT_URL, '/')
 
     def test_site_id_configured(self):
         """Test that SITE_ID is configured."""
-        assert hasattr(settings, 'SITE_ID')
-        assert settings.SITE_ID == 1
+        self.assertTrue(hasattr(settings, 'SITE_ID'))
+        self.assertEqual(settings.SITE_ID, 1)

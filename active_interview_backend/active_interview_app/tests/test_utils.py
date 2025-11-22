@@ -1,9 +1,8 @@
 import os
 import tempfile
 import shutil
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.conf import settings
 from unittest.mock import patch
 from ..utils import handle_uploaded_file
 
@@ -14,7 +13,7 @@ class TestFileUploadUtils(TestCase):
         self.test_upload_dir = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, self.test_upload_dir)
 
-    #@override_settings(MEDIA_ROOT=property(lambda s: s.test_upload_dir))
+    # @override_settings(MEDIA_ROOT=property(lambda s: s.test_upload_dir))
     def test_successful_file_upload(self):
         """Test that files are uploaded and saved correctly"""
         # Create a test file

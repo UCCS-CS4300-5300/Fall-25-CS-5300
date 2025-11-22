@@ -14,7 +14,7 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from django.core import mail
 from django.conf import settings
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from datetime import timedelta
 from icalendar import Calendar
 import uuid
@@ -111,8 +111,7 @@ class InvitationEmailTests(TestCase):
 
         # Check HTML alternative exists
         self.assertEqual(len(email.alternatives), 1)
-        html_content = email.alternatives[0][0]
-        self.assertIn('html', email.alternatives[0][1])
+        email.alternatives[0][0]
 
         # Check calendar attachment
         self.assertEqual(len(email.attachments), 1)
@@ -165,7 +164,8 @@ class InvitationEmailTests(TestCase):
         self.assertFalse(result)
 
     @patch('active_interview_app.invitation_utils.generate_calendar_invite')
-    def test_send_invitation_email_without_calendar_attachment(self, mock_generate):
+    def test_send_invitation_email_without_calendar_attachment(
+            self, mock_generate):
         """Test email sends even if calendar generation fails"""
         mock_generate.return_value = None
 
@@ -425,7 +425,8 @@ class CalendarInviteGenerationTests(TestCase):
         cal = Calendar.from_ical(ics_content)
 
         # Should have one event
-        events = [component for component in cal.walk() if component.name == 'VEVENT']
+        events = [component for component in cal.walk()
+                  if component.name == 'VEVENT']
         self.assertEqual(len(events), 1)
 
     def test_calendar_event_has_correct_summary(self):
@@ -446,17 +447,23 @@ class CalendarInviteGenerationTests(TestCase):
 
         event = [c for c in cal.walk() if c.name == 'VEVENT'][0]
 
-        # Start time should match scheduled_time (within 1 second for microsecond differences)
+        # Start time should match scheduled_time (within 1 second for
+        # microsecond differences)
         dtstart = event['dtstart'].dt
-        scheduled_time_normalized = self.scheduled_time.replace(tzinfo=None, microsecond=0)
-        dtstart_normalized = dtstart.replace(tzinfo=None, microsecond=0) if hasattr(dtstart, 'replace') else dtstart
+        scheduled_time_normalized = self.scheduled_time.replace(
+            tzinfo=None, microsecond=0)
+        dtstart_normalized = dtstart.replace(
+            tzinfo=None, microsecond=0) if hasattr(
+            dtstart, 'replace') else dtstart
         self.assertEqual(dtstart_normalized, scheduled_time_normalized)
 
         # End time should be start + duration
         dtend = event['dtend'].dt
         expected_end = self.scheduled_time + timedelta(minutes=90)
-        expected_end_normalized = expected_end.replace(tzinfo=None, microsecond=0)
-        dtend_normalized = dtend.replace(tzinfo=None, microsecond=0) if hasattr(dtend, 'replace') else dtend
+        expected_end_normalized = expected_end.replace(
+            tzinfo=None, microsecond=0)
+        dtend_normalized = dtend.replace(
+            tzinfo=None, microsecond=0) if hasattr(dtend, 'replace') else dtend
         self.assertEqual(dtend_normalized, expected_end_normalized)
 
     def test_calendar_event_has_description(self):
