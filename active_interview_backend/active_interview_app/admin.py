@@ -7,6 +7,10 @@ from .models import (
 )
 from .token_usage_models import TokenUsage
 from .merge_stats_models import MergeTokenStats
+from .observability_models import (
+    RequestMetric, DailyMetricsSummary,
+    ProviderCostDaily, ErrorLog
+)
 
 # Register your models here.
 admin.site.register(Chat)
@@ -458,3 +462,152 @@ class DeletionRequestAdmin(admin.ModelAdmin):
         )
         return f"{total} items"
     total_data_deleted.short_description = 'Total Deleted'
+
+
+# Observability Metrics Admin - Issues #14, #15
+@admin.register(RequestMetric)
+class RequestMetricAdmin(admin.ModelAdmin):
+    list_display = (
+        'timestamp',
+        'endpoint',
+        'method',
+        'status_code',
+        'response_time_ms',
+        'user_id',
+        'is_error'
+    )
+    list_filter = ('method', 'status_code', 'timestamp')
+    search_fields = ('endpoint', 'user_id')
+    readonly_fields = ('timestamp',)
+    date_hierarchy = 'timestamp'
+    ordering = ('-timestamp',)
+
+    def is_error(self, obj):
+        return obj.is_error
+    is_error.boolean = True
+    is_error.short_description = 'Error?'
+
+
+@admin.register(DailyMetricsSummary)
+class DailyMetricsSummaryAdmin(admin.ModelAdmin):
+    list_display = (
+        'date',
+        'total_requests',
+        'error_rate_display',
+        'avg_response_time',
+        'p50_response_time',
+        'p95_response_time'
+    )
+    list_filter = ('date',)
+    readonly_fields = ('created_at', 'updated_at')
+    date_hierarchy = 'date'
+    ordering = ('-date',)
+
+    fieldsets = (
+        ('Summary Date', {
+            'fields': ('date',)
+        }),
+        ('Request Statistics', {
+            'fields': (
+                'total_requests',
+                'total_errors',
+                'client_errors',
+                'server_errors'
+            )
+        }),
+        ('Latency Statistics', {
+            'fields': (
+                'avg_response_time',
+                'p50_response_time',
+                'p95_response_time',
+                'max_response_time'
+            )
+        }),
+        ('Endpoint Breakdown', {
+            'fields': ('endpoint_stats',),
+            'classes': ('collapse',)
+        }),
+        ('Metadata', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        })
+    )
+
+    def error_rate_display(self, obj):
+        return f"{obj.error_rate:.1f}%"
+    error_rate_display.short_description = 'Error Rate'
+
+
+@admin.register(ProviderCostDaily)
+class ProviderCostDailyAdmin(admin.ModelAdmin):
+    list_display = (
+        'date',
+        'provider',
+        'service',
+        'total_requests',
+        'cost_display',
+        'total_tokens'
+    )
+    list_filter = ('provider', 'service', 'date')
+    search_fields = ('provider', 'service')
+    readonly_fields = ('created_at', 'updated_at')
+    date_hierarchy = 'date'
+    ordering = ('-date', 'provider')
+
+    fieldsets = (
+        ('Provider Information', {
+            'fields': ('date', 'provider', 'service')
+        }),
+        ('Usage Statistics', {
+            'fields': (
+                'total_requests',
+                'total_cost_usd',
+                'total_tokens',
+                'prompt_tokens',
+                'completion_tokens'
+            )
+        }),
+        ('Metadata', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        })
+    )
+
+    def cost_display(self, obj):
+        return f"${obj.total_cost_usd:.4f}"
+    cost_display.short_description = 'Cost (USD)'
+
+
+@admin.register(ErrorLog)
+class ErrorLogAdmin(admin.ModelAdmin):
+    list_display = (
+        'timestamp',
+        'endpoint',
+        'method',
+        'status_code',
+        'error_type',
+        'error_message_preview',
+        'user_id'
+    )
+    list_filter = ('status_code', 'error_type', 'timestamp')
+    search_fields = ('endpoint', 'error_type', 'error_message')
+    readonly_fields = ('timestamp',)
+    date_hierarchy = 'timestamp'
+    ordering = ('-timestamp',)
+
+    fieldsets = (
+        ('Request Information', {
+            'fields': ('timestamp', 'endpoint', 'method', 'status_code', 'user_id')
+        }),
+        ('Error Details', {
+            'fields': ('error_type', 'error_message', 'stack_trace')
+        }),
+        ('Request Context', {
+            'fields': ('request_data',),
+            'classes': ('collapse',)
+        })
+    )
+
+    def error_message_preview(self, obj):
+        return obj.error_message[:100] + '...' if len(obj.error_message) > 100 else obj.error_message
+    error_message_preview.short_description = 'Error Message'
