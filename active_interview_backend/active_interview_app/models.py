@@ -251,6 +251,24 @@ class Chat(models.Model):
     scheduled_end_at = models.DateTimeField(null=True, blank=True,
                                             help_text='Scheduled time when interview should end')
 
+    # Finalization tracking (Report Generation Refactor)
+    is_finalized = models.BooleanField(
+        default=False,
+        help_text='Whether the interview has been finalized and report generated'
+    )
+    finalized_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='When the interview was finalized'
+    )
+
+    # Graceful ending tracking for invited interviews
+    last_question_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='When the last question was asked (for graceful ending calculation)'
+    )
+
     # create object itself, not the field
     # all templates for documents in /documents/
     # thing that returns all user files is at views
@@ -590,6 +608,11 @@ class InvitedInterview(models.Model):
         null=True,
         blank=True,
         help_text='When the candidate completed the interview'
+    )
+    last_activity_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='Last time candidate interacted with interview (for abandonment detection)'
     )
 
     class Meta:
