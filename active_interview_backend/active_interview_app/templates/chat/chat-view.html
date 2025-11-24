@@ -66,8 +66,8 @@
     {% elif chat.interview_type == 'INVITED' and time_expired %}
       <div class="alert alert-danger mx-3 mb-0" role="alert">
         <i class="bi bi-exclamation-triangle-fill"></i>
-        <strong>Interview Time Expired</strong> - This interview has been automatically completed.
-        <a href="{% url 'chat-results' chat_id=chat.id %}" class="alert-link">View Results</a>
+        <strong>Interview Time Expired</strong> - This interview has been automatically completed and finalized.
+        <a href="{% url 'export_report' chat_id=chat.id %}" class="alert-link">View Report</a>
       </div>
     {% endif %}
 
@@ -291,10 +291,8 @@
                   </div>
                 </div>`);
               updateScroll();
-              // Redirect to results after 3 seconds
-              setTimeout(() => {
-                window.location.href = '{% url "chat-results" chat_id=chat.id %}';
-              }, 3000);
+              // Show message that interview is being finalized
+              // (No redirect - user will use sidebar to finish interview)
             } else {
               // Handle other errors
               $('#loading-bubble').remove();

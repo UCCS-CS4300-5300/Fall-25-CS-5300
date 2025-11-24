@@ -51,10 +51,6 @@ urlpatterns = [
          name='chat-delete'),
     path('chat/<int:chat_id>/restart/', views.RestartChat.as_view(),
          name='chat-restart'),
-    path('chat/<int:chat_id>/results/', views.ResultCharts.as_view(),
-         name='chat-results'),
-    path('chat/<int:chat_id>/result-charts/', views.ResultCharts.as_view(),
-         name='result-charts'),  # Alias for tests
     path('chat/<int:chat_id>/key-questions/<int:question_id>/',
          views.KeyQuestionsView.as_view(), name='key-questions'),
 
@@ -95,8 +91,8 @@ urlpatterns = [
          views.edit_job_posting, name='edit_job_posting'),
 
     # Exportable Report urls
-    path('chat/<int:chat_id>/generate-report/',
-         views.GenerateReportView.as_view(), name='generate_report'),
+    path('chat/<int:chat_id>/finalize/',
+         views.FinalizeInterviewView.as_view(), name='finalize_interview'),
     path('chat/<int:chat_id>/export-report/',
          views.ExportReportView.as_view(), name='export_report'),
     path('chat/<int:chat_id>/download-pdf/',

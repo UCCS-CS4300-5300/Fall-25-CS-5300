@@ -85,9 +85,9 @@
           <p>You completed this interview on <span data-utc-time="{{ invitation.completed_at|date:'c' }}">{{ invitation.completed_at|date:"F j, Y \a\t g:i A" }} UTC</span>.</p>
           <hr>
           <p class="mb-0">
-            {% if invitation.interviewer_review_status == 'REVIEW_COMPLETE' %}
+            {% if invitation.interviewer_review_status == 'completed' %}
               The interviewer has reviewed your interview and provided feedback.
-              <a href="{% url 'chat-results' chat_id=invitation.chat.id %}" class="alert-link">View your results and feedback</a>
+              <a href="{% url 'export_report' chat_id=invitation.chat.id %}" class="alert-link">View your full report with feedback</a>
             {% else %}
               The interviewer has not yet completed their review. You'll receive an email notification when feedback is available.
             {% endif %}
@@ -95,9 +95,15 @@
         </div>
 
         <div class="text-center mt-4">
-          <a href="{% url 'chat-results' chat_id=invitation.chat.id %}" class="btn btn-primary btn-lg">
-            <i class="bi bi-bar-chart-fill"></i> View Results
-          </a>
+          {% if invitation.interviewer_review_status == 'completed' %}
+            <a href="{% url 'export_report' chat_id=invitation.chat.id %}" class="btn btn-primary btn-lg">
+              <i class="bi bi-file-earmark-text-fill"></i> View Full Report
+            </a>
+          {% else %}
+            <span class="btn btn-secondary btn-lg disabled">
+              <i class="bi bi-hourglass-split"></i> Pending Interviewer Review
+            </span>
+          {% endif %}
         </div>
 
       <!-- Status: Interview Started (In Progress) -->
