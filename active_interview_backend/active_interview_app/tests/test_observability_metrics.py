@@ -467,7 +467,7 @@ class MetricsMiddlewareTests(TransactionTestCase):
         request.user = self.user
 
         # Process request through middleware
-        _response = middleware(request)
+        middleware(request)
 
         # Check that metric was recorded
         metrics = RequestMetric.objects.filter(endpoint='/api/test/')
@@ -521,7 +521,7 @@ class MetricsMiddlewareTests(TransactionTestCase):
         from django.contrib.auth.models import AnonymousUser
         request.user = AnonymousUser()
 
-        _response = middleware(request)
+        middleware(request)
 
         metric = RequestMetric.objects.get(endpoint='/api/public/')
         self.assertIsNone(metric.user_id)
@@ -540,7 +540,7 @@ class MetricsMiddlewareTests(TransactionTestCase):
 
         # Measure middleware overhead
         start = time.time()
-        _response = middleware(request)
+        middleware(request)
         end = time.time()
 
         overhead_ms = (end - start) * 1000
@@ -558,7 +558,7 @@ class MetricsMiddlewareTests(TransactionTestCase):
         request = self.factory.get('/api/notfound/')
         request.user = self.user
 
-        _response = middleware(request)
+        middleware(request)
 
         # Check metric recorded with 404 status
         metric = RequestMetric.objects.get(endpoint='/api/notfound/')
@@ -581,7 +581,7 @@ class MetricsMiddlewareTests(TransactionTestCase):
         request = self.factory.post('/api/create/', {'key': 'value'})
         request.user = self.user
 
-        _response = middleware(request)
+        middleware(request)
 
         metric = RequestMetric.objects.get(endpoint='/api/create/')
         self.assertEqual(metric.method, 'POST')
