@@ -79,7 +79,7 @@ def calculate_stats(logs: List[Dict]) -> Dict:
 
     return {
         'total_sequences': total_sequences,
-        'total_tests_all_sequences':total_tests_all_seq,
+        'total_tests_all_sequences': total_tests_all_seq,
         'avg_iterations': round(avg_iterations, 2),
         'avg_first_run_failure_rate': round(avg_first_run_failure, 2),
         'total_regressions': total_regressions,

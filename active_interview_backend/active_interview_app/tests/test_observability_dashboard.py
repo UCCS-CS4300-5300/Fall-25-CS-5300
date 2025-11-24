@@ -12,11 +12,8 @@ import json
 
 from active_interview_app.observability_models import (
     RequestMetric,
-    DailyMetricsSummary,
-    ProviderCostDaily,
-    ErrorLog
+    ProviderCostDaily
 )
-from active_interview_app.token_usage_models import TokenUsage
 
 
 class ObservabilityDashboardViewTests(TestCase):
