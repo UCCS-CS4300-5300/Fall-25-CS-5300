@@ -659,14 +659,25 @@ gh issue list --label "feature" --milestone "Sprint-1"
 ### Pipeline Jobs
 
 1. **Lint** - flake8, djlint
-2. **Security** - safety, bandit
+2. **Security** - safety, bandit (with SARIF upload to Security tab)
 3. **Test** - Django tests with 80% coverage requirement
 4. **AI Review** - OpenAI code review (parallel)
 5. **Cleanup** - Archive reports
 
 **Deployment** - Railway (on push to `main`)
 
-**See:** [CI/CD Documentation](docs/deployment/ci-cd.md) for details.
+### Scheduled Security Scans (Dependabot-style)
+
+**Weekly automated scans** (Mondays at 9 AM UTC):
+- Bandit code security analysis
+- Safety dependency vulnerability checks
+- Results uploaded to GitHub Security tab
+- Auto-creates issues for critical findings
+
+**See:**
+- [CI/CD Documentation](docs/deployment/ci-cd.md)
+- [Security Scanning Guide](docs/setup/security-scanning.md)
+- [Bandit Quick Reference](docs/setup/bandit-quick-reference.md)
 
 ---
 

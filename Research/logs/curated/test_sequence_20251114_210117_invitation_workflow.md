@@ -44,7 +44,7 @@ summary:
   iterations_to_success: 3
   first_run_failure_rate: 44.4  # 12/27 tests failed
   final_status: "success"
-  total_time_minutes: 20
+  total_time_minutes: 15
 
 # Coverage tracking
 coverage:

@@ -8,6 +8,7 @@ from allauth.account import views as allauth_views
 
 from . import views
 from . import question_bank_views
+from . import observability_views
 
 
 # Create router and register views
@@ -182,6 +183,20 @@ urlpatterns = [
          views.start_invited_interview, name='start_invited_interview'),
     path('my-invitations/', views.candidate_invitations,
          name='candidate_invitations'),
+
+    # Observability Dashboard URLs (Issues #14, #15)
+    path('observability/', observability_views.observability_dashboard,
+         name='observability_dashboard'),
+    path('observability/api/metrics/rps/',
+         observability_views.api_metrics_rps, name='api_metrics_rps'),
+    path('observability/api/metrics/latency/',
+         observability_views.api_metrics_latency, name='api_metrics_latency'),
+    path('observability/api/metrics/errors/',
+         observability_views.api_metrics_errors, name='api_metrics_errors'),
+    path('observability/api/metrics/costs/',
+         observability_views.api_metrics_costs, name='api_metrics_costs'),
+    path('observability/api/export/',
+         observability_views.api_export_metrics, name='api_export_metrics'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

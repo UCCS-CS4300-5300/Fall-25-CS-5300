@@ -588,6 +588,172 @@ cumulative_total_cost = previous_cumulative + this_merge_cost
 
 ---
 
+## Observability Models
+
+**Location:** `active_interview_app/observability_models.py`
+
+**Issues**: [#14](https://github.com/UCCS-CS4300-5300/Fall-25-CS-5300/issues/14), [#15](https://github.com/UCCS-CS4300-5300/Fall-25-CS-5300/issues/15)
+
+Models for tracking application performance, error rates, and provider costs.
+
+### RequestMetric
+
+Tracks individual HTTP requests for RPS and latency analysis.
+
+**Fields:**
+
+| Field | Type | Description | Constraints |
+|-------|------|-------------|-------------|
+| `timestamp` | DateTimeField | Request time | auto_now_add=True, indexed |
+| `endpoint` | CharField(255) | Request path | indexed |
+| `method` | CharField(10) | HTTP method | GET, POST, etc. |
+| `status_code` | IntegerField | Response status | indexed |
+| `response_time_ms` | FloatField | Latency (ms) | Required |
+| `user_id` | IntegerField | User ID | nullable |
+
+**Properties:**
+- `is_error` - True if status >= 400
+- `is_client_error` - True if 400 <= status < 500
+- `is_server_error` - True if status >= 500
+
+**Class Methods:**
+- `calculate_rps(endpoint, start_time, end_time)` - Calculate requests per second
+- `get_error_rate(endpoint, start_time, end_time)` - Calculate error percentage
+- `calculate_percentiles(endpoint, start_time, end_time)` - Get p50/p95 latency
+
+**Example:**
+```python
+# Get RPS for last minute
+rps = RequestMetric.calculate_rps(
+    endpoint='/api/chat/',
+    start_time=timezone.now() - timedelta(minutes=1),
+    end_time=timezone.now()
+)
+
+# Get latency percentiles
+percentiles = RequestMetric.calculate_percentiles(
+    endpoint='/api/chat/',
+    start_time=timezone.now() - timedelta(hours=1),
+    end_time=timezone.now()
+)
+print(f"p50: {percentiles['p50']}ms, p95: {percentiles['p95']}ms")
+```
+
+---
+
+### DailyMetricsSummary
+
+Aggregated daily statistics for efficient historical analysis.
+
+**Fields:**
+
+| Field | Type | Description | Constraints |
+|-------|------|-------------|-------------|
+| `date` | DateField | Summary date | unique=True, indexed |
+| `total_requests` | IntegerField | Request count | default=0 |
+| `total_errors` | IntegerField | Error count | default=0 |
+| `client_errors` | IntegerField | 4xx count | default=0 |
+| `server_errors` | IntegerField | 5xx count | default=0 |
+| `avg_response_time` | FloatField | Average latency | default=0.0 |
+| `p50_response_time` | FloatField | Median latency | default=0.0 |
+| `p95_response_time` | FloatField | 95th percentile | default=0.0 |
+| `max_response_time` | FloatField | Maximum latency | default=0.0 |
+| `endpoint_stats` | JSONField | Per-endpoint breakdown | default=dict |
+| `created_at` | DateTimeField | Record creation | auto_now_add=True |
+| `updated_at` | DateTimeField | Last update | auto_now=True |
+
+**Properties:**
+- `error_rate` - Calculated as (total_errors / total_requests) * 100
+
+**Example:**
+```python
+# Get yesterday's summary
+yesterday = date.today() - timedelta(days=1)
+summary = DailyMetricsSummary.objects.get(date=yesterday)
+
+print(f"Requests: {summary.total_requests:,}")
+print(f"Error rate: {summary.error_rate:.1f}%")
+print(f"p95 latency: {summary.p95_response_time:.2f}ms")
+```
+
+---
+
+### ProviderCostDaily
+
+Daily provider spending aggregation for budget tracking.
+
+**Fields:**
+
+| Field | Type | Description | Constraints |
+|-------|------|-------------|-------------|
+| `date` | DateField | Cost date | indexed |
+| `provider` | CharField(100) | Provider name | e.g., "OpenAI", indexed |
+| `service` | CharField(100) | Service name | e.g., "gpt-4o" |
+| `total_requests` | IntegerField | API call count | default=0 |
+| `total_cost_usd` | DecimalField(10,4) | Total cost | default=0.0 |
+| `total_tokens` | BigIntegerField | Token usage | default=0 |
+| `prompt_tokens` | BigIntegerField | Input tokens | default=0 |
+| `completion_tokens` | BigIntegerField | Output tokens | default=0 |
+| `created_at` | DateTimeField | Record creation | auto_now_add=True |
+| `updated_at` | DateTimeField | Last update | auto_now=True |
+
+**Unique Together:** `(date, provider, service)`
+
+**Class Methods:**
+- `get_monthly_cost(year, month, provider=None)` - Aggregate monthly spending
+
+**Example:**
+```python
+# Get monthly OpenAI cost
+monthly_cost = ProviderCostDaily.get_monthly_cost(
+    year=2025,
+    month=1,
+    provider='OpenAI'
+)
+print(f"OpenAI January cost: ${monthly_cost:.2f}")
+```
+
+---
+
+### ErrorLog
+
+Detailed error logging with stack traces for debugging.
+
+**Fields:**
+
+| Field | Type | Description | Constraints |
+|-------|------|-------------|-------------|
+| `timestamp` | DateTimeField | Error time | auto_now_add=True, indexed |
+| `endpoint` | CharField(255) | Request path | indexed |
+| `method` | CharField(10) | HTTP method | Required |
+| `status_code` | IntegerField | Error status | indexed |
+| `error_type` | CharField(255) | Exception class | Required |
+| `error_message` | TextField | Error description | Required |
+| `stack_trace` | TextField | Full traceback | blank=True |
+| `user_id` | IntegerField | User ID | nullable |
+| `request_data` | JSONField | Request context | default=dict |
+
+**Example:**
+```python
+# Get recent 5xx errors
+server_errors = ErrorLog.objects.filter(
+    status_code__gte=500,
+    timestamp__gte=timezone.now() - timedelta(hours=1)
+).order_by('-timestamp')
+
+for error in server_errors:
+    print(f"{error.timestamp}: {error.error_type} at {error.endpoint}")
+```
+
+---
+
+**Related Documentation:**
+- [Observability Feature Guide](../features/observability-metrics.md)
+- [Middleware Documentation](../features/observability-metrics.md#middleware)
+- [Management Commands](../features/observability-metrics.md#management-commands)
+
+---
+
 ## Model Relationships
 
 ### Entity Relationship Diagram
@@ -688,6 +854,10 @@ All models registered in Django admin (`admin.py`):
 - ExportableReport
 - TokenUsage
 - MergeTokenStats
+- RequestMetric
+- DailyMetricsSummary
+- ProviderCostDaily
+- ErrorLog
 - InvitedInterview
 - RoleChangeRequest
 

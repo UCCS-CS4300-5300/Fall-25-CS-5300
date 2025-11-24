@@ -41,7 +41,7 @@ summary:
   iterations_to_success: 3
   first_run_failure_rate: 10.5
   final_status: "success"
-  total_time_minutes: 8
+  total_time_minutes: 4
 
 coverage:
   initial: 0
