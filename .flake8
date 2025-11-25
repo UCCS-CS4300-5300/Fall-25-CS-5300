@@ -1,7 +1,15 @@
 [flake8]
+max-line-length = 150
 extend-ignore = E711, F403, F405
 exclude =
     migrations,
     manage.py,
     wsgi.py,
-    asgi.py
+    asgi.py,
+    .venv,
+    venv,
+    env,
+    myenv,
+    active_interview_project/myenv,
+    __pycache__,
+    *.pyc

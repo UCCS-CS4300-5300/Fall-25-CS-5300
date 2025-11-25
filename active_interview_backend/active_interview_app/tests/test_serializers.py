@@ -101,7 +101,8 @@ class UploadedResumeSerializerTest(TestCase):
 
         serializer = UploadedResumeSerializer(data=data)
         if serializer.is_valid():
-            resume = serializer.save(user=self.user, content='New resume content')
+            resume = serializer.save(
+                user=self.user, content='New resume content')
             self.assertIsNotNone(resume.id)
             self.assertEqual(resume.user, self.user)
 

@@ -5,8 +5,6 @@ Tests admin display methods and queryset optimizations.
 from django.test import TestCase, RequestFactory
 from django.contrib.auth.models import User
 from django.contrib.admin.sites import AdminSite
-from django.utils import timezone
-from datetime import timedelta
 
 from active_interview_app.models import DataExportRequest, DeletionRequest
 from active_interview_app.admin import (

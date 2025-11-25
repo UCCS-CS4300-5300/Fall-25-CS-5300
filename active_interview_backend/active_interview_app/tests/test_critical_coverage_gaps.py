@@ -15,7 +15,6 @@ from active_interview_app.models import (
     Chat
 )
 from active_interview_app.merge_stats_models import MergeTokenStats
-from active_interview_app.token_usage_models import TokenUsage
 
 
 # ============================================================================
@@ -74,8 +73,7 @@ class CreateChatFormInvalidTest(TestCase):
 
     def test_create_chat_missing_required_fields(self):
         """Test form invalid when missing required fields"""
-        response = self.client.post(reverse('chat-create'), {
-            'create': 'true',
+        self.client.post(reverse('chat-create'), {
             # Missing listing_choice, difficulty, type
         })
 
@@ -94,8 +92,7 @@ class CreateChatFormInvalidTest(TestCase):
             file=fake_job_file
         )
 
-        response = self.client.post(reverse('chat-create'), {
-            'create': 'true',
+        self.client.post(reverse('chat-create'), {
             'listing_choice': job_listing.id,
             'difficulty': 999,  # Invalid value
             'type': 'GEN'
@@ -118,8 +115,7 @@ class CreateChatNoCreateButtonTest(TestCase):
 
     def test_create_chat_post_without_create_button(self):
         """Test POST to create chat without 'create' in POST data"""
-        response = self.client.post(reverse('chat-create'), {
-            'some_other_field': 'value'
+        self.client.post(reverse('chat-create'), {
         })
 
         # Should not process the form
@@ -139,12 +135,12 @@ class UploadFileFormInvalidTest(TestCase):
 
     def test_upload_file_no_file_provided(self):
         """Test upload form invalid when no file is provided"""
-        response = self.client.post(reverse('upload_file'), {
+        _response = self.client.post(reverse('upload_file'), {
             'title': 'Test Title'
             # No file provided
         })
 
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(_response.status_code, 302)
         self.assertEqual(UploadedResume.objects.count(), 0)
 
     def test_upload_file_empty_title(self):
@@ -164,8 +160,10 @@ class ChatViewUnauthorizedAccessTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user1 = User.objects.create_user(username='user1', password='pass')
-        self.user2 = User.objects.create_user(username='user2', password='pass')
+        self.user1 = User.objects.create_user(
+            username='user1', password='pass')
+        self.user2 = User.objects.create_user(
+            username='user2', password='pass')
 
         fake_job_file = SimpleUploadedFile("job.txt", b"job content")
         self.job_listing = UploadedJobListing.objects.create(
@@ -190,7 +188,8 @@ class ChatViewUnauthorizedAccessTest(TestCase):
     def test_chatview_unauthorized_get(self):
         """Test ChatView GET by unauthorized user"""
         self.client.login(username='user2', password='pass')
-        response = self.client.get(reverse('chat-view', kwargs={'chat_id': self.chat.id}))
+        response = self.client.get(
+            reverse('chat-view', kwargs={'chat_id': self.chat.id}))
         self.assertIn(response.status_code, [302, 403])
 
     def test_chatview_unauthorized_post(self):
@@ -205,7 +204,8 @@ class ChatViewUnauthorizedAccessTest(TestCase):
     def test_editchat_unauthorized(self):
         """Test EditChat by unauthorized user"""
         self.client.login(username='user2', password='pass')
-        response = self.client.get(reverse('chat-edit', kwargs={'chat_id': self.chat.id}))
+        response = self.client.get(
+            reverse('chat-edit', kwargs={'chat_id': self.chat.id}))
         self.assertIn(response.status_code, [302, 403])
 
     def test_deletechat_unauthorized(self):
@@ -229,25 +229,29 @@ class ChatViewUnauthorizedAccessTest(TestCase):
 
     def test_keyquestionsview_unauthorized(self):
         """Test KeyQuestionsView by unauthorized user"""
-        self.chat.key_questions = [{"id": 0, "title": "Q", "duration": 60, "content": "Test"}]
+        self.chat.key_questions = [
+            {"id": 0, "title": "Q", "duration": 60, "content": "Test"}]
         self.chat.save()
 
         self.client.login(username='user2', password='pass')
         response = self.client.get(
-            reverse('key-questions', kwargs={'chat_id': self.chat.id, 'question_id': 0})
+            reverse('key-questions',
+                    kwargs={'chat_id': self.chat.id, 'question_id': 0})
         )
         self.assertIn(response.status_code, [302, 403])
 
     def test_resultschat_unauthorized(self):
         """Test ResultsChat by unauthorized user"""
         self.client.login(username='user2', password='pass')
-        response = self.client.get(reverse('chat-results', kwargs={'chat_id': self.chat.id}))
+        response = self.client.get(
+            reverse('chat-results', kwargs={'chat_id': self.chat.id}))
         self.assertIn(response.status_code, [302, 403])
 
     def test_resultcharts_unauthorized(self):
         """Test ResultCharts by unauthorized user"""
         self.client.login(username='user2', password='pass')
-        response = self.client.get(reverse('result-charts', kwargs={'chat_id': self.chat.id}))
+        response = self.client.get(
+            reverse('result-charts', kwargs={'chat_id': self.chat.id}))
         self.assertIn(response.status_code, [302, 403])
 
 
@@ -256,7 +260,8 @@ class ResultChartsScoreParsingEdgeCasesTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(username='testuser', password='pass')
+        self.user = User.objects.create_user(
+            username='testuser', password='pass')
         self.client.login(username='testuser', password='pass')
 
         fake_job_file = SimpleUploadedFile("job.txt", b"job content")
@@ -296,7 +301,8 @@ class ResultChartsScoreParsingEdgeCasesTest(TestCase):
             mock_response1, mock_response2
         ]
 
-        response = self.client.get(reverse('result-charts', kwargs={'chat_id': self.chat.id}))
+        response = self.client.get(
+            reverse('result-charts', kwargs={'chat_id': self.chat.id}))
 
         self.assertEqual(response.status_code, 200)
         # Should default to zeros when parsing fails
@@ -321,7 +327,8 @@ class ResultChartsScoreParsingEdgeCasesTest(TestCase):
             mock_response1, mock_response2
         ]
 
-        response = self.client.get(reverse('result-charts', kwargs={'chat_id': self.chat.id}))
+        response = self.client.get(
+            reverse('result-charts', kwargs={'chat_id': self.chat.id}))
 
         self.assertEqual(response.status_code, 200)
         scores = response.context['scores']
@@ -333,7 +340,8 @@ class APIViewSerializerErrorsTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(username='testuser', password='pass')
+        self.user = User.objects.create_user(
+            username='testuser', password='pass')
         self.client.force_login(self.user)
 
     def test_uploaded_resume_post_invalid_data(self):
@@ -368,7 +376,8 @@ class UploadedJobListingViewErrorPathsTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(username='testuser', password='pass')
+        self.user = User.objects.create_user(
+            username='testuser', password='pass')
         self.client.login(username='testuser', password='pass')
 
     def test_upload_job_listing_with_whitespace_title(self):
@@ -398,7 +407,8 @@ class ChatListOrderingTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(username='testuser', password='pass')
+        self.user = User.objects.create_user(
+            username='testuser', password='pass')
         self.client.login(username='testuser', password='pass')
 
         fake_job_file = SimpleUploadedFile("job.txt", b"job content")
@@ -453,7 +463,8 @@ class EditResumeFormInvalidTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(username='testuser', password='pass')
+        self.user = User.objects.create_user(
+            username='testuser', password='pass')
         self.client.login(username='testuser', password='pass')
 
         fake_file = SimpleUploadedFile("resume.pdf", b"content")
@@ -468,8 +479,7 @@ class EditResumeFormInvalidTest(TestCase):
 
     def test_edit_resume_invalid_form(self):
         """Test edit resume with invalid form data"""
-        response = self.client.post(
-            reverse('edit_resume', kwargs={'resume_id': self.resume.id}),
+        self.client.post(
             {
                 'title': '',  # Empty title should be invalid
                 'content': ''
@@ -486,7 +496,8 @@ class EditJobPostingFormInvalidTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(username='testuser', password='pass')
+        self.user = User.objects.create_user(
+            username='testuser', password='pass')
         self.client.login(username='testuser', password='pass')
 
         fake_file = SimpleUploadedFile("job.txt", b"content")
@@ -501,8 +512,7 @@ class EditJobPostingFormInvalidTest(TestCase):
 
     def test_edit_job_posting_invalid_form(self):
         """Test edit job posting with invalid form data"""
-        response = self.client.post(
-            reverse('edit_job_posting', kwargs={'job_id': self.job.id}),
+        self.client.post(
             {
                 'title': '',  # Empty title
                 'content': ''
@@ -546,7 +556,8 @@ class ProfileViewWithDocumentsTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(username='testuser', password='pass')
+        self.user = User.objects.create_user(
+            username='testuser', password='pass')
         self.client.login(username='testuser', password='pass')
 
     def test_profile_shows_user_documents(self):

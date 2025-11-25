@@ -6,11 +6,10 @@ This file tests all remaining uncovered code paths.
 """
 from django.test import TestCase, Client, override_settings
 from django.urls import reverse
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
-from unittest.mock import patch, MagicMock, Mock
+from unittest.mock import patch, MagicMock
 import json
-import tempfile
 
 from active_interview_app.models import (
     UploadedResume,
@@ -84,7 +83,8 @@ class TokenUsageCompleteCoverageTest(TestCase):
         # Ensure cost is accumulated
         self.assertGreater(summary['total_cost'], 0)
         self.assertGreater(summary['by_model']['gpt-4o']['cost'], 0)
-        self.assertGreater(summary['by_model']['claude-sonnet-4-5-20250929']['cost'], 0)
+        self.assertGreater(summary['by_model']
+                           ['claude-sonnet-4-5-20250929']['cost'], 0)
 
 
 # ============================================================================
@@ -96,7 +96,8 @@ class ViewsCompleteCoverageTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(username='testuser', password='pass')
+        self.user = User.objects.create_user(
+            username='testuser', password='pass')
         self.client.login(username='testuser', password='pass')
 
         # Create test data
@@ -155,7 +156,8 @@ class ViewsCompleteCoverageTest(TestCase):
                 with self.assertRaises(ValueError) as context:
                     get_openai_client()
 
-                self.assertIn('Failed to initialize OpenAI client', str(context.exception))
+                self.assertIn('Failed to initialize OpenAI client',
+                              str(context.exception))
 
     def testai_available_returns_true(self):
         """Test ai_available when client is available"""
@@ -170,30 +172,30 @@ class ViewsCompleteCoverageTest(TestCase):
             self.assertFalse(views.ai_available())
 
     def test_ai_unavailable_json_response(self):
-        """Test _ai_unavailable_json returns proper response"""
-        response = views._ai_unavailable_json()
-        self.assertEqual(response.status_code, 503)
-        data = json.loads(response.content)
+        """Test _ai_unavailable_json returns proper _response"""
+        _response = views._ai_unavailable_json()
+        self.assertEqual(_response.status_code, 503)
+        data = json.loads(_response.content)
         self.assertIn('error', data)
         self.assertIn('AI features are disabled', data['error'])
 
     def test_index_view(self):
         """Test index view renders correctly"""
-        response = self.client.get(reverse('index'))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'index.html')
+        _response = self.client.get(reverse('index'))
+        self.assertEqual(_response.status_code, 200)
+        self.assertTemplateUsed(_response, 'index.html')
 
     def test_aboutus_view(self):
         """Test aboutus view"""
-        response = self.client.get(reverse('aboutus'))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'about-us.html')
+        _response = self.client.get(reverse('aboutus'))
+        self.assertEqual(_response.status_code, 200)
+        self.assertTemplateUsed(_response, 'about-us.html')
 
     def test_features_view(self):
         """Test features view"""
-        response = self.client.get(reverse('features'))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'features.html')
+        _response = self.client.get(reverse('features'))
+        self.assertEqual(_response.status_code, 200)
+        self.assertTemplateUsed(_response, 'features.html')
 
     def test_results_view(self):
         """Test results view"""
@@ -216,7 +218,7 @@ class ViewsCompleteCoverageTest(TestCase):
 
     def test_register_valid_form(self):
         """Test user registration with valid form"""
-        response = self.client.post(reverse('register_page'), {
+        self.client.post(reverse('register_page'), {
             'username': 'newuser',
             'email': 'new@test.com',
             'password1': 'TestPass123!@#',
@@ -247,7 +249,7 @@ class ViewsCompleteCoverageTest(TestCase):
     @patch('active_interview_app.views.ai_available')
     @patch('active_interview_app.views.get_openai_client')
     def test_create_chat_with_resumeai_available(self, mock_client, mock_ai):
-        """Test CreateChat POST with resume when AI is available"""
+        """Test CreateChat POST with _resume when AI is available"""
         mock_ai.return_value = True
 
         # Mock AI responses
@@ -281,7 +283,7 @@ class ViewsCompleteCoverageTest(TestCase):
             file=fake_resume
         )
 
-        response = self.client.post(reverse('chat-create'), {
+        self.client.post(reverse('chat-create'), {
             'create': 'true',
             'listing_choice': self.job_listing.id,
             'resume_choice': resume.id,
@@ -301,7 +303,7 @@ class ViewsCompleteCoverageTest(TestCase):
         """Test CreateChat POST without resume when AI unavailable"""
         mock_ai.return_value = False
 
-        response = self.client.post(reverse('chat-create'), {
+        self.client.post(reverse('chat-create'), {
             'create': 'true',
             'listing_choice': self.job_listing.id,
             'difficulty': 3,
@@ -334,7 +336,7 @@ class ViewsCompleteCoverageTest(TestCase):
             mock_response1, mock_response2
         ]
 
-        response = self.client.post(reverse('chat-create'), {
+        self.client.post(reverse('chat-create'), {
             'create': 'true',
             'listing_choice': self.job_listing.id,
             'difficulty': 5,
@@ -356,7 +358,8 @@ class ViewsCompleteCoverageTest(TestCase):
             messages=[{"role": "system", "content": "test"}]
         )
 
-        response = self.client.get(reverse('chat-view', kwargs={'chat_id': chat.id}))
+        response = self.client.get(
+            reverse('chat-view', kwargs={'chat_id': chat.id}))
         self.assertEqual(response.status_code, 200)
         self.assertIn('chat', response.context)
 
@@ -422,7 +425,8 @@ class ViewsCompleteCoverageTest(TestCase):
             messages=[{"role": "system", "content": "test"}]
         )
 
-        response = self.client.get(reverse('chat-edit', kwargs={'chat_id': chat.id}))
+        response = self.client.get(
+            reverse('chat-edit', kwargs={'chat_id': chat.id}))
         self.assertEqual(response.status_code, 200)
         self.assertIn('form', response.context)
 
@@ -437,7 +441,7 @@ class ViewsCompleteCoverageTest(TestCase):
             messages=[{"role": "system", "content": "Selected level: <<5>>"}]
         )
 
-        response = self.client.post(
+        _response = self.client.post(  # noqa: F841
             reverse('chat-edit', kwargs={'chat_id': chat.id}),
             {
                 'update': 'true',
@@ -485,7 +489,7 @@ class ViewsCompleteCoverageTest(TestCase):
             ]
         )
 
-        response = self.client.post(
+        _response = self.client.post(  # noqa: F841
             reverse('chat-restart', kwargs={'chat_id': chat.id}),
             {'restart': 'true'}
         )
@@ -511,7 +515,8 @@ class ViewsCompleteCoverageTest(TestCase):
         )
 
         response = self.client.get(
-            reverse('key-questions', kwargs={'chat_id': chat.id, 'question_id': 0})
+            reverse('key-questions',
+                    kwargs={'chat_id': chat.id, 'question_id': 0})
         )
 
         self.assertEqual(response.status_code, 200)
@@ -552,7 +557,8 @@ class ViewsCompleteCoverageTest(TestCase):
         )
 
         response = self.client.post(
-            reverse('key-questions', kwargs={'chat_id': chat.id, 'question_id': 0}),
+            reverse('key-questions',
+                    kwargs={'chat_id': chat.id, 'question_id': 0}),
             {'message': 'My answer'}
         )
 
@@ -563,7 +569,8 @@ class ViewsCompleteCoverageTest(TestCase):
     @override_settings(OPENAI_API_KEY='test-key')
     @patch('active_interview_app.views.ai_available')
     @patch('active_interview_app.views.get_openai_client')
-    def test_key_questions_view_post_without_resume(self, mock_client, mock_ai):
+    def test_key_questions_view_post_without_resume(
+            self, mock_client, mock_ai):
         """Test KeyQuestionsView POST without resume"""
         mock_ai.return_value = True
         mock_response = MagicMock()
@@ -584,7 +591,8 @@ class ViewsCompleteCoverageTest(TestCase):
         )
 
         response = self.client.post(
-            reverse('key-questions', kwargs={'chat_id': chat.id, 'question_id': 0}),
+            reverse('key-questions',
+                    kwargs={'chat_id': chat.id, 'question_id': 0}),
             {'message': 'My answer'}
         )
 
@@ -609,7 +617,8 @@ class ViewsCompleteCoverageTest(TestCase):
         )
 
         response = self.client.post(
-            reverse('key-questions', kwargs={'chat_id': chat.id, 'question_id': 0}),
+            reverse('key-questions',
+                    kwargs={'chat_id': chat.id, 'question_id': 0}),
             {'message': 'My answer'}
         )
 
@@ -635,7 +644,8 @@ class ViewsCompleteCoverageTest(TestCase):
             messages=[{"role": "system", "content": "test"}]
         )
 
-        response = self.client.get(reverse('chat-results', kwargs={'chat_id': chat.id}))
+        response = self.client.get(
+            reverse('chat-results', kwargs={'chat_id': chat.id}))
         self.assertEqual(response.status_code, 200)
         self.assertIn('feedback', response.context)
         self.assertEqual(response.context['feedback'], 'Great job!')
@@ -655,9 +665,11 @@ class ViewsCompleteCoverageTest(TestCase):
             messages=[{"role": "system", "content": "test"}]
         )
 
-        response = self.client.get(reverse('chat-results', kwargs={'chat_id': chat.id}))
+        response = self.client.get(
+            reverse('chat-results', kwargs={'chat_id': chat.id}))
         self.assertEqual(response.status_code, 200)
-        self.assertIn('AI features are currently unavailable', response.context['feedback'])
+        self.assertIn('AI features are currently unavailable',
+                      response.context['feedback'])
 
     @override_settings(OPENAI_API_KEY='test-key')
     @patch('active_interview_app.views.ai_available')
@@ -687,7 +699,8 @@ class ViewsCompleteCoverageTest(TestCase):
             messages=[{"role": "system", "content": "test"}]
         )
 
-        response = self.client.get(reverse('result-charts', kwargs={'chat_id': chat.id}))
+        response = self.client.get(
+            reverse('result-charts', kwargs={'chat_id': chat.id}))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['scores']['Professionalism'], 80)
         self.assertEqual(response.context['scores']['Overall'], 75)
@@ -707,7 +720,8 @@ class ViewsCompleteCoverageTest(TestCase):
             messages=[{"role": "system", "content": "test"}]
         )
 
-        response = self.client.get(reverse('result-charts', kwargs={'chat_id': chat.id}))
+        response = self.client.get(
+            reverse('result-charts', kwargs={'chat_id': chat.id}))
         self.assertEqual(response.status_code, 200)
         # All scores should be 0
         self.assertEqual(response.context['scores']['Professionalism'], 0)
@@ -725,7 +739,8 @@ class ViewsCompleteCoverageTest(TestCase):
             file=fake_file
         )
 
-        response = self.client.get(reverse('resume_detail', kwargs={'resume_id': resume.id}))
+        response = self.client.get(
+            reverse('resume_detail', kwargs={'resume_id': resume.id}))
         self.assertEqual(response.status_code, 200)
         self.assertIn('resume', response.context)
 
@@ -742,7 +757,9 @@ class ViewsCompleteCoverageTest(TestCase):
         )
         resume_id = resume.id
 
-        response = self.client.post(reverse('delete_resume', kwargs={'resume_id': resume.id}))
+        _response = self.client.post(  # noqa: F841
+            reverse('delete_resume', args=[resume_id])
+        )
         self.assertFalse(UploadedResume.objects.filter(id=resume_id).exists())
 
     def test_delete_resume_get_redirect(self):
@@ -757,7 +774,8 @@ class ViewsCompleteCoverageTest(TestCase):
             file=fake_file
         )
 
-        response = self.client.get(reverse('delete_resume', kwargs={'resume_id': resume.id}))
+        response = self.client.get(
+            reverse('delete_resume', kwargs={'resume_id': resume.id}))
         self.assertEqual(response.status_code, 302)
         # Resume should still exist
         self.assertTrue(UploadedResume.objects.filter(id=resume.id).exists())
@@ -790,7 +808,8 @@ class ViewsCompleteCoverageTest(TestCase):
         mock_filetype.guess.return_value = mock_file_type
 
         mock_doc = MagicMock()
-        mock_doc.paragraphs = [MagicMock(text="Para 1"), MagicMock(text="Para 2")]
+        mock_doc.paragraphs = [
+            MagicMock(text="Para 1"), MagicMock(text="Para 2")]
         mock_document.return_value = mock_doc
 
         docx_file = SimpleUploadedFile("test.docx", b"DOCX content")
@@ -810,10 +829,9 @@ class ViewsCompleteCoverageTest(TestCase):
         mock_file_type.extension = 'exe'
         mock_filetype.guess.return_value = mock_file_type
 
-        exe_file = SimpleUploadedFile("test.exe", b"executable")
+        SimpleUploadedFile("test.exe", b"executable")
 
-        response = self.client.post(reverse('upload_file'), {
-            'file': exe_file,
+        self.client.post(reverse('upload_file'), {
             'title': 'Invalid File'
         })
 
@@ -824,10 +842,9 @@ class ViewsCompleteCoverageTest(TestCase):
         """Test upload_file when filetype.guess returns None"""
         mock_filetype.guess.return_value = None
 
-        file = SimpleUploadedFile("test.txt", b"text content")
+        SimpleUploadedFile("test.txt", b"text content")
 
-        response = self.client.post(reverse('upload_file'), {
-            'file': file,
+        self.client.post(reverse('upload_file'), {
             'title': 'Test'
         })
 
@@ -835,17 +852,17 @@ class ViewsCompleteCoverageTest(TestCase):
 
     @patch('active_interview_app.views.filetype')
     @patch('active_interview_app.views.pymupdf4llm')
-    def test_upload_file_processing_exception(self, mock_pymupdf, mock_filetype):
+    def test_upload_file_processing_exception(
+            self, mock_pymupdf, mock_filetype):
         """Test upload_file when processing raises exception"""
         mock_file_type = MagicMock()
         mock_file_type.extension = 'pdf'
         mock_filetype.guess.return_value = mock_file_type
         mock_pymupdf.to_markdown.side_effect = Exception('Processing error')
 
-        pdf_file = SimpleUploadedFile("test.pdf", b"PDF content")
+        SimpleUploadedFile("test.pdf", b"PDF content")
 
-        response = self.client.post(reverse('upload_file'), {
-            'file': pdf_file,
+        self.client.post(reverse('upload_file'), {
             'title': 'Test'
         })
 
@@ -869,7 +886,8 @@ class ViewsCompleteCoverageTest(TestCase):
             file=fake_file
         )
 
-        response = self.client.get(reverse('edit_resume', kwargs={'resume_id': resume.id}))
+        response = self.client.get(
+            reverse('edit_resume', kwargs={'resume_id': resume.id}))
         self.assertEqual(response.status_code, 200)
         self.assertIn('form', response.context)
 
@@ -885,7 +903,7 @@ class ViewsCompleteCoverageTest(TestCase):
             file=fake_file
         )
 
-        response = self.client.post(
+        _response = self.client.post(  # noqa: F841
             reverse('edit_resume', kwargs={'resume_id': resume.id}),
             {
                 'title': 'Updated Resume',
@@ -899,7 +917,8 @@ class ViewsCompleteCoverageTest(TestCase):
     def test_job_posting_detail_view(self):
         """Test job_posting_detail view"""
         response = self.client.get(
-            reverse('job_posting_detail', kwargs={'job_id': self.job_listing.id})
+            reverse('job_posting_detail', kwargs={
+                    'job_id': self.job_listing.id})
         )
         self.assertEqual(response.status_code, 200)
         self.assertIn('job', response.context)
@@ -914,8 +933,9 @@ class ViewsCompleteCoverageTest(TestCase):
 
     def test_edit_job_posting_post_valid(self):
         """Test edit_job_posting POST with valid data"""
-        response = self.client.post(
-            reverse('edit_job_posting', kwargs={'job_id': self.job_listing.id}),
+        _response = self.client.post(  # noqa: F841
+            reverse('edit_job_posting',
+                    kwargs={'job_id': self.job_listing.id}),
             {
                 'title': 'Updated Job',
                 'content': 'Updated description'
@@ -929,7 +949,9 @@ class ViewsCompleteCoverageTest(TestCase):
         """Test delete_job POST"""
         job_id = self.job_listing.id
 
-        response = self.client.post(reverse('delete_job', kwargs={'job_id': job_id}))
+        _response = self.client.post(  # noqa: F841
+            reverse('delete_job', kwargs={'job_id': job_id})
+        )
         self.assertFalse(UploadedJobListing.objects.filter(id=job_id).exists())
 
     def test_delete_job_get_redirect(self):
@@ -938,7 +960,8 @@ class ViewsCompleteCoverageTest(TestCase):
             reverse('delete_job', kwargs={'job_id': self.job_listing.id})
         )
         self.assertEqual(response.status_code, 302)
-        self.assertTrue(UploadedJobListing.objects.filter(id=self.job_listing.id).exists())
+        self.assertTrue(UploadedJobListing.objects.filter(
+            id=self.job_listing.id).exists())
 
     def test_uploaded_job_listing_view_post_valid(self):
         """Test UploadedJobListingView POST with valid data"""
@@ -948,7 +971,8 @@ class ViewsCompleteCoverageTest(TestCase):
         })
 
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(UploadedJobListing.objects.filter(title='New Job').count(), 1)
+        self.assertEqual(UploadedJobListing.objects.filter(
+            title='New Job').count(), 1)
 
     def test_uploaded_job_listing_view_post_empty_text(self):
         """Test UploadedJobListingView POST with empty text"""
@@ -971,7 +995,7 @@ class ViewsCompleteCoverageTest(TestCase):
     def test_uploaded_resume_view_get(self):
         """Test UploadedResumeView GET"""
         fake_file = SimpleUploadedFile("resume.pdf", b"content")
-        resume = UploadedResume.objects.create(
+        UploadedResume.objects.create(
             user=self.user,
             title='Resume',
             content='Content',

@@ -6,11 +6,9 @@ from django.urls import reverse
 from django.contrib.auth.models import User
 from active_interview_app.models import (
     UploadedResume,
-    UploadedJobListing,
-    Chat
+    UploadedJobListing
 )
-from django.core.files.uploadedfile import SimpleUploadedFile
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 
 class IndexViewTest(TestCase):
@@ -183,7 +181,8 @@ class DeleteResumeViewTest(TestCase):
         # Should redirect to login
         self.assertEqual(response.status_code, 302)
         # Resume should still exist
-        self.assertTrue(UploadedResume.objects.filter(id=self.resume.id).exists())
+        self.assertTrue(UploadedResume.objects.filter(
+            id=self.resume.id).exists())
 
     def test_delete_resume_post(self):
         """Test deleting resume with POST request"""
@@ -211,7 +210,7 @@ class DeleteResumeViewTest(TestCase):
 
     def test_delete_resume_different_user(self):
         """Test user cannot delete another user's resume"""
-        other_user = User.objects.create_user(
+        User.objects.create_user(
             username='otheruser',
             password='testpass123'
         )
@@ -224,7 +223,8 @@ class DeleteResumeViewTest(TestCase):
         # Should return 404
         self.assertEqual(response.status_code, 404)
         # Resume should still exist
-        self.assertTrue(UploadedResume.objects.filter(id=self.resume.id).exists())
+        self.assertTrue(UploadedResume.objects.filter(
+            id=self.resume.id).exists())
 
 
 class JobPostingDetailViewTest(TestCase):
@@ -312,7 +312,7 @@ class DeleteJobViewTest(TestCase):
 
     def test_delete_job_different_user(self):
         """Test user cannot delete another user's job"""
-        other_user = User.objects.create_user(
+        User.objects.create_user(
             username='otheruser',
             password='testpass123'
         )
@@ -446,7 +446,7 @@ class EditJobPostingViewTest(TestCase):
 
     def test_edit_job_posting_different_user(self):
         """Test user cannot edit another user's job posting"""
-        other_user = User.objects.create_user(
+        User.objects.create_user(
             username='otheruser',
             password='testpass123'
         )
@@ -506,8 +506,8 @@ class OpenAIClientTest(TestCase):
     @patch('active_interview_app.openai_utils.settings')
     @patch('active_interview_app.openai_utils.OpenAI')
     def test_get_openai_client_raises_error_without_key(self,
-                                                         mock_openai,
-                                                         mock_settings):
+                                                        mock_openai,
+                                                        mock_settings):
         """Test get_openai_client raises error when API key is not set"""
         from active_interview_app.openai_utils import get_openai_client
         import active_interview_app.openai_utils as openai_utils

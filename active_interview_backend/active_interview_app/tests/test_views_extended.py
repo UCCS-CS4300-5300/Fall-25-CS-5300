@@ -3,18 +3,16 @@ Extended comprehensive tests for views.py to maximize coverage
 """
 from django.test import TestCase, Client
 from django.urls import reverse
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User
 from active_interview_app.models import (
     UploadedResume,
     UploadedJobListing,
     Chat
 )
 from django.core.files.uploadedfile import SimpleUploadedFile
-from unittest.mock import patch, MagicMock, Mock
+from unittest.mock import patch, Mock
 from unittest import skip
 import json
-import tempfile
-import os
 
 
 class RegisterViewTest(TestCase):
@@ -104,7 +102,11 @@ class UploadFileViewTest(TestCase):
     @patch('active_interview_app.views.filetype')
     @patch('active_interview_app.views.Document')
     @patch('active_interview_app.views.md')
-    def test_upload_docx_file(self, mock_md, mock_document_class, mock_filetype):
+    def test_upload_docx_file(
+            self,
+            mock_md,
+            mock_document_class,
+            mock_filetype):
         """Test uploading a DOCX file"""
         # Mock filetype detection
         mock_file_type = Mock()
@@ -170,7 +172,8 @@ class UploadFileViewTest(TestCase):
         self.assertRedirects(response, reverse('document-list'))
 
         # Resume should NOT be created
-        self.assertFalse(UploadedResume.objects.filter(title='Test TXT File').exists())
+        self.assertFalse(UploadedResume.objects.filter(
+            title='Test TXT File').exists())
 
     def test_upload_file_get_request(self):
         """Test GET request to upload_file returns form"""
@@ -205,7 +208,8 @@ class UploadedJobListingViewTest(TestCase):
 
         # Job listing should be created
         job_listing = UploadedJobListing.objects.get(title='Software Engineer')
-        self.assertEqual(job_listing.content, 'Software Engineer position available')
+        self.assertEqual(job_listing.content,
+                         'Software Engineer position available')
         self.assertEqual(job_listing.user, self.user)
 
     def test_post_empty_text(self):
@@ -221,7 +225,8 @@ class UploadedJobListingViewTest(TestCase):
         self.assertRedirects(response, reverse('document-list'))
 
         # Job listing should NOT be created
-        self.assertFalse(UploadedJobListing.objects.filter(title='Empty Job').exists())
+        self.assertFalse(UploadedJobListing.objects.filter(
+            title='Empty Job').exists())
 
     def test_post_empty_title(self):
         """Test POST with empty title field"""
@@ -236,7 +241,8 @@ class UploadedJobListingViewTest(TestCase):
         self.assertRedirects(response, reverse('document-list'))
 
         # Job listing should NOT be created
-        self.assertFalse(UploadedJobListing.objects.filter(content='Some job content').exists())
+        self.assertFalse(UploadedJobListing.objects.filter(
+            content='Some job content').exists())
 
 
 class UploadedResumeViewAPITest(TestCase):
@@ -380,7 +386,7 @@ class ResultsChatViewTest(TestCase):
 
     def test_results_chat_requires_ownership(self):
         """Test user can only view their own chat results"""
-        other_user = User.objects.create_user(
+        User.objects.create_user(
             username='otheruser',
             password='testpass123'
         )
@@ -482,7 +488,8 @@ class ResultChartsViewTest(TestCase):
     @skip("chat-results-charts URL not implemented yet")
     @patch('active_interview_app.views.get_openai_client')
     @patch('active_interview_app.views.ai_available')
-    def test_result_chartsai_available_valid_scores(self, mockai_available, mock_get_client):
+    def test_result_chartsai_available_valid_scores(
+            self, mockai_available, mock_get_client):
         """Test result charts with valid AI scores"""
         mockai_available.return_value = True
 
@@ -502,7 +509,8 @@ class ResultChartsViewTest(TestCase):
         mock_choice2.message = mock_message2
         mock_response2.choices = [mock_choice2]
 
-        mock_client.chat.completions.create.side_effect = [mock_response1, mock_response2]
+        mock_client.chat.completions.create.side_effect = [
+            mock_response1, mock_response2]
         mock_get_client.return_value = mock_client
 
         self.client.login(username='testuser', password='testpass123')
@@ -522,7 +530,8 @@ class ResultChartsViewTest(TestCase):
     @skip("chat-results-charts URL not implemented yet")
     @patch('active_interview_app.views.get_openai_client')
     @patch('active_interview_app.views.ai_available')
-    def test_result_charts_ai_invalid_scores(self, mockai_available, mock_get_client):
+    def test_result_charts_ai_invalid_scores(
+            self, mockai_available, mock_get_client):
         """Test result charts with invalid AI response"""
         mockai_available.return_value = True
 
@@ -542,7 +551,8 @@ class ResultChartsViewTest(TestCase):
         mock_choice2.message = mock_message2
         mock_response2.choices = [mock_choice2]
 
-        mock_client.chat.completions.create.side_effect = [mock_response1, mock_response2]
+        mock_client.chat.completions.create.side_effect = [
+            mock_response1, mock_response2]
         mock_get_client.return_value = mock_client
 
         self.client.login(username='testuser', password='testpass123')
@@ -585,7 +595,8 @@ class CreateChatViewExtendedTest(TestCase):
 
     @patch('active_interview_app.views.get_openai_client')
     @patch('active_interview_app.views.ai_available')
-    def test_create_chat_without_resumeai_available(self, mockai_available, mock_get_client):
+    def test_create_chat_without_resumeai_available(
+            self, mockai_available, mock_get_client):
         """Test creating chat without resume when AI is available"""
         mockai_available.return_value = True
 
@@ -605,7 +616,8 @@ class CreateChatViewExtendedTest(TestCase):
         mock_choice2.message = mock_message2
         mock_response2.choices = [mock_choice2]
 
-        mock_client.chat.completions.create.side_effect = [mock_response1, mock_response2]
+        mock_client.chat.completions.create.side_effect = [
+            mock_response1, mock_response2]
         mock_get_client.return_value = mock_client
 
         data = {

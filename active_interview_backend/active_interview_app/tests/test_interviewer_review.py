@@ -26,7 +26,7 @@ User = get_user_model()
 
 
 class InvitationReviewViewAccessTests(TestCase):
-    """Test access control for invitation review view"""
+    """Test access control for _invitation review view"""
 
     def setUp(self):
         self.client = Client()
@@ -37,7 +37,8 @@ class InvitationReviewViewAccessTests(TestCase):
             email='interviewer@test.com',
             password='testpass123'
         )
-        self.interviewer_profile = UserProfile.objects.get(user=self.interviewer)
+        self.interviewer_profile = UserProfile.objects.get(
+            user=self.interviewer)
         self.interviewer_profile.role = 'interviewer'
         self.interviewer_profile.save()
 
@@ -64,7 +65,7 @@ class InvitationReviewViewAccessTests(TestCase):
             name='Technical Interview'
         )
 
-        # Create completed invitation with chat
+        # Create completed _invitation with chat
         self.invitation = InvitedInterview.objects.create(
             interviewer=self.interviewer,
             candidate_email='candidate@test.com',
@@ -87,7 +88,8 @@ class InvitationReviewViewAccessTests(TestCase):
 
     def test_requires_authentication(self):
         """Test that review view requires login"""
-        url = reverse('invitation_review', kwargs={'invitation_id': self.invitation.id})
+        url = reverse('invitation_review', kwargs={
+                      'invitation_id': self.invitation.id})
         response = self.client.get(url)
 
         # Should redirect to login
@@ -96,8 +98,10 @@ class InvitationReviewViewAccessTests(TestCase):
 
     def test_only_interviewer_can_access(self):
         """Test that only the invitation creator can access review"""
-        self.client.login(username='candidate@test.com', password='testpass123')
-        url = reverse('invitation_review', kwargs={'invitation_id': self.invitation.id})
+        self.client.login(username='candidate@test.com',
+                          password='testpass123')
+        url = reverse('invitation_review', kwargs={
+                      'invitation_id': self.invitation.id})
         response = self.client.get(url)
 
         # Candidates should be forbidden
@@ -106,7 +110,8 @@ class InvitationReviewViewAccessTests(TestCase):
     def test_other_interviewer_cannot_access(self):
         """Test that different interviewer cannot access another's review"""
         self.client.login(username='other@test.com', password='testpass123')
-        url = reverse('invitation_review', kwargs={'invitation_id': self.invitation.id})
+        url = reverse('invitation_review', kwargs={
+                      'invitation_id': self.invitation.id})
         response = self.client.get(url)
 
         # Should return 404 (get_object_or_404 with interviewer=request.user)
@@ -114,8 +119,10 @@ class InvitationReviewViewAccessTests(TestCase):
 
     def test_invitation_creator_can_access(self):
         """Test that invitation creator can access review page"""
-        self.client.login(username='interviewer@test.com', password='testpass123')
-        url = reverse('invitation_review', kwargs={'invitation_id': self.invitation.id})
+        self.client.login(username='interviewer@test.com',
+                          password='testpass123')
+        url = reverse('invitation_review', kwargs={
+                      'invitation_id': self.invitation.id})
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200)
@@ -133,8 +140,10 @@ class InvitationReviewViewAccessTests(TestCase):
             status=InvitedInterview.PENDING
         )
 
-        self.client.login(username='interviewer@test.com', password='testpass123')
-        url = reverse('invitation_review', kwargs={'invitation_id': invitation_no_chat.id})
+        self.client.login(username='interviewer@test.com',
+                          password='testpass123')
+        url = reverse('invitation_review', kwargs={
+                      'invitation_id': invitation_no_chat.id})
         response = self.client.get(url)
 
         # Should redirect with error message
@@ -191,8 +200,10 @@ class FeedbackSubmissionTests(TestCase):
         self.invitation.chat = self.chat
         self.invitation.save()
 
-        self.client.login(username='interviewer@test.com', password='testpass123')
-        self.url = reverse('invitation_review', kwargs={'invitation_id': self.invitation.id})
+        self.client.login(username='interviewer@test.com',
+                          password='testpass123')
+        self.url = reverse('invitation_review', kwargs={
+                           'invitation_id': self.invitation.id})
 
     def test_save_feedback_without_marking_reviewed(self):
         """Test saving feedback without marking as reviewed"""
@@ -213,7 +224,8 @@ class FeedbackSubmissionTests(TestCase):
 
         # Status should still be COMPLETED, not REVIEWED
         self.assertEqual(self.invitation.status, InvitedInterview.COMPLETED)
-        self.assertEqual(self.invitation.interviewer_review_status, InvitedInterview.REVIEW_PENDING)
+        self.assertEqual(self.invitation.interviewer_review_status,
+                         InvitedInterview.REVIEW_PENDING)
         self.assertIsNone(self.invitation.reviewed_at)
 
     def test_update_existing_feedback(self):
@@ -299,8 +311,10 @@ class MarkAsReviewedTests(TestCase):
         self.invitation.chat = self.chat
         self.invitation.save()
 
-        self.client.login(username='interviewer@test.com', password='testpass123')
-        self.url = reverse('invitation_review', kwargs={'invitation_id': self.invitation.id})
+        self.client.login(username='interviewer@test.com',
+                          password='testpass123')
+        self.url = reverse('invitation_review', kwargs={
+                           'invitation_id': self.invitation.id})
 
     def test_mark_as_reviewed_updates_status(self):
         """Test that marking as reviewed updates all status fields"""
@@ -317,7 +331,8 @@ class MarkAsReviewedTests(TestCase):
 
         # Check all status fields updated
         self.assertEqual(self.invitation.status, InvitedInterview.REVIEWED)
-        self.assertEqual(self.invitation.interviewer_review_status, InvitedInterview.REVIEW_COMPLETED)
+        self.assertEqual(self.invitation.interviewer_review_status,
+                         InvitedInterview.REVIEW_COMPLETED)
         self.assertIsNotNone(self.invitation.reviewed_at)
         self.assertEqual(self.invitation.interviewer_feedback, feedback_text)
 
@@ -412,8 +427,10 @@ class ReviewViewContextTests(TestCase):
         self.invitation.chat = self.chat
         self.invitation.save()
 
-        self.client.login(username='interviewer@test.com', password='testpass123')
-        self.url = reverse('invitation_review', kwargs={'invitation_id': self.invitation.id})
+        self.client.login(username='interviewer@test.com',
+                          password='testpass123')
+        self.url = reverse('invitation_review', kwargs={
+                           'invitation_id': self.invitation.id})
 
     def test_context_includes_invitation(self):
         """Test that context includes invitation object"""
@@ -492,7 +509,8 @@ class CandidateViewFeedbackTests(TestCase):
             chat=self.chat
         )
 
-        self.client.login(username='candidate@test.com', password='testpass123')
+        self.client.login(username='candidate@test.com',
+                          password='testpass123')
         self.url = reverse('chat-results', kwargs={'chat_id': self.chat.id})
 
     def test_pending_review_shows_waiting_message(self):
@@ -515,7 +533,8 @@ class CandidateViewFeedbackTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Interviewer Feedback')
-        self.assertContains(response, 'Excellent technical skills demonstrated')
+        self.assertContains(
+            response, 'Excellent technical skills demonstrated')
 
     def test_practice_interview_no_interviewer_feedback(self):
         """Test that practice interviews don't show interviewer feedback section"""
@@ -577,12 +596,13 @@ class DashboardReviewButtonTests(TestCase):
             name='Technical Interview'
         )
 
-        self.client.login(username='interviewer@test.com', password='testpass123')
+        self.client.login(username='interviewer@test.com',
+                          password='testpass123')
         self.dashboard_url = reverse('invitation_dashboard')
 
     def test_pending_invitation_no_review_button(self):
         """Test that pending invitations don't show review button"""
-        invitation = InvitedInterview.objects.create(
+        InvitedInterview.objects.create(
             interviewer=self.interviewer,
             candidate_email='test@example.com',
             template=self.template,
@@ -621,7 +641,8 @@ class DashboardReviewButtonTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Review Results')
-        self.assertContains(response, reverse('invitation_review', kwargs={'invitation_id': invitation.id}))
+        self.assertContains(response, reverse(
+            'invitation_review', kwargs={'invitation_id': invitation.id}))
 
     def test_reviewed_invitation_shows_view_review_button(self):
         """Test that reviewed invitations show 'View Review' button"""
@@ -631,7 +652,7 @@ class DashboardReviewButtonTests(TestCase):
             interview_type=Chat.INVITED
         )
 
-        invitation = InvitedInterview.objects.create(
+        InvitedInterview.objects.create(
             interviewer=self.interviewer,
             candidate_email='test@example.com',
             template=self.template,

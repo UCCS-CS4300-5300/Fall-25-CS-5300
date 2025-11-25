@@ -7,7 +7,6 @@ from django.contrib.auth.models import User, Group
 from django.core.files.uploadedfile import SimpleUploadedFile
 from unittest.mock import patch, MagicMock
 import json
-import io
 
 from active_interview_app.models import (
     UploadedResume,
@@ -111,7 +110,8 @@ class FileUploadCoverageTest(TestCase):
 
         # Check redirect after successful upload
         self.assertEqual(response.status_code, 302)
-        self.assertTrue(UploadedResume.objects.filter(title='Test DOCX Resume').exists())
+        self.assertTrue(UploadedResume.objects.filter(
+            title='Test DOCX Resume').exists())
 
 
 class JobListingViewCoverageTest(TestCase):
@@ -142,7 +142,8 @@ class JobListingViewCoverageTest(TestCase):
             reverse('delete_job', kwargs={'job_id': self.job.id})
         )
         self.assertEqual(response.status_code, 302)
-        self.assertFalse(UploadedJobListing.objects.filter(id=self.job.id).exists())
+        self.assertFalse(UploadedJobListing.objects.filter(
+            id=self.job.id).exists())
 
     def test_uploaded_job_listing_view_empty_text(self):
         """Test UploadedJobListingView with empty text"""
@@ -211,7 +212,8 @@ class ChatViewsCoverageTest(TestCase):
 
     @patch('active_interview_app.views.ai_available')
     @patch('active_interview_app.views.get_openai_client')
-    def test_create_chat_without_resume_ai_unavailable(self, mock_client, mockai_available):
+    def test_create_chat_without_resume_ai_unavailable(
+            self, mock_client, mockai_available):
         """Test creating chat without resume when AI is unavailable"""
         mockai_available.return_value = False
 
@@ -227,7 +229,8 @@ class ChatViewsCoverageTest(TestCase):
 
     @patch('active_interview_app.views.ai_available')
     @patch('active_interview_app.views.get_openai_client')
-    def test_create_chat_key_questions_regex_fail(self, mock_client, mockai_available):
+    def test_create_chat_key_questions_regex_fail(
+            self, mock_client, mockai_available):
         """Test creating chat when key questions regex doesn't match"""
         mockai_available.return_value = True
         mock_response = MagicMock()
@@ -299,7 +302,8 @@ class ChatViewsCoverageTest(TestCase):
         )
 
         response = self.client.post(
-            reverse('key-questions', kwargs={'chat_id': chat.id, 'question_id': 0}),
+            reverse('key-questions',
+                    kwargs={'chat_id': chat.id, 'question_id': 0}),
             {'message': 'My answer'},
             HTTP_X_REQUESTED_WITH='XMLHttpRequest'
         )
@@ -331,7 +335,8 @@ class ChatViewsCoverageTest(TestCase):
         )
 
         response = self.client.post(
-            reverse('key-questions', kwargs={'chat_id': chat.id, 'question_id': 0}),
+            reverse('key-questions',
+                    kwargs={'chat_id': chat.id, 'question_id': 0}),
             {'message': 'My answer'},
             HTTP_X_REQUESTED_WITH='XMLHttpRequest'
         )
@@ -471,4 +476,3 @@ class APIViewsCoverageTest(TestCase):
             content_type='application/json'
         )
         self.assertEqual(response.status_code, 400)
-

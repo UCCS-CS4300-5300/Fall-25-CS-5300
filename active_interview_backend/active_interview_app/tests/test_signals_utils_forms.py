@@ -1,13 +1,10 @@
 """
 Comprehensive tests for signals, utils, forms, and serializers to increase coverage.
 """
-from django.test import TestCase, RequestFactory
+from django.test import TestCase
 from django.contrib.auth.models import User, Group
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.conf import settings
-from unittest.mock import patch, mock_open, MagicMock
-import os
-import tempfile
+from unittest.mock import patch, mock_open
 
 from active_interview_app.models import (
     UserProfile, UploadedResume, UploadedJobListing, Chat
@@ -387,7 +384,8 @@ class UploadedResumeSerializerTest(TestCase):
         serializer = UploadedResumeSerializer(instance=self.resume)
 
         data = serializer.data
-        self.assertEqual(set(data.keys()), {'id', 'file', 'user', 'uploaded_at', 'title'})
+        self.assertEqual(set(data.keys()), {
+                         'id', 'file', 'user', 'uploaded_at', 'title'})
 
     def test_serializer_data(self):
         """Test serializer data content"""

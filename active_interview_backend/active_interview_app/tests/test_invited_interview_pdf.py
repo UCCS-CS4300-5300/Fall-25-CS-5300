@@ -22,7 +22,6 @@ from active_interview_app.pdf_export import (
     _create_interviewer_feedback_section,
     _create_styles
 )
-from reportlab.lib.styles import getSampleStyleSheet
 
 
 @override_settings(OPENAI_API_KEY='test-key')
@@ -75,7 +74,8 @@ class InvitedInterviewPDFGenerationTests(TestCase):
             messages=[
                 {"role": "assistant", "content": "What is polymorphism?"},
                 {"role": "user", "content": "Polymorphism allows objects of different classes to be treated as objects of a common base class."},
-                {"role": "assistant", "content": "Can you explain the difference between lists and tuples in Python?"},
+                {"role": "assistant",
+                    "content": "Can you explain the difference between lists and tuples in Python?"},
                 {"role": "user", "content": "Lists are mutable while tuples are immutable."}
             ]
         )
@@ -105,8 +105,7 @@ class InvitedInterviewPDFGenerationTests(TestCase):
             clarity_rationale="Explanations were clear and concise.",
             overall_rationale="Solid performance overall.",
             total_questions_asked=2,
-            total_responses_given=2
-        )
+            total_responses_given=2)
 
     def test_pdf_generation_before_review(self):
         """Test that PDF is generated successfully for invited interview before review"""
@@ -152,7 +151,8 @@ class InvitedInterviewPDFGenerationTests(TestCase):
 
         # Verify section was created (should have elements for pending message)
         self.assertGreater(len(elements), 0)
-        # Should contain at least: heading, HR line, spacer, pending message, spacer
+        # Should contain at least: heading, HR line, spacer, pending message,
+        # spacer
         self.assertGreaterEqual(len(elements), 3)
 
     def test_interviewer_feedback_section_completed_status(self):
@@ -407,4 +407,5 @@ class PDFGenerationAccessTests(TestCase):
             # Verify no interviewer section in this case
             # (since invitation was deleted, it can't find it)
         except Exception as e:
-            self.fail(f"PDF generation should handle missing invitation gracefully: {e}")
+            self.fail(
+                f"PDF generation should handle missing invitation gracefully: {e}")

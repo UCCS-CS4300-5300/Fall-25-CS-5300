@@ -14,7 +14,7 @@ Test coverage:
 from django.test import TestCase, RequestFactory, TransactionTestCase
 from django.contrib.auth.models import User
 from django.utils import timezone
-from datetime import timedelta, datetime, date
+from datetime import timedelta, date
 from decimal import Decimal
 from io import StringIO
 from django.core.management import call_command
@@ -467,7 +467,7 @@ class MetricsMiddlewareTests(TransactionTestCase):
         request.user = self.user
 
         # Process request through middleware
-        response = middleware(request)
+        middleware(request)
 
         # Check that metric was recorded
         metrics = RequestMetric.objects.filter(endpoint='/api/test/')
@@ -521,7 +521,7 @@ class MetricsMiddlewareTests(TransactionTestCase):
         from django.contrib.auth.models import AnonymousUser
         request.user = AnonymousUser()
 
-        response = middleware(request)
+        middleware(request)
 
         metric = RequestMetric.objects.get(endpoint='/api/public/')
         self.assertIsNone(metric.user_id)
@@ -540,7 +540,7 @@ class MetricsMiddlewareTests(TransactionTestCase):
 
         # Measure middleware overhead
         start = time.time()
-        response = middleware(request)
+        middleware(request)
         end = time.time()
 
         overhead_ms = (end - start) * 1000
@@ -558,7 +558,7 @@ class MetricsMiddlewareTests(TransactionTestCase):
         request = self.factory.get('/api/notfound/')
         request.user = self.user
 
-        response = middleware(request)
+        middleware(request)
 
         # Check metric recorded with 404 status
         metric = RequestMetric.objects.get(endpoint='/api/notfound/')
@@ -581,7 +581,7 @@ class MetricsMiddlewareTests(TransactionTestCase):
         request = self.factory.post('/api/create/', {'key': 'value'})
         request.user = self.user
 
-        response = middleware(request)
+        middleware(request)
 
         metric = RequestMetric.objects.get(endpoint='/api/create/')
         self.assertEqual(metric.method, 'POST')
@@ -650,7 +650,6 @@ class PerformanceMonitorMiddlewareTests(TestCase):
     def test_performance_monitor_logs_slow_requests(self):
         """Test that slow requests trigger warnings."""
         from active_interview_app.middleware import PerformanceMonitorMiddleware
-        import logging
 
         def slow_view(request):
             import time
@@ -735,9 +734,9 @@ class CleanupOldMetricsCommandTests(TransactionTestCase):
         # Only recent metric should remain
         remaining = RequestMetric.objects.count()
         self.assertEqual(remaining, 1,
-            f"Expected 1 metric to remain, but found {remaining}. "
-            f"Old date: {old_date}, Recent date: {recent_date}, "
-            f"Cutoff would be: {now - timedelta(days=30)}")
+                         f"Expected 1 metric to remain, but found {remaining}. "
+                         f"Old date: {old_date}, Recent date: {recent_date}, "
+                         f"Cutoff would be: {now - timedelta(days=30)}")
         self.assertEqual(
             RequestMetric.objects.first().endpoint,
             '/api/recent/'
