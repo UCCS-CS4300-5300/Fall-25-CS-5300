@@ -65,7 +65,8 @@ from rest_framework.views import APIView
 
 
 # Import OpenAI utilities (moved to separate module to prevent circular imports)
-from .openai_utils import get_openai_client, ai_available, MAX_TOKENS
+# Updated for Issue #14: Multi-tier model selection with automatic fallback
+from .openai_utils import get_openai_client, get_client_and_model, ai_available, MAX_TOKENS
 
 # Import RBAC decorators (Issue #69)
 from .decorators import (
@@ -313,8 +314,10 @@ class CreateChat(LoginRequiredMixin, View):
                     messages.error(request, "AI features are disabled on this server.")
                     ai_message = ""
                 else:
-                    response = get_openai_client().chat.completions.create(
-                        model="gpt-4o",
+                    # Auto-select model tier based on spending cap (Issue #14)
+                    client, model, tier_info = get_client_and_model()
+                    response = client.chat.completions.create(
+                        model=model,
                         messages=chat.messages,
                         max_tokens=MAX_TOKENS
                     )
@@ -442,8 +445,10 @@ class CreateChat(LoginRequiredMixin, View):
                     messages.error(request, "AI features are disabled on this server.")
                     ai_message = "[]"
                 else:
-                    response = get_openai_client().chat.completions.create(
-                        model="gpt-4o",
+                    # Auto-select model tier based on spending cap (Issue #14)
+                    client, model, tier_info = get_client_and_model()
+                    response = client.chat.completions.create(
+                        model=model,
                         messages=timed_question_messages,
                         max_tokens=MAX_TOKENS
                     )
@@ -545,8 +550,10 @@ class ChatView(LoginRequiredMixin, UserPassesTestMixin, View):
         if not ai_available():
             return _ai_unavailable_json()
 
-        response = get_openai_client().chat.completions.create(
-            model="gpt-4o",
+        # Auto-select model tier based on spending cap (Issue #14)
+        client, model, tier_info = get_client_and_model()
+        response = client.chat.completions.create(
+            model=model,
             messages=new_messages,
             max_tokens=MAX_TOKENS
         )
@@ -787,8 +794,10 @@ class KeyQuestionsView(LoginRequiredMixin, UserPassesTestMixin, View):
         if not ai_available():
             return _ai_unavailable_json()
 
-        response = get_openai_client().chat.completions.create(
-            model="gpt-4o",
+        # Auto-select model tier based on spending cap (Issue #14)
+        client, model, tier_info = get_client_and_model()
+        response = client.chat.completions.create(
+            model=model,
             messages=ai_input,
             max_tokens=MAX_TOKENS
         )
@@ -823,8 +832,10 @@ class ResultsChat(LoginRequiredMixin, UserPassesTestMixin, View):
         if not ai_available():
             ai_message = "AI features are currently unavailable."
         else:
-            response = get_openai_client().chat.completions.create(
-                model="gpt-4o",
+            # Auto-select model tier based on spending cap (Issue #14)
+            client, model, tier_info = get_client_and_model()
+            response = client.chat.completions.create(
+                model=model,
                 messages=input_messages,
                 max_tokens=MAX_TOKENS
             )
@@ -884,8 +895,10 @@ class ResultCharts(LoginRequiredMixin, UserPassesTestMixin, View):
         if not ai_available():
             professionalism, subject_knowledge, clarity, overall = [0, 0, 0, 0]
         else:
-            response = get_openai_client().chat.completions.create(
-                model="gpt-4o",
+            # Auto-select model tier based on spending cap (Issue #14)
+            client, model, tier_info = get_client_and_model()
+            response = client.chat.completions.create(
+                model=model,
                 messages=input_messages,
                 max_tokens=MAX_TOKENS
             )
@@ -918,8 +931,10 @@ class ResultCharts(LoginRequiredMixin, UserPassesTestMixin, View):
         if not ai_available():
             ai_message = "AI features are currently unavailable."
         else:
-            response = get_openai_client().chat.completions.create(
-                model="gpt-4o",
+            # Auto-select model tier based on spending cap (Issue #14)
+            client, model, tier_info = get_client_and_model()
+            response = client.chat.completions.create(
+                model=model,
                 messages=input_messages,
                 max_tokens=MAX_TOKENS
             )
@@ -1591,8 +1606,10 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
             professionalism, subject_knowledge, clarity, overall = [0, 0, 0, 0]
         else:
             try:
-                response = get_openai_client().chat.completions.create(
-                    model="gpt-4o",
+                # Auto-select model tier based on spending cap (Issue #14)
+                client, model, tier_info = get_client_and_model()
+                response = client.chat.completions.create(
+                    model=model,
                     messages=input_messages,
                     max_tokens=MAX_TOKENS
                 )
@@ -1630,8 +1647,10 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
             return "AI features are currently unavailable."
 
         try:
-            response = get_openai_client().chat.completions.create(
-                model="gpt-4o",
+            # Auto-select model tier based on spending cap (Issue #14)
+            client, model, tier_info = get_client_and_model()
+            response = client.chat.completions.create(
+                model=model,
                 messages=input_messages,
                 max_tokens=MAX_TOKENS
             )
@@ -1669,8 +1688,10 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
             }
 
         try:
-            response = get_openai_client().chat.completions.create(
-                model="gpt-4o",
+            # Auto-select model tier based on spending cap (Issue #14)
+            client, model, tier_info = get_client_and_model()
+            response = client.chat.completions.create(
+                model=model,
                 messages=input_messages,
                 max_tokens=MAX_TOKENS
             )
@@ -3178,8 +3199,10 @@ def start_invited_interview(request, invitation_id):
         messages.error(request, "AI features are disabled on this server.")
         ai_message = "Hello! I'm your interviewer today. Unfortunately, AI features are currently disabled. Please contact support."
     else:
-        response = get_openai_client().chat.completions.create(
-            model="gpt-4o",
+        # Auto-select model tier based on spending cap (Issue #14)
+        client, model, tier_info = get_client_and_model()
+        response = client.chat.completions.create(
+            model=model,
             messages=chat.messages,
             max_tokens=MAX_TOKENS
         )

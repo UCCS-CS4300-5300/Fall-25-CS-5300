@@ -119,7 +119,7 @@ class OpenAIUtilsTests(TestCase):
         with self.assertRaises(ValueError) as context:
             get_openai_client()
 
-        self.assertIn("OPENAI_API_KEY is not set", str(context.exception))
+        self.assertIn("No OpenAI API key available", str(context.exception))
 
     @override_settings(OPENAI_API_KEY="test-key")
     @patch('active_interview_app.openai_utils.OpenAI')
@@ -172,20 +172,23 @@ class ResumeParserTests(TestCase):
     """Test AI-powered resume parsing functions."""
 
     @override_settings(OPENAI_API_KEY="test-key")
-    @patch('active_interview_app.resume_parser.get_openai_client')
+    @patch('active_interview_app.resume_parser.get_client_and_model')
     @patch('active_interview_app.resume_parser.ai_available')
     def test_parse_resume_with_ai_success(self, mockai_available, mock_get_client):
         """Test successful resume parsing."""
         # Mock AI availability
         mockai_available.return_value = True
 
-        # Mock OpenAI client response
+        # Mock OpenAI client response with proper nested structure
         mock_client = MagicMock()
+        mock_message = MagicMock()
+        mock_message.content = json.dumps(create_sample_parsed_data())
+        mock_choice = MagicMock()
+        mock_choice.message = mock_message
         mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = json.dumps(create_sample_parsed_data())
+        mock_response.choices = [mock_choice]
         mock_client.chat.completions.create.return_value = mock_response
-        mock_get_client.return_value = mock_client
+        mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
         # Parse resume
         result = parse_resume_with_ai(create_sample_resume_text())
@@ -215,7 +218,7 @@ class ResumeParserTests(TestCase):
         self.assertIn("OpenAI service is unavailable", str(context.exception))
 
     @override_settings(OPENAI_API_KEY="test-key")
-    @patch('active_interview_app.resume_parser.get_openai_client')
+    @patch('active_interview_app.resume_parser.get_client_and_model')
     @patch('active_interview_app.resume_parser.ai_available')
     def test_parse_resume_invalid_json(self, mockai_available, mock_get_client):
         """Test parsing handles invalid JSON response."""
@@ -223,11 +226,14 @@ class ResumeParserTests(TestCase):
 
         # Mock client with invalid JSON
         mock_client = MagicMock()
+        mock_message = MagicMock()
+        mock_message.content = "Not valid JSON"
+        mock_choice = MagicMock()
+        mock_choice.message = mock_message
         mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = "Not valid JSON"
+        mock_response.choices = [mock_choice]
         mock_client.chat.completions.create.return_value = mock_response
-        mock_get_client.return_value = mock_client
+        mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
         with self.assertRaises(ValueError) as context:
             parse_resume_with_ai(create_sample_resume_text())
@@ -235,7 +241,7 @@ class ResumeParserTests(TestCase):
         self.assertIn("Failed to parse OpenAI response as JSON", str(context.exception))
 
     @override_settings(OPENAI_API_KEY="test-key")
-    @patch('active_interview_app.resume_parser.get_openai_client')
+    @patch('active_interview_app.resume_parser.get_client_and_model')
     @patch('active_interview_app.resume_parser.ai_available')
     def test_parse_resume_with_markdown_json(self, mockai_available, mock_get_client):
         """Test parsing handles JSON wrapped in markdown code blocks."""
@@ -243,12 +249,15 @@ class ResumeParserTests(TestCase):
 
         # Mock client with markdown-wrapped JSON
         mock_client = MagicMock()
-        mock_response = MagicMock()
         markdown_json = "```json\n" + json.dumps(create_sample_parsed_data()) + "\n```"
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = markdown_json
+        mock_message = MagicMock()
+        mock_message.content = markdown_json
+        mock_choice = MagicMock()
+        mock_choice.message = mock_message
+        mock_response = MagicMock()
+        mock_response.choices = [mock_choice]
         mock_client.chat.completions.create.return_value = mock_response
-        mock_get_client.return_value = mock_client
+        mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
         # Should successfully parse despite markdown wrapper
         result = parse_resume_with_ai(create_sample_resume_text())
@@ -257,7 +266,7 @@ class ResumeParserTests(TestCase):
         self.assertIsInstance(result['skills'], list)
 
     @override_settings(OPENAI_API_KEY="test-key")
-    @patch('active_interview_app.resume_parser.get_openai_client')
+    @patch('active_interview_app.resume_parser.get_client_and_model')
     @patch('active_interview_app.resume_parser.ai_available')
     def test_parse_resume_missing_fields(self, mockai_available, mock_get_client):
         """Test parsing handles missing fields in response."""
@@ -265,12 +274,15 @@ class ResumeParserTests(TestCase):
 
         # Mock client with partial data
         mock_client = MagicMock()
-        mock_response = MagicMock()
         partial_data = {"skills": ["Python"]}  # Missing experience and education
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = json.dumps(partial_data)
+        mock_message = MagicMock()
+        mock_message.content = json.dumps(partial_data)
+        mock_choice = MagicMock()
+        mock_choice.message = mock_message
+        mock_response = MagicMock()
+        mock_response.choices = [mock_choice]
         mock_client.chat.completions.create.return_value = mock_response
-        mock_get_client.return_value = mock_client
+        mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
         result = parse_resume_with_ai(create_sample_resume_text())
 
@@ -280,7 +292,7 @@ class ResumeParserTests(TestCase):
         self.assertEqual(result['education'], [])
 
     @override_settings(OPENAI_API_KEY="test-key")
-    @patch('active_interview_app.resume_parser.get_openai_client')
+    @patch('active_interview_app.resume_parser.get_client_and_model')
     @patch('active_interview_app.resume_parser.ai_available')
     def test_parse_resume_truncates_long_content(self, mockai_available, mock_get_client):
         """Test parsing truncates very long resume content."""
@@ -288,11 +300,14 @@ class ResumeParserTests(TestCase):
 
         # Mock successful response
         mock_client = MagicMock()
+        mock_message = MagicMock()
+        mock_message.content = json.dumps(create_sample_parsed_data())
+        mock_choice = MagicMock()
+        mock_choice.message = mock_message
         mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = json.dumps(create_sample_parsed_data())
+        mock_response.choices = [mock_choice]
         mock_client.chat.completions.create.return_value = mock_response
-        mock_get_client.return_value = mock_client
+        mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
         # Create very long content (>10,000 chars)
         long_content = "A" * 15000

@@ -520,7 +520,7 @@ class OpenAIClientTest(TestCase):
         with self.assertRaises(ValueError) as context:
             get_openai_client()
 
-        self.assertIn("OPENAI_API_KEY is not set", str(context.exception))
+        self.assertIn("No OpenAI API key available", str(context.exception))
 
     def test_ai_unavailable_json(self):
         """Test _ai_unavailable_json returns proper JSON response"""

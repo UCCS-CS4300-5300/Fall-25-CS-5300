@@ -406,7 +406,7 @@ class ResultsChatViewTest(TestCase):
         self.assertEqual(response.context['feedback'],
                          'AI features are currently unavailable.')
 
-    @patch('active_interview_app.views.get_openai_client')
+    @patch('active_interview_app.views.get_client_and_model')
     @patch('active_interview_app.views.ai_available')
     def test_results_chatai_available(self, mockai_available, mock_get_client):
         """Test results chat when AI is available"""
@@ -421,7 +421,7 @@ class ResultsChatViewTest(TestCase):
         mock_choice.message = mock_message
         mock_response.choices = [mock_choice]
         mock_client.chat.completions.create.return_value = mock_response
-        mock_get_client.return_value = mock_client
+        mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
         self.client.login(username='testuser', password='testpass123')
 
@@ -583,7 +583,7 @@ class CreateChatViewExtendedTest(TestCase):
         self.client = Client()
         self.client.login(username='testuser', password='testpass123')
 
-    @patch('active_interview_app.views.get_openai_client')
+    @patch('active_interview_app.views.get_client_and_model')
     @patch('active_interview_app.views.ai_available')
     def test_create_chat_without_resumeai_available(self, mockai_available, mock_get_client):
         """Test creating chat without resume when AI is available"""
@@ -606,7 +606,7 @@ class CreateChatViewExtendedTest(TestCase):
         mock_response2.choices = [mock_choice2]
 
         mock_client.chat.completions.create.side_effect = [mock_response1, mock_response2]
-        mock_get_client.return_value = mock_client
+        mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
         data = {
             'create': 'true',

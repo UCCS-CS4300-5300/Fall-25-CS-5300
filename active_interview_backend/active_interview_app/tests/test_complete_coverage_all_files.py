@@ -139,7 +139,7 @@ class ViewsCompleteCoverageTest(TestCase):
             with self.assertRaises(ValueError) as context:
                 get_openai_client()
 
-            self.assertIn('OPENAI_API_KEY is not set', str(context.exception))
+            self.assertIn('No OpenAI API key available', str(context.exception))
 
     def test_get_openai_client_initialization_failure(self):
         """Test OpenAI client initialization failure"""
@@ -245,12 +245,13 @@ class ViewsCompleteCoverageTest(TestCase):
 
     @override_settings(OPENAI_API_KEY='test-key')
     @patch('active_interview_app.views.ai_available')
-    @patch('active_interview_app.views.get_openai_client')
-    def test_create_chat_with_resumeai_available(self, mock_client, mock_ai):
+    @patch('active_interview_app.views.get_client_and_model')
+    def test_create_chat_with_resumeai_available(self, mock_get_client, mock_ai):
         """Test CreateChat POST with resume when AI is available"""
         mock_ai.return_value = True
 
         # Mock AI responses
+        mock_client = MagicMock()
         mock_response1 = MagicMock()
         mock_response1.choices = [MagicMock()]
         mock_response1.choices[0].message.content = "Hello! Let's start the interview."
@@ -266,9 +267,12 @@ class ViewsCompleteCoverageTest(TestCase):
             }
         ]'''
 
-        mock_client.return_value.chat.completions.create.side_effect = [
+        mock_client.chat.completions.create.side_effect = [
             mock_response1, mock_response2
         ]
+
+        # get_client_and_model returns (client, model, tier_info)
+        mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
         # Create resume
         fake_resume = SimpleUploadedFile("resume.pdf", b"resume content")
@@ -316,11 +320,12 @@ class ViewsCompleteCoverageTest(TestCase):
 
     @override_settings(OPENAI_API_KEY='test-key')
     @patch('active_interview_app.views.ai_available')
-    @patch('active_interview_app.views.get_openai_client')
-    def test_create_chat_key_questions_regex_fails(self, mock_client, mock_ai):
+    @patch('active_interview_app.views.get_client_and_model')
+    def test_create_chat_key_questions_regex_fails(self, mock_get_client, mock_ai):
         """Test CreateChat when key questions regex doesn't match"""
         mock_ai.return_value = True
 
+        mock_client = MagicMock()
         mock_response1 = MagicMock()
         mock_response1.choices = [MagicMock()]
         mock_response1.choices[0].message.content = "Hello!"
@@ -330,9 +335,12 @@ class ViewsCompleteCoverageTest(TestCase):
         mock_response2.choices = [MagicMock()]
         mock_response2.choices[0].message.content = "This is not valid JSON"
 
-        mock_client.return_value.chat.completions.create.side_effect = [
+        mock_client.chat.completions.create.side_effect = [
             mock_response1, mock_response2
         ]
+
+        # get_client_and_model returns (client, model, tier_info)
+        mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
         response = self.client.post(reverse('chat-create'), {
             'create': 'true',
@@ -362,14 +370,20 @@ class ViewsCompleteCoverageTest(TestCase):
 
     @override_settings(OPENAI_API_KEY='test-key')
     @patch('active_interview_app.views.ai_available')
-    @patch('active_interview_app.views.get_openai_client')
-    def test_chat_view_post_success(self, mock_client, mock_ai):
+    @patch('active_interview_app.views.get_client_and_model')
+    def test_chat_view_post_success(self, mock_get_client, mock_ai):
         """Test ChatView POST with AI available"""
         mock_ai.return_value = True
+
+        # Mock the client and model returned by get_client_and_model
+        mock_client = MagicMock()
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
         mock_response.choices[0].message.content = "AI response"
-        mock_client.return_value.chat.completions.create.return_value = mock_response
+        mock_client.chat.completions.create.return_value = mock_response
+
+        # get_client_and_model returns (client, model, tier_info)
+        mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
         chat = Chat.objects.create(
             owner=self.user,
@@ -495,9 +509,12 @@ class ViewsCompleteCoverageTest(TestCase):
 
     @override_settings(OPENAI_API_KEY='test-key')
     @patch('active_interview_app.views.ai_available')
-    @patch('active_interview_app.views.get_openai_client')
-    def test_key_questions_view_get(self, mock_client, mock_ai):
+    @patch('active_interview_app.views.get_client_and_model')
+    def test_key_questions_view_get(self, mock_get_client, mock_ai):
         """Test KeyQuestionsView GET"""
+        mock_client = MagicMock()
+        mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
+
         chat = Chat.objects.create(
             owner=self.user,
             title='Test',
@@ -519,14 +536,19 @@ class ViewsCompleteCoverageTest(TestCase):
 
     @override_settings(OPENAI_API_KEY='test-key')
     @patch('active_interview_app.views.ai_available')
-    @patch('active_interview_app.views.get_openai_client')
-    def test_key_questions_view_post_with_resume(self, mock_client, mock_ai):
+    @patch('active_interview_app.views.get_client_and_model')
+    def test_key_questions_view_post_with_resume(self, mock_get_client, mock_ai):
         """Test KeyQuestionsView POST with resume"""
         mock_ai.return_value = True
+
+        mock_client = MagicMock()
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
         mock_response.choices[0].message.content = "Good answer! 8/10"
-        mock_client.return_value.chat.completions.create.return_value = mock_response
+        mock_client.chat.completions.create.return_value = mock_response
+
+        # get_client_and_model returns (client, model, tier_info)
+        mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
         fake_resume = SimpleUploadedFile("resume.pdf", b"resume")
         resume = UploadedResume.objects.create(
@@ -562,14 +584,19 @@ class ViewsCompleteCoverageTest(TestCase):
 
     @override_settings(OPENAI_API_KEY='test-key')
     @patch('active_interview_app.views.ai_available')
-    @patch('active_interview_app.views.get_openai_client')
-    def test_key_questions_view_post_without_resume(self, mock_client, mock_ai):
+    @patch('active_interview_app.views.get_client_and_model')
+    def test_key_questions_view_post_without_resume(self, mock_get_client, mock_ai):
         """Test KeyQuestionsView POST without resume"""
         mock_ai.return_value = True
+
+        mock_client = MagicMock()
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
         mock_response.choices[0].message.content = "Feedback"
-        mock_client.return_value.chat.completions.create.return_value = mock_response
+        mock_client.chat.completions.create.return_value = mock_response
+
+        # get_client_and_model returns (client, model, tier_info)
+        mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
         chat = Chat.objects.create(
             owner=self.user,
@@ -617,14 +644,19 @@ class ViewsCompleteCoverageTest(TestCase):
 
     @override_settings(OPENAI_API_KEY='test-key')
     @patch('active_interview_app.views.ai_available')
-    @patch('active_interview_app.views.get_openai_client')
-    def test_results_chat_getai_available(self, mock_client, mock_ai):
+    @patch('active_interview_app.views.get_client_and_model')
+    def test_results_chat_getai_available(self, mock_get_client, mock_ai):
         """Test ResultsChat GET when AI is available"""
         mock_ai.return_value = True
+
+        mock_client = MagicMock()
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
         mock_response.choices[0].message.content = "Great job!"
-        mock_client.return_value.chat.completions.create.return_value = mock_response
+        mock_client.chat.completions.create.return_value = mock_response
+
+        # get_client_and_model returns (client, model, tier_info)
+        mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
         chat = Chat.objects.create(
             owner=self.user,
@@ -661,11 +693,12 @@ class ViewsCompleteCoverageTest(TestCase):
 
     @override_settings(OPENAI_API_KEY='test-key')
     @patch('active_interview_app.views.ai_available')
-    @patch('active_interview_app.views.get_openai_client')
-    def test_result_charts_getai_available(self, mock_client, mock_ai):
+    @patch('active_interview_app.views.get_client_and_model')
+    def test_result_charts_getai_available(self, mock_get_client, mock_ai):
         """Test ResultCharts GET when AI is available"""
         mock_ai.return_value = True
 
+        mock_client = MagicMock()
         mock_response1 = MagicMock()
         mock_response1.choices = [MagicMock()]
         mock_response1.choices[0].message.content = "80\n70\n90\n75"
@@ -674,9 +707,12 @@ class ViewsCompleteCoverageTest(TestCase):
         mock_response2.choices = [MagicMock()]
         mock_response2.choices[0].message.content = "You did well"
 
-        mock_client.return_value.chat.completions.create.side_effect = [
+        mock_client.chat.completions.create.side_effect = [
             mock_response1, mock_response2
         ]
+
+        # get_client_and_model returns (client, model, tier_info)
+        mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
         chat = Chat.objects.create(
             owner=self.user,

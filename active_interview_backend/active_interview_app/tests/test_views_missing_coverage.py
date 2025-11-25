@@ -35,7 +35,7 @@ class OpenAIClientTest(TestCase):
         with self.assertRaises(ValueError) as context:
             get_openai_client()
 
-        self.assertIn("OPENAI_API_KEY is not set", str(context.exception))
+        self.assertIn("No OpenAI API key available", str(context.exception))
 
     @patch('active_interview_app.openai_utils.OpenAI')
     @patch('active_interview_app.openai_utils.settings')

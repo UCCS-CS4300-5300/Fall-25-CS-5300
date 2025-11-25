@@ -138,7 +138,7 @@ class KeyQuestionsViewTest(TestCase):
         self.assertIn('question', response.context)
         self.assertEqual(response.context['question']['content'], "What is Python?")
 
-    @patch('active_interview_app.views.get_openai_client')
+    @patch('active_interview_app.views.get_client_and_model')
     @patch('active_interview_app.views.ai_available')
     def test_key_questions_post_with_resume(self, mockai_available, mock_get_client):
         """Test POST to key questions with resume"""
@@ -153,7 +153,7 @@ class KeyQuestionsViewTest(TestCase):
         mock_choice.message = mock_message
         mock_response.choices = [mock_choice]
         mock_client.chat.completions.create.return_value = mock_response
-        mock_get_client.return_value = mock_client
+        mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
         data = {'message': 'Python is a programming language'}
 
@@ -182,7 +182,7 @@ class KeyQuestionsViewTest(TestCase):
         response_data = json.loads(response.content)
         self.assertIn('error', response_data)
 
-    @patch('active_interview_app.views.get_openai_client')
+    @patch('active_interview_app.views.get_client_and_model')
     @patch('active_interview_app.views.ai_available')
     def test_key_questions_post_without_resume(self, mockai_available, mock_get_client):
         """Test POST to key questions without resume"""
@@ -214,7 +214,7 @@ class KeyQuestionsViewTest(TestCase):
         mock_choice.message = mock_message
         mock_response.choices = [mock_choice]
         mock_client.chat.completions.create.return_value = mock_response
-        mock_get_client.return_value = mock_client
+        mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
         data = {'message': 'Python is a programming language'}
 
@@ -310,7 +310,7 @@ class ChatViewPostTest(TestCase):
         self.client = Client()
         self.client.login(username='testuser', password='testpass123')
 
-    @patch('active_interview_app.views.get_openai_client')
+    @patch('active_interview_app.views.get_client_and_model')
     @patch('active_interview_app.views.ai_available')
     def test_chat_view_post(self, mockai_available, mock_get_client):
         """Test posting a message to chat"""
@@ -325,7 +325,7 @@ class ChatViewPostTest(TestCase):
         mock_choice.message = mock_message
         mock_response.choices = [mock_choice]
         mock_client.chat.completions.create.return_value = mock_response
-        mock_get_client.return_value = mock_client
+        mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
         data = {'message': 'User message'}
 
@@ -371,7 +371,7 @@ class CreateChatViewComprehensiveTest(TestCase):
         self.client = Client()
         self.client.login(username='testuser', password='testpass123')
 
-    @patch('active_interview_app.views.get_openai_client')
+    @patch('active_interview_app.views.get_client_and_model')
     @patch('active_interview_app.views.ai_available')
     def test_create_chat_with_resume_all_types(self, mockai_available, mock_get_client):
         """Test creating chat with all interview types"""
@@ -396,7 +396,7 @@ class CreateChatViewComprehensiveTest(TestCase):
             mock_response2.choices = [mock_choice2]
 
             mock_client.chat.completions.create.side_effect = [mock_response1, mock_response2]
-            mock_get_client.return_value = mock_client
+            mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
             data = {
                 'create': 'true',
@@ -415,7 +415,7 @@ class CreateChatViewComprehensiveTest(TestCase):
             self.assertEqual(chat.type, interview_type)
             self.assertEqual(len(chat.key_questions), 1)
 
-    @patch('active_interview_app.views.get_openai_client')
+    @patch('active_interview_app.views.get_client_and_model')
     @patch('active_interview_app.views.ai_available')
     def test_create_chat_key_questions_no_json_match(self, mockai_available, mock_get_client):
         """Test when key questions response doesn't match JSON pattern"""
@@ -439,7 +439,7 @@ class CreateChatViewComprehensiveTest(TestCase):
         mock_response2.choices = [mock_choice2]
 
         mock_client.chat.completions.create.side_effect = [mock_response1, mock_response2]
-        mock_get_client.return_value = mock_client
+        mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
         data = {
             'create': 'true',

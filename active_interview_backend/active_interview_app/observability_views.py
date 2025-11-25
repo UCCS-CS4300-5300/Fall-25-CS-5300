@@ -387,3 +387,154 @@ def api_export_metrics(request):
         current_time = bucket_end
 
     return response
+
+
+# Spending Tracker Views (Issues #10, #11, #12)
+
+
+@staff_member_required
+def api_spending_current_month(request):
+    """
+    API endpoint for current month's spending data.
+
+    Returns:
+        JSON with current month spending, cap info, and breakdown by service
+    """
+    from .spending_tracker_models import MonthlySpending, MonthlySpendingCap
+
+    # Get current month's spending
+    spending = MonthlySpending.get_current_month()
+    cap = MonthlySpendingCap.get_active_cap()
+
+    # Get cap status
+    cap_status = spending.get_cap_status()
+
+    data = {
+        'year': spending.year,
+        'month': spending.month,
+        'total_cost': float(spending.total_cost_usd),
+        'llm_cost': float(spending.llm_cost_usd),
+        'tts_cost': float(spending.tts_cost_usd),
+        'other_cost': float(spending.other_cost_usd),
+        'total_requests': spending.total_requests,
+        'llm_requests': spending.llm_requests,
+        'tts_requests': spending.tts_requests,
+        'cap_status': cap_status,
+        'last_updated': spending.updated_at.isoformat()
+    }
+
+    return JsonResponse(data)
+
+
+@staff_member_required
+def api_spending_history(request):
+    """
+    API endpoint for historical spending data.
+
+    Query params:
+        months: Number of months to include (default: 6, max: 12)
+
+    Returns:
+        JSON with monthly spending history
+    """
+    from .spending_tracker_models import MonthlySpending
+
+    months = int(request.GET.get('months', 6))
+    months = min(months, 12)  # Cap at 12 months
+
+    # Get recent months
+    spending_records = MonthlySpending.objects.all()[:months]
+
+    data = {
+        'months': [
+            {
+                'year': s.year,
+                'month': s.month,
+                'month_label': f"{s.year}-{s.month:02d}",
+                'total_cost': float(s.total_cost_usd),
+                'llm_cost': float(s.llm_cost_usd),
+                'tts_cost': float(s.tts_cost_usd),
+                'total_requests': s.total_requests
+            }
+            for s in spending_records
+        ]
+    }
+
+    return JsonResponse(data)
+
+
+@staff_member_required
+def api_update_spending_cap(request):
+    """
+    API endpoint to update the monthly spending cap.
+
+    Method: POST
+    Body: {"cap_amount": 200.00}
+
+    Returns:
+        JSON with success status and new cap info
+    """
+    from django.views.decorators.http import require_http_methods
+    from django.views.decorators.csrf import csrf_exempt
+    import json
+
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST request required'}, status=405)
+
+    try:
+        # Parse request body
+        data = json.loads(request.body)
+        cap_amount = data.get('cap_amount')
+
+        if cap_amount is None:
+            return JsonResponse({
+                'success': False,
+                'error': 'cap_amount is required'
+            }, status=400)
+
+        # Validate cap amount
+        try:
+            cap_amount = float(cap_amount)
+        except (ValueError, TypeError):
+            return JsonResponse({
+                'success': False,
+                'error': 'cap_amount must be a valid number'
+            }, status=400)
+
+        if cap_amount <= 0:
+            return JsonResponse({
+                'success': False,
+                'error': 'cap_amount must be a positive number'
+            }, status=400)
+
+        # Create new spending cap
+        from .spending_tracker_models import MonthlySpendingCap
+        from decimal import Decimal
+
+        new_cap = MonthlySpendingCap.objects.create(
+            cap_amount_usd=Decimal(str(cap_amount)),
+            is_active=True,
+            created_by=request.user
+        )
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Spending cap updated to ${cap_amount:.2f}/month',
+            'cap': {
+                'id': new_cap.id,
+                'amount': float(new_cap.cap_amount_usd),
+                'created_by': request.user.username,
+                'created_at': new_cap.created_at.isoformat()
+            }
+        })
+
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid JSON in request body'
+        }, status=400)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)

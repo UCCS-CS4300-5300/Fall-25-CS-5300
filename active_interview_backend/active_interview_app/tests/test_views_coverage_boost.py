@@ -120,8 +120,10 @@ class GenerateReportAITest(TestCase):
         url = reverse('generate_report', kwargs={'chat_id': self.chat.id})
 
         with patch('active_interview_app.views.ai_available', return_value=True):
-            with patch('active_interview_app.views.get_openai_client') as mock_client:
-                mock_client.return_value.chat.completions.create.side_effect = Exception('API Error')
+            with patch('active_interview_app.views.get_client_and_model') as mock_get_client:
+                mock_client = MagicMock()
+                mock_client.chat.completions.create.side_effect = Exception('API Error')
+                mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
                 response = self.client.post(url, follow=True)
 
         # Should still create report with default values
@@ -139,8 +141,10 @@ class GenerateReportAITest(TestCase):
         mock_response.choices[0].message.content = "invalid\nformat\nhere"
 
         with patch('active_interview_app.views.ai_available', return_value=True):
-            with patch('active_interview_app.views.get_openai_client') as mock_client:
-                mock_client.return_value.chat.completions.create.return_value = mock_response
+            with patch('active_interview_app.views.get_client_and_model') as mock_get_client:
+                mock_client = MagicMock()
+                mock_client.chat.completions.create.return_value = mock_response
+                mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
                 response = self.client.post(url, follow=True)
 
         report = ExportableReport.objects.get(chat=self.chat)
@@ -157,8 +161,10 @@ class GenerateReportAITest(TestCase):
         mock_response.choices[0].message.content = "85\n78"  # Only 2 scores
 
         with patch('active_interview_app.views.ai_available', return_value=True):
-            with patch('active_interview_app.views.get_openai_client') as mock_client:
-                mock_client.return_value.chat.completions.create.return_value = mock_response
+            with patch('active_interview_app.views.get_client_and_model') as mock_get_client:
+                mock_client = MagicMock()
+                mock_client.chat.completions.create.return_value = mock_response
+                mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
                 response = self.client.post(url, follow=True)
 
         report = ExportableReport.objects.get(chat=self.chat)
@@ -170,7 +176,7 @@ class GenerateReportAITest(TestCase):
         url = reverse('generate_report', kwargs={'chat_id': self.chat.id})
 
         with patch('active_interview_app.views.ai_available', return_value=True):
-            with patch('active_interview_app.views.get_openai_client') as mock_client:
+            with patch('active_interview_app.views.get_client_and_model') as mock_get_client:
                 # Create proper mock responses for the three AI calls
                 mock_scores = MagicMock()
                 mock_scores.choices = [MagicMock()]
@@ -192,11 +198,13 @@ Clarity: Clear communication.
 Overall: Great performance.
 """
 
-                mock_client.return_value.chat.completions.create.side_effect = [
+                mock_client = MagicMock()
+                mock_client.chat.completions.create.side_effect = [
                     mock_scores,
                     mock_feedback,
                     mock_rationale
                 ]
+                mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
                 response = self.client.post(url, follow=True)
 
         report = ExportableReport.objects.get(chat=self.chat)
@@ -211,7 +219,7 @@ Overall: Great performance.
         url = reverse('generate_report', kwargs={'chat_id': self.chat.id})
 
         with patch('active_interview_app.views.ai_available', return_value=True):
-            with patch('active_interview_app.views.get_openai_client') as mock_client:
+            with patch('active_interview_app.views.get_client_and_model') as mock_get_client:
                 # Create proper mock responses for the three AI calls
                 mock_scores = MagicMock()
                 mock_scores.choices = [MagicMock()]
@@ -235,11 +243,13 @@ Clarity: Clear.
 Overall: Good.
 """
 
-                mock_client.return_value.chat.completions.create.side_effect = [
+                mock_client = MagicMock()
+                mock_client.chat.completions.create.side_effect = [
                     mock_scores,
                     mock_feedback,
                     mock_rationale
                 ]
+                mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
                 response = self.client.post(url, follow=True)
 
         report = ExportableReport.objects.get(chat=self.chat)
@@ -253,7 +263,7 @@ Overall: Good.
         url = reverse('generate_report', kwargs={'chat_id': self.chat.id})
 
         with patch('active_interview_app.views.ai_available', return_value=True):
-            with patch('active_interview_app.views.get_openai_client') as mock_client:
+            with patch('active_interview_app.views.get_client_and_model') as mock_get_client:
                 # Create proper mock responses for the three AI calls
                 mock_scores = MagicMock()
                 mock_scores.choices = [MagicMock()]
@@ -263,11 +273,13 @@ Overall: Good.
                 mock_feedback.choices = [MagicMock()]
                 mock_feedback.choices[0].message.content = "Good!"
 
-                mock_client.return_value.chat.completions.create.side_effect = [
+                mock_client = MagicMock()
+                mock_client.chat.completions.create.side_effect = [
                     mock_scores,
                     mock_feedback,
                     Exception('Rationale API error')
                 ]
+                mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
                 response = self.client.post(url, follow=True)
 
         report = ExportableReport.objects.get(chat=self.chat)
