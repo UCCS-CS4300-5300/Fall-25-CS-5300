@@ -5,6 +5,7 @@ from django.test import TestCase
 from django.contrib.auth.models import User
 from active_interview_app.token_usage_models import TokenUsage
 from active_interview_app.merge_stats_models import MergeTokenStats
+from .test_credentials import TEST_PASSWORD
 
 
 class TokenUsageModelTest(TestCase):
@@ -13,7 +14,7 @@ class TokenUsageModelTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
     def test_create_token_usage(self):
@@ -201,7 +202,7 @@ class MergeTokenStatsModelTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
     def test_create_merge_stats(self):
@@ -506,7 +507,7 @@ class TokenUsageEdgeCasesTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='edgeuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
     def test_create_token_usage_without_user(self):

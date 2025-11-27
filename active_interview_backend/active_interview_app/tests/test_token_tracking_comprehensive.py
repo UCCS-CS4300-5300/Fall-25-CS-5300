@@ -15,6 +15,7 @@ from active_interview_app.token_tracking import (
     record_openai_usage
 )
 from active_interview_app.token_usage_models import TokenUsage
+from .test_credentials import TEST_PASSWORD
 
 
 class GetCurrentGitBranchTest(TestCase):
@@ -110,7 +111,7 @@ class RecordTokenUsageTest(TestCase):
         """Set up test user"""
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
     @patch('active_interview_app.token_tracking.get_current_git_branch')
@@ -328,7 +329,7 @@ class RecordClaudeUsageTest(TestCase):
         """Set up test user"""
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
     @patch('active_interview_app.token_tracking.get_current_git_branch')
@@ -399,7 +400,7 @@ class RecordOpenAIUsageTest(TestCase):
         """Set up test user"""
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
     @patch('active_interview_app.token_tracking.get_current_git_branch')

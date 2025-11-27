@@ -22,6 +22,7 @@ from active_interview_app.pdf_export import (
     _create_interviewer_feedback_section,
     _create_styles
 )
+from .test_credentials import TEST_PASSWORD
 
 
 @override_settings(OPENAI_API_KEY='test-key')
@@ -34,7 +35,7 @@ class InvitedInterviewPDFGenerationTests(TestCase):
         self.interviewer = User.objects.create_user(
             username='interviewer@test.com',
             email='interviewer@test.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         interviewer_profile = UserProfile.objects.get(user=self.interviewer)
         interviewer_profile.role = 'interviewer'
@@ -44,7 +45,7 @@ class InvitedInterviewPDFGenerationTests(TestCase):
         self.candidate = User.objects.create_user(
             username='candidate@test.com',
             email='candidate@test.com',
-            password='testpass123',
+            password=TEST_PASSWORD,
             first_name='John',
             last_name='Doe'
         )
@@ -309,7 +310,7 @@ class PDFGenerationAccessTests(TestCase):
         self.interviewer = User.objects.create_user(
             username='interviewer@test.com',
             email='interviewer@test.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         interviewer_profile = UserProfile.objects.get(user=self.interviewer)
         interviewer_profile.role = 'interviewer'
@@ -319,7 +320,7 @@ class PDFGenerationAccessTests(TestCase):
         self.candidate = User.objects.create_user(
             username='candidate@test.com',
             email='candidate@test.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
         # Create job listing

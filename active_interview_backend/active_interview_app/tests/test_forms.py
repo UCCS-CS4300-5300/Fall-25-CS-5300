@@ -21,6 +21,7 @@ from active_interview_app.models import (
     UserProfile
 )
 from django.core.files.uploadedfile import SimpleUploadedFile
+from .test_credentials import TEST_PASSWORD
 
 
 class CreateUserFormTest(TestCase):
@@ -91,7 +92,7 @@ class DocumentEditFormTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.resume = UploadedResume.objects.create(
             user=self.user,
@@ -140,7 +141,7 @@ class JobPostingEditFormTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.job_listing = UploadedJobListing.objects.create(
             user=self.user,
@@ -190,7 +191,7 @@ class CreateChatFormTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.job_listing = UploadedJobListing.objects.create(
             user=self.user,
@@ -275,7 +276,7 @@ class CreateChatFormTest(TestCase):
         """Test that form only shows user's job listings"""
         other_user = User.objects.create_user(
             username='otheruser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         other_job = UploadedJobListing.objects.create(
             user=other_user,
@@ -293,7 +294,7 @@ class CreateChatFormTest(TestCase):
         """Test that form only shows user's resumes"""
         other_user = User.objects.create_user(
             username='otheruser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         other_resume = UploadedResume.objects.create(
             user=other_user,
@@ -351,7 +352,7 @@ class EditChatFormTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.chat = Chat.objects.create(
             owner=self.user,
@@ -485,7 +486,7 @@ class InterviewTemplateFormTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.user.profile.role = UserProfile.INTERVIEWER
         self.user.profile.save()
@@ -505,7 +506,7 @@ class InterviewTemplateFormTest(TestCase):
         """Test that form filters question banks by user"""
         other_user = User.objects.create_user(
             username='otheruser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         other_bank = QuestionBank.objects.create(
             name="Other Bank",

@@ -19,6 +19,7 @@ from active_interview_app.models import (
 from active_interview_app.merge_stats_models import MergeTokenStats
 from active_interview_app.token_usage_models import TokenUsage
 from active_interview_app import views
+from .test_credentials import TEST_PASSWORD
 
 
 # ============================================================================
@@ -56,7 +57,7 @@ class TokenUsageCompleteCoverageTest(TestCase):
     """Ensure 100% coverage of token_usage_models.py"""
 
     def setUp(self):
-        self.user = User.objects.create_user(username='test', password='pass')
+        self.user = User.objects.create_user(username='test', password=TEST_PASSWORD)
 
     def test_get_branch_summary_cost_accumulation(self):
         """Test that cost is accumulated correctly across multiple records"""
@@ -97,8 +98,8 @@ class ViewsCompleteCoverageTest(TestCase):
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create_user(
-            username='testuser', password='pass')
-        self.client.login(username='testuser', password='pass')
+            username='testuser', password=TEST_PASSWORD)
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
         # Create test data
         fake_file = SimpleUploadedFile("job.txt", b"job content")

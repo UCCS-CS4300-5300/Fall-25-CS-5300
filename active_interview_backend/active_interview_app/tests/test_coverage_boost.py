@@ -16,6 +16,7 @@ from active_interview_app.models import (
 from active_interview_app.merge_stats_models import MergeTokenStats
 from active_interview_app.token_usage_models import TokenUsage
 from active_interview_app import views
+from .test_credentials import TEST_PASSWORD
 
 
 # ============================================================================
@@ -56,7 +57,7 @@ class TokenUsageCoverageBoostTest(TestCase):
 
     def setUp(self):
         self.user = User.objects.create_user(
-            username='tokenuser', password='pass')
+            username='tokenuser', password=TEST_PASSWORD)
 
     def test_get_branch_summary_cost_paths(self):
         """Test cost calculation paths in get_branch_summary"""

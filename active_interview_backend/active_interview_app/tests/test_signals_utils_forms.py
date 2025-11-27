@@ -18,6 +18,7 @@ from active_interview_app.serializers import (
 )
 from active_interview_app.signals import ensure_average_role_group
 from active_interview_app.utils import handle_uploaded_file
+from .test_credentials import TEST_PASSWORD
 
 
 # ============================================================================
@@ -59,7 +60,7 @@ class SignalsTest(TestCase):
         user = User.objects.create_user(
             username='signaltest',
             email='signal@test.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
         # Verify UserProfile was created
@@ -210,7 +211,7 @@ class CreateChatFormTest(TestCase):
         self.user = User.objects.create_user(
             username='chatuser',
             email='chat@example.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
         fake_file = SimpleUploadedFile("job.txt", b"content")
@@ -366,7 +367,7 @@ class UploadedResumeSerializerTest(TestCase):
         self.user = User.objects.create_user(
             username='serializeruser',
             email='serializer@example.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
         fake_file = SimpleUploadedFile("resume.pdf", b"resume content")
@@ -405,7 +406,7 @@ class UploadedJobListingSerializerTest(TestCase):
         self.user = User.objects.create_user(
             username='jobuser',
             email='job@example.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
         fake_file = SimpleUploadedFile("job.txt", b"job content")

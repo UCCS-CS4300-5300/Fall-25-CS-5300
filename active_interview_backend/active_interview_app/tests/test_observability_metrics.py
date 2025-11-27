@@ -28,6 +28,7 @@ from active_interview_app.observability_models import (
 )
 from active_interview_app.middleware import MetricsMiddleware
 from active_interview_app.token_usage_models import TokenUsage
+from .test_credentials import TEST_PASSWORD
 
 
 class RequestMetricModelTests(TestCase):
@@ -37,7 +38,7 @@ class RequestMetricModelTests(TestCase):
         """Create test data."""
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.now = timezone.now()
 
@@ -451,7 +452,7 @@ class MetricsMiddlewareTests(TransactionTestCase):
         self.factory = RequestFactory()
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
     def test_middleware_records_successful_request(self):
@@ -769,7 +770,7 @@ class AggregateDailyMetricsCommandTests(TransactionTestCase):
         self.yesterday = timezone.now() - timedelta(days=1)
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
     def test_aggregate_request_metrics(self):

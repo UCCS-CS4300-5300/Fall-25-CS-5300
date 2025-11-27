@@ -10,6 +10,7 @@ from django.contrib.auth.models import User, Group
 from unittest.mock import Mock, patch
 from active_interview_app.adapters import CustomSocialAccountAdapter
 from active_interview_app.models import UserProfile
+from .test_credentials import TEST_PASSWORD
 
 
 class CustomSocialAccountAdapterComprehensiveTest(TestCase):

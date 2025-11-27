@@ -13,6 +13,7 @@ from active_interview_app.models import (
 )
 from unittest.mock import patch, Mock
 import json
+from .test_credentials import TEST_PASSWORD
 
 
 class AboutUsViewTest(TestCase):
@@ -35,7 +36,7 @@ class RestartChatViewTest(TestCase):
 
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.job_listing = UploadedJobListing.objects.create(
             user=self.user,
@@ -54,7 +55,7 @@ class RestartChatViewTest(TestCase):
             job_listing=self.job_listing
         )
         self.client = Client()
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
     def test_restart_chat_post(self):
         """Test restarting a chat"""
@@ -76,9 +77,9 @@ class RestartChatViewTest(TestCase):
         """Test user can only restart their own chats"""
         User.objects.create_user(
             username='otheruser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
-        self.client.login(username='otheruser', password='testpass123')
+        self.client.login(username='otheruser', password=TEST_PASSWORD)
 
         response = self.client.post(
             reverse('chat-restart', args=[self.chat.id]),
@@ -97,7 +98,7 @@ class KeyQuestionsViewTest(TestCase):
 
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.job_listing = UploadedJobListing.objects.create(
             user=self.user,
@@ -125,7 +126,7 @@ class KeyQuestionsViewTest(TestCase):
             ]
         )
         self.client = Client()
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
     def test_key_questions_get(self):
         """Test GET request to key questions view"""
@@ -241,7 +242,7 @@ class EditChatViewTest(TestCase):
 
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.job_listing = UploadedJobListing.objects.create(
             user=self.user,
@@ -259,7 +260,7 @@ class EditChatViewTest(TestCase):
             job_listing=self.job_listing
         )
         self.client = Client()
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
     def test_edit_chat_updates_difficulty_in_messages(self):
         """Test that difficulty update also updates messages"""
@@ -296,7 +297,7 @@ class ChatViewPostTest(TestCase):
 
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.job_listing = UploadedJobListing.objects.create(
             user=self.user,
@@ -312,7 +313,7 @@ class ChatViewPostTest(TestCase):
             job_listing=self.job_listing
         )
         self.client = Client()
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
     @patch('active_interview_app.views.get_openai_client')
     @patch('active_interview_app.views.ai_available')
@@ -359,7 +360,7 @@ class CreateChatViewComprehensiveTest(TestCase):
 
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.job_listing = UploadedJobListing.objects.create(
             user=self.user,
@@ -373,7 +374,7 @@ class CreateChatViewComprehensiveTest(TestCase):
             title='Resume Title'
         )
         self.client = Client()
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
     @patch('active_interview_app.views.get_openai_client')
     @patch('active_interview_app.views.ai_available')
@@ -478,10 +479,10 @@ class UploadFileViewComprehensiveTest(TestCase):
 
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.client = Client()
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
     @patch('active_interview_app.views.filetype')
     @patch('active_interview_app.views.pymupdf4llm')
@@ -540,8 +541,8 @@ class DocumentListViewTest(TestCase):
         Group.objects.get_or_create(name='average_role')
 
         self.user = User.objects.create_user(
-            username='testuser', password='testpass123')
-        self.client.login(username='testuser', password='testpass123')
+            username='testuser', password=TEST_PASSWORD)
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
     def test_document_list_get(self):
         """Test GET request to document list"""
@@ -560,7 +561,7 @@ class ResultsChatViewComprehensiveTest(TestCase):
 
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.job_listing = UploadedJobListing.objects.create(
             user=self.user,
@@ -581,7 +582,7 @@ class AllInterviewTypesTest(TestCase):
 
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.job_listing = UploadedJobListing.objects.create(
             user=self.user,
