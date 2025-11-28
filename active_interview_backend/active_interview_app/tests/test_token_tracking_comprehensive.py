@@ -21,9 +21,11 @@ from .test_credentials import TEST_PASSWORD
 class GetCurrentGitBranchTest(TestCase):
     """Test get_current_git_branch function"""
 
-    @patch('subprocess.run')
-    def test_get_current_git_branch_success(self, mock_run):
+    @patch('active_interview_app.token_tracking.shutil.which')
+    @patch('active_interview_app.token_tracking.subprocess.run')
+    def test_get_current_git_branch_success(self, mock_run, mock_which):
         """Test successful git branch retrieval"""
+        mock_which.return_value = '/usr/bin/git'
         mock_run.return_value = MagicMock(
             stdout='main\n',
             returncode=0
@@ -34,9 +36,11 @@ class GetCurrentGitBranchTest(TestCase):
         self.assertEqual(branch, 'main')
         mock_run.assert_called_once()
 
-    @patch('subprocess.run')
-    def test_get_current_git_branch_feature_branch(self, mock_run):
+    @patch('active_interview_app.token_tracking.shutil.which')
+    @patch('active_interview_app.token_tracking.subprocess.run')
+    def test_get_current_git_branch_feature_branch(self, mock_run, mock_which):
         """Test git branch retrieval for feature branch"""
+        mock_which.return_value = '/usr/bin/git'
         mock_run.return_value = MagicMock(
             stdout='feature/oauth-integration\n',
             returncode=0
@@ -46,9 +50,11 @@ class GetCurrentGitBranchTest(TestCase):
 
         self.assertEqual(branch, 'feature/oauth-integration')
 
-    @patch('subprocess.run')
-    def test_get_current_git_branch_with_whitespace(self, mock_run):
+    @patch('active_interview_app.token_tracking.shutil.which')
+    @patch('active_interview_app.token_tracking.subprocess.run')
+    def test_get_current_git_branch_with_whitespace(self, mock_run, mock_which):
         """Test git branch retrieval strips whitespace"""
+        mock_which.return_value = '/usr/bin/git'
         mock_run.return_value = MagicMock(
             stdout='  develop  \n',
             returncode=0
@@ -58,30 +64,36 @@ class GetCurrentGitBranchTest(TestCase):
 
         self.assertEqual(branch, 'develop')
 
-    @patch('subprocess.run', side_effect=subprocess.CalledProcessError(128, 'git'))
-    def test_get_current_git_branch_not_git_repo(self, mock_run):
+    @patch('active_interview_app.token_tracking.shutil.which')
+    @patch('active_interview_app.token_tracking.subprocess.run', side_effect=subprocess.CalledProcessError(128, 'git'))
+    def test_get_current_git_branch_not_git_repo(self, mock_run, mock_which):
         """Test git branch when not in a git repository"""
+        mock_which.return_value = '/usr/bin/git'
         branch = get_current_git_branch()
 
         self.assertEqual(branch, 'unknown')
 
-    @patch('subprocess.run', side_effect=subprocess.TimeoutExpired('git', 5))
-    def test_get_current_git_branch_timeout(self, mock_run):
+    @patch('active_interview_app.token_tracking.shutil.which')
+    @patch('active_interview_app.token_tracking.subprocess.run', side_effect=subprocess.TimeoutExpired('git', 5))
+    def test_get_current_git_branch_timeout(self, mock_run, mock_which):
         """Test git branch with timeout"""
+        mock_which.return_value = '/usr/bin/git'
         branch = get_current_git_branch()
 
         self.assertEqual(branch, 'unknown')
 
-    @patch('subprocess.run', side_effect=FileNotFoundError)
-    def test_get_current_git_branch_git_not_installed(self, mock_run):
+    @patch('active_interview_app.token_tracking.shutil.which', return_value=None)
+    def test_get_current_git_branch_git_not_installed(self, mock_which):
         """Test git branch when git is not installed"""
         branch = get_current_git_branch()
 
         self.assertEqual(branch, 'unknown')
 
-    @patch('subprocess.run')
-    def test_get_current_git_branch_detached_head(self, mock_run):
+    @patch('active_interview_app.token_tracking.shutil.which')
+    @patch('active_interview_app.token_tracking.subprocess.run')
+    def test_get_current_git_branch_detached_head(self, mock_run, mock_which):
         """Test git branch in detached HEAD state"""
+        mock_which.return_value = '/usr/bin/git'
         mock_run.return_value = MagicMock(
             stdout='HEAD\n',
             returncode=0
@@ -91,9 +103,11 @@ class GetCurrentGitBranchTest(TestCase):
 
         self.assertEqual(branch, 'HEAD')
 
-    @patch('subprocess.run')
-    def test_get_current_git_branch_special_characters(self, mock_run):
+    @patch('active_interview_app.token_tracking.shutil.which')
+    @patch('active_interview_app.token_tracking.subprocess.run')
+    def test_get_current_git_branch_special_characters(self, mock_run, mock_which):
         """Test git branch with special characters"""
+        mock_which.return_value = '/usr/bin/git'
         mock_run.return_value = MagicMock(
             stdout='fix/issue-#123\n',
             returncode=0
