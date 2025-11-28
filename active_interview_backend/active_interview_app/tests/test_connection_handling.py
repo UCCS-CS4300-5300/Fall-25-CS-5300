@@ -12,6 +12,7 @@ from django.test import TestCase
 from django.urls import reverse
 from unittest.mock import patch, MagicMock
 from ..models import Chat, UploadedJobListing, UploadedResume
+from .test_credentials import TEST_PASSWORD
 
 
 # === Helper Functions ===
@@ -19,7 +20,7 @@ def generateConnectionTestUser():
     """Create a test user for connection handling tests."""
     user = User.objects.create_user(
         username="connectiontestuser",
-        password="testpass123"
+        password=TEST_PASSWORD
     )
     return user
 

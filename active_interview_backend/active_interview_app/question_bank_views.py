@@ -8,7 +8,7 @@ Includes:
 - Auto-Interview Assembly (Issue #42)
 """
 
-import random
+import secrets
 from typing import Optional, List, Dict, Any
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -952,7 +952,9 @@ class AutoAssembleInterviewView(APIView):
             available = list(questions_query.filter(difficulty=difficulty))
 
             if randomize:
-                selected_questions.extend(random.sample(available, count))
+                # Use secrets.SystemRandom for cryptographically secure sampling
+                secure_random = secrets.SystemRandom()
+                selected_questions.extend(secure_random.sample(available, count))
             else:
                 selected_questions.extend(available[:count])
 
@@ -967,7 +969,9 @@ class AutoAssembleInterviewView(APIView):
         available = list(questions_query)
 
         if randomize:
-            return random.sample(available, question_count)
+            # Use secrets.SystemRandom for cryptographically secure sampling
+            secure_random = secrets.SystemRandom()
+            return secure_random.sample(available, question_count)
         else:
             return available[:question_count]
 

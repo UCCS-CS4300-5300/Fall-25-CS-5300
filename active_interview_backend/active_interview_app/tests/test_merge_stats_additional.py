@@ -7,6 +7,7 @@ from decimal import Decimal
 
 from active_interview_app.token_usage_models import TokenUsage
 from active_interview_app.merge_stats_models import MergeTokenStats
+from .test_credentials import TEST_PASSWORD
 
 
 class MergeTokenStatsEdgeCasesTest(TestCase):
@@ -15,7 +16,7 @@ class MergeTokenStatsEdgeCasesTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
     def test_save_updates_existing_record_no_cumulative_change(self):

@@ -6,6 +6,7 @@ from django.urls import reverse
 from django.contrib.auth.models import User, Group
 from django.core.files.uploadedfile import SimpleUploadedFile
 from unittest.mock import patch, MagicMock
+from .test_credentials import TEST_PASSWORD
 import json
 
 from active_interview_app.models import (
@@ -22,7 +23,7 @@ class BasicViewsCoverageTest(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
     def test_aboutus_view(self):
@@ -69,9 +70,9 @@ class FileUploadCoverageTest(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
     def test_upload_file_get(self):
         """Test GET request to upload_file view"""
@@ -121,9 +122,9 @@ class JobListingViewCoverageTest(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         # UploadedJobListing requires a file field
         from django.core.files.uploadedfile import SimpleUploadedFile
         fake_file = SimpleUploadedFile("test.txt", b"test content")
@@ -169,9 +170,9 @@ class ChatViewsCoverageTest(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         # Create job listing and resume with proper fields
         from django.core.files.uploadedfile import SimpleUploadedFile
         fake_job_file = SimpleUploadedFile("job.txt", b"job content")
@@ -352,9 +353,9 @@ class ResultsViewsCoverageTest(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         # Create job listing with proper fields
         from django.core.files.uploadedfile import SimpleUploadedFile
         fake_job_file = SimpleUploadedFile("job.txt", b"job content")
@@ -445,7 +446,7 @@ class APIViewsCoverageTest(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.client.force_login(self.user)
 

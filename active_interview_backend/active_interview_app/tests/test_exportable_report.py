@@ -11,6 +11,7 @@ from active_interview_app.models import (
     Chat, ExportableReport
 )
 from active_interview_app.pdf_export import generate_pdf_report, get_score_rating
+from .test_credentials import TEST_PASSWORD
 
 
 class ExportableReportModelTest(TestCase):
@@ -20,7 +21,7 @@ class ExportableReportModelTest(TestCase):
         """Set up test fixtures"""
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.chat = Chat.objects.create(
             owner=self.user,
@@ -112,7 +113,7 @@ class ExportableReportViewTest(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.chat = Chat.objects.create(
             owner=self.user,
@@ -137,7 +138,7 @@ class ExportableReportViewTest(TestCase):
         """Test generating a report via the GenerateReportView"""
         from unittest.mock import patch
 
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         url = reverse('generate_report', kwargs={'chat_id': self.chat.id})
 
         # Mock the AI functions to avoid external API calls in tests
@@ -170,7 +171,7 @@ class ExportableReportViewTest(TestCase):
 
     def test_export_report_view(self):
         """Test viewing the export report page"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         ExportableReport.objects.create(
             chat=self.chat,
             overall_score=80,
@@ -186,7 +187,7 @@ class ExportableReportViewTest(TestCase):
 
     def test_export_report_redirects_if_no_report(self):
         """Test that export view redirects if no report exists"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         url = reverse('export_report', kwargs={'chat_id': self.chat.id})
         response = self.client.get(url)
 
@@ -205,7 +206,7 @@ class ExportableReportViewTest(TestCase):
 
     def test_download_pdf_view(self):
         """Test downloading the PDF report"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         report = ExportableReport.objects.create(
             chat=self.chat,
             overall_score=80,
@@ -232,7 +233,7 @@ class ExportableReportViewTest(TestCase):
         # Create another user and their chat
         other_user = User.objects.create_user(
             username='otheruser',
-            password='otherpass123'
+            password=TEST_PASSWORD
         )
         other_chat = Chat.objects.create(
             owner=other_user,
@@ -247,7 +248,7 @@ class ExportableReportViewTest(TestCase):
         )
 
         # Login as first user
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
         # Try to access other user's report
         url = reverse('export_report', kwargs={'chat_id': other_chat.id})
@@ -264,7 +265,7 @@ class PDFExportUtilityTest(TestCase):
         """Set up test fixtures"""
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.chat = Chat.objects.create(
             owner=self.user,
@@ -341,7 +342,7 @@ class ExportableReportSerializerTest(TestCase):
 
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.chat = Chat.objects.create(
             owner=self.user,
@@ -385,7 +386,7 @@ class ScoreWeightsAndRationalesTest(TestCase):
         """Set up test fixtures"""
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.chat = Chat.objects.create(
             owner=self.user,
@@ -480,7 +481,7 @@ class CSVExportTest(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.chat = Chat.objects.create(
             owner=self.user,
@@ -517,7 +518,7 @@ class CSVExportTest(TestCase):
 
     def test_download_csv_view(self):
         """Test downloading the CSV report"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         url = reverse('download_csv_report', kwargs={'chat_id': self.chat.id})
         response = self.client.get(url)
 
@@ -529,7 +530,7 @@ class CSVExportTest(TestCase):
 
     def test_csv_contains_scores_and_weights(self):
         """Test that CSV contains scores and weights"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         url = reverse('download_csv_report', kwargs={'chat_id': self.chat.id})
         response = self.client.get(url)
 
@@ -553,7 +554,7 @@ class CSVExportTest(TestCase):
 
     def test_csv_contains_rationales(self):
         """Test that CSV contains rationales"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         url = reverse('download_csv_report', kwargs={'chat_id': self.chat.id})
         response = self.client.get(url)
 
@@ -568,7 +569,7 @@ class CSVExportTest(TestCase):
 
     def test_csv_contains_metadata(self):
         """Test that CSV contains interview metadata"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         url = reverse('download_csv_report', kwargs={'chat_id': self.chat.id})
         response = self.client.get(url)
 
@@ -581,7 +582,7 @@ class CSVExportTest(TestCase):
 
     def test_csv_redirects_if_no_report(self):
         """Test that CSV download redirects if no report exists"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
         # Create a new chat without a report
         new_chat = Chat.objects.create(
@@ -603,7 +604,7 @@ class CSVExportTest(TestCase):
         # Create another user and their chat
         other_user = User.objects.create_user(
             username='otheruser',
-            password='otherpass123'
+            password=TEST_PASSWORD
         )
         other_chat = Chat.objects.create(
             owner=other_user,
@@ -618,7 +619,7 @@ class CSVExportTest(TestCase):
         )
 
         # Login as first user
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
         # Try to download other user's CSV
         url = reverse('download_csv_report', kwargs={'chat_id': other_chat.id})
@@ -643,7 +644,7 @@ class FinalScoreComputationTest(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.chat = Chat.objects.create(
             owner=self.user,
@@ -674,7 +675,7 @@ class FinalScoreComputationTest(TestCase):
 
     def test_final_score_displayed_with_weights(self):
         """Test that final score is shown with weight breakdown"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         url = reverse('export_report', kwargs={'chat_id': self.chat.id})
         response = self.client.get(url)
 
@@ -691,7 +692,7 @@ class FinalScoreComputationTest(TestCase):
 
     def test_score_computation_explanation_displayed(self):
         """Test that score computation explanation is shown"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         url = reverse('export_report', kwargs={'chat_id': self.chat.id})
         response = self.client.get(url)
 
@@ -704,7 +705,7 @@ class FinalScoreComputationTest(TestCase):
 
     def test_rationales_explain_scoring_logic(self):
         """Test that rationales clearly explain the scoring logic"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         url = reverse('export_report', kwargs={'chat_id': self.chat.id})
         response = self.client.get(url)
 
@@ -719,7 +720,7 @@ class FinalScoreComputationTest(TestCase):
 
     def test_scores_exportable_as_pdf(self):
         """Test that scores can be exported as PDF"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         url = reverse('download_pdf_report', kwargs={'chat_id': self.chat.id})
         response = self.client.get(url)
 
@@ -733,7 +734,7 @@ class FinalScoreComputationTest(TestCase):
 
     def test_scores_exportable_as_csv(self):
         """Test that scores can be exported as CSV"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         url = reverse('download_csv_report', kwargs={'chat_id': self.chat.id})
         response = self.client.get(url)
 
@@ -753,7 +754,7 @@ class FinalScoreComputationTest(TestCase):
 
     def test_weight_breakdown_visible_in_export_page(self):
         """Test that weight breakdown is clearly visible"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         url = reverse('export_report', kwargs={'chat_id': self.chat.id})
         response = self.client.get(url)
 
@@ -767,7 +768,7 @@ class FinalScoreComputationTest(TestCase):
 
     def test_pdf_download_button_accessible(self):
         """Test that PDF download button is accessible"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         url = reverse('export_report', kwargs={'chat_id': self.chat.id})
         response = self.client.get(url)
 
@@ -777,7 +778,7 @@ class FinalScoreComputationTest(TestCase):
 
     def test_csv_download_button_accessible(self):
         """Test that CSV download button is accessible"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         url = reverse('export_report', kwargs={'chat_id': self.chat.id})
         response = self.client.get(url)
 
@@ -800,7 +801,7 @@ class SectionScoresWithRationalesTest(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.chat = Chat.objects.create(
             owner=self.user,
@@ -832,7 +833,7 @@ class SectionScoresWithRationalesTest(TestCase):
 
     def test_section_scores_displayed(self):
         """Test that all section scores are displayed on the export report page"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         url = reverse('export_report', kwargs={'chat_id': self.chat.id})
         response = self.client.get(url)
 
@@ -850,7 +851,7 @@ class SectionScoresWithRationalesTest(TestCase):
 
     def test_section_rationales_displayed(self):
         """Test that each section score includes its rationale"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         url = reverse('export_report', kwargs={'chat_id': self.chat.id})
         response = self.client.get(url)
 
@@ -876,7 +877,7 @@ class SectionScoresWithRationalesTest(TestCase):
 
     def test_score_breakdown_section_exists(self):
         """Test that the Score Breakdown & Rationales section exists"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         url = reverse('export_report', kwargs={'chat_id': self.chat.id})
         response = self.client.get(url)
 
@@ -887,7 +888,7 @@ class SectionScoresWithRationalesTest(TestCase):
 
     def test_section_scores_with_weights(self):
         """Test that section scores display with their weights"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         url = reverse('export_report', kwargs={'chat_id': self.chat.id})
         response = self.client.get(url)
 
@@ -899,7 +900,7 @@ class SectionScoresWithRationalesTest(TestCase):
 
     def test_generate_report_button_exists(self):
         """Test that the generate detailed report button exists on results page"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         url = reverse('chat-results', kwargs={'chat_id': self.chat.id})
         response = self.client.get(url)
 
@@ -915,7 +916,7 @@ class SectionScoresWithRationalesTest(TestCase):
 
     def test_pdf_export_includes_rationales(self):
         """Test that PDF export includes section rationales"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         url = reverse('download_pdf_report', kwargs={'chat_id': self.chat.id})
         response = self.client.get(url)
 
@@ -929,7 +930,7 @@ class SectionScoresWithRationalesTest(TestCase):
 
     def test_csv_export_accessible(self):
         """Test that CSV export is accessible"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         url = reverse('download_csv_report', kwargs={'chat_id': self.chat.id})
         response = self.client.get(url)
 
@@ -958,7 +959,7 @@ class IntegratedUserStoriesTest(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(
             username='candidate',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.chat = Chat.objects.create(
             owner=self.user,
@@ -977,7 +978,7 @@ class IntegratedUserStoriesTest(TestCase):
         """Test complete workflow covering both user stories"""
         from unittest.mock import patch, MagicMock
 
-        self.client.login(username='candidate', password='testpass123')
+        self.client.login(username='candidate', password=TEST_PASSWORD)
 
         # Step 1: View quick results page
         results_url = reverse('chat-results', kwargs={'chat_id': self.chat.id})
@@ -1071,7 +1072,7 @@ Overall: Strong overall performance with good balance across all areas.
 
     def test_all_acceptance_criteria_met(self):
         """Verify all acceptance criteria for both user stories are met"""
-        self.client.login(username='candidate', password='testpass123')
+        self.client.login(username='candidate', password=TEST_PASSWORD)
 
         # Create report with all data
         ExportableReport.objects.create(
@@ -1140,7 +1141,7 @@ class ScoreComputationLearningScenarioTest(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(
             username='candidate_learner',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
     def test_score_computation_learning_scenario(self):
@@ -1185,7 +1186,7 @@ class ScoreComputationLearningScenarioTest(TestCase):
             total_questions_asked=3,
             total_responses_given=3)
 
-        self.client.login(username='candidate_learner', password='testpass123')
+        self.client.login(username='candidate_learner', password=TEST_PASSWORD)
 
         # WHEN I open my results
         results_url = reverse('export_report', kwargs={
@@ -1238,7 +1239,7 @@ class ScoreComputationLearningScenarioTest(TestCase):
 
     def test_learning_oriented_content_present(self):
         """Test that content is oriented toward learning and improvement"""
-        self.client.login(username='candidate_learner', password='testpass123')
+        self.client.login(username='candidate_learner', password=TEST_PASSWORD)
 
         chat = Chat.objects.create(
             owner=self.user,
@@ -1286,7 +1287,7 @@ class ScoreComputationLearningScenarioTest(TestCase):
 
     def test_all_scenario_elements_integrated(self):
         """Test that all scenario elements work together cohesively"""
-        self.client.login(username='candidate_learner', password='testpass123')
+        self.client.login(username='candidate_learner', password=TEST_PASSWORD)
 
         chat = Chat.objects.create(
             owner=self.user,

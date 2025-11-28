@@ -13,6 +13,7 @@ from active_interview_app.models import (
 )
 from active_interview_app.merge_stats_models import MergeTokenStats
 from active_interview_app.token_usage_models import TokenUsage
+from .test_credentials import TEST_PASSWORD
 
 
 # ============================================================================
@@ -53,7 +54,7 @@ class TokenUsageModelCoverageTest(TestCase):
 
     def setUp(self):
         self.user = User.objects.create_user(
-            username='testuser', password='pass')
+            username='testuser', password=TEST_PASSWORD)
 
     def test_estimated_cost_gpt4o(self):
         """Test cost for gpt-4o model"""
@@ -141,8 +142,8 @@ class ViewsBasicCoverageTest(TestCase):
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create_user(
-            username='viewuser', password='testpass')
-        self.client.login(username='viewuser', password='testpass')
+            username='viewuser', password=TEST_PASSWORD)
+        self.client.login(username='viewuser', password=TEST_PASSWORD)
 
     def test_static_views(self):
         """Test all static page views"""
@@ -209,8 +210,8 @@ class ViewsDocumentOperationsTest(TestCase):
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create_user(
-            username='docuser', password='pass')
-        self.client.login(username='docuser', password='pass')
+            username='docuser', password=TEST_PASSWORD)
+        self.client.login(username='docuser', password=TEST_PASSWORD)
 
     def test_resume_detail_view(self):
         """Test resume detail view"""
@@ -339,7 +340,7 @@ class ViewsAPITest(TestCase):
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create_user(
-            username='apiuser', password='pass')
+            username='apiuser', password=TEST_PASSWORD)
         self.client.force_login(self.user)
 
     def test_uploaded_resume_view_get(self):

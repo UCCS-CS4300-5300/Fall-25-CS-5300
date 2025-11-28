@@ -20,6 +20,7 @@ from active_interview_app.pdf_export import (
     _create_statistics_section,
     _create_footer
 )
+from .test_credentials import TEST_PASSWORD
 
 
 class GetScoreRatingTest(TestCase):
@@ -113,7 +114,7 @@ class PDFSectionCreationTest(TestCase):
         """Set up test data"""
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.chat = Chat.objects.create(
             owner=self.user,
@@ -320,7 +321,7 @@ class GeneratePDFReportTest(TestCase):
         """Set up test data"""
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
     def test_generate_pdf_complete_report(self):
@@ -554,7 +555,7 @@ class ScoreRationalesSectionTest(TestCase):
         """Set up test data"""
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.chat = Chat.objects.create(
             owner=self.user,
@@ -661,7 +662,7 @@ class RecommendedExercisesSectionTest(TestCase):
         """Set up test data"""
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.chat = Chat.objects.create(
             owner=self.user,

@@ -13,6 +13,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from unittest.mock import patch, Mock
 from unittest import skip
 import json
+from .test_credentials import TEST_PASSWORD
 
 
 class RegisterViewTest(TestCase):
@@ -61,10 +62,10 @@ class UploadFileViewTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.client = Client()
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
     @patch('active_interview_app.views.filetype')
     @patch('active_interview_app.views.pymupdf4llm')
@@ -189,10 +190,10 @@ class UploadedJobListingViewTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.client = Client()
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
     def test_post_valid_job_listing(self):
         """Test POST with valid job listing text"""
@@ -251,13 +252,13 @@ class UploadedResumeViewAPITest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.client = Client()
 
     def test_get_resumes_authenticated(self):
         """Test GET request returns user's resumes"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
         # Create some resumes
         UploadedResume.objects.create(
@@ -292,7 +293,7 @@ class ChatListViewTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.client = Client()
 
@@ -303,7 +304,7 @@ class ChatListViewTest(TestCase):
 
     def test_chat_list_shows_user_chats(self):
         """Test chat list shows only user's chats"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
         # Create chats for user
         job_listing = UploadedJobListing.objects.create(
@@ -328,7 +329,7 @@ class ChatListViewTest(TestCase):
         # Create chat for other user
         other_user = User.objects.create_user(
             username='otheruser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         other_job = UploadedJobListing.objects.create(
             user=other_user,
@@ -358,7 +359,7 @@ class ResultsChatViewTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.job_listing = UploadedJobListing.objects.create(
             user=self.user,
@@ -388,9 +389,9 @@ class ResultsChatViewTest(TestCase):
         """Test user can only view their own chat results"""
         User.objects.create_user(
             username='otheruser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
-        self.client.login(username='otheruser', password='testpass123')
+        self.client.login(username='otheruser', password=TEST_PASSWORD)
 
         response = self.client.get(
             reverse('chat-results', args=[self.chat.id])
@@ -401,7 +402,7 @@ class ResultsChatViewTest(TestCase):
     def test_results_chat_ai_unavailable(self, mockai_available):
         """Test results chat when AI is unavailable"""
         mockai_available.return_value = False
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
         response = self.client.get(
             reverse('chat-results', args=[self.chat.id])
@@ -429,7 +430,7 @@ class ResultsChatViewTest(TestCase):
         mock_client.chat.completions.create.return_value = mock_response
         mock_get_client.return_value = mock_client
 
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
         response = self.client.get(
             reverse('chat-results', args=[self.chat.id])
@@ -447,7 +448,7 @@ class ResultChartsViewTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.job_listing = UploadedJobListing.objects.create(
             user=self.user,
@@ -471,7 +472,7 @@ class ResultChartsViewTest(TestCase):
     def test_result_charts_ai_unavailable(self, mockai_available):
         """Test result charts when AI is unavailable"""
         mockai_available.return_value = False
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
         response = self.client.get(
             reverse('chat-results-charts', args=[self.chat.id])
@@ -513,7 +514,7 @@ class ResultChartsViewTest(TestCase):
             mock_response1, mock_response2]
         mock_get_client.return_value = mock_client
 
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
         response = self.client.get(
             reverse('chat-results-charts', args=[self.chat.id])
@@ -555,7 +556,7 @@ class ResultChartsViewTest(TestCase):
             mock_response1, mock_response2]
         mock_get_client.return_value = mock_client
 
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
         response = self.client.get(
             reverse('chat-results-charts', args=[self.chat.id])
@@ -577,7 +578,7 @@ class CreateChatViewExtendedTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.job_listing = UploadedJobListing.objects.create(
             user=self.user,
@@ -591,7 +592,7 @@ class CreateChatViewExtendedTest(TestCase):
             title='My Resume'
         )
         self.client = Client()
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
     @patch('active_interview_app.views.get_openai_client')
     @patch('active_interview_app.views.ai_available')

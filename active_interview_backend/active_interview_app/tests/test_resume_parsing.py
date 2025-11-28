@@ -19,6 +19,7 @@ from docx import Document as DocxDocument
 from ..models import UploadedResume
 from ..openai_utils import get_openai_client, ai_available, MAX_TOKENS
 from ..resume_parser import parse_resume_with_ai, validate_parsed_data
+from .test_credentials import TEST_PASSWORD
 
 
 # === Helper Functions ===
@@ -27,7 +28,7 @@ def create_test_user():
     """Create a test user for authentication."""
     return User.objects.create_user(
         username="testuser",
-        password="testpass123",
+        password=TEST_PASSWORD,
         email="test@example.com"
     )
 
@@ -347,7 +348,7 @@ class ResumeUploadParsingIntegrationTests(TestCase):
     def setUp(self):
         """Set up test fixtures."""
         self.user = create_test_user()
-        self.client.login(username="testuser", password="testpass123")
+        self.client.login(username="testuser", password=TEST_PASSWORD)
 
     @override_settings(OPENAI_API_KEY="test-key")
     @patch('active_interview_app.views.ai_available')

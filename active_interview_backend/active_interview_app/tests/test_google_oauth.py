@@ -26,6 +26,7 @@ import os
 
 from active_interview_app.models import UserProfile
 from active_interview_app.adapters import CustomSocialAccountAdapter
+from .test_credentials import TEST_PASSWORD
 
 
 class GoogleOAuthConfigTestCase(TestCase):
@@ -300,7 +301,7 @@ class GoogleOAuthFlowTestCase(TestCase):
         existing_user = User.objects.create_user(
             username='existinguser',
             email='existing@example.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
         # Create profile for existing user (local auth)
@@ -520,7 +521,7 @@ class UserProfileModelTest(TestCase):
         self.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
     def test_user_profile_created_on_user_creation(self):
@@ -565,7 +566,7 @@ class UserProfileModelTest(TestCase):
         local_user = User.objects.create_user(
             username='localuser',
             email='local@example.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
         # Verify profile was created with default 'local' provider
