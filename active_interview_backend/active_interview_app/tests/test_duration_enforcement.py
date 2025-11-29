@@ -397,9 +397,9 @@ class ChatViewDurationEnforcementPOSTTests(TestCase):
             }]
         )
 
-    @patch('active_interview_app.views.get_openai_client')
+    @patch('active_interview_app.views.get_client_and_model')
     def test_post_invited_chat_not_expired_processes_normally(
-            self, mock_client):
+            self, mock_get_client_and_model):
         """Test POST on non-expired invited interview processes normally"""
         # Mock OpenAI response
         mock_ai_client = MagicMock()
@@ -407,7 +407,8 @@ class ChatViewDurationEnforcementPOSTTests(TestCase):
         mock_response.choices = [MagicMock()]
         mock_response.choices[0].message.content = "Test AI response"
         mock_ai_client.chat.completions.create.return_value = mock_response
-        mock_client.return_value = mock_ai_client
+        # get_client_and_model returns (client, model, tier_info)
+        mock_get_client_and_model.return_value = (mock_ai_client, "gpt-4o", {"tier": "premium"})
 
         # Create invitation and chat
         invitation = InvitedInterview.objects.create(

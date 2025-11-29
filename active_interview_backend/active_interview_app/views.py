@@ -558,15 +558,16 @@ class ChatView(LoginRequiredMixin, UserPassesTestMixin, View):
         if not ai_available():
             return _ai_unavailable_json()
 
-        # Auto-select model tier based on spending cap (Issue #14)
-        client, model, tier_info = get_client_and_model()
-        response = client.chat.completions.create(
-            model=model,
-            messages=new_messages,
-            max_tokens=MAX_TOKENS
-        )
-        ai_message = response.choices[0].message.content
-        new_messages.append({"role": "assistant", "content": ai_message})
+        try:
+            # Auto-select model tier based on spending cap (Issue #14)
+            client, model, tier_info = get_client_and_model()
+            response = client.chat.completions.create(
+                model=model,
+                messages=new_messages,
+                max_tokens=MAX_TOKENS
+            )
+            ai_message = response.choices[0].message.content
+            new_messages.append({"role": "assistant", "content": ai_message})
 
             chat.messages = new_messages
             chat.save()

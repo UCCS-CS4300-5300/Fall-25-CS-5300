@@ -487,10 +487,10 @@ class ResultChartsViewTest(TestCase):
         self.assertEqual(scores['Overall'], 0)
 
     @skip("chat-results-charts URL not implemented yet")
-    @patch('active_interview_app.views.get_openai_client')
+    @patch('active_interview_app.views.get_client_and_model')
     @patch('active_interview_app.views.ai_available')
     def test_result_chartsai_available_valid_scores(
-            self, mockai_available, mock_get_client):
+            self, mockai_available, mock_get_client_and_model):
         """Test result charts with valid AI scores"""
         mockai_available.return_value = True
 
@@ -512,7 +512,8 @@ class ResultChartsViewTest(TestCase):
 
         mock_client.chat.completions.create.side_effect = [
             mock_response1, mock_response2]
-        mock_get_client.return_value = mock_client
+        # get_client_and_model returns (client, model, tier_info)
+        mock_get_client_and_model.return_value = (mock_client, "gpt-4o", {"tier": "premium"})
 
         self.client.login(username='testuser', password=TEST_PASSWORD)
 
@@ -529,10 +530,10 @@ class ResultChartsViewTest(TestCase):
         self.assertEqual(scores['Overall'], 88)
 
     @skip("chat-results-charts URL not implemented yet")
-    @patch('active_interview_app.views.get_openai_client')
+    @patch('active_interview_app.views.get_client_and_model')
     @patch('active_interview_app.views.ai_available')
     def test_result_charts_ai_invalid_scores(
-            self, mockai_available, mock_get_client):
+            self, mockai_available, mock_get_client_and_model):
         """Test result charts with invalid AI response"""
         mockai_available.return_value = True
 
@@ -554,7 +555,8 @@ class ResultChartsViewTest(TestCase):
 
         mock_client.chat.completions.create.side_effect = [
             mock_response1, mock_response2]
-        mock_get_client.return_value = mock_client
+        # get_client_and_model returns (client, model, tier_info)
+        mock_get_client_and_model.return_value = (mock_client, "gpt-4o", {"tier": "premium"})
 
         self.client.login(username='testuser', password=TEST_PASSWORD)
 

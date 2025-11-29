@@ -892,8 +892,8 @@ class CreateChatViewTest(TestCase):
         self.assertIn('form', response.context)
 
     @patch('active_interview_app.views.ai_available', return_value=True)
-    @patch('active_interview_app.views.get_openai_client')
-    def test_create_chat_post_with_resume(self, mock_client, mock_ai):
+    @patch('active_interview_app.views.get_client_and_model')
+    def test_create_chat_post_with_resume(self, mock_get_client_and_model, mock_ai):
         """Test CreateChat POST with resume"""
         # Mock AI responses
         mock_response = MagicMock()
@@ -905,10 +905,13 @@ class CreateChatViewTest(TestCase):
         mock_questions_response.choices[
             0].message.content = '[{"id": 0, "title": "Q1", "content": "Question?", "duration": 60}]'
 
-        mock_client.return_value.chat.completions.create.side_effect = [
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.side_effect = [
             mock_response,
             mock_questions_response
         ]
+        # get_client_and_model returns (client, model, tier_info)
+        mock_get_client_and_model.return_value = (mock_client, "gpt-4o", {"tier": "premium"})
 
         job = UploadedJobListing.objects.create(
             user=self.user,
@@ -937,8 +940,8 @@ class CreateChatViewTest(TestCase):
         self.assertTrue(Chat.objects.filter(title='Test Interview').exists())
 
     @patch('active_interview_app.views.ai_available', return_value=True)
-    @patch('active_interview_app.views.get_openai_client')
-    def test_create_chat_post_without_resume(self, mock_client, mock_ai):
+    @patch('active_interview_app.views.get_client_and_model')
+    def test_create_chat_post_without_resume(self, mock_get_client_and_model, mock_ai):
         """Test CreateChat POST without resume"""
         # Mock AI responses
         mock_response = MagicMock()
@@ -950,10 +953,13 @@ class CreateChatViewTest(TestCase):
         mock_questions_response.choices[
             0].message.content = '[{"id": 0, "title": "Q1", "content": "Question?", "duration": 60}]'
 
-        mock_client.return_value.chat.completions.create.side_effect = [
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.side_effect = [
             mock_response,
             mock_questions_response
         ]
+        # get_client_and_model returns (client, model, tier_info)
+        mock_get_client_and_model.return_value = (mock_client, "gpt-4o", {"tier": "premium"})
 
         job = UploadedJobListing.objects.create(
             user=self.user,

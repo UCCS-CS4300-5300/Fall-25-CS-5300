@@ -5,6 +5,7 @@ This module tests the centralized OpenAI client management and graceful degradat
 Updated for Issue #13 to include tests for API key pool integration.
 """
 
+import pytest
 from django.test import TestCase, override_settings
 from django.contrib.auth.models import User
 from unittest.mock import patch, MagicMock

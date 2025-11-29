@@ -143,8 +143,8 @@ class TestCreateChatView(TestCase):
         # Validate that the index template was used
         self.assertTemplateUsed(response, 'base-sidebar.html')
 
-    @patch('active_interview_app.views.get_openai_client')
-    def testPOSTCreateChatView(self, mock_get_client):
+    @patch('active_interview_app.views.get_client_and_model')
+    def testPOSTCreateChatView(self, mock_get_client_and_model):
         # Mock the OpenAI client and API response
         mock_client = MagicMock()
         mock_response = MagicMock()
@@ -164,7 +164,8 @@ class TestCreateChatView(TestCase):
             }
         ]'''
         mock_client.chat.completions.create.return_value = mock_response
-        mock_get_client.return_value = mock_client
+        # get_client_and_model returns (client, model, tier_info)
+        mock_get_client_and_model.return_value = (mock_client, "gpt-4o", {"tier": "premium"})
 
         # Call the view with a response
         response = self.client.post(reverse('chat-create'),
@@ -202,15 +203,16 @@ class TestChatView(TestCase):
         # Validate that the index template was used
         self.assertTemplateUsed(response, 'base-sidebar.html')
 
-    @patch('active_interview_app.views.get_openai_client')
-    def testPOSTChatView(self, mock_get_client):
+    @patch('active_interview_app.views.get_client_and_model')
+    def testPOSTChatView(self, mock_get_client_and_model):
         # Mock the OpenAI client and API response
         mock_client = MagicMock()
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
         mock_response.choices[0].message.content = "Pi is approximately 3.14159, a mathematical constant."
         mock_client.chat.completions.create.return_value = mock_response
-        mock_get_client.return_value = mock_client
+        # get_client_and_model returns (client, model, tier_info)
+        mock_get_client_and_model.return_value = (mock_client, "gpt-4o", {"tier": "premium"})
 
         # Call view with an ai prompt
         response = self.client.post(reverse('chat-view', args=[self.chat.id]),
@@ -337,15 +339,16 @@ class TestKeyQuestionsView(TestCase):
         # Validate that the index template was used
         self.assertTemplateUsed(response, 'base-sidebar.html')
 
-    @patch('active_interview_app.views.get_openai_client')
-    def testPOSTChatView(self, mock_get_client):
+    @patch('active_interview_app.views.get_client_and_model')
+    def testPOSTChatView(self, mock_get_client_and_model):
         # Mock the OpenAI client and API response
         mock_client = MagicMock()
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
         mock_response.choices[0].message.content = "That answer is off-topic and doesn't address the interview question. Rating: 2/10"
         mock_client.chat.completions.create.return_value = mock_response
-        mock_get_client.return_value = mock_client
+        # get_client_and_model returns (client, model, tier_info)
+        mock_get_client_and_model.return_value = (mock_client, "gpt-4o", {"tier": "premium"})
 
         # Call view with an ai prompt
         response = self.client.post(reverse('key-questions',

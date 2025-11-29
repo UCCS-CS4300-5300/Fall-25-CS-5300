@@ -74,7 +74,7 @@ def get_api_key_from_pool(model_tier='premium'):
     raise ValueError(
         f"No OpenAI API key available for tier '{model_tier}'. Either:\n"
         "1. Add a key to the API Key Pool (recommended), or\n"
-        "2. Set OPENAI_API_KEY in your .env file\n"
+        "2. Set OPENAI_API_KEY environment variables in your .env file\n"
         "3. For fallback tier, set OPENAI_API_FALLBACK_KEY in your .env file"
     )
 

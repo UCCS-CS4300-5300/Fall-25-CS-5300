@@ -54,10 +54,12 @@ class OpenAIClientTest(TestCase):
         self.assertIn("Failed to initialize OpenAI client",
                       str(context.exception))
 
-    @patch('active_interview_app.views.get_openai_client')
-    def testai_available_returns_true(self, mock_get_client):
+    @patch('active_interview_app.views.get_client_and_model')
+    def testai_available_returns_true(self, mock_get_client_and_model):
         """Test ai_available when client can be initialized"""
-        mock_get_client.return_value = MagicMock()
+        mock_client = MagicMock()
+        # get_client_and_model returns (client, model, tier_info)
+        mock_get_client_and_model.return_value = (mock_client, "gpt-4o", {"tier": "premium"})
 
         self.assertTrue(ai_available())
 
