@@ -615,49 +615,8 @@ class ViewsCompleteCoverageTest(TestCase):
 
         self.assertEqual(response.status_code, 503)
 
-    @override_settings(OPENAI_API_KEY='test-key')
-    @patch('active_interview_app.views.ai_available')
-    @patch('active_interview_app.views.get_openai_client')
-    def test_results_chat_getai_available(self, mock_client, mock_ai):
-        """Test ResultsChat GET when AI is available"""
-        mock_ai.return_value = True
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = "Great job!"
-        mock_client.return_value.chat.completions.create.return_value = mock_response
-
-        chat = Chat.objects.create(
-            owner=self.user,
-            title='Test',
-            job_listing=self.job_listing,
-            difficulty=5,
-            type='GEN',
-            messages=[{"role": "system", "content": "test"}]
-        )
-
-        response = self.client.get(reverse('chat-results', kwargs={'chat_id': chat.id}))
-        self.assertEqual(response.status_code, 200)
-        self.assertIn('feedback', response.context)
-        self.assertEqual(response.context['feedback'], 'Great job!')
-
-    @override_settings(OPENAI_API_KEY='test-key')
-    @patch('active_interview_app.views.ai_available')
-    def test_results_chat_get_ai_unavailable(self, mock_ai):
-        """Test ResultsChat GET when AI is unavailable"""
-        mock_ai.return_value = False
-
-        chat = Chat.objects.create(
-            owner=self.user,
-            title='Test',
-            job_listing=self.job_listing,
-            difficulty=5,
-            type='GEN',
-            messages=[{"role": "system", "content": "test"}]
-        )
-
-        response = self.client.get(reverse('chat-results', kwargs={'chat_id': chat.id}))
-        self.assertEqual(response.status_code, 200)
-        self.assertIn('AI features are currently unavailable', response.context['feedback'])
+    # Tests for chat-results view removed - view deleted in Phase 3
+    # See: temp/COMPLETED_PHASES_1-3.md for details
 
     @override_settings(OPENAI_API_KEY='test-key')
     @patch('active_interview_app.views.ai_available')

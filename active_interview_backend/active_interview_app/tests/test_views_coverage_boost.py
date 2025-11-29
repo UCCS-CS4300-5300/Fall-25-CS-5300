@@ -704,10 +704,9 @@ class ResultViewsTest(TestCase):
             type='GEN'
         )
         self.client.login(username='testuser', password='pass123')
-        url = reverse('chat-results', kwargs={'chat_id': chat.id})
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertIn('AI features are currently unavailable', response.context['feedback'])
+        # Test removed - chat-results view deleted in Phase 3
+        # See: temp/COMPLETED_PHASES_1-3.md
+        pass
 
     @patch('active_interview_app.views.ai_available', return_value=False)
     def test_result_charts_ai_unavailable(self, mock_ai):

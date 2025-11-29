@@ -897,21 +897,8 @@ class SectionScoresWithRationalesTest(TestCase):
         self.assertContains(response, '30%')  # Professionalism weight
         self.assertContains(response, '40%')  # Subject Knowledge weight
 
-    def test_generate_report_button_exists(self):
-        """Test that the generate detailed report button exists on results page"""
-        self.client.login(username='testuser', password='testpass123')
-        url = reverse('chat-results', kwargs={'chat_id': self.chat.id})
-        response = self.client.get(url)
-
-        self.assertEqual(response.status_code, 200)
-
-        # Check for the generate report button (updated for Issue #130 spinner)
-        self.assertContains(response, 'Generate Detailed Report')
-        self.assertContains(response, 'generate_report')
-        # Check for loading spinner elements added in Issue #130
-        self.assertContains(response, 'id="generateReportBtn"')
-        self.assertContains(response, 'id="reportSpinner"')
-        self.assertContains(response, 'loading-spinner-button')
+    # test_generate_report_button_exists removed - chat-results view deleted in Phase 3
+    # See: temp/COMPLETED_PHASES_1-3.md for details
 
     def test_pdf_export_includes_rationales(self):
         """Test that PDF export includes section rationales"""
@@ -978,10 +965,8 @@ class IntegratedUserStoriesTest(TestCase):
 
         self.client.login(username='candidate', password='testpass123')
 
-        # Step 1: View quick results page
-        results_url = reverse('chat-results', kwargs={'chat_id': self.chat.id})
-        results_response = self.client.get(results_url)
-        self.assertEqual(results_response.status_code, 200)
+        # Step 1: chat-results view removed - skipping to report generation
+        # See: temp/COMPLETED_PHASES_1-3.md for details
 
         # Step 2: Generate detailed report (triggers score computation)
         generate_url = reverse('generate_report', kwargs={'chat_id': self.chat.id})

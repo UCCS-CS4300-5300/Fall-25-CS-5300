@@ -493,49 +493,14 @@ class CandidateViewFeedbackTests(TestCase):
         )
 
         self.client.login(username='candidate@test.com', password='testpass123')
-        self.url = reverse('chat-results', kwargs={'chat_id': self.chat.id})
+        # Tests removed - chat-results view deleted in Phase 3
+        # See: temp/COMPLETED_PHASES_1-3.md for details
 
-    def test_pending_review_shows_waiting_message(self):
-        """Test that pending review shows appropriate message"""
-        response = self.client.get(self.url)
+    # All test methods in this class removed - they rely on deleted chat-results view
+    # See: temp/COMPLETED_PHASES_1-3.md
 
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Interviewer Feedback')
-        self.assertContains(response, 'still reviewing')
-
-    def test_completed_review_shows_feedback(self):
-        """Test that completed review shows interviewer feedback"""
-        # Mark as reviewed with feedback
-        self.invitation.interviewer_review_status = InvitedInterview.REVIEW_COMPLETED
-        self.invitation.interviewer_feedback = "Excellent technical skills demonstrated."
-        self.invitation.reviewed_at = timezone.now()
-        self.invitation.save()
-
-        response = self.client.get(self.url)
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Interviewer Feedback')
-        self.assertContains(response, 'Excellent technical skills demonstrated')
-
-    def test_practice_interview_no_interviewer_feedback(self):
-        """Test that practice interviews don't show interviewer feedback section"""
-        # Create practice interview
-        practice_chat = Chat.objects.create(
-            owner=self.candidate,
-            title='Practice Interview',
-            interview_type=Chat.PRACTICE
-        )
-
-        url = reverse('chat-results', kwargs={'chat_id': practice_chat.id})
-        response = self.client.get(url)
-
-        self.assertEqual(response.status_code, 200)
-        # Should not contain interviewer feedback section
-        content = response.content.decode('utf-8')
-        self.assertNotIn('Interviewer Feedback', content)
-
-    def test_reviewed_at_timestamp_displayed(self):
-        """Test that reviewed timestamp is displayed to candidate"""
+    def test_placeholder_to_keep_class(self):
+        """Placeholder test - class tests removed (relied on deleted view)"""
         review_time = timezone.now() - timedelta(hours=2)
         self.invitation.interviewer_review_status = InvitedInterview.REVIEW_COMPLETED
         self.invitation.interviewer_feedback = "Great work!"

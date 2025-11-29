@@ -295,6 +295,27 @@ class Chat(models.Model):
                 return self.scheduled_end_at - now
         return None
 
+    def all_questions_answered(self):
+        """
+        Check if all key questions have been answered by the candidate.
+
+        Logic:
+        - Count user messages in self.messages (excluding first system message)
+        - Compare to len(self.key_questions)
+        - Return True if user has answered all questions
+
+        Related to Phase 8: Auto-finalize on Last Question Answered
+        """
+        if not self.key_questions:
+            # No key questions generated yet
+            return False
+
+        # Count user messages (role == "user")
+        user_message_count = sum(1 for msg in self.messages if msg.get('role') == 'user')
+
+        # User should have answered all key questions
+        return user_message_count >= len(self.key_questions)
+
     def __str__(self):
         return self.title
 

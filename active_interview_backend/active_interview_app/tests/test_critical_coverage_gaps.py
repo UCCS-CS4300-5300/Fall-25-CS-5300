@@ -238,11 +238,8 @@ class ChatViewUnauthorizedAccessTest(TestCase):
         )
         self.assertIn(response.status_code, [302, 403])
 
-    def test_resultschat_unauthorized(self):
-        """Test ResultsChat by unauthorized user"""
-        self.client.login(username='user2', password='pass')
-        response = self.client.get(reverse('chat-results', kwargs={'chat_id': self.chat.id}))
-        self.assertIn(response.status_code, [302, 403])
+    # test_resultschat_unauthorized removed - chat-results view deleted in Phase 3
+    # See: temp/COMPLETED_PHASES_1-3.md for details
 
     def test_resultcharts_unauthorized(self):
         """Test ResultCharts by unauthorized user"""

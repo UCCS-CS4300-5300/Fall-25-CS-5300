@@ -390,25 +390,18 @@ class ResultsViewsCoverageTest(TestCase):
         mock_openai.chat.completions.create.return_value = mock_response
         mock_client.return_value = mock_openai
 
-        response = self.client.get(
-            reverse('chat-results', kwargs={'chat_id': self.chat.id})
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context['scores']['Professionalism'], 85)
-        self.assertEqual(response.context['scores']['Subject Knowledge'], 90)
+        # Test removed - chat-results view deleted in Phase 3
+        # See: temp/COMPLETED_PHASES_1-3.md
+        pass
 
     @patch('active_interview_app.views.ai_available')
     def test_result_charts_view_ai_unavailable(self, mockai_available):
         """Test ResultCharts view when AI is unavailable"""
         mockai_available.return_value = False
 
-        response = self.client.get(
-            reverse('chat-results', kwargs={'chat_id': self.chat.id})
-        )
-        self.assertEqual(response.status_code, 200)
-        # All scores should be 0 when AI is unavailable
-        self.assertEqual(response.context['scores']['Professionalism'], 0)
-        self.assertEqual(response.context['scores']['Overall'], 0)
+        # Test removed - chat-results view deleted in Phase 3
+        # See: temp/COMPLETED_PHASES_1-3.md
+        pass
 
     @patch('active_interview_app.views.ai_available')
     @patch('active_interview_app.views.get_openai_client')
@@ -425,12 +418,9 @@ class ResultsViewsCoverageTest(TestCase):
         mock_openai.chat.completions.create.return_value = mock_response
         mock_client.return_value = mock_openai
 
-        response = self.client.get(
-            reverse('chat-results', kwargs={'chat_id': self.chat.id})
-        )
-        self.assertEqual(response.status_code, 200)
-        # Should default to 0s when scores are invalid
-        self.assertEqual(response.context['scores']['Professionalism'], 0)
+        # Test removed - chat-results view deleted in Phase 3
+        # See: temp/COMPLETED_PHASES_1-3.md
+        pass
 
 
 class APIViewsCoverageTest(TestCase):
