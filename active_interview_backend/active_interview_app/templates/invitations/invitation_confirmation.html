@@ -226,7 +226,10 @@
         </div>
 
         <div class="button-group">
-            <a href="{% url 'invitation_create' %}" class="btn-primary">Send Another Invitation</a>
+            <a href="{{ google_calendar_url }}" target="_blank" class="btn-primary" title="Add this interview to your Google Calendar">
+                📅 Add to Google Calendar
+            </a>
+            <a href="{% url 'invitation_create' %}" class="btn-secondary">Send Another Invitation</a>
             <a href="{% url 'invitation_dashboard' %}" class="btn-secondary">View All Invitations</a>
             <a href="{% url 'template_detail' invitation.template.id %}" class="btn-secondary">Back to Template</a>
         </div>

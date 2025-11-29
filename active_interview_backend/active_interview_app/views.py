@@ -2604,6 +2604,7 @@ def invitation_confirmation(request, invitation_id):
     Show confirmation page after successfully creating an invitation.
 
     Related to Issue #9 (Interview Confirmation Page).
+    Related to Phase 9 (Google Calendar Integration).
     """
     # Get invitation and verify ownership
     invitation = get_object_or_404(
@@ -2612,10 +2613,15 @@ def invitation_confirmation(request, invitation_id):
         interviewer=request.user
     )
 
+    # Generate Google Calendar URL for interviewer
+    from .invitation_utils import get_google_calendar_url
+    google_calendar_url = get_google_calendar_url(invitation)
+
     context = {
         'invitation': invitation,
         'join_url': invitation.get_join_url(),
         'window_end': invitation.get_window_end(),
+        'google_calendar_url': google_calendar_url,
     }
 
     return render(request, 'invitations/invitation_confirmation.html', context)
