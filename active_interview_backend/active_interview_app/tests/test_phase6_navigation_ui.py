@@ -14,11 +14,12 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from active_interview_app.models import (
-    UserProfile, Chat, InterviewTemplate, InvitedInterview
+    UserProfile, Chat, InterviewTemplate
 )
 from django.utils import timezone
 from datetime import timedelta
 import uuid
+from .test_credentials import TEST_PASSWORD
 
 User = get_user_model()
 
@@ -33,9 +34,10 @@ class NavbarInvitationsLinkTests(TestCase):
         self.interviewer = User.objects.create_user(
             username='interviewer@test.com',
             email='interviewer@test.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
-        self.interviewer_profile = UserProfile.objects.get(user=self.interviewer)
+        self.interviewer_profile = UserProfile.objects.get(
+            user=self.interviewer)
         self.interviewer_profile.role = 'interviewer'
         self.interviewer_profile.save()
 
@@ -43,7 +45,7 @@ class NavbarInvitationsLinkTests(TestCase):
         self.candidate = User.objects.create_user(
             username='candidate@test.com',
             email='candidate@test.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.candidate_profile = UserProfile.objects.get(user=self.candidate)
         self.candidate_profile.role = 'candidate'
@@ -51,7 +53,8 @@ class NavbarInvitationsLinkTests(TestCase):
 
     def test_interviewer_sees_invitations_link(self):
         """Test interviewer can see Invitations link in navbar"""
-        self.client.login(username='interviewer@test.com', password='testpass123')
+        self.client.login(username='interviewer@test.com',
+                          password=TEST_PASSWORD)
         response = self.client.get(reverse('index'))
 
         self.assertEqual(response.status_code, 200)
@@ -60,7 +63,8 @@ class NavbarInvitationsLinkTests(TestCase):
 
     def test_candidate_does_not_see_invitations_link(self):
         """Test candidate cannot see Invitations link in navbar"""
-        self.client.login(username='candidate@test.com', password='testpass123')
+        self.client.login(username='candidate@test.com',
+                          password=TEST_PASSWORD)
         response = self.client.get(reverse('index'))
 
         self.assertEqual(response.status_code, 200)
@@ -68,20 +72,21 @@ class NavbarInvitationsLinkTests(TestCase):
         # We need to be careful not to match other uses of the word
         navbar_content = str(response.content)
         # The navbar has specific structure, check it doesn't have the link
-        self.assertNotIn('href="%s"' % reverse('invitation_dashboard'), navbar_content)
+        self.assertNotIn('href="%s"' % reverse(
+            'invitation_dashboard'), navbar_content)
 
     def test_admin_sees_invitations_link(self):
         """Test admin can see Invitations link in navbar"""
         admin = User.objects.create_user(
             username='admin@test.com',
             email='admin@test.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         admin_profile = UserProfile.objects.get(user=admin)
         admin_profile.role = 'admin'
         admin_profile.save()
 
-        self.client.login(username='admin@test.com', password='testpass123')
+        self.client.login(username='admin@test.com', password=TEST_PASSWORD)
         response = self.client.get(reverse('index'))
 
         self.assertEqual(response.status_code, 200)
@@ -99,9 +104,10 @@ class TemplateInviteButtonTests(TestCase):
         self.interviewer = User.objects.create_user(
             username='interviewer@test.com',
             email='interviewer@test.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
-        self.interviewer_profile = UserProfile.objects.get(user=self.interviewer)
+        self.interviewer_profile = UserProfile.objects.get(
+            user=self.interviewer)
         self.interviewer_profile.role = 'interviewer'
         self.interviewer_profile.save()
 
@@ -121,33 +127,39 @@ class TemplateInviteButtonTests(TestCase):
 
     def test_template_list_has_invite_button(self):
         """Test template list page has Invite Candidate button for each template"""
-        self.client.login(username='interviewer@test.com', password='testpass123')
+        self.client.login(username='interviewer@test.com',
+                          password=TEST_PASSWORD)
         response = self.client.get(reverse('template_list'))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Invite Candidate')
         self.assertContains(
             response,
-            reverse('invitation_create_from_template', kwargs={'template_id': self.template.id})
+            reverse('invitation_create_from_template',
+                    kwargs={'template_id': self.template.id})
         )
 
     def test_template_detail_has_invite_button(self):
         """Test template detail page has Invite Candidate button"""
-        self.client.login(username='interviewer@test.com', password='testpass123')
+        self.client.login(username='interviewer@test.com',
+                          password=TEST_PASSWORD)
         response = self.client.get(
-            reverse('template_detail', kwargs={'template_id': self.template.id})
+            reverse('template_detail', kwargs={
+                    'template_id': self.template.id})
         )
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Invite Candidate')
         self.assertContains(
             response,
-            reverse('invitation_create_from_template', kwargs={'template_id': self.template.id})
+            reverse('invitation_create_from_template',
+                    kwargs={'template_id': self.template.id})
         )
 
     def test_invite_button_links_to_correct_url(self):
         """Test Invite Candidate button links to pre-populated form"""
-        self.client.login(username='interviewer@test.com', password='testpass123')
+        self.client.login(username='interviewer@test.com',
+                          password=TEST_PASSWORD)
 
         # Get the template list page
         response = self.client.get(reverse('template_list'))
@@ -170,9 +182,10 @@ class SidebarInterviewCategorizationTests(TestCase):
         self.interviewer = User.objects.create_user(
             username='interviewer@test.com',
             email='interviewer@test.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
-        self.interviewer_profile = UserProfile.objects.get(user=self.interviewer)
+        self.interviewer_profile = UserProfile.objects.get(
+            user=self.interviewer)
         self.interviewer_profile.role = 'interviewer'
         self.interviewer_profile.save()
 
@@ -180,7 +193,7 @@ class SidebarInterviewCategorizationTests(TestCase):
         self.candidate = User.objects.create_user(
             username='candidate@test.com',
             email='candidate@test.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
         # Create template
@@ -208,7 +221,8 @@ class SidebarInterviewCategorizationTests(TestCase):
 
     def test_sidebar_shows_practice_section(self):
         """Test sidebar displays 'Practice Interviews' section header"""
-        self.client.login(username='candidate@test.com', password='testpass123')
+        self.client.login(username='candidate@test.com',
+                          password=TEST_PASSWORD)
         response = self.client.get(reverse('chat-list'))
 
         self.assertEqual(response.status_code, 200)
@@ -216,7 +230,8 @@ class SidebarInterviewCategorizationTests(TestCase):
 
     def test_sidebar_shows_invited_section(self):
         """Test sidebar displays 'Invited Interviews' section header"""
-        self.client.login(username='candidate@test.com', password='testpass123')
+        self.client.login(username='candidate@test.com',
+                          password=TEST_PASSWORD)
         response = self.client.get(reverse('chat-list'))
 
         self.assertEqual(response.status_code, 200)
@@ -224,7 +239,8 @@ class SidebarInterviewCategorizationTests(TestCase):
 
     def test_practice_chat_in_practice_section(self):
         """Test practice interviews appear in Practice section"""
-        self.client.login(username='candidate@test.com', password='testpass123')
+        self.client.login(username='candidate@test.com',
+                          password=TEST_PASSWORD)
         response = self.client.get(reverse('chat-list'))
 
         content = response.content.decode('utf-8')
@@ -239,7 +255,8 @@ class SidebarInterviewCategorizationTests(TestCase):
 
     def test_invited_chat_in_invited_section(self):
         """Test invited interviews appear in Invited section"""
-        self.client.login(username='candidate@test.com', password='testpass123')
+        self.client.login(username='candidate@test.com',
+                          password=TEST_PASSWORD)
         response = self.client.get(reverse('chat-list'))
 
         content = response.content.decode('utf-8')
@@ -254,7 +271,8 @@ class SidebarInterviewCategorizationTests(TestCase):
 
     def test_invited_chat_has_badge(self):
         """Test invited interviews have 'Invited' badge"""
-        self.client.login(username='candidate@test.com', password='testpass123')
+        self.client.login(username='candidate@test.com',
+                          password=TEST_PASSWORD)
         response = self.client.get(reverse('chat-list'))
 
         self.assertEqual(response.status_code, 200)
@@ -264,7 +282,8 @@ class SidebarInterviewCategorizationTests(TestCase):
 
     def test_invited_chat_no_edit_or_restart_options(self):
         """Test invited interviews don't have Edit or Restart in dropdown"""
-        self.client.login(username='candidate@test.com', password='testpass123')
+        self.client.login(username='candidate@test.com',
+                          password=TEST_PASSWORD)
         response = self.client.get(
             reverse('chat-view', kwargs={'chat_id': self.invited_chat.id})
         )
@@ -285,7 +304,8 @@ class SidebarInterviewCategorizationTests(TestCase):
 
     def test_practice_chat_has_edit_and_restart(self):
         """Test practice interviews have Edit and Restart in dropdown"""
-        self.client.login(username='candidate@test.com', password='testpass123')
+        self.client.login(username='candidate@test.com',
+                          password=TEST_PASSWORD)
         response = self.client.get(
             reverse('chat-view', kwargs={'chat_id': self.practice_chat.id})
         )
@@ -308,14 +328,14 @@ class InterviewTypeBadgeTests(TestCase):
         self.candidate = User.objects.create_user(
             username='candidate@test.com',
             email='candidate@test.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
         # Create interviewer
         self.interviewer = User.objects.create_user(
             username='interviewer@test.com',
             email='interviewer@test.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
         # Create template
@@ -341,7 +361,8 @@ class InterviewTypeBadgeTests(TestCase):
 
     def test_invited_badge_uses_css_variables(self):
         """Test that invited badge uses CSS variables (not hardcoded colors)"""
-        self.client.login(username='candidate@test.com', password='testpass123')
+        self.client.login(username='candidate@test.com',
+                          password=TEST_PASSWORD)
         response = self.client.get(reverse('chat-list'))
 
         content = response.content.decode('utf-8')
@@ -352,7 +373,8 @@ class InterviewTypeBadgeTests(TestCase):
 
     def test_badge_size_is_readable(self):
         """Test that badge font size is appropriate"""
-        self.client.login(username='candidate@test.com', password='testpass123')
+        self.client.login(username='candidate@test.com',
+                          password=TEST_PASSWORD)
         response = self.client.get(reverse('chat-list'))
 
         # Check for small font size for badge
@@ -360,13 +382,15 @@ class InterviewTypeBadgeTests(TestCase):
 
     def test_practice_interview_no_badge(self):
         """Test that practice interviews don't have a badge"""
-        self.client.login(username='candidate@test.com', password='testpass123')
+        self.client.login(username='candidate@test.com',
+                          password=TEST_PASSWORD)
         response = self.client.get(reverse('chat-list'))
 
         content = response.content.decode('utf-8')
 
         # Find practice interview section
-        practice_section = content.split('Practice Interviews')[1].split('Invited Interviews')[0]
+        practice_section = content.split('Practice Interviews')[
+            1].split('Invited Interviews')[0]
 
         # Practice section should not have the "Invited" badge
         self.assertNotIn('badge', practice_section.lower())
@@ -382,7 +406,7 @@ class ChatListViewNavigationTests(TestCase):
         self.user = User.objects.create_user(
             username='user@test.com',
             email='user@test.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
         # Create template
@@ -393,7 +417,7 @@ class ChatListViewNavigationTests(TestCase):
 
     def test_empty_chat_list_displays_message(self):
         """Test chat list with no interviews shows appropriate message"""
-        self.client.login(username='user@test.com', password='testpass123')
+        self.client.login(username='user@test.com', password=TEST_PASSWORD)
         response = self.client.get(reverse('chat-list'))
 
         self.assertEqual(response.status_code, 200)
@@ -410,7 +434,7 @@ class ChatListViewNavigationTests(TestCase):
                 interview_type=Chat.PRACTICE
             )
 
-        self.client.login(username='user@test.com', password='testpass123')
+        self.client.login(username='user@test.com', password=TEST_PASSWORD)
         response = self.client.get(reverse('chat-list'))
 
         self.assertEqual(response.status_code, 200)
@@ -429,7 +453,7 @@ class ChatListViewNavigationTests(TestCase):
                 scheduled_end_at=timezone.now() + timedelta(hours=1)
             )
 
-        self.client.login(username='user@test.com', password='testpass123')
+        self.client.login(username='user@test.com', password=TEST_PASSWORD)
         response = self.client.get(reverse('chat-list'))
 
         self.assertEqual(response.status_code, 200)
@@ -462,7 +486,7 @@ class ChatListViewNavigationTests(TestCase):
             scheduled_end_at=timezone.now() + timedelta(hours=1)
         )
 
-        self.client.login(username='user@test.com', password='testpass123')
+        self.client.login(username='user@test.com', password=TEST_PASSWORD)
         response = self.client.get(reverse('chat-list'))
 
         content = response.content.decode('utf-8')

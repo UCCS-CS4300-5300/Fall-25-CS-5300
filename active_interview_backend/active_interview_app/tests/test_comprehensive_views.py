@@ -2,17 +2,16 @@
 Comprehensive tests for views to achieve >80% coverage.
 Tests all view functions and classes including edge cases.
 """
-from django.test import TestCase, Client, RequestFactory
+from django.test import TestCase, Client
 from django.contrib.auth.models import User, Group
 from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
-from unittest.mock import patch, Mock, MagicMock
+from unittest.mock import patch
 import json
 
 from active_interview_app.models import (
-    UploadedResume, UploadedJobListing, Chat, UserProfile
+    UploadedResume, UploadedJobListing, Chat
 )
-from active_interview_app.forms import CreateChatForm, EditChatForm
 from active_interview_app import views
 
 
@@ -20,7 +19,7 @@ class ViewsHelperFunctionsTest(TestCase):
     """Test helper functions in views"""
 
     @patch('active_interview_app.openai_utils.settings.OPENAI_API_KEY', '')
-    def testai_available_no_api_key(self):
+    def test_ai_available_no_api_key(self):
         """Test ai_available returns False when no API key"""
         from active_interview_app import openai_utils
         # Reset the cached client
@@ -30,7 +29,7 @@ class ViewsHelperFunctionsTest(TestCase):
 
     @patch('active_interview_app.openai_utils.settings.OPENAI_API_KEY', 'test-key')
     @patch('active_interview_app.openai_utils.OpenAI')
-    def testai_available_with_api_key(self, mock_openai):
+    def test_ai_available_with_api_key(self, mock_openai):
         """Test ai_available returns True with valid API key"""
         from active_interview_app import openai_utils
         # Reset the global client
@@ -174,7 +173,8 @@ class ProfileViewTest(TestCase):
 
     def setUp(self):
         """Set up test data"""
-        self.user = User.objects.create_user('testuser', 'test@example.com', 'pass')
+        self.user = User.objects.create_user(
+            'testuser', 'test@example.com', 'pass')
         self.client = Client()
         self.client.force_login(self.user)
 
@@ -227,8 +227,10 @@ class ChatListViewTest(TestCase):
 
     def setUp(self):
         """Set up test data"""
-        self.user = User.objects.create_user('chatuser', 'chat@example.com', 'pass')
-        self.other_user = User.objects.create_user('other', 'other@example.com', 'pass')
+        self.user = User.objects.create_user(
+            'chatuser', 'chat@example.com', 'pass')
+        self.other_user = User.objects.create_user(
+            'other', 'other@example.com', 'pass')
         self.client = Client()
         self.client.force_login(self.user)
 
@@ -290,7 +292,8 @@ class CreateChatViewTest(TestCase):
 
     def setUp(self):
         """Set up test data"""
-        self.user = User.objects.create_user('chatcreator', 'create@example.com', 'pass')
+        self.user = User.objects.create_user(
+            'chatcreator', 'create@example.com', 'pass')
         self.client = Client()
         self.client.force_login(self.user)
 
@@ -330,14 +333,14 @@ class CreateChatViewTest(TestCase):
     @patch('active_interview_app.views.ai_available', return_value=False)
     def test_create_chat_post_ai_disabled(self, mockai_available):
         """Test CreateChat POST when AI is disabled"""
-        response = self.client.post(reverse('chat-create'), {
+        self.client.post(reverse('chat-create'), {
             'create': 'true',
             'title': 'Test Chat',
             'type': Chat.GENERAL,
             'difficulty': 5,
             'listing_choice': self.job.id,
             'resume_choice': self.resume.id
-        })
+        })  # noqa: F841
 
         # Should still create chat but with empty AI message
         self.assertEqual(Chat.objects.filter(title='Test Chat').count(), 1)
@@ -359,8 +362,10 @@ class EditChatViewTest(TestCase):
         # Create average_role group (required by signals)
         Group.objects.get_or_create(name='average_role')
 
-        self.user = User.objects.create_user('editor', 'edit@example.com', 'pass')
-        self.other_user = User.objects.create_user('other', 'other@example.com', 'pass')
+        self.user = User.objects.create_user(
+            'editor', 'edit@example.com', 'pass')
+        self.other_user = User.objects.create_user(
+            'other', 'other@example.com', 'pass')
         self.client = Client()
         self.client.force_login(self.user)
 
@@ -378,7 +383,8 @@ class EditChatViewTest(TestCase):
             owner=self.user,
             title='Original Title',
             difficulty=5,
-            messages=[{"role": "system", "content": "System prompt with difficulty <<5>>"}],
+            messages=[
+                {"role": "system", "content": "System prompt with difficulty <<5>>"}],
             job_listing=self.job
         )
 
@@ -386,7 +392,8 @@ class EditChatViewTest(TestCase):
             owner=self.other_user,
             title='Other Chat',
             difficulty=5,
-            messages=[{"role": "system", "content": "System prompt with difficulty <<5>>"}],
+            messages=[
+                {"role": "system", "content": "System prompt with difficulty <<5>>"}],
             job_listing=self.job
         )
 
@@ -405,17 +412,21 @@ class EditChatViewTest(TestCase):
 
     def test_edit_chat_get_not_owner(self):
         """Test EditChat GET as non-owner returns 403"""
-        response = self.client.get(reverse('chat-edit', args=[self.other_chat.id]))
+        response = self.client.get(
+            reverse('chat-edit', args=[self.other_chat.id]))
 
         self.assertEqual(response.status_code, 403)
 
     def test_edit_chat_post_valid(self):
         """Test EditChat POST with valid data"""
-        response = self.client.post(reverse('chat-edit', args=[self.chat.id]), {
-            'update': 'true',
-            'title': 'Updated Title',
-            'difficulty': 8
-        })
+        response = self.client.post(
+            reverse('chat-edit', args=[self.chat.id]),
+            {
+                'update': 'true',
+                'title': 'Updated Title',
+                'difficulty': 8
+            }
+        )
 
         # Should redirect to chat view
         self.assertEqual(response.status_code, 302)
@@ -434,8 +445,10 @@ class DeleteChatViewTest(TestCase):
         # Create average_role group (required by signals)
         Group.objects.get_or_create(name='average_role')
 
-        self.user = User.objects.create_user('deleter', 'delete@example.com', 'pass')
-        self.other_user = User.objects.create_user('other', 'other@example.com', 'pass')
+        self.user = User.objects.create_user(
+            'deleter', 'delete@example.com', 'pass')
+        self.other_user = User.objects.create_user(
+            'other', 'other@example.com', 'pass')
         self.client = Client()
         self.client.force_login(self.user)
 
@@ -481,7 +494,8 @@ class DeleteChatViewTest(TestCase):
 
     def test_delete_chat_post_not_owner(self):
         """Test DeleteChat POST as non-owner returns 403"""
-        response = self.client.post(reverse('chat-delete', args=[self.other_chat.id]))
+        response = self.client.post(
+            reverse('chat-delete', args=[self.other_chat.id]))
 
         self.assertEqual(response.status_code, 403)
 
@@ -494,7 +508,8 @@ class DocumentViewsTest(TestCase):
 
     def setUp(self):
         """Set up test data"""
-        self.user = User.objects.create_user('docuser', 'doc@example.com', 'pass')
+        self.user = User.objects.create_user(
+            'docuser', 'doc@example.com', 'pass')
         self.client = Client()
         self.client.force_login(self.user)
 
@@ -520,7 +535,8 @@ class DocumentViewsTest(TestCase):
 
     def test_resume_detail_view(self):
         """Test resume detail view"""
-        response = self.client.get(reverse('resume_detail', args=[self.resume.id]))
+        response = self.client.get(
+            reverse('resume_detail', args=[self.resume.id]))
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'documents/resume_detail.html')
@@ -529,7 +545,8 @@ class DocumentViewsTest(TestCase):
 
     def test_job_posting_detail_view(self):
         """Test job posting detail view"""
-        response = self.client.get(reverse('job_posting_detail', args=[self.job.id]))
+        response = self.client.get(
+            reverse('job_posting_detail', args=[self.job.id]))
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'documents/job_posting_detail.html')
@@ -560,7 +577,8 @@ class DocumentViewsTest(TestCase):
 
     def test_edit_resume_get(self):
         """Test edit resume GET"""
-        response = self.client.get(reverse('edit_resume', args=[self.resume.id]))
+        response = self.client.get(
+            reverse('edit_resume', args=[self.resume.id]))
 
         self.assertEqual(response.status_code, 200)
         template_names = [t.name for t in response.templates]
@@ -587,7 +605,8 @@ class DocumentViewsTest(TestCase):
 
     def test_edit_job_posting_get(self):
         """Test edit job posting GET"""
-        response = self.client.get(reverse('edit_job_posting', args=[self.job.id]))
+        response = self.client.get(
+            reverse('edit_job_posting', args=[self.job.id]))
 
         self.assertEqual(response.status_code, 200)
         template_names = [t.name for t in response.templates]
@@ -618,7 +637,8 @@ class DocumentListViewTest(TestCase):
 
     def setUp(self):
         """Set up test data"""
-        self.user = User.objects.create_user('listuser', 'list@example.com', 'pass')
+        self.user = User.objects.create_user(
+            'listuser', 'list@example.com', 'pass')
         self.client = Client()
         self.client.force_login(self.user)
 

@@ -7,15 +7,13 @@ from django.shortcuts import render
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import JsonResponse
 from django.utils import timezone
-from django.db.models import Count, Avg, Sum
+from django.db.models import Sum
 from datetime import timedelta
 from decimal import Decimal
 
 from .observability_models import (
     RequestMetric,
-    DailyMetricsSummary,
-    ProviderCostDaily,
-    ErrorLog
+    ProviderCostDaily
 )
 
 

@@ -11,7 +11,7 @@ Usage:
 """
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-from django.db.models import Count, Avg, Max, Sum
+from django.db.models import Avg, Max, Sum
 from datetime import datetime, timedelta
 from decimal import Decimal
 

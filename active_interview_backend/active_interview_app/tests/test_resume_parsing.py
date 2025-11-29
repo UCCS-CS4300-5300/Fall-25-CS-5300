@@ -9,7 +9,7 @@ Tests cover:
 
 import json
 from io import BytesIO
-from unittest.mock import patch, MagicMock, Mock
+from unittest.mock import patch, MagicMock
 from django.contrib.auth.models import User
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -19,6 +19,7 @@ from docx import Document as DocxDocument
 from ..models import UploadedResume
 from ..openai_utils import get_openai_client, ai_available, MAX_TOKENS
 from ..resume_parser import parse_resume_with_ai, validate_parsed_data
+from .test_credentials import TEST_PASSWORD
 
 
 # === Helper Functions ===
@@ -27,7 +28,7 @@ def create_test_user():
     """Create a test user for authentication."""
     return User.objects.create_user(
         username="testuser",
-        password="testpass123",
+        password=TEST_PASSWORD,
         email="test@example.com"
     )
 
@@ -136,7 +137,8 @@ class OpenAIUtilsTests(TestCase):
         with self.assertRaises(ValueError) as context:
             get_openai_client()
 
-        self.assertIn("Failed to initialize OpenAI client", str(context.exception))
+        self.assertIn("Failed to initialize OpenAI client",
+                      str(context.exception))
 
     @override_settings(OPENAI_API_KEY="test-key")
     @patch('active_interview_app.openai_utils.OpenAI')
@@ -174,7 +176,8 @@ class ResumeParserTests(TestCase):
     @override_settings(OPENAI_API_KEY="test-key")
     @patch('active_interview_app.resume_parser.get_client_and_model')
     @patch('active_interview_app.resume_parser.ai_available')
-    def test_parse_resume_with_ai_success(self, mockai_available, mock_get_client):
+    def test_parse_resume_with_ai_success(
+            self, mockai_available, mock_get_client):
         """Test successful resume parsing."""
         # Mock AI availability
         mockai_available.return_value = True
@@ -220,7 +223,8 @@ class ResumeParserTests(TestCase):
     @override_settings(OPENAI_API_KEY="test-key")
     @patch('active_interview_app.resume_parser.get_client_and_model')
     @patch('active_interview_app.resume_parser.ai_available')
-    def test_parse_resume_invalid_json(self, mockai_available, mock_get_client):
+    def test_parse_resume_invalid_json(
+            self, mockai_available, mock_get_client):
         """Test parsing handles invalid JSON response."""
         mockai_available.return_value = True
 
@@ -238,12 +242,14 @@ class ResumeParserTests(TestCase):
         with self.assertRaises(ValueError) as context:
             parse_resume_with_ai(create_sample_resume_text())
 
-        self.assertIn("Failed to parse OpenAI response as JSON", str(context.exception))
+        self.assertIn("Failed to parse OpenAI response as JSON",
+                      str(context.exception))
 
     @override_settings(OPENAI_API_KEY="test-key")
     @patch('active_interview_app.resume_parser.get_client_and_model')
     @patch('active_interview_app.resume_parser.ai_available')
-    def test_parse_resume_with_markdown_json(self, mockai_available, mock_get_client):
+    def test_parse_resume_with_markdown_json(
+            self, mockai_available, mock_get_client):
         """Test parsing handles JSON wrapped in markdown code blocks."""
         mockai_available.return_value = True
 
@@ -268,7 +274,8 @@ class ResumeParserTests(TestCase):
     @override_settings(OPENAI_API_KEY="test-key")
     @patch('active_interview_app.resume_parser.get_client_and_model')
     @patch('active_interview_app.resume_parser.ai_available')
-    def test_parse_resume_missing_fields(self, mockai_available, mock_get_client):
+    def test_parse_resume_missing_fields(
+            self, mockai_available, mock_get_client):
         """Test parsing handles missing fields in response."""
         mockai_available.return_value = True
 
@@ -294,7 +301,8 @@ class ResumeParserTests(TestCase):
     @override_settings(OPENAI_API_KEY="test-key")
     @patch('active_interview_app.resume_parser.get_client_and_model')
     @patch('active_interview_app.resume_parser.ai_available')
-    def test_parse_resume_truncates_long_content(self, mockai_available, mock_get_client):
+    def test_parse_resume_truncates_long_content(
+            self, mockai_available, mock_get_client):
         """Test parsing truncates very long resume content."""
         mockai_available.return_value = True
 
@@ -351,7 +359,7 @@ class ResumeUploadParsingIntegrationTests(TestCase):
     def setUp(self):
         """Set up test fixtures."""
         self.user = create_test_user()
-        self.client.login(username="testuser", password="testpass123")
+        self.client.login(username="testuser", password=TEST_PASSWORD)
 
     @override_settings(OPENAI_API_KEY="test-key")
     @patch('active_interview_app.views.ai_available')
@@ -374,7 +382,8 @@ class ResumeUploadParsingIntegrationTests(TestCase):
         mock_parse.return_value = create_sample_parsed_data()
 
         # Upload resume
-        file = SimpleUploadedFile("resume.pdf", b"%PDF-1.4 test", content_type="application/pdf")
+        file = SimpleUploadedFile(
+            "resume.pdf", b"%PDF-1.4 test", content_type="application/pdf")
         response = self.client.post(
             reverse("upload_file"),
             {"file": file, "title": "My Resume"},
@@ -382,7 +391,8 @@ class ResumeUploadParsingIntegrationTests(TestCase):
         )
 
         # Verify success message
-        self.assertContains(response, "Resume uploaded and parsed successfully!")
+        self.assertContains(
+            response, "Resume uploaded and parsed successfully!")
 
         # Verify resume was saved with parsed data
         resume = UploadedResume.objects.get(title="My Resume")
@@ -412,7 +422,8 @@ class ResumeUploadParsingIntegrationTests(TestCase):
         mock_parse.side_effect = ValueError("OpenAI rate limit exceeded")
 
         # Upload resume
-        file = SimpleUploadedFile("resume.pdf", b"%PDF-1.4 test", content_type="application/pdf")
+        file = SimpleUploadedFile(
+            "resume.pdf", b"%PDF-1.4 test", content_type="application/pdf")
         response = self.client.post(
             reverse("upload_file"),
             {"file": file, "title": "My Resume"},
@@ -446,7 +457,8 @@ class ResumeUploadParsingIntegrationTests(TestCase):
         mockai_available.return_value = False
 
         # Upload resume
-        file = SimpleUploadedFile("resume.pdf", b"%PDF-1.4 test", content_type="application/pdf")
+        file = SimpleUploadedFile(
+            "resume.pdf", b"%PDF-1.4 test", content_type="application/pdf")
         response = self.client.post(
             reverse("upload_file"),
             {"file": file, "title": "My Resume"},
@@ -454,7 +466,9 @@ class ResumeUploadParsingIntegrationTests(TestCase):
         )
 
         # Verify warning message
-        self.assertContains(response, "Resume uploaded but AI parsing is currently unavailable")
+        self.assertContains(
+            response,
+            "Resume uploaded but AI parsing is currently unavailable")
 
         # Verify resume was saved with error status
         resume = UploadedResume.objects.get(title="My Resume")

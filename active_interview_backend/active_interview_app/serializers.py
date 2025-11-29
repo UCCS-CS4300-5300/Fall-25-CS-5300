@@ -12,7 +12,9 @@ class UploadedResumeSerializer(serializers.ModelSerializer):
 
 
 class UploadedJobListingSerializer(serializers.ModelSerializer):
-    filename = serializers.CharField(required=False, allow_blank=True, default='')
+    filename = serializers.CharField(
+        required=False, allow_blank=True, default=''
+    )
     file = serializers.FileField(required=False, allow_null=True)
     recommended_template_name = serializers.CharField(
         source='recommended_template.name',
@@ -33,7 +35,8 @@ class UploadedJobListingSerializer(serializers.ModelSerializer):
             'id', 'created_at', 'user',
             # Parsing fields are set by backend, not user input
             'required_skills', 'seniority_level', 'requirements',
-            'recommended_template', 'parsing_status', 'parsing_error', 'parsed_at'
+            'recommended_template', 'parsing_status', 'parsing_error',
+            'parsed_at'
         ]
 
 
@@ -42,7 +45,7 @@ class ExportableReportSerializer(serializers.ModelSerializer):
     chat_type = serializers.CharField(source='chat.get_type_display',
                                       read_only=True)
     chat_difficulty = serializers.IntegerField(source='chat.difficulty',
-                                                read_only=True)
+                                               read_only=True)
 
     class Meta:
         model = ExportableReport
@@ -85,14 +88,19 @@ class TagSerializer(serializers.ModelSerializer):
 class QuestionSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True, read_only=True)
     tag_ids = serializers.PrimaryKeyRelatedField(
-        many=True, queryset=Tag.objects.all(), write_only=True, required=False
+        many=True, queryset=Tag.objects.all(), write_only=True,
+        required=False
     )
-    owner_username = serializers.CharField(source='owner.username', read_only=True)
+    owner_username = serializers.CharField(
+        source='owner.username', read_only=True
+    )
 
     class Meta:
         model = Question
-        fields = ['id', 'question_bank', 'text', 'difficulty', 'tags', 'tag_ids',
-                 'owner', 'owner_username', 'created_at', 'updated_at']
+        fields = [
+            'id', 'question_bank', 'text', 'difficulty', 'tags', 'tag_ids',
+            'owner', 'owner_username', 'created_at', 'updated_at'
+        ]
         read_only_fields = ['id', 'owner', 'created_at', 'updated_at']
 
     def create(self, validated_data):
@@ -114,12 +122,16 @@ class QuestionSerializer(serializers.ModelSerializer):
 class QuestionBankSerializer(serializers.ModelSerializer):
     questions = QuestionSerializer(many=True, read_only=True)
     question_count = serializers.SerializerMethodField()
-    owner_username = serializers.CharField(source='owner.username', read_only=True)
+    owner_username = serializers.CharField(
+        source='owner.username', read_only=True
+    )
 
     class Meta:
         model = QuestionBank
-        fields = ['id', 'name', 'description', 'owner', 'owner_username',
-                 'questions', 'question_count', 'created_at', 'updated_at']
+        fields = [
+            'id', 'name', 'description', 'owner', 'owner_username',
+            'questions', 'question_count', 'created_at', 'updated_at'
+        ]
         read_only_fields = ['id', 'owner', 'created_at', 'updated_at']
 
     def get_question_count(self, obj):
@@ -129,12 +141,16 @@ class QuestionBankSerializer(serializers.ModelSerializer):
 class QuestionBankListSerializer(serializers.ModelSerializer):
     """Lighter serializer for list views without nested questions"""
     question_count = serializers.SerializerMethodField()
-    owner_username = serializers.CharField(source='owner.username', read_only=True)
+    owner_username = serializers.CharField(
+        source='owner.username', read_only=True
+    )
 
     class Meta:
         model = QuestionBank
-        fields = ['id', 'name', 'description', 'owner', 'owner_username',
-                 'question_count', 'created_at', 'updated_at']
+        fields = [
+            'id', 'name', 'description', 'owner', 'owner_username',
+            'question_count', 'created_at', 'updated_at'
+        ]
         read_only_fields = ['id', 'owner', 'created_at', 'updated_at']
 
     def get_question_count(self, obj):
@@ -154,9 +170,12 @@ class InterviewTemplateSerializer(serializers.ModelSerializer):
         many=True, read_only=True
     )
     question_bank_ids = serializers.PrimaryKeyRelatedField(
-        many=True, queryset=QuestionBank.objects.all(), write_only=True, required=False
+        many=True, queryset=QuestionBank.objects.all(), write_only=True,
+        required=False
     )
-    user_username = serializers.CharField(source='user.username', read_only=True)
+    user_username = serializers.CharField(
+        source='user.username', read_only=True
+    )
     status = serializers.CharField(source='get_status_display', read_only=True)
 
     class Meta:

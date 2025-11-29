@@ -4,16 +4,16 @@ No complex mocking, just simple tests that hit uncovered code paths.
 """
 from django.test import TestCase, Client
 from django.urls import reverse
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from active_interview_app.models import (
     UploadedResume,
-    UploadedJobListing,
-    Chat
+    UploadedJobListing
 )
 from active_interview_app.merge_stats_models import MergeTokenStats
 from active_interview_app.token_usage_models import TokenUsage
+from .test_credentials import TEST_PASSWORD
 
 
 # ============================================================================
@@ -53,7 +53,8 @@ class TokenUsageModelCoverageTest(TestCase):
     """Test all code paths in TokenUsage model"""
 
     def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='pass')
+        self.user = User.objects.create_user(
+            username='testuser', password=TEST_PASSWORD)
 
     def test_estimated_cost_gpt4o(self):
         """Test cost for gpt-4o model"""
@@ -126,7 +127,8 @@ class TokenUsageModelCoverageTest(TestCase):
         # Verify cost paths are hit
         self.assertGreater(summary['total_cost'], 0)
         self.assertGreater(summary['by_model']['gpt-4o']['cost'], 0)
-        self.assertGreater(summary['by_model']['claude-sonnet-4-5-20250929']['cost'], 0)
+        self.assertGreater(summary['by_model']
+                           ['claude-sonnet-4-5-20250929']['cost'], 0)
         self.assertEqual(summary['total_tokens'], 4500)
 
 
@@ -139,8 +141,9 @@ class ViewsBasicCoverageTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(username='viewuser', password='testpass')
-        self.client.login(username='viewuser', password='testpass')
+        self.user = User.objects.create_user(
+            username='viewuser', password=TEST_PASSWORD)
+        self.client.login(username='viewuser', password=TEST_PASSWORD)
 
     def test_static_views(self):
         """Test all static page views"""
@@ -186,7 +189,7 @@ class ViewsRegisterTest(TestCase):
         """Test registration creates user and adds to group"""
         client = Client()
 
-        response = client.post(reverse('register_page'), {
+        client.post(reverse('register_page'), {
             'username': 'newuser456',
             'email': 'new@example.com',
             'password1': 'TestPassword123!',
@@ -206,8 +209,9 @@ class ViewsDocumentOperationsTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(username='docuser', password='pass')
-        self.client.login(username='docuser', password='pass')
+        self.user = User.objects.create_user(
+            username='docuser', password=TEST_PASSWORD)
+        self.client.login(username='docuser', password=TEST_PASSWORD)
 
     def test_resume_detail_view(self):
         """Test resume detail view"""
@@ -221,7 +225,8 @@ class ViewsDocumentOperationsTest(TestCase):
             file=fake_file
         )
 
-        response = self.client.get(reverse('resume_detail', kwargs={'resume_id': resume.id}))
+        response = self.client.get(
+            reverse('resume_detail', kwargs={'resume_id': resume.id}))
         self.assertEqual(response.status_code, 200)
 
     def test_delete_resume(self):
@@ -238,7 +243,8 @@ class ViewsDocumentOperationsTest(TestCase):
         resume_id = resume.id
 
         # POST to delete
-        response = self.client.post(reverse('delete_resume', kwargs={'resume_id': resume_id}))
+        response = self.client.post(
+            reverse('delete_resume', kwargs={'resume_id': resume_id}))
 
         # Should redirect
         self.assertEqual(response.status_code, 302)
@@ -258,7 +264,8 @@ class ViewsDocumentOperationsTest(TestCase):
             file=fake_file
         )
 
-        response = self.client.get(reverse('job_posting_detail', kwargs={'job_id': job.id}))
+        response = self.client.get(
+            reverse('job_posting_detail', kwargs={'job_id': job.id}))
         self.assertEqual(response.status_code, 200)
 
     def test_delete_job(self):
@@ -275,7 +282,8 @@ class ViewsDocumentOperationsTest(TestCase):
         job_id = job.id
 
         # POST to delete
-        response = self.client.post(reverse('delete_job', kwargs={'job_id': job_id}))
+        response = self.client.post(
+            reverse('delete_job', kwargs={'job_id': job_id}))
 
         # Should redirect
         self.assertEqual(response.status_code, 302)
@@ -294,7 +302,8 @@ class ViewsDocumentOperationsTest(TestCase):
         self.assertEqual(response.status_code, 302)
 
         # Job listing should be created
-        self.assertTrue(UploadedJobListing.objects.filter(title='Software Engineer').exists())
+        self.assertTrue(UploadedJobListing.objects.filter(
+            title='Software Engineer').exists())
 
     def test_uploaded_job_listing_view_empty_text(self):
         """Test posting job listing with empty text"""
@@ -307,7 +316,8 @@ class ViewsDocumentOperationsTest(TestCase):
         self.assertEqual(response.status_code, 302)
 
         # Should not create job listing (line 1038-1040 in views.py)
-        self.assertFalse(UploadedJobListing.objects.filter(title='Empty Job').exists())
+        self.assertFalse(UploadedJobListing.objects.filter(
+            title='Empty Job').exists())
 
     def test_uploaded_job_listing_view_empty_title(self):
         """Test posting job listing with empty title"""
@@ -329,7 +339,8 @@ class ViewsAPITest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(username='apiuser', password='pass')
+        self.user = User.objects.create_user(
+            username='apiuser', password=TEST_PASSWORD)
         self.client.force_login(self.user)
 
     def test_uploaded_resume_view_get(self):

@@ -7,12 +7,8 @@ from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
 from unittest.mock import patch, Mock
 import json
-import io
 
 from active_interview_app.models import UploadedResume, UploadedJobListing, Chat
-from active_interview_app.views import (
-    UploadedResumeView, UploadedJobListingView, upload_file
-)
 
 
 class UploadedResumeViewTest(TestCase):
@@ -20,7 +16,8 @@ class UploadedResumeViewTest(TestCase):
 
     def setUp(self):
         """Set up test data"""
-        self.user = User.objects.create_user('apiuser', 'api@example.com', 'pass')
+        self.user = User.objects.create_user(
+            'apiuser', 'api@example.com', 'pass')
         self.client = Client()
         self.client.force_login(self.user)
 
@@ -56,7 +53,8 @@ class UploadedJobListingViewTest(TestCase):
 
     def setUp(self):
         """Set up test data"""
-        self.user = User.objects.create_user('jobapi', 'jobapi@example.com', 'pass')
+        self.user = User.objects.create_user(
+            'jobapi', 'jobapi@example.com', 'pass')
         self.client = Client()
         self.client.force_login(self.user)
 
@@ -135,7 +133,8 @@ class UploadFileViewTest(TestCase):
 
     def setUp(self):
         """Set up test data"""
-        self.user = User.objects.create_user('uploader', 'upload@example.com', 'pass')
+        self.user = User.objects.create_user(
+            'uploader', 'upload@example.com', 'pass')
         self.client = Client()
         self.client.force_login(self.user)
 
@@ -168,7 +167,8 @@ class UploadFileViewTest(TestCase):
             self.assertEqual(response.status_code, 302)
 
             # Resume should be created
-            resume = UploadedResume.objects.filter(title='My PDF Resume').first()
+            resume = UploadedResume.objects.filter(
+                title='My PDF Resume').first()
             self.assertIsNotNone(resume)
             self.assertEqual(resume.user, self.user)
 
@@ -306,8 +306,10 @@ class ChatViewTest(TestCase):
         # Create average_role group (required by signals)
         Group.objects.get_or_create(name='average_role')
 
-        self.user = User.objects.create_user('chatter', 'chat@example.com', 'pass')
-        self.other_user = User.objects.create_user('other', 'other@example.com', 'pass')
+        self.user = User.objects.create_user(
+            'chatter', 'chat@example.com', 'pass')
+        self.other_user = User.objects.create_user(
+            'other', 'other@example.com', 'pass')
         self.client = Client()
         self.client.force_login(self.user)
 
@@ -357,7 +359,8 @@ class ChatViewTest(TestCase):
 
     def test_chat_view_get_not_owner(self):
         """Test GET chat view as non-owner returns 403"""
-        response = self.client.get(reverse('chat-view', args=[self.other_chat.id]))
+        response = self.client.get(
+            reverse('chat-view', args=[self.other_chat.id]))
 
         self.assertEqual(response.status_code, 403)
 
@@ -383,7 +386,8 @@ class RestartChatViewTest(TestCase):
         # Create average_role group (required by signals)
         Group.objects.get_or_create(name='average_role')
 
-        self.user = User.objects.create_user('restarter', 'restart@example.com', 'pass')
+        self.user = User.objects.create_user(
+            'restarter', 'restart@example.com', 'pass')
         self.client = Client()
         self.client.force_login(self.user)
 
@@ -412,9 +416,8 @@ class RestartChatViewTest(TestCase):
     @patch('active_interview_app.views.ai_available', return_value=False)
     def test_restart_chat_post(self, mock_ai):
         """Test POST to restart chat"""
-        response = self.client.post(reverse('chat-restart', args=[self.chat.id]), {
-            'restart': 'true'
-        })
+        response = self.client.post(
+            reverse('chat-restart', args=[self.chat.id]), {'restart': 'true'})
 
         # Should redirect
         self.assertEqual(response.status_code, 302)
@@ -433,7 +436,8 @@ class KeyQuestionsViewTest(TestCase):
         # Create average_role group (required by signals)
         Group.objects.get_or_create(name='average_role')
 
-        self.user = User.objects.create_user('questioner', 'q@example.com', 'pass')
+        self.user = User.objects.create_user(
+            'questioner', 'q@example.com', 'pass')
         self.client = Client()
         self.client.force_login(self.user)
 

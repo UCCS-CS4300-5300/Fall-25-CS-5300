@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}{{ title }} - Active Interview{% endblock %}
+{% block title %}{{ title }} - Active Interview{% endblock title %}
 
 {% block content %}
 <div class="container-fluid mt-4">
@@ -296,7 +296,7 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
 <script src="{% static 'js/observability_dashboard.js' %}"></script>
-{% endblock %}
+{% endblock extra_js %}
 
 {% block extra_css %}
 <style>
@@ -326,4 +326,4 @@ canvas {
     max-height: 300px;
 }
 </style>
-{% endblock %}
+{% endblock extra_css %}

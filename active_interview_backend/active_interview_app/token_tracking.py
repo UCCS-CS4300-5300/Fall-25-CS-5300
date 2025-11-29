@@ -1,7 +1,8 @@
 """
 Utility functions for tracking token usage from Claude and ChatGPT API calls.
 """
-import subprocess
+import shutil
+import subprocess  # nosec B404 - subprocess used for safe git commands only
 from django.conf import settings
 
 
@@ -11,13 +12,20 @@ def get_current_git_branch():
     Returns 'unknown' if not in a git repository or if detection fails.
     """
     try:
+        # Get full path to git executable for security
+        git_path = shutil.which('git')
+        if not git_path:
+            return 'unknown'
+
+        # nosec B603, B607 - Safe use of subprocess with hardcoded git command
+        # and validated executable path. No user input is passed to subprocess.
         result = subprocess.run(
-            ['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
+            [git_path, 'rev-parse', '--abbrev-ref', 'HEAD'],
             capture_output=True,
             text=True,
             check=True,
             timeout=5
-        )
+        )  # nosec B603
         return result.stdout.strip()
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError):
         return 'unknown'

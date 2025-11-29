@@ -104,7 +104,8 @@ class JobListingParserTests(TestCase):
 
     @patch('active_interview_app.job_listing_parser.get_client_and_model')
     @patch('active_interview_app.job_listing_parser.ai_available')
-    def test_parse_job_listing_entry_level(self, mockai_available, mock_get_client):
+    def test_parse_job_listing_entry_level(
+            self, mockai_available, mock_get_client):
         """Test parsing of entry-level job description"""
         # Arrange
         mockai_available.return_value = True
@@ -150,7 +151,8 @@ class JobListingParserTests(TestCase):
 
     @patch('active_interview_app.job_listing_parser.get_client_and_model')
     @patch('active_interview_app.job_listing_parser.ai_available')
-    def test_parse_job_listing_lead_level(self, mockai_available, mock_get_client):
+    def test_parse_job_listing_lead_level(
+            self, mockai_available, mock_get_client):
         """Test parsing of lead/principal level job description"""
         # Arrange
         mockai_available.return_value = True
@@ -207,12 +209,14 @@ class JobListingParserTests(TestCase):
 
     @patch('active_interview_app.job_listing_parser.get_client_and_model')
     @patch('active_interview_app.job_listing_parser.ai_available')
-    def test_parse_job_listing_with_truncation(self, mockai_available, mock_get_client):
+    def test_parse_job_listing_with_truncation(
+            self, mockai_available, mock_get_client):
         """Test parsing of extremely long job descriptions (truncation)"""
         # Arrange
         mockai_available.return_value = True
 
-        # Create a job description longer than JOB_DESCRIPTION_LIMIT (15000 chars)
+        # Create a job description longer than JOB_DESCRIPTION_LIMIT (15000
+        # chars)
         long_job = "Senior Developer\n" + ("Long description. " * 1000)
 
         mock_client = MagicMock()
@@ -246,7 +250,8 @@ class JobListingParserTests(TestCase):
 
     @patch('active_interview_app.job_listing_parser.get_client_and_model')
     @patch('active_interview_app.job_listing_parser.ai_available')
-    def test_parse_job_listing_invalid_json_recovery(self, mockai_available, mock_get_client):
+    def test_parse_job_listing_invalid_json_recovery(
+            self, mockai_available, mock_get_client):
         """Test recovery from markdown-wrapped JSON response"""
         # Arrange
         mockai_available.return_value = True
@@ -282,7 +287,8 @@ class JobListingParserTests(TestCase):
 
     @patch('active_interview_app.job_listing_parser.get_client_and_model')
     @patch('active_interview_app.job_listing_parser.ai_available')
-    def test_parse_job_listing_seniority_mapping(self, mockai_available, mock_get_client):
+    def test_parse_job_listing_seniority_mapping(
+            self, mockai_available, mock_get_client):
         """Test seniority level mapping from variations"""
         # Arrange
         mockai_available.return_value = True
@@ -318,7 +324,8 @@ class JobListingParserTests(TestCase):
 
     @patch('active_interview_app.job_listing_parser.get_client_and_model')
     @patch('active_interview_app.job_listing_parser.ai_available')
-    def test_parse_job_listing_empty_fields(self, mockai_available, mock_get_client):
+    def test_parse_job_listing_empty_fields(
+            self, mockai_available, mock_get_client):
         """Test parsing with minimal job description (empty fields)"""
         # Arrange
         mockai_available.return_value = True
@@ -356,7 +363,8 @@ class JobListingParserTests(TestCase):
 
     @patch('active_interview_app.job_listing_parser.get_client_and_model')
     @patch('active_interview_app.job_listing_parser.ai_available')
-    def test_parse_job_listing_api_error(self, mockai_available, mock_get_client):
+    def test_parse_job_listing_api_error(
+            self, mockai_available, mock_get_client):
         """Test error handling when OpenAI API call fails"""
         # Arrange
         mockai_available.return_value = True

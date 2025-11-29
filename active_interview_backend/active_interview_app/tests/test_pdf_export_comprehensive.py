@@ -20,6 +20,7 @@ from active_interview_app.pdf_export import (
     _create_statistics_section,
     _create_footer
 )
+from .test_credentials import TEST_PASSWORD
 
 
 class GetScoreRatingTest(TestCase):
@@ -113,7 +114,7 @@ class PDFSectionCreationTest(TestCase):
         """Set up test data"""
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.chat = Chat.objects.create(
             owner=self.user,
@@ -320,7 +321,7 @@ class GeneratePDFReportTest(TestCase):
         """Set up test data"""
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
     def test_generate_pdf_complete_report(self):
@@ -344,13 +345,10 @@ class GeneratePDFReportTest(TestCase):
                     'question': 'Describe your leadership experience',
                     'answer': 'I led a team of 10 engineers.',
                     'score': 9,
-                    'feedback': 'Great example'
-                }
-            ],
+                    'feedback': 'Great example'}],
             total_questions_asked=20,
             total_responses_given=20,
-            interview_duration_minutes=60
-        )
+            interview_duration_minutes=60)
 
         pdf_content = generate_pdf_report(report)
 
@@ -557,7 +555,7 @@ class ScoreRationalesSectionTest(TestCase):
         """Set up test data"""
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.chat = Chat.objects.create(
             owner=self.user,
@@ -580,11 +578,11 @@ class ScoreRationalesSectionTest(TestCase):
             clarity_rationale='Communicated clearly and concisely.',
             overall_rationale='Solid performance overall with room for improvement.',
             total_questions_asked=15,
-            total_responses_given=15
-        )
+            total_responses_given=15)
 
         _, heading_style, normal_style = _create_styles()
-        result = _create_score_rationales_section(report, heading_style, normal_style)
+        result = _create_score_rationales_section(
+            report, heading_style, normal_style)
 
         self.assertIsInstance(result, list)
         self.assertGreater(len(result), 0)
@@ -599,7 +597,8 @@ class ScoreRationalesSectionTest(TestCase):
         )
 
         _, heading_style, normal_style = _create_styles()
-        result = _create_score_rationales_section(report, heading_style, normal_style)
+        result = _create_score_rationales_section(
+            report, heading_style, normal_style)
 
         self.assertIsInstance(result, list)
         # Should be empty when no overall score
@@ -622,7 +621,8 @@ class ScoreRationalesSectionTest(TestCase):
         )
 
         _, heading_style, normal_style = _create_styles()
-        result = _create_score_rationales_section(report, heading_style, normal_style)
+        result = _create_score_rationales_section(
+            report, heading_style, normal_style)
 
         self.assertIsInstance(result, list)
         # Should still generate content for rationales that exist
@@ -648,7 +648,8 @@ class ScoreRationalesSectionTest(TestCase):
         )
 
         _, heading_style, normal_style = _create_styles()
-        result = _create_score_rationales_section(report, heading_style, normal_style)
+        result = _create_score_rationales_section(
+            report, heading_style, normal_style)
 
         self.assertIsInstance(result, list)
         self.assertGreater(len(result), 0)
@@ -661,7 +662,7 @@ class RecommendedExercisesSectionTest(TestCase):
         """Set up test data"""
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.chat = Chat.objects.create(
             owner=self.user,
@@ -684,7 +685,8 @@ class RecommendedExercisesSectionTest(TestCase):
         )
 
         _, heading_style, normal_style = _create_styles()
-        result = _create_recommended_exercises_section(report, heading_style, normal_style)
+        result = _create_recommended_exercises_section(
+            report, heading_style, normal_style)
 
         self.assertIsInstance(result, list)
         self.assertGreater(len(result), 0)
@@ -702,7 +704,8 @@ class RecommendedExercisesSectionTest(TestCase):
         )
 
         _, heading_style, normal_style = _create_styles()
-        result = _create_recommended_exercises_section(report, heading_style, normal_style)
+        result = _create_recommended_exercises_section(
+            report, heading_style, normal_style)
 
         self.assertIsInstance(result, list)
         self.assertGreater(len(result), 0)
@@ -720,7 +723,8 @@ class RecommendedExercisesSectionTest(TestCase):
         )
 
         _, heading_style, normal_style = _create_styles()
-        result = _create_recommended_exercises_section(report, heading_style, normal_style)
+        result = _create_recommended_exercises_section(
+            report, heading_style, normal_style)
 
         self.assertIsInstance(result, list)
         self.assertGreater(len(result), 0)
@@ -738,7 +742,8 @@ class RecommendedExercisesSectionTest(TestCase):
         )
 
         _, heading_style, normal_style = _create_styles()
-        result = _create_recommended_exercises_section(report, heading_style, normal_style)
+        result = _create_recommended_exercises_section(
+            report, heading_style, normal_style)
 
         self.assertIsInstance(result, list)
         self.assertGreater(len(result), 0)
@@ -756,7 +761,8 @@ class RecommendedExercisesSectionTest(TestCase):
         )
 
         _, heading_style, normal_style = _create_styles()
-        result = _create_recommended_exercises_section(report, heading_style, normal_style)
+        result = _create_recommended_exercises_section(
+            report, heading_style, normal_style)
 
         self.assertIsInstance(result, list)
         self.assertGreater(len(result), 0)
@@ -774,7 +780,8 @@ class RecommendedExercisesSectionTest(TestCase):
         )
 
         _, heading_style, normal_style = _create_styles()
-        result = _create_recommended_exercises_section(report, heading_style, normal_style)
+        result = _create_recommended_exercises_section(
+            report, heading_style, normal_style)
 
         self.assertIsInstance(result, list)
         self.assertGreater(len(result), 0)
@@ -792,7 +799,8 @@ class RecommendedExercisesSectionTest(TestCase):
         )
 
         _, heading_style, normal_style = _create_styles()
-        result = _create_recommended_exercises_section(report, heading_style, normal_style)
+        result = _create_recommended_exercises_section(
+            report, heading_style, normal_style)
 
         self.assertIsInstance(result, list)
         self.assertGreater(len(result), 0)

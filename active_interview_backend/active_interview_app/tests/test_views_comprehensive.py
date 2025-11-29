@@ -13,7 +13,7 @@ from active_interview_app.models import (
 )
 from unittest.mock import patch, Mock
 import json
-import re
+from .test_credentials import TEST_PASSWORD
 
 
 class AboutUsViewTest(TestCase):
@@ -36,7 +36,7 @@ class RestartChatViewTest(TestCase):
 
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.job_listing = UploadedJobListing.objects.create(
             user=self.user,
@@ -55,7 +55,7 @@ class RestartChatViewTest(TestCase):
             job_listing=self.job_listing
         )
         self.client = Client()
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
     def test_restart_chat_post(self):
         """Test restarting a chat"""
@@ -66,7 +66,8 @@ class RestartChatViewTest(TestCase):
             {'restart': 'true'}
         )
 
-        self.assertRedirects(response, reverse('chat-view', args=[self.chat.id]))
+        self.assertRedirects(response, reverse(
+            'chat-view', args=[self.chat.id]))
 
         # Check that chat was restarted
         self.chat.refresh_from_db()
@@ -74,11 +75,11 @@ class RestartChatViewTest(TestCase):
 
     def test_restart_chat_requires_ownership(self):
         """Test user can only restart their own chats"""
-        other_user = User.objects.create_user(
+        User.objects.create_user(
             username='otheruser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
-        self.client.login(username='otheruser', password='testpass123')
+        self.client.login(username='otheruser', password=TEST_PASSWORD)
 
         response = self.client.post(
             reverse('chat-restart', args=[self.chat.id]),
@@ -97,7 +98,7 @@ class KeyQuestionsViewTest(TestCase):
 
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.job_listing = UploadedJobListing.objects.create(
             user=self.user,
@@ -125,7 +126,7 @@ class KeyQuestionsViewTest(TestCase):
             ]
         )
         self.client = Client()
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
     def test_key_questions_get(self):
         """Test GET request to key questions view"""
@@ -136,11 +137,13 @@ class KeyQuestionsViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'key-questions.html')
         self.assertIn('question', response.context)
-        self.assertEqual(response.context['question']['content'], "What is Python?")
+        self.assertEqual(
+            response.context['question']['content'], "What is Python?")
 
     @patch('active_interview_app.views.get_client_and_model')
     @patch('active_interview_app.views.ai_available')
-    def test_key_questions_post_with_resume(self, mockai_available, mock_get_client):
+    def test_key_questions_post_with_resume(
+            self, mockai_available, mock_get_client):
         """Test POST to key questions with resume"""
         mockai_available.return_value = True
 
@@ -184,7 +187,8 @@ class KeyQuestionsViewTest(TestCase):
 
     @patch('active_interview_app.views.get_client_and_model')
     @patch('active_interview_app.views.ai_available')
-    def test_key_questions_post_without_resume(self, mockai_available, mock_get_client):
+    def test_key_questions_post_without_resume(
+            self, mockai_available, mock_get_client):
         """Test POST to key questions without resume"""
         # Create chat without resume
         chat_no_resume = Chat.objects.create(
@@ -238,7 +242,7 @@ class EditChatViewTest(TestCase):
 
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.job_listing = UploadedJobListing.objects.create(
             user=self.user,
@@ -256,7 +260,7 @@ class EditChatViewTest(TestCase):
             job_listing=self.job_listing
         )
         self.client = Client()
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
     def test_edit_chat_updates_difficulty_in_messages(self):
         """Test that difficulty update also updates messages"""
@@ -271,7 +275,8 @@ class EditChatViewTest(TestCase):
             data
         )
 
-        self.assertRedirects(response, reverse('chat-view', args=[self.chat.id]))
+        self.assertRedirects(response, reverse(
+            'chat-view', args=[self.chat.id]))
 
         # Check that chat was updated
         self.chat.refresh_from_db()
@@ -292,7 +297,7 @@ class ChatViewPostTest(TestCase):
 
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.job_listing = UploadedJobListing.objects.create(
             user=self.user,
@@ -308,7 +313,7 @@ class ChatViewPostTest(TestCase):
             job_listing=self.job_listing
         )
         self.client = Client()
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
     @patch('active_interview_app.views.get_client_and_model')
     @patch('active_interview_app.views.ai_available')
@@ -355,7 +360,7 @@ class CreateChatViewComprehensiveTest(TestCase):
 
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.job_listing = UploadedJobListing.objects.create(
             user=self.user,
@@ -369,18 +374,23 @@ class CreateChatViewComprehensiveTest(TestCase):
             title='Resume Title'
         )
         self.client = Client()
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
     @patch('active_interview_app.views.get_client_and_model')
     @patch('active_interview_app.views.ai_available')
-    def test_create_chat_with_resume_all_types(self, mockai_available, mock_get_client):
+    def test_create_chat_with_resume_all_types(
+            self, mockai_available, mock_get_client):
         """Test creating chat with all interview types"""
         mockai_available.return_value = True
 
         # Mock OpenAI responses
         mock_client = Mock()
 
-        for interview_type in [Chat.GENERAL, Chat.SKILLS, Chat.PERSONALITY, Chat.FINAL_SCREENING]:
+        for interview_type in [
+                Chat.GENERAL,
+                Chat.SKILLS,
+                Chat.PERSONALITY,
+                Chat.FINAL_SCREENING]:
             mock_response1 = Mock()
             mock_choice1 = Mock()
             mock_message1 = Mock()
@@ -417,7 +427,8 @@ class CreateChatViewComprehensiveTest(TestCase):
 
     @patch('active_interview_app.views.get_client_and_model')
     @patch('active_interview_app.views.ai_available')
-    def test_create_chat_key_questions_no_json_match(self, mockai_available, mock_get_client):
+    def test_create_chat_key_questions_no_json_match(
+            self, mockai_available, mock_get_client):
         """Test when key questions response doesn't match JSON pattern"""
         mockai_available.return_value = True
 
@@ -450,8 +461,7 @@ class CreateChatViewComprehensiveTest(TestCase):
             'resume_choice': self.resume.id
         }
 
-        response = self.client.post(reverse('chat-create'), data)
-
+        self.client.post(reverse('chat-create'), data)
         # Should still create chat but with empty key_questions
         chat = Chat.objects.get(title='Chat No JSON')
         self.assertEqual(chat.key_questions, [])
@@ -467,10 +477,10 @@ class UploadFileViewComprehensiveTest(TestCase):
 
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.client = Client()
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
     @patch('active_interview_app.views.filetype')
     @patch('active_interview_app.views.pymupdf4llm')
@@ -481,7 +491,8 @@ class UploadFileViewComprehensiveTest(TestCase):
         mock_filetype.guess.return_value = mock_file_type
 
         # Mock PDF conversion to raise exception
-        mock_pymupdf.to_markdown.side_effect = Exception("PDF processing error")
+        mock_pymupdf.to_markdown.side_effect = Exception(
+            "PDF processing error")
 
         pdf_content = b'%PDF fake content'
         uploaded_file = SimpleUploadedFile(
@@ -501,7 +512,8 @@ class UploadFileViewComprehensiveTest(TestCase):
         self.assertRedirects(response, reverse('document-list'))
 
         # Resume should NOT be created
-        self.assertFalse(UploadedResume.objects.filter(title='Error PDF').exists())
+        self.assertFalse(UploadedResume.objects.filter(
+            title='Error PDF').exists())
 
     @patch('active_interview_app.views.filetype')
     def test_upload_invalid_form(self, mock_filetype):
@@ -526,8 +538,9 @@ class DocumentListViewTest(TestCase):
         from django.contrib.auth.models import Group
         Group.objects.get_or_create(name='average_role')
 
-        self.user = User.objects.create_user(username='testuser', password='testpass123')
-        self.client.login(username='testuser', password='testpass123')
+        self.user = User.objects.create_user(
+            username='testuser', password=TEST_PASSWORD)
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
     def test_document_list_get(self):
         """Test GET request to document list"""
@@ -546,7 +559,7 @@ class ResultsChatViewComprehensiveTest(TestCase):
 
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.job_listing = UploadedJobListing.objects.create(
             user=self.user,
@@ -567,7 +580,7 @@ class AllInterviewTypesTest(TestCase):
 
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.job_listing = UploadedJobListing.objects.create(
             user=self.user,

@@ -5,7 +5,6 @@ This module tests the centralized OpenAI client management and graceful degradat
 Updated for Issue #13 to include tests for API key pool integration.
 """
 
-import pytest
 from django.test import TestCase, override_settings
 from django.contrib.auth.models import User
 from unittest.mock import patch, MagicMock
@@ -83,7 +82,8 @@ class OpenAIUtilsTest(TestCase):
         with self.assertRaises(ValueError) as context:
             get_openai_client()
 
-        self.assertIn('Failed to initialize OpenAI client', str(context.exception))
+        self.assertIn('Failed to initialize OpenAI client',
+                      str(context.exception))
 
     @override_settings(OPENAI_API_KEY='test-key-123')
     @patch('active_interview_app.openai_utils.OpenAI')
@@ -168,53 +168,49 @@ class OpenAIUtilsTest(TestCase):
         mock_openai.assert_called_once()
 
 
-@pytest.mark.django_db
-class OpenAIUtilsPytestTest:
-    """Pytest-based tests for OpenAI utilities"""
+class OpenAIUtilsPytestTest(TestCase):
+    """Django TestCase-based tests for OpenAI utilities"""
 
-    def test_get_openai_client_with_valid_key(self, settings):
+    @override_settings(OPENAI_API_KEY='sk-test123')
+    def test_get_openai_client_with_valid_key(self):
         """Test client initialization with valid API key"""
         import active_interview_app.openai_utils as openai_utils
         openai_utils._openai_client = None
-
-        settings.OPENAI_API_KEY = 'sk-test123'
 
         with patch('active_interview_app.openai_utils.OpenAI') as mock_openai:
             mock_client = MagicMock()
             mock_openai.return_value = mock_client
 
             client = get_openai_client()
-            assert client == mock_client
+            self.assertEqual(client, mock_client)
 
         # Cleanup
         openai_utils._openai_client = None
 
-    def testai_available_graceful_degradation(self, settings):
+    @override_settings(OPENAI_API_KEY='')
+    def testai_available_graceful_degradation(self):
         """Test graceful degradation when OpenAI is not available"""
         import active_interview_app.openai_utils as openai_utils
         openai_utils._openai_client = None
 
-        settings.OPENAI_API_KEY = ''
-
         # Should not raise, just return False
         result = ai_available()
-        assert result is False
+        self.assertFalse(result)
 
         # Cleanup
         openai_utils._openai_client = None
 
-    def test_error_message_includes_configuration_hint(self, settings):
+    @override_settings(OPENAI_API_KEY='')
+    def test_error_message_includes_configuration_hint(self):
         """Test that error messages provide helpful configuration hints"""
         import active_interview_app.openai_utils as openai_utils
         openai_utils._openai_client = None
 
-        settings.OPENAI_API_KEY = ''
-
-        with pytest.raises(ValueError) as exc_info:
+        with self.assertRaises(ValueError) as exc_info:
             get_openai_client()
 
-        assert '.env file' in str(exc_info.value)
-        assert 'environment variables' in str(exc_info.value)
+        self.assertIn('.env file', str(exc_info.exception))
+        self.assertIn('environment variables', str(exc_info.exception))
 
         # Cleanup
         openai_utils._openai_client = None

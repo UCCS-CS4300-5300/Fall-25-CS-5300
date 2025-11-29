@@ -8,7 +8,6 @@ Usage:
 """
 
 import yaml
-import glob
 import sys
 from pathlib import Path
 from typing import List, Dict
@@ -38,7 +37,9 @@ def calculate_stats(logs: List[Dict]) -> Dict:
 
     total_tests_all_seq = 0
     total_sequences = len(logs)
-    total_iterations = sum(log['summary']['total_iterations'] for log in logs)
+    total_iterations = sum(
+        log['summary']['total_iterations'] for log in logs
+    )
 
     # First-run failure rates
     first_run_failures = []
@@ -57,19 +58,33 @@ def calculate_stats(logs: List[Dict]) -> Dict:
 
     # Calculate aggregates
     avg_iterations = total_iterations / total_sequences
-    avg_first_run_failure = sum(first_run_failures) / len(first_run_failures) if first_run_failures else 0
+    avg_first_run_failure = (
+        sum(first_run_failures) / len(first_run_failures)
+        if first_run_failures else 0
+    )
     total_regressions = sum(regression_counts)
-    sequences_with_regressions = sum(1 for r in regression_counts if r > 0)
-    regression_rate = (sequences_with_regressions / total_sequences) * 100 if total_sequences > 0 else 0
+    sequences_with_regressions = sum(
+        1 for r in regression_counts if r > 0
+    )
+    regression_rate = ((sequences_with_regressions / total_sequences)
+                       * 100 if total_sequences > 0 else 0)
+
+    success_count = sum(
+        1 for log in logs
+        if log['summary']['final_status'] == 'success'
+    )
+    success_rate = round(
+        (success_count / total_sequences * 100), 2
+    )
 
     return {
         'total_sequences': total_sequences,
-        'total_tests_all_sequences':total_tests_all_seq,
+        'total_tests_all_sequences': total_tests_all_seq,
         'avg_iterations': round(avg_iterations, 2),
         'avg_first_run_failure_rate': round(avg_first_run_failure, 2),
         'total_regressions': total_regressions,
         'regression_rate': round(regression_rate, 2),
-        'success_rate': round(sum(1 for log in logs if log['summary']['final_status'] == 'success') / total_sequences * 100, 2)
+        'success_rate': success_rate
     }
 
 
@@ -80,24 +95,37 @@ def print_detailed_stats(logs: List[Dict]):
     print("="*70 + "\n")
 
     for log in logs:
-        print(f"Feature: {log['feature']}")
-        print(f"  Test file: {log['test_file']}")
-        print(f"  Iterations: {log['summary']['total_iterations']}")
-        print(f"  First-run failure rate: {log['summary']['first_run_failure_rate']}%")
-        print(f"  Final status: {log['summary']['final_status']}")
+        print("Feature: {}".format(log['feature']))
+        print("  Test file: {}".format(log['test_file']))
+        print("  Iterations: {}".format(
+            log['summary']['total_iterations']
+        ))
+        print("  First-run failure rate: {}%".format(
+            log['summary']['first_run_failure_rate']
+        ))
+        print("  Final status: {}".format(
+            log['summary']['final_status']
+        ))
 
         # Show iteration progression
-        print(f"  Progression: ", end="")
+        print("  Progression: ", end="")
         for i, iteration in enumerate(log['iterations']):
-            status = "PASS" if iteration['failed'] == 0 else f"FAIL ({iteration['failed']})"
-            print(f"Run {iteration['number']}: {status}", end=" -> " if i < len(log['iterations']) - 1 else "\n")
+            status = ("PASS" if iteration['failed'] == 0
+                      else "FAIL ({})".format(iteration['failed']))
+            separator = " -> " if i < len(log['iterations']) - 1 else "\n"
+            print("Run {}: {}".format(iteration['number'], status),
+                  end=separator)
 
         # Regressions
-        total_regressions = sum(it['regression_failures'] for it in log['iterations'])
+        total_regressions = sum(
+            it['regression_failures'] for it in log['iterations']
+        )
         if total_regressions > 0:
-            print(f"  [!] Regressions detected: {total_regressions}")
+            print("  [!] Regressions detected: {}".format(
+                total_regressions
+            ))
         else:
-            print(f"  No regressions")
+            print("  No regressions")
 
         print()
 
@@ -152,10 +180,17 @@ def main():
     print("="*70)
     print("RESEARCH INSIGHTS")
     print("="*70)
-    print(f"\n[+] Claude Code achieves {stats['success_rate']}% success rate through iteration")
-    print(f"[+] Average {stats['avg_iterations']} iterations to get all tests passing")
-    print(f"[!] First-run tests fail {stats['avg_first_run_failure_rate']}% of the time")
-    print(f"[+] Low regression rate ({stats['regression_rate']}%) indicates careful coding")
+    print("\n[+] Claude Code achieves {}% success rate through "
+          "iteration".format(stats['success_rate']))
+    print("[+] Average {} iterations to get all tests passing".format(
+        stats['avg_iterations']
+    ))
+    print("[!] First-run tests fail {}% of the time".format(
+        stats['avg_first_run_failure_rate']
+    ))
+    print("[+] Low regression rate ({}%) indicates careful coding".format(
+        stats['regression_rate']
+    ))
     print()
 
 

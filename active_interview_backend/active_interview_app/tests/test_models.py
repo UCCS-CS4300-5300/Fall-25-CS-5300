@@ -10,6 +10,7 @@ from active_interview_app.models import (
     Chat
 )
 from django.utils import timezone
+from .test_credentials import TEST_PASSWORD
 
 
 class UploadedResumeModelTest(TestCase):
@@ -18,7 +19,7 @@ class UploadedResumeModelTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
     def test_create_resume(self):
@@ -83,7 +84,7 @@ class UploadedJobListingModelTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
     def test_create_job_listing(self):
@@ -150,7 +151,7 @@ class ChatModelTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.job_listing = UploadedJobListing.objects.create(
             user=self.user,

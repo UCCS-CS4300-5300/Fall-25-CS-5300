@@ -5,14 +5,13 @@ Tests admin display methods and queryset optimizations.
 from django.test import TestCase, RequestFactory
 from django.contrib.auth.models import User
 from django.contrib.admin.sites import AdminSite
-from django.utils import timezone
-from datetime import timedelta
 
 from active_interview_app.models import DataExportRequest, DeletionRequest
 from active_interview_app.admin import (
     DataExportRequestAdmin,
     DeletionRequestAdmin
 )
+from .test_credentials import TEST_PASSWORD
 
 
 class MockRequest:
@@ -29,7 +28,7 @@ class DataExportRequestAdminTest(TestCase):
         self.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.factory = RequestFactory()
         self.request = MockRequest()
@@ -128,7 +127,7 @@ class DeletionRequestAdminTest(TestCase):
         self.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
     def test_total_data_deleted_all_zeros(self):
@@ -209,7 +208,7 @@ class AdminIntegrationTest(TestCase):
         self.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.admin_user = User.objects.create_superuser(
             username='admin',

@@ -7,10 +7,9 @@ This module provides extensive coverage of all utility functions.
 import os
 import tempfile
 from django.test import TestCase, override_settings
-from django.core.files.uploadedfile import SimpleUploadedFile, InMemoryUploadedFile
-from unittest.mock import patch, MagicMock, mock_open
+from django.core.files.uploadedfile import SimpleUploadedFile
+from unittest.mock import patch, MagicMock
 from active_interview_app.utils import handle_uploaded_file
-from io import BytesIO
 
 
 class HandleUploadedFileTest(TestCase):
@@ -147,7 +146,8 @@ class HandleUploadedFileTest(TestCase):
     @override_settings(MEDIA_ROOT='/invalid/readonly/path')
     @patch('active_interview_app.utils.os.makedirs')
     @patch('builtins.open', side_effect=PermissionError("Access denied"))
-    def test_handle_uploaded_file_permission_error(self, mock_open, mock_makedirs):
+    def test_handle_uploaded_file_permission_error(
+            self, mock_open, mock_makedirs):
         """Test handling PermissionError during file save"""
         uploaded_file = SimpleUploadedFile(
             "test.txt",

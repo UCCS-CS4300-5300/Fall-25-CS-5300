@@ -29,7 +29,8 @@ Run the session analysis tool and generate an updated research report:
    - Concrete examples with session IDs
 
 ## Analysis Script Usage
-
+Determine the path to the session longs first and use that path instead of the 
+example path below.
 ```bash
 cd Research/Session_Analysis
 
