@@ -1587,9 +1587,22 @@ class ExportReportView(LoginRequiredMixin, UserPassesTestMixin, View):
     """
 
     def test_func(self):
-        """Verify that the user owns the chat"""
+        """Verify that the user owns the chat or is the interviewer"""
         chat = get_object_or_404(Chat, id=self.kwargs['chat_id'])
-        return self.request.user == chat.owner
+
+        # Allow chat owner (candidate)
+        if self.request.user == chat.owner:
+            return True
+
+        # Allow interviewer for invited interviews
+        if chat.interview_type == Chat.INVITED:
+            try:
+                invitation = InvitedInterview.objects.get(chat=chat)
+                return self.request.user == invitation.interviewer
+            except InvitedInterview.DoesNotExist:
+                pass
+
+        return False
 
     def get(self, request, chat_id):
         """Display the exportable report"""
@@ -1602,9 +1615,18 @@ class ExportReportView(LoginRequiredMixin, UserPassesTestMixin, View):
                            'No report exists yet. Generating one now...')
             return redirect('generate_report', chat_id=chat_id)
 
+        # Get invitation if this is an invited interview
+        invitation = None
+        if chat.interview_type == Chat.INVITED:
+            try:
+                invitation = InvitedInterview.objects.get(chat=chat)
+            except InvitedInterview.DoesNotExist:
+                pass
+
         context = {
             'chat': chat,
             'report': report,
+            'invitation': invitation,
         }
         return render(request, 'reports/export-report.html', context)
 
@@ -1615,9 +1637,22 @@ class DownloadPDFReportView(LoginRequiredMixin, UserPassesTestMixin, View):
     """
 
     def test_func(self):
-        """Verify that the user owns the chat"""
+        """Verify that the user owns the chat or is the interviewer"""
         chat = get_object_or_404(Chat, id=self.kwargs['chat_id'])
-        return self.request.user == chat.owner
+
+        # Allow chat owner (candidate)
+        if self.request.user == chat.owner:
+            return True
+
+        # Allow interviewer for invited interviews
+        if chat.interview_type == Chat.INVITED:
+            try:
+                invitation = InvitedInterview.objects.get(chat=chat)
+                return self.request.user == invitation.interviewer
+            except InvitedInterview.DoesNotExist:
+                pass
+
+        return False
 
     def get(self, request, chat_id):
         """Generate and download PDF report"""
@@ -1650,9 +1685,22 @@ class DownloadCSVReportView(LoginRequiredMixin, UserPassesTestMixin, View):
     """
 
     def test_func(self):
-        """Verify that the user owns the chat"""
+        """Verify that the user owns the chat or is the interviewer"""
         chat = get_object_or_404(Chat, id=self.kwargs['chat_id'])
-        return self.request.user == chat.owner
+
+        # Allow chat owner (candidate)
+        if self.request.user == chat.owner:
+            return True
+
+        # Allow interviewer for invited interviews
+        if chat.interview_type == Chat.INVITED:
+            try:
+                invitation = InvitedInterview.objects.get(chat=chat)
+                return self.request.user == invitation.interviewer
+            except InvitedInterview.DoesNotExist:
+                pass
+
+        return False
 
     def get(self, request, chat_id):
         """Generate and download CSV report"""

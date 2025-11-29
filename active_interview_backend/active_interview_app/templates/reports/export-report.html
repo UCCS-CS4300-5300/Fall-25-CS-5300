@@ -225,6 +225,24 @@
     </div>
     {% endif %}
 
+    <!-- Interviewer Feedback (for invited interviews) -->
+    {% if invitation and invitation.interviewer_feedback %}
+    <div class="box box-section" style="border: 2px solid var(--success);">
+      <h2 style="color: var(--success);">
+        <i class="bi bi-person-check-fill"></i> Interviewer Feedback
+      </h2>
+      <div class="box box-info" style="background: var(--surface); border-color: var(--success);">
+        <p style="white-space: pre-wrap; line-height: 1.6; color: var(--text-primary); margin-bottom: 1rem;">{{ invitation.interviewer_feedback }}</p>
+        {% if invitation.reviewed_at %}
+        <hr style="border-color: var(--border);">
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">
+          <i class="bi bi-clock"></i> Reviewed by {{ invitation.interviewer.get_full_name|default:invitation.interviewer.username }} on {{ invitation.reviewed_at|date:"F j, Y \a\t g:i A" }}
+        </p>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
     <!-- Recommended Exercises -->
     <div class="box box-section">
       <h2>Recommended Exercises</h2>
