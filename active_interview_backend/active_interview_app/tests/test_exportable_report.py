@@ -991,7 +991,10 @@ class IntegratedUserStoriesTest(TestCase):
 
         # Mock the AI calls to avoid external API dependency
         with patch('active_interview_app.views.ai_available', return_value=True):
-            with patch('active_interview_app.views.get_openai_client') as mock_client:
+            with patch('active_interview_app.views.get_client_and_model') as mock_get_client:
+                # Create mock client
+                mock_client = MagicMock()
+
                 # Mock scores response
                 mock_scores = MagicMock()
                 mock_scores.choices = [MagicMock()]
@@ -1015,7 +1018,11 @@ Clarity: Communicated clearly and effectively.
 Overall: Strong overall performance with good balance across all areas.
 """
 
-                mock_client.return_value.chat.completions.create.side_effect = [
+                # Set up get_client_and_model to return (client, model, tier_info)
+                mock_get_client.return_value = (mock_client, 'gpt-4o', {})
+
+                # Set up the side effects for the three API calls
+                mock_client.chat.completions.create.side_effect = [
                     mock_scores, mock_feedback, mock_rationales]
 
                 generate_response = self.client.post(generate_url, follow=True)
