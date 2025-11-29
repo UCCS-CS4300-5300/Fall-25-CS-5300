@@ -377,6 +377,11 @@
                     <a href="{% url 'invitation_dashboard' %}" class="btn btn-secondary">
                         Back to Dashboard
                     </a>
+                    {% if chat.is_finalized %}
+                    <a href="{% url 'export_report' chat.id %}" class="btn btn-secondary" target="_blank">
+                        📄 View AI Report
+                    </a>
+                    {% endif %}
                     {% if invitation.interviewer_review_status != 'completed' %}
                     <button type="submit" name="mark_reviewed" value="false" class="btn btn-primary">
                         Save Feedback
