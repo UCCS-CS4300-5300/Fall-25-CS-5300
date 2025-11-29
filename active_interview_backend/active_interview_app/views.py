@@ -647,61 +647,15 @@ class ChatView(LoginRequiredMixin, UserPassesTestMixin, View):
         chat.save()
 
         # Phase 8: Check if all questions answered and auto-finalize
-        if chat.all_questions_answered() and not chat.is_finalized:
-            # Auto-finalize the interview
-            from .report_utils import generate_and_save_report
-
-            if chat.interview_type == Chat.INVITED:
-                # For invited interviews: auto-finalize with report and notification
-                try:
-                    # Generate report (no rushed qualifier - they completed all questions)
-                    report = generate_and_save_report(chat, include_rushed_qualifier=False)
-
-                    # Mark chat as finalized
-                    chat.is_finalized = True
-                    chat.finalized_at = timezone.now()
-                    chat.save()
-
-                    # Update invitation status and send notification
-                    try:
-                        invitation = InvitedInterview.objects.get(chat=chat)
-                        if invitation.status != InvitedInterview.COMPLETED:
-                            invitation.status = InvitedInterview.COMPLETED
-                            invitation.completed_at = timezone.now()
-                            invitation.save()
-
-                            # Send completion notification to interviewer
-                            from .invitation_utils import send_completion_notification_email
-                            send_completion_notification_email(invitation)
-                    except InvitedInterview.DoesNotExist:
-                        pass
-
-                    # Return with completion flag
-                    return JsonResponse({
-                        'message': ai_message,
-                        'all_questions_answered': True,
-                        'interview_completed': True,
-                        'redirect_to_report': True
-                    })
-                except Exception as e:
-                    # If report generation fails, still mark as completed but continue normally
-                    chat.is_finalized = True
-                    chat.finalized_at = timezone.now()
-                    chat.save()
-
-                    return JsonResponse({
-                        'message': ai_message,
-                        'all_questions_answered': True,
-                        'error': 'Report generation failed, but interview marked as complete'
-                    })
-
-            elif chat.interview_type == Chat.PRACTICE:
-                # For practice interviews: just signal completion, let user finalize manually
-                return JsonResponse({
-                    'message': ai_message,
-                    'all_questions_answered': True,
-                    'show_completion_message': True
-                })
+        # NOTE: Only applies to practice interviews with key_questions
+        # Invited interviews use time-based finalization (T-5, hard cutoff, abandonment)
+        if chat.interview_type == Chat.PRACTICE and chat.all_questions_answered() and not chat.is_finalized:
+            # For practice interviews: just signal completion, let user finalize manually
+            return JsonResponse({
+                'message': ai_message,
+                'all_questions_answered': True,
+                'show_completion_message': True
+            })
 
         return JsonResponse({'message': ai_message})
 
