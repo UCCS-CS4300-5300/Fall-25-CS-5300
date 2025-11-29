@@ -516,25 +516,50 @@ class ChatView(LoginRequiredMixin, UserPassesTestMixin, View):
     def post(self, request, chat_id):
         chat = Chat.objects.get(id=chat_id)
 
-        # Check if invited interview time has expired (Issue #138)
-        if chat.interview_type == Chat.INVITED and chat.is_time_expired():
-            # Mark invitation as completed if not already
+        # Track activity for invited interviews (for abandonment detection)
+        if chat.interview_type == Chat.INVITED:
             try:
                 invitation = InvitedInterview.objects.get(chat=chat)
-                if invitation.status != InvitedInterview.COMPLETED:
-                    invitation.status = InvitedInterview.COMPLETED
-                    invitation.completed_at = timezone.now()
-                    invitation.save()
-
-                    # Send completion notification to interviewer
-                    from .invitation_utils import send_completion_notification_email
-                    send_completion_notification_email(invitation)
+                invitation.last_activity_at = timezone.now()
+                invitation.save(update_fields=['last_activity_at'])
             except InvitedInterview.DoesNotExist:
                 pass
 
+        # Check if invited interview time has expired - hard cutoff
+        if chat.interview_type == Chat.INVITED and chat.is_time_expired():
+            # Auto-finalize if not already done
+            if not chat.is_finalized:
+                from .report_utils import generate_and_save_report
+                try:
+                    report = generate_and_save_report(chat, include_rushed_qualifier=True)
+                    chat.is_finalized = True
+                    chat.finalized_at = timezone.now()
+                    chat.save()
+
+                    # Update invitation status
+                    try:
+                        invitation = InvitedInterview.objects.get(chat=chat)
+                        if invitation.status != InvitedInterview.COMPLETED:
+                            invitation.status = InvitedInterview.COMPLETED
+                            invitation.completed_at = timezone.now()
+                            invitation.save()
+
+                            # Send completion notification to interviewer
+                            from .invitation_utils import send_completion_notification_email
+                            send_completion_notification_email(invitation)
+                    except InvitedInterview.DoesNotExist:
+                        pass
+                except Exception:
+                    # If report generation fails, still mark as finalized
+                    chat.is_finalized = True
+                    chat.finalized_at = timezone.now()
+                    chat.save()
+
             return JsonResponse({
                 'error': 'Interview time has expired',
-                'time_expired': True
+                'time_expired': True,
+                'interview_ended': True,
+                'finalized': True
             }, status=403)
 
         user_message = request.POST.get('message', '')
@@ -545,6 +570,67 @@ class ChatView(LoginRequiredMixin, UserPassesTestMixin, View):
         if not ai_available():
             return _ai_unavailable_json()
 
+        # For invited interviews, check if we should ask another question
+        # No new questions after T-5 minutes (graceful ending)
+        should_end_interview = False
+        if chat.interview_type == Chat.INVITED:
+            time_remaining = chat.time_remaining()
+            if time_remaining and time_remaining.total_seconds() < 300:  # Less than 5 mins
+                should_end_interview = True
+
+        if should_end_interview:
+            # Don't ask new questions - thank candidate and end
+            import textwrap
+            ai_message = textwrap.dedent("""\
+                Thank you for your response.
+
+                The interview time window is ending, so this concludes our interview.
+                Your responses will be reviewed and you'll receive feedback soon.
+
+                Thank you for your time!
+            """)
+
+            # Add final message
+            new_messages.append({"role": "assistant", "content": ai_message})
+            chat.messages = new_messages
+            chat.last_question_at = timezone.now()
+            chat.save()
+
+            # Auto-finalize
+            if not chat.is_finalized:
+                from .report_utils import generate_and_save_report
+                try:
+                    report = generate_and_save_report(chat, include_rushed_qualifier=True)
+                    chat.is_finalized = True
+                    chat.finalized_at = timezone.now()
+                    chat.save()
+
+                    # Update invitation
+                    try:
+                        invitation = InvitedInterview.objects.get(chat=chat)
+                        if invitation.status != InvitedInterview.COMPLETED:
+                            invitation.status = InvitedInterview.COMPLETED
+                            invitation.completed_at = timezone.now()
+                            invitation.save()
+
+                            from .invitation_utils import send_completion_notification_email
+                            send_completion_notification_email(invitation)
+                    except InvitedInterview.DoesNotExist:
+                        pass
+                except Exception:
+                    # If report generation fails, still mark as finalized
+                    chat.is_finalized = True
+                    chat.finalized_at = timezone.now()
+                    chat.save()
+
+            return JsonResponse({
+                'role': 'assistant',
+                'content': ai_message,
+                'interview_ended': True,
+                'time_expired': True
+            })
+
+        # Normal flow - get AI response
         response = get_openai_client().chat.completions.create(
             model="gpt-4o",
             messages=new_messages,
@@ -552,6 +638,10 @@ class ChatView(LoginRequiredMixin, UserPassesTestMixin, View):
         )
         ai_message = response.choices[0].message.content
         new_messages.append({"role": "assistant", "content": ai_message})
+
+        # Update last question time for invited interviews
+        if chat.interview_type == Chat.INVITED:
+            chat.last_question_at = timezone.now()
 
         chat.messages = new_messages
         chat.save()

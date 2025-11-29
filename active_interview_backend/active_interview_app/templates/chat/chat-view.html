@@ -16,46 +16,95 @@
         <span>
           <i class="bi bi-clock-fill"></i>
           <strong>Time Remaining:</strong>
-          <span id="time-display">Calculating...</span>
+          <span id="time-display" class="countdown-display ms-2">Calculating...</span>
         </span>
         <small>Interview will auto-complete when time expires</small>
       </div>
+      <!-- 5-Minute Warning Banner (Hidden initially) -->
+      <div id="final-warning" class="alert alert-warning mx-3 mb-0 final-warning" role="alert" style="display: none;">
+        <div class="d-flex flex-column align-items-center">
+          <div class="mb-2">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <strong>Final 5 Minutes!</strong>
+          </div>
+          <p class="mb-2 text-center">No new questions will be asked. Please submit your final response before time expires.</p>
+          <div class="countdown-timer">
+            <i class="bi bi-hourglass-split"></i>
+            <span id="final-countdown" class="countdown-display-large">5:00</span>
+          </div>
+        </div>
+      </div>
       <script>
-        // Time tracking for invited interviews
+        // Time tracking for invited interviews with graceful ending
         const scheduledEndTime = new Date("{{ chat.scheduled_end_at|date:'c' }}");
+        let fiveMinuteWarningShown = false;
 
         function updateTimeDisplay() {
           const now = new Date();
           const timeLeft = scheduledEndTime - now;
+          const totalSeconds = Math.floor(timeLeft / 1000);
 
           if (timeLeft <= 0) {
-            document.getElementById('time-display').textContent = 'Time Expired';
-            document.getElementById('time-banner').classList.remove('alert-info');
+            document.getElementById('time-display').textContent = '0:00 - Time Expired';
+            document.getElementById('time-banner').classList.remove('alert-info', 'alert-warning');
             document.getElementById('time-banner').classList.add('alert-danger');
+
+            // Update final warning if shown
+            if (document.getElementById('final-warning').style.display !== 'none') {
+              document.getElementById('final-countdown').textContent = '0:00';
+              document.getElementById('final-warning').classList.remove('alert-warning');
+              document.getElementById('final-warning').classList.add('alert-danger');
+            }
+
             // Disable input
             document.getElementById('user-input').disabled = true;
             document.getElementById('user-input').placeholder = 'Interview time has expired';
+            document.querySelector('.button-chat-send[onclick="sendMessage()"]').disabled = true;
+
             // Reload page to show completion
             setTimeout(() => location.reload(), 2000);
             return;
           }
 
-          const minutes = Math.floor(timeLeft / 60000);
-          const seconds = Math.floor((timeLeft % 60000) / 1000);
+          const minutes = Math.floor(totalSeconds / 60);
+          const seconds = totalSeconds % 60;
+          const timeString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
 
-          document.getElementById('time-display').textContent =
-            `${minutes}:${seconds.toString().padStart(2, '0')}`;
+          document.getElementById('time-display').textContent = timeString;
 
-          // Change color when less than 5 minutes remain
-          if (minutes < 5) {
+          // Show 5-minute warning banner
+          if (totalSeconds <= 300 && !fiveMinuteWarningShown) {  // 300 seconds = 5 minutes
+            fiveMinuteWarningShown = true;
+            document.getElementById('final-warning').style.display = 'block';
+            // Scroll to show warning
+            document.getElementById('final-warning').scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+
+          // Update final countdown if warning is shown
+          if (fiveMinuteWarningShown) {
+            document.getElementById('final-countdown').textContent = timeString;
+
+            // Change final warning color when less than 1 minute
+            if (totalSeconds <= 60) {
+              document.getElementById('final-warning').classList.remove('alert-warning');
+              document.getElementById('final-warning').classList.add('alert-danger');
+              document.getElementById('final-countdown').style.color = 'var(--bs-danger)';
+              document.getElementById('final-countdown').style.fontWeight = 'bold';
+            }
+          }
+
+          // Change main banner color when less than 5 minutes remain
+          if (totalSeconds <= 300) {
             document.getElementById('time-banner').classList.remove('alert-info');
             document.getElementById('time-banner').classList.add('alert-warning');
           }
 
           // Change to danger when less than 1 minute remains
-          if (minutes < 1) {
+          if (totalSeconds <= 60) {
             document.getElementById('time-banner').classList.remove('alert-warning');
             document.getElementById('time-banner').classList.add('alert-danger');
+            document.getElementById('time-display').style.color = 'var(--bs-danger)';
+            document.getElementById('time-display').style.fontWeight = 'bold';
           }
         }
 
@@ -260,6 +309,41 @@
             csrfmiddlewaretoken: '{{ csrf_token }}'
           },
           success: function(response) {
+            // Handle interview_ended flag (graceful ending)
+            if (response.interview_ended && response.time_expired) {
+              let messageContent = response.content || response.message;
+              formattedResponseMessage = DOMPurify.sanitize(messageContent.replace(/(?:\r\n|\r|\n)/g, '<br>'));
+
+              // delete loading bubble
+              $('#loading-bubble').remove();
+
+              // Show final message with special styling
+              $('#chat-messages').append(
+                `<div class="col bot-text-container">
+                  <div class="card bot-text-bubble" style="background-color: var(--bs-warning); color: var(--bs-dark);">
+                    <div class="card-body">
+                      <p class="card-text"><i class="bi bi-check-circle-fill"></i> ${formattedResponseMessage}</p>
+                    </div>
+                  </div>
+                </div>`);
+
+              updateScroll();
+
+              // Disable input
+              document.getElementById('user-input').disabled = true;
+              document.getElementById('user-input').placeholder = 'Interview has ended';
+              document.querySelector('.button-chat-send[onclick="sendMessage()"]').disabled = true;
+
+              // Show completion message
+              setTimeout(() => {
+                alert('Interview completed! Your responses have been saved and will be reviewed.');
+                location.reload();
+              }, 2000);
+
+              return;
+            }
+
+            // Normal message handling
             formattedResponseMessage = DOMPurify.sanitize(response.message.replace(/(?:\r\n|\r|\n)/g, '<br>'));
 
             // delete loading bubble

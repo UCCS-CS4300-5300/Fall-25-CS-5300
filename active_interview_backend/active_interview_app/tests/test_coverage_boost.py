@@ -402,67 +402,8 @@ class ViewsCriticalPathsTest(TransactionTestCase):
         )
         self.assertEqual(response.status_code, 200)
 
-    @patch('active_interview_app.views.ai_available', return_value=True)
-    @patch('active_interview_app.views.get_openai_client')
-    def test_results_chat(self, mock_client, mock_ai):
-        """Test ResultsChat"""
-        chat = Chat.objects.create(
-            owner=self.user,
-            title='Test',
-            job_listing=self.job,
-            difficulty=5,
-            type='GEN',
-            messages=[{"role": "system", "content": "test"}]
-        )
-
-        mock_resp = MagicMock()
-        mock_resp.choices = [MagicMock()]
-        mock_resp.choices[0].message.content = "Feedback"
-        mock_client.return_value.chat.completions.create.return_value = mock_resp
-
-        response = self.client.get(reverse('chat-results', kwargs={'chat_id': chat.id}))
-        self.assertEqual(response.status_code, 200)
-
-    @patch('active_interview_app.views.ai_available', return_value=False)
-    def test_results_chat_no_ai(self, mock_ai):
-        """Test ResultsChat without AI"""
-        chat = Chat.objects.create(
-            owner=self.user,
-            title='Test',
-            job_listing=self.job,
-            difficulty=5,
-            type='GEN',
-            messages=[{"role": "system", "content": "test"}]
-        )
-
-        response = self.client.get(reverse('chat-results', kwargs={'chat_id': chat.id}))
-        self.assertIn('unavailable', response.context['feedback'])
-
-    @patch('active_interview_app.views.ai_available', return_value=True)
-    @patch('active_interview_app.views.get_openai_client')
-    def test_result_charts(self, mock_client, mock_ai):
-        """Test ResultCharts"""
-        chat = Chat.objects.create(
-            owner=self.user,
-            title='Test',
-            job_listing=self.job,
-            difficulty=5,
-            type='GEN',
-            messages=[{"role": "system", "content": "test"}]
-        )
-
-        mock_resp1 = MagicMock()
-        mock_resp1.choices = [MagicMock()]
-        mock_resp1.choices[0].message.content = "80\n70\n90\n75"
-
-        mock_resp2 = MagicMock()
-        mock_resp2.choices = [MagicMock()]
-        mock_resp2.choices[0].message.content = "Good"
-
-        mock_client.return_value.chat.completions.create.side_effect = [mock_resp1, mock_resp2]
-
-        response = self.client.get(reverse('result-charts', kwargs={'chat_id': chat.id}))
-        self.assertEqual(response.context['scores']['Professionalism'], 80)
+    # Tests for ResultsChat and ResultCharts removed - views deleted in Phase 3 (Results Page Removal)
+    # See: temp/COMPLETED_PHASES_1-3.md for details
 
     @patch('active_interview_app.views.filetype')
     @patch('active_interview_app.views.pymupdf4llm')
