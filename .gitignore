@@ -9,6 +9,7 @@ __pycache__/
 # Distribution / packaging
 .Python
 build/
+temp/
 develop-eggs/
 dist/
 downloads/
@@ -50,6 +51,7 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 cover/
+*coverage_report.txt
 
 # Translations
 *.mo
@@ -234,6 +236,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
+
+# Exception: Include Research test logs for research study
+!Research/logs/
+!Research/logs/*.md
 .pnpm-debug.log*
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
@@ -372,3 +378,15 @@ error_log.txt
 
 testfile.pdf
 myenv/
+
+# Claude Code generated reports (should go in PR descriptions instead)
+Claude_Reports/
+*_SUMMARY.md
+*_FIXES.md
+*_IMPROVEMENTS.md
+*_COMPLETE.md
+*_SETUP_COMPLETE.md
+QUICK_*_GUIDE.md
+PIPELINE_*.md
+TESTING_*.md
+COVERAGE_*.md

@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+{% block title %}
+    AIS - Invitation Sent
+{% endblock title %}
+{% block content %}
+    <style>
+    .confirmation-page {
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .page-header h1 {
+      color: var(--success);
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .page-header .success-icon {
+      font-size: 3rem;
+      color: var(--success);
+      margin-bottom: 1rem;
+    }
+
+    .confirmation-section {
+      background: var(--surface-hover);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .confirmation-section h2 {
+      color: var(--text-primary);
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .confirmation-section h2::before {
+      content: "";
+      display: inline-block;
+      width: 4px;
+      height: 1.3rem;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 1rem;
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 0.75rem;
+    }
+
+    .detail-label {
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .detail-value {
+      color: var(--text-primary);
+      font-weight: 500;
+      text-align: right;
+    }
+
+    .join-link-section {
+      background: var(--primary-light);
+      border: 2px solid var(--primary);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+    }
+
+    .join-link-section p {
+      color: var(--text-primary);
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+
+    .join-link {
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.75rem;
+      font-family: monospace;
+      color: var(--text-primary);
+      word-break: break-all;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .join-link:hover {
+      border-color: var(--primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      border: 2px solid var(--primary);
+      color: var(--text-white);
+      padding: 0.75rem 2rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border-radius: var(--radius);
+      transition: all 0.2s ease;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-dark);
+      border-color: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      color: var(--text-white);
+    }
+
+    .btn-secondary {
+      background-color: var(--surface);
+      border: 2px solid var(--border);
+      color: var(--text-primary);
+      padding: 0.75rem 2rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border-radius: var(--radius);
+      transition: all 0.2s ease;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--surface-hover);
+      border-color: var(--primary);
+      color: var(--text-primary);
+    }
+
+    .button-group {
+      display: flex;
+      gap: 1rem;
+      margin-top: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .info-box {
+      background: var(--info-light, #d1ecf1);
+      border: 2px solid var(--info);
+      border-radius: var(--radius);
+      padding: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .info-box p {
+      color: var(--text-primary);
+      margin: 0;
+      font-size: 0.95rem;
+    }
+    </style>
+
+    <div class="confirmation-page">
+        <div class="page-header">
+            <div class="success-icon">✓</div>
+            <h1>Invitation Sent Successfully!</h1>
+            <p>The candidate will receive an email with interview details</p>
+        </div>
+
+        <div class="confirmation-section">
+            <h2>Invitation Details</h2>
+
+            <div class="detail-row">
+                <span class="detail-label">Template:</span>
+                <span class="detail-value">{{ invitation.template.name }}</span>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-label">Candidate Email:</span>
+                <span class="detail-value">{{ invitation.candidate_email }}</span>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-label">Scheduled Time:</span>
+                <span class="detail-value">{{ invitation.scheduled_time|date:"F j, Y, g:i A" }}</span>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-label">Duration:</span>
+                <span class="detail-value">{{ invitation.duration_minutes }} minutes</span>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-label">Window Closes:</span>
+                <span class="detail-value">{{ window_end|date:"F j, Y, g:i A" }}</span>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-label">Status:</span>
+                <span class="detail-value">{{ invitation.get_status_display }}</span>
+            </div>
+
+            <div class="join-link-section">
+                <p>Interview Join Link:</p>
+                <div class="join-link" title="Click to copy">
+                    {{ join_url }}
+                </div>
+            </div>
+
+            <div class="info-box">
+                <p><strong>What happens next:</strong></p>
+                <p>• An email invitation has been sent to {{ invitation.candidate_email }}</p>
+                <p>• The candidate can access the interview starting at {{ invitation.scheduled_time|date:"g:i A" }} on {{ invitation.scheduled_time|date:"F j, Y" }}</p>
+                <p>• You'll receive a notification when the candidate completes the interview</p>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <a href="{% url 'invitation_create' %}" class="btn-primary">Send Another Invitation</a>
+            <a href="{% url 'invitation_dashboard' %}" class="btn-secondary">View All Invitations</a>
+            <a href="{% url 'template_detail' invitation.template.id %}" class="btn-secondary">Back to Template</a>
+        </div>
+    </div>
+
+    <script>
+        // Copy to clipboard functionality
+        document.querySelector('.join-link').addEventListener('click', function() {
+            const text = this.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const originalBg = this.style.backgroundColor;
+                this.style.backgroundColor = 'var(--success-light, #d4edda)';
+                setTimeout(() => {
+                    this.style.backgroundColor = originalBg;
+                }, 500);
+            });
+        });
+    </script>
+{% endblock content %}

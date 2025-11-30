@@ -1,0 +1,318 @@
+{% extends "base.html" %}
+{% block title %}
+    AIS - Create Invitation
+{% endblock title %}
+{% block content %}
+    <style>
+    .invitation-page {
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .page-header h1 {
+      color: var(--primary);
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .page-header p {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+    }
+
+    .form-section {
+      background: var(--surface-hover);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .form-section h2 {
+      color: var(--text-primary);
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .form-section h2::before {
+      content: "";
+      display: inline-block;
+      width: 4px;
+      height: 1.3rem;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .form-group .form-control,
+    .form-group .form-select {
+      background-color: var(--surface);
+      border: 2px solid var(--border);
+      color: var(--text-primary);
+      border-radius: var(--radius);
+      padding: 0.75rem;
+      font-size: 1rem;
+      transition: all 0.2s ease;
+    }
+
+    .form-group .form-control:focus,
+    .form-group .form-select:focus {
+      background-color: var(--surface);
+      border-color: var(--primary);
+      box-shadow: 0 0 0 0.2rem var(--primary-light);
+      color: var(--text-primary);
+      outline: none;
+    }
+
+    .form-text {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+    }
+
+    .errorlist {
+      list-style: none;
+      padding: 0;
+      margin: 0.5rem 0 0 0;
+    }
+
+    .errorlist li {
+      color: var(--error);
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      border: 2px solid var(--primary);
+      color: var(--text-white);
+      padding: 0.75rem 2rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border-radius: var(--radius);
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-dark);
+      border-color: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn-secondary {
+      background-color: var(--surface);
+      border: 2px solid var(--border);
+      color: var(--text-primary);
+      padding: 0.75rem 2rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border-radius: var(--radius);
+      transition: all 0.2s ease;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--surface-hover);
+      border-color: var(--primary);
+      color: var(--text-primary);
+    }
+
+    .button-group {
+      display: flex;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .template-badge {
+      display: inline-block;
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius);
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+    </style>
+
+    <div class="invitation-page">
+        <div class="page-header">
+            <h1>Create Interview Invitation</h1>
+            <p>Invite a candidate to take an interview based on your template</p>
+        </div>
+
+        {% if template %}
+        <div class="template-badge">
+            Using Template: {{ template.name }}
+        </div>
+        {% endif %}
+
+        <div class="form-section">
+            <h2>Invitation Details</h2>
+
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                <!-- Non-field errors -->
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+
+                <!-- Template Field -->
+                <div class="form-group">
+                    <label for="{{ form.template.id_for_label }}">Interview Template *</label>
+                    {{ form.template }}
+                    {% if form.template.help_text %}
+                        <div class="form-text">{{ form.template.help_text }}</div>
+                    {% endif %}
+                    {{ form.template.errors }}
+                </div>
+
+                <!-- Candidate Email Field -->
+                <div class="form-group">
+                    <label for="{{ form.candidate_email.id_for_label }}">Candidate Email *</label>
+                    {{ form.candidate_email }}
+                    {% if form.candidate_email.help_text %}
+                        <div class="form-text">{{ form.candidate_email.help_text }}</div>
+                    {% endif %}
+                    {{ form.candidate_email.errors }}
+                </div>
+
+                <!-- Scheduled Date Field -->
+                <div class="form-group">
+                    <label for="{{ form.scheduled_date.id_for_label }}">Scheduled Date *</label>
+                    {{ form.scheduled_date }}
+                    {% if form.scheduled_date.help_text %}
+                        <div class="form-text">{{ form.scheduled_date.help_text }}</div>
+                    {% endif %}
+                    {{ form.scheduled_date.errors }}
+                </div>
+
+                <!-- Scheduled Time Field -->
+                <div class="form-group">
+                    <label for="{{ form.scheduled_time.id_for_label }}">Scheduled Time *</label>
+                    {{ form.scheduled_time }}
+                    <div class="form-text">
+                        <i class="bi bi-clock"></i> <span id="current-time-display">Enter time in your local timezone</span>
+                        <br>Times must be at least 2 minutes in the future
+                    </div>
+                    {{ form.scheduled_time.errors }}
+                </div>
+
+                <!-- Hidden timezone offset field -->
+                {{ form.timezone_offset }}
+
+                <!-- Duration Field -->
+                <div class="form-group">
+                    <label for="{{ form.duration_minutes.id_for_label }}">Duration *</label>
+                    {{ form.duration_minutes }}
+                    {% if form.duration_minutes.help_text %}
+                        <div class="form-text">{{ form.duration_minutes.help_text }}</div>
+                    {% endif %}
+                    {{ form.duration_minutes.errors }}
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">Send Invitation</button>
+                    <a href="{% url 'invitation_dashboard' %}" class="btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+    // Timezone handling for invitation scheduling
+    (function() {
+        // Get user's timezone offset in minutes
+        const timezoneOffset = new Date().getTimezoneOffset();
+
+        // Set the hidden timezone offset field
+        const offsetField = document.getElementById('id_timezone_offset');
+        if (offsetField) {
+            offsetField.value = timezoneOffset;
+        }
+
+        // Display current time in user's local timezone
+        function updateCurrentTime() {
+            const now = new Date();
+            const timeString = now.toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                timeZoneName: 'short'
+            });
+
+            const display = document.getElementById('current-time-display');
+            if (display) {
+                display.textContent = `Current time: ${timeString}`;
+            }
+        }
+
+        // Update time display on page load and every minute
+        updateCurrentTime();
+        setInterval(updateCurrentTime, 60000);
+
+        // Set minimum date/time to now + 2 minutes
+        const dateInput = document.getElementById('{{ form.scheduled_date.id_for_label }}');
+        const timeInput = document.getElementById('{{ form.scheduled_time.id_for_label }}');
+
+        if (dateInput) {
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.setAttribute('min', today);
+        }
+
+        // Optional: Provide helpful validation when user selects a time
+        if (timeInput && dateInput) {
+            function validateSelectedTime() {
+                const selectedDate = dateInput.value;
+                const selectedTime = timeInput.value;
+
+                if (selectedDate && selectedTime) {
+                    const selected = new Date(selectedDate + 'T' + selectedTime);
+                    const now = new Date();
+                    const minTime = new Date(now.getTime() + 2 * 60000); // 2 minutes from now
+
+                    if (selected < minTime) {
+                        const diff = Math.round((minTime - selected) / 60000);
+                        timeInput.setCustomValidity(
+                            `Please select a time at least 2 minutes in the future (${diff} more minutes needed)`
+                        );
+                    } else {
+                        timeInput.setCustomValidity('');
+                    }
+                }
+            }
+
+            dateInput.addEventListener('change', validateSelectedTime);
+            timeInput.addEventListener('change', validateSelectedTime);
+        }
+    })();
+    </script>
+{% endblock content %}

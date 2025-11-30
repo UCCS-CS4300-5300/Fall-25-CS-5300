@@ -8,6 +8,7 @@ from django.contrib.auth.models import User
 from rest_framework.test import APIClient
 from unittest.mock import patch
 from django.conf import settings
+from .test_credentials import TEST_PASSWORD
 import os
 import shutil
 
@@ -109,8 +110,8 @@ class UploadedJobListingUploadTestCase(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = User.objects.create_user(
-            username="testuser", password="testpass")
-        self.client.login(username="testuser", password="testpass")
+            username="testuser", password=TEST_PASSWORD)
+        self.client.login(username="testuser", password=TEST_PASSWORD)
 
 
 def test_pasted_text_upload(self):
@@ -141,7 +142,7 @@ class ResumeUploadTests(TestCase):
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create_user(
-            username='testuser', password='testpass')
+            username='testuser', password=TEST_PASSWORD)
 
     def test_upload_valid_pdf(self):
         print(f"Current working directory: {os.getcwd()}")
@@ -155,7 +156,7 @@ class ResumeUploadTests(TestCase):
             uploaded_pdf = SimpleUploadedFile(
                 'test.pdf', pdf_file.read(), content_type='application/pdf')
 
-        self.client.login(username='testuser', password='testpass')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
         response = self.client.post(
             reverse('upload_file'),
@@ -168,11 +169,12 @@ class ResumeUploadTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         messages = list(get_messages(response.wsgi_request))
-        self.assertTrue(any("File uploaded successfully!" in str(m)
+        # Message changed for resume uploads with AI parsing
+        self.assertTrue(any("uploaded" in str(m).lower()
                         for m in messages))
 
     def test_upload_invalid_filetype(self):
-        self.client.login(username='testuser', password='testpass')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         txt_file = SimpleUploadedFile(
             "test.txt", b"Just some text", content_type="text/plain")
 
@@ -193,11 +195,11 @@ class UploadedJobListingViewTests(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = User.objects.create_user(
-            username='testuser', password='testpass')
+            username='testuser', password=TEST_PASSWORD)
 
 
 def test_post_valid_text(self):
-    self.client.login(username='testuser', password='testpass')
+    self.client.login(username='testuser', password=TEST_PASSWORD)
     response = self.client.post(
         reverse('save_pasted_text'),
         {'paste-text': 'This is a pasted test.', 'title': 'Test Title'},
@@ -210,7 +212,7 @@ def test_post_valid_text(self):
                     for m in messages_list))
 
     def test_post_empty_text(self):
-        self.client.login(username='testuser', password='testpass')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         response = self.client.post(reverse('save_pasted_text'), {
                                     'paste-text': ''}, follow=True)
         self.assertEqual(response.status_code, 200)
@@ -229,16 +231,16 @@ class IndexViewTest(TestCase):
 class ResumeUploadTestCase(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
-            username='testuser', password='password')
+            username='testuser', password=TEST_PASSWORD)
         self.other_user = User.objects.create_user(
-            username='otheruser', password='password')
+            username='otheruser', password=TEST_PASSWORD)
         self.resume = UploadedResume.objects.create(
             user=self.user, content='Sample Resume Content', title='My Resume')
         self.other_resume = UploadedResume.objects.create(
             user=self.other_user, content='Not Yours', title='Other Resume')
 
     def test_delete_resume_post_success(self):
-        self.client.login(username='testuser', password='password')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         response = self.client.post(
             reverse('delete_resume', args=[self.resume.id]))
         self.assertRedirects(response, reverse('profile'))
@@ -246,7 +248,7 @@ class ResumeUploadTestCase(TestCase):
             UploadedResume.objects.get(id=self.resume.id)
 
     def test_delete_resume_get_does_not_delete(self):
-        self.client.login(username='testuser', password='password')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         response = self.client.get(
             reverse('delete_resume', args=[self.resume.id]))
         self.assertRedirects(response, reverse('profile'))
@@ -254,7 +256,7 @@ class ResumeUploadTestCase(TestCase):
             id=self.resume.id).exists())
 
     def test_cannot_delete_other_users_resume(self):
-        self.client.login(username='testuser', password='password')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         response = self.client.post(
             reverse('delete_resume', args=[self.other_resume.id]))
         self.assertEqual(response.status_code, 404)
@@ -265,7 +267,7 @@ class ResumeUploadTestCase(TestCase):
 class ResumeDetailViewTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
-            username='testuser', password='password')
+            username='testuser', password=TEST_PASSWORD)
         self.resume = UploadedResume.objects.create(
             user=self.user,
             title='Sample Resume',
@@ -273,7 +275,7 @@ class ResumeDetailViewTests(TestCase):
         )
 
     def test_resume_detail_view_authenticated(self):
-        self.client.login(username='testuser', password='password')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         response = self.client.get(
             reverse('resume_detail', args=[self.resume.id]))
         self.assertEqual(response.status_code, 200)
@@ -284,10 +286,10 @@ class ResumeDetailViewTests(TestCase):
         response = self.client.get(
             reverse('resume_detail', args=[self.resume.id]))
         self.assertEqual(response.status_code, 302)
-        self.assertIn('/login/', response.url)
+        self.assertIn('/accounts/login/', response.url)
 
     def test_resume_detail_view_nonexistent_resume(self):
-        self.client.login(username='testuser', password='password')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         response = self.client.get(reverse('resume_detail', args=[999]))
         self.assertEqual(response.status_code, 404)
 
@@ -295,8 +297,8 @@ class ResumeDetailViewTests(TestCase):
 class UploadedJobListingViewTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
-            username="testuser", password="password")
-        self.client.login(username="testuser", password="password")
+            username="testuser", password=TEST_PASSWORD)
+        self.client.login(username="testuser", password=TEST_PASSWORD)
         self.url = "/pasted-text/"
 
     def tearDown(self):
@@ -332,9 +334,9 @@ class UploadedResumeViewTest(TestCase):
 
     def setUp(self):
         self.user = User.objects.create_user(
-            username="testuser", password="password")
+            username="testuser", password=TEST_PASSWORD)
         self.client = APIClient()
-        self.client.login(username="testuser", password="password")
+        self.client.login(username="testuser", password=TEST_PASSWORD)
         self.url = reverse('upload_file')
 
     def test_valid_resume_upload(self):
@@ -353,8 +355,8 @@ class FileUploadTests(TestCase):
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create_user(
-            username="testuser", password="testpass")
-        self.client.login(username="testuser", password="testpass")
+            username="testuser", password=TEST_PASSWORD)
+        self.client.login(username="testuser", password=TEST_PASSWORD)
 
     @patch("filetype.guess")
     def test_file_type_guess_called_on_upload(self, mock_guess):
@@ -378,8 +380,8 @@ class FileUploadTests(TestCase):
 class EditResumeViewTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
-            username='testuser', password='testpass')
-        self.client.login(username='testuser', password='testpass')
+            username='testuser', password=TEST_PASSWORD)
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
         self.resume = UploadedResume.objects.create(
             user=self.user,
@@ -418,7 +420,7 @@ class EditResumeViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'documents/edit_document.html')
-        self.assertFormError(response, 'form', 'title',
+        self.assertFormError(response.context['form'], 'title',
                              'This field is required.')
 
 

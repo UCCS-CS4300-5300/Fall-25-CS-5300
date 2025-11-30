@@ -1,0 +1,41 @@
+# Bandit Configuration File (YAML format)
+# See: https://bandit.readthedocs.io/en/latest/config.html
+
+# Paths to exclude from scanning
+exclude_dirs:
+  - '.git'
+  - '.github'
+  - 'venv'
+  - 'env'
+  - '.venv'
+  - 'node_modules'
+  - 'staticfiles'
+  - 'static'
+  - 'media'
+  - 'active_interview_backend/active_interview_app/tests'
+  - 'active_interview_backend/active_interview_app/migrations'
+  - '__pycache__'
+
+# Tests to skip (use with caution)
+# Uncomment specific tests if you want to skip them
+# Format: B### where ### is the test ID
+# skips:
+#   - B201  # Skip flask_debug_true (if not using Flask)
+#   - B601  # Skip paramiko_calls (if intentional)
+
+# Tests to run (leave empty to run all)
+# tests: []
+
+# Severity level threshold
+# Options: all, low, medium, high
+# Only report issues at this level or higher
+# This is overridden by command-line flags in workflows
+# severity: medium
+
+# Confidence level threshold
+# Options: all, low, medium, high
+# Only report issues with this confidence or higher
+# confidence: medium
+
+# Plugins to load (leave empty to use defaults)
+# plugins: []

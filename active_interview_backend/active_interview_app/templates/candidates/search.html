@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* Override Bootstrap classes for theme support */
+    .text-muted {
+        color: var(--text-secondary) !important;
+    }
+    .form-control {
+        background-color: var(--surface) !important;
+        border-color: var(--border) !important;
+        color: var(--text-primary) !important;
+    }
+    .form-control:focus {
+        background-color: var(--surface) !important;
+        border-color: var(--primary) !important;
+        color: var(--text-primary) !important;
+        box-shadow: 0 0 0 0.2rem rgba(31, 123, 166, 0.25) !important;
+    }
+    .form-control::placeholder {
+        color: var(--text-light) !important;
+        opacity: 1 !important;
+    }
+    .badge {
+        background-color: var(--primary) !important;
+        color: var(--text-white) !important;
+    }
+    .badge.bg-secondary {
+        background-color: var(--text-secondary) !important;
+    }
+</style>
+<div class="container-page container-standard">
+    <h2 class="text-brand text-xl mb-4">Search Candidates</h2>
+
+    <!-- Search Form -->
+    <div class="box box-section mb-4">
+        <form method="get" action="{% url 'candidate_search' %}">
+            <div class="input-group">
+                <input type="text"
+                       name="q"
+                       class="form-control"
+                       placeholder="Search by username..."
+                       value="{{ query }}"
+                       autofocus>
+                <button class="btn btn-primary" type="submit">
+                    Search
+                </button>
+                {% if query %}
+                    <a href="{% url 'candidate_search' %}" class="btn btn-secondary">
+                        Clear
+                    </a>
+                {% endif %}
+            </div>
+            <small class="form-text text-muted mt-2 d-block">
+                Search for candidates by their username.
+            </small>
+        </form>
+    </div>
+
+    <!-- Search Results -->
+    {% if query %}
+        <div class="box box-section">
+            <h4 class="text-brand mb-3">
+                Search Results
+                {% if candidates %}
+                    <span class="badge bg-primary">{{ candidates.count }} found</span>
+                {% endif %}
+            </h4>
+
+            {% if candidates %}
+                <ul class="list-clean list-items">
+                    {% for candidate in candidates %}
+                        <li class="box box-item">
+                            <div>
+                                <h5 class="text-bold mb-2">
+                                    {{ candidate.username }}
+                                    <span class="badge bg-secondary">Candidate</span>
+                                </h5>
+                                {% if candidate.email %}
+                                    <p class="mb-1 text-sm">
+                                        <strong>Email:</strong> {{ candidate.email }}
+                                    </p>
+                                {% endif %}
+                                {% if candidate.first_name or candidate.last_name %}
+                                    <p class="mb-1 text-sm">
+                                        <strong>Name:</strong> {{ candidate.first_name }} {{ candidate.last_name }}
+                                    </p>
+                                {% endif %}
+                                <p class="mb-1 text-sm">
+                                    <strong>Joined:</strong> {{ candidate.date_joined|date:"M d, Y" }}
+                                </p>
+                                {% if candidate.profile.created_at %}
+                                    <p class="mb-0 text-secondary-color text-sm">
+                                        Profile created: {{ candidate.profile.created_at|date:"M d, Y" }}
+                                    </p>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <a href="{% url 'view_user_profile' candidate.id %}"
+                                   class="btn btn-primary">
+                                    View Profile
+                                </a>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="box box-info">
+                    <p class="mb-0 text-bold">No candidates found matching "{{ query }}".</p>
+                </div>
+            {% endif %}
+        </div>
+    {% else %}
+        <div class="box box-info">
+            <p class="mb-0 text-bold">Enter a username to search for candidates.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock content %}

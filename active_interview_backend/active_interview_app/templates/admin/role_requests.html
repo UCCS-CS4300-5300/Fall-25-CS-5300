@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* Override Bootstrap classes for theme support */
+    h2, h4, h5 {
+        color: var(--text-primary) !important;
+    }
+    .text-muted {
+        color: var(--text-secondary) !important;
+    }
+    .card {
+        background-color: var(--surface-hover) !important;
+        border: 2px solid var(--border) !important;
+        color: var(--text-primary) !important;
+    }
+    .card-header {
+        background-color: var(--surface) !important;
+        border-color: var(--border) !important;
+        color: var(--text-primary) !important;
+    }
+    .card-header.bg-warning {
+        background-color: var(--warning) !important;
+        color: var(--text-primary) !important;
+    }
+    .card-header.bg-secondary {
+        background-color: var(--surface) !important;
+        color: var(--text-primary) !important;
+    }
+    .card-body {
+        background-color: var(--surface) !important;
+        color: var(--text-primary) !important;
+    }
+    .table {
+        color: var(--text-primary) !important;
+    }
+    .table-hover tbody tr:hover {
+        background-color: var(--surface) !important;
+    }
+    .table-hover tbody tr:hover td {
+        color: var(--text-primary) !important;
+    }
+    .table-hover tbody tr:hover .text-muted {
+        color: var(--text-secondary) !important;
+    }
+    .form-control, .form-select {
+        background-color: var(--surface) !important;
+        border-color: var(--border) !important;
+        color: var(--text-primary) !important;
+    }
+    .form-control::placeholder,
+    .form-select::placeholder,
+    textarea::placeholder {
+        color: var(--text-light) !important;
+        opacity: 1 !important;
+    }
+    .form-control:focus, .form-select:focus {
+        background-color: var(--surface) !important;
+        border-color: var(--primary) !important;
+        color: var(--text-primary) !important;
+        box-shadow: 0 0 0 0.2rem rgba(31, 123, 166, 0.25) !important;
+    }
+    .modal-content {
+        background-color: var(--surface) !important;
+        color: var(--text-primary) !important;
+    }
+    .modal-header {
+        border-color: var(--border) !important;
+    }
+    .modal-footer {
+        border-color: var(--border) !important;
+    }
+    .form-label {
+        color: var(--text-primary) !important;
+    }
+    p {
+        color: var(--text-primary) !important;
+    }
+</style>
+<div class="container mt-5">
+    <h2>Role Change Requests</h2>
+
+    <!-- Messages now displayed globally in base.html -->
+
+    <!-- Pending Requests -->
+    <div class="card mb-4">
+        <div class="card-header bg-warning">
+            <h4 class="mb-0">Pending Requests ({{ pending_requests.count }})</h4>
+        </div>
+        <div class="card-body">
+            {% if pending_requests %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Email</th>
+                                <th>Current Role</th>
+                                <th>Requested Role</th>
+                                <th>Reason</th>
+                                <th>Requested At</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for request in pending_requests %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ request.user.username }}</strong>
+                                        {% if request.user.first_name or request.user.last_name %}
+                                            <br>
+                                            <small class="text-muted">
+                                                {{ request.user.first_name }} {{ request.user.last_name }}
+                                            </small>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ request.user.email }}</td>
+                                    <td><span class="badge bg-secondary">{{ request.current_role|title }}</span></td>
+                                    <td><span class="badge bg-primary">{{ request.requested_role|title }}</span></td>
+                                    <td>
+                                        {% if request.reason %}
+                                            <button class="btn btn-sm btn-outline-info" type="button"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#reasonModal{{ request.id }}">
+                                                View Reason
+                                            </button>
+                                            <!-- Reason Modal -->
+                                            <div class="modal fade" id="reasonModal{{ request.id }}" tabindex="-1">
+                                                <div class="modal-dialog">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title">Request Reason</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            {{ request.reason }}
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% else %}
+                                            <span class="text-muted">No reason provided</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ request.created_at|date:"M d, Y H:i" }}</td>
+                                    <td>
+                                        <form method="post" action="{% url 'review_role_request' request.id %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="approve">
+                                            <button type="submit" class="btn btn-sm btn-success">
+                                                Approve
+                                            </button>
+                                        </form>
+                                        <button type="button" class="btn btn-sm btn-danger"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#rejectModal{{ request.id }}">
+                                            Reject
+                                        </button>
+
+                                        <!-- Reject Modal -->
+                                        <div class="modal fade" id="rejectModal{{ request.id }}" tabindex="-1">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <form method="post" action="{% url 'review_role_request' request.id %}">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="action" value="reject">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title">Reject Role Request</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <p>Are you sure you want to reject this request from <strong>{{ request.user.username }}</strong>?</p>
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Admin Notes (Optional)</label>
+                                                                <textarea name="admin_notes" class="form-control" rows="3"
+                                                                          placeholder="Provide feedback or reason for rejection..."></textarea>
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                            <button type="submit" class="btn btn-danger">Reject Request</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted mb-0">No pending role change requests.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Reviewed Requests -->
+    <div class="card">
+        <div class="card-header bg-secondary text-white">
+            <h4 class="mb-0">Recently Reviewed Requests</h4>
+        </div>
+        <div class="card-body">
+            {% if reviewed_requests %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Requested Role</th>
+                                <th>Status</th>
+                                <th>Reviewed By</th>
+                                <th>Reviewed At</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for request in reviewed_requests %}
+                                <tr>
+                                    <td>{{ request.user.username }}</td>
+                                    <td>{{ request.requested_role|title }}</td>
+                                    <td>
+                                        {% if request.status == 'approved' %}
+                                            <span class="badge bg-success">Approved</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Rejected</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ request.reviewed_by.username }}</td>
+                                    <td>{{ request.reviewed_at|date:"M d, Y H:i" }}</td>
+                                    <td>
+                                        {% if request.admin_notes %}
+                                            <button class="btn btn-sm btn-outline-secondary" type="button"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#notesModal{{ request.id }}">
+                                                View Notes
+                                            </button>
+                                            <!-- Notes Modal -->
+                                            <div class="modal fade" id="notesModal{{ request.id }}" tabindex="-1">
+                                                <div class="modal-dialog">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title">Admin Notes</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            {{ request.admin_notes }}
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted mb-0">No reviewed requests yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock content %}

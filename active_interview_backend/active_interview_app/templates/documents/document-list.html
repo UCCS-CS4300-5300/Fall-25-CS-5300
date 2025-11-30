@@ -6,72 +6,722 @@
 
 {% block content %}
   <style>
-    body {
-      color: white;
+    /* Page header and document-page styles moved to main.css */
+
+    /* Upload Section - Page specific */
+    .upload-section {
+      background: var(--surface-hover);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow 0.3s ease;
     }
-    label, textarea, input, button, h2 {
-      color: white;
+
+    .upload-section:hover {
+      box-shadow: var(--shadow);
     }
-    input, textarea {
-      background-color: #333;
-      border: 1px solid #777;
+
+    .upload-section h2 {
+      color: var(--text-primary);
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
-    button {
-      background-color: #555;
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      margin-top: 8px;
+
+    .upload-section h2::before {
+      content: "";
+      display: inline-block;
+      width: 4px;
+      height: 1.5rem;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+      display: block;
+      color: var(--text-primary);
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    .form-group input[type="text"],
+    .form-group input[type="file"],
+    .form-group textarea {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background-color: var(--surface);
+      color: var(--text-primary);
+      font-size: 1rem;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .form-group input[type="text"]:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(31, 123, 166, 0.1);
+    }
+
+    .form-group input[type="file"] {
+      padding: 0.5rem;
       cursor: pointer;
     }
-    button:hover {
-      background-color: #777;
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 150px;
+      line-height: 1.6;
     }
-    .messages li.success { color: lightgreen; }
-    .messages li.error { color: red; }
+
+    .form-group input::placeholder,
+    .form-group textarea::placeholder {
+      color: var(--text-light);
+    }
+
+    .btn-upload {
+      background-color: var(--primary);
+      color: var(--text-white);
+      border: none;
+      padding: 0.75rem 2rem;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-upload:hover {
+      background-color: var(--primary-light);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow);
+    }
+
+    .btn-upload:active {
+      transform: translateY(0);
+      background-color: var(--primary-dark);
+    }
+
+    /* Messages styles removed - now handled globally in base.html */
+
+    .section-divider {
+      height: 2px;
+      background: linear-gradient(to right, transparent, var(--border), transparent);
+      margin: 2rem 0;
+      border: none;
+    }
+
+    .markdown-preview {
+      background: var(--surface-hover);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 2rem;
+      margin-top: 2rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .markdown-preview h2 {
+      color: var(--text-primary);
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--border);
+    }
+
+    .markdown-preview div {
+      color: var(--text-primary);
+      line-height: 1.7;
+      font-size: 0.95rem;
+    }
+
+    .file-input-wrapper {
+      position: relative;
+      overflow: hidden;
+      display: inline-block;
+      width: 100%;
+    }
+
+    .file-input-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 1rem;
+      background-color: var(--surface-hover);
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .file-input-label:hover {
+      border-color: var(--primary);
+      background-color: rgba(31, 123, 166, 0.05);
+      color: var(--primary);
+    }
+
+    .file-input-wrapper input[type="file"] {
+      position: absolute;
+      left: -9999px;
+    }
+
+    .file-name-display {
+      margin-top: 0.5rem;
+      padding: 0.5rem 1rem;
+      background-color: var(--surface-hover);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    .file-name-display.active {
+      display: block;
+    }
+
+    /* Job Analysis Results (Issues #21, #51, #52, #53) */
+    .analysis-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .seniority-badge {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius);
+      font-weight: 600;
+      font-size: 0.95rem;
+      text-transform: capitalize;
+    }
+
+    .seniority-badge.entry {
+      background: var(--surface-hover);
+      color: var(--text-primary);
+      border: 2px solid var(--primary);
+    }
+
+    .seniority-badge.mid {
+      background: var(--info);
+      color: var(--text-white);
+    }
+
+    .seniority-badge.senior {
+      background: var(--primary);
+      color: var(--text-white);
+    }
+
+    .seniority-badge.lead {
+      background: var(--accent);
+      color: var(--text-white);
+    }
+
+    .seniority-badge.executive {
+      background: var(--error);
+      color: var(--text-white);
+    }
+
+    .skill-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .skill-tag {
+      display: inline-block;
+      padding: 0.4rem 0.8rem;
+      background: var(--primary-light);
+      color: var(--text-primary);
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      font-weight: 500;
+      border: 1px solid var(--border);
+    }
+
+    .template-preview {
+      padding: 1rem;
+      background: var(--surface-hover);
+      border-radius: var(--radius);
+      border-left: 4px solid var(--primary);
+    }
+
+    .template-preview h5 {
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .template-preview p {
+      color: var(--text-secondary);
+      margin: 0.25rem 0;
+      font-size: 0.9rem;
+    }
+
+    /* Template Card and Action Buttons (Issue #53) */
+    .template-card {
+      padding: 1.5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    .template-actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .btn-template-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      padding: 0.75rem;
+      text-align: center;
+      text-decoration: none;
+      border-radius: var(--radius);
+      font-weight: 500;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .btn-template-action:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-template-action.btn-secondary {
+      background: var(--surface);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-template-action.btn-secondary:hover {
+      background: var(--surface-hover);
+      border-color: var(--primary);
+    }
+
+    .btn-template-action.btn-primary {
+      background: var(--primary);
+      color: var(--text-white);
+      border: none;
+    }
+
+    @media (max-width: 768px) {
+      .document-page {
+        padding: 0 1rem;
+      }
+
+      .upload-section {
+        padding: 1.5rem;
+      }
+
+      .btn-upload {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .skill-tags {
+        justify-content: center;
+      }
+
+      .template-actions {
+        flex-direction: column;
+      }
+
+      .btn-template-action {
+        width: 100%;
+      }
+    }
   </style>
 
-  <div class="centered-container flex-grow-1 d-flex flex-column p-2">
-    {% if messages %}
-      <ul class="messages">
-        {% for message in messages %}
-          <li class="{{ message.tags }}">{{ message }}</li>
-        {% endfor %}
-      </ul>
-    {% endif %}
-    
-    <h2>Upload Your Resume</h2>
-    <form action="{% url 'upload_file' %}" method="post" enctype="multipart/form-data">
-      {% csrf_token %}
-      
-      <label for="title">Resume Title:</label>
-      <input type="text" name="title" id="resume-title" placeholder="Enter a title for your resume" required><br><br>
-    
-      <label for="file">Upload your resume (PDF or Word):</label>
-      <input type="file" name="file" id="file" required>
-      
-      <button name="submit">Upload</button>
-    </form>
+  <div class="document-page">
+    <!-- Messages now displayed globally in base.html -->
 
-    <hr class="white-break">
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1>Document Management</h1>
+      <p>
+        Upload your resume and add job listings to create personalized interview experiences
+      </p>
+    </div>
 
-    <h2>Or Paste Your Job Listing Text</h2>
-    <form method="post" action="{% url 'save_pasted_text' %}">
-      {% csrf_token %}
+    <!-- Resume Upload Section -->
+    <div class="upload-section">
+      <h2>Upload Your Resume</h2>
+      <form action="{% url 'upload_file' %}"
+            method="post"
+            enctype="multipart/form-data"
+            id="uploadForm"
+            onsubmit="return showUploadSpinner()">
+        {% csrf_token %}
 
-      <label for="title">Job Listing Title:</label>
-      <input type="text" name="title" id="title" placeholder="Enter the title for your job listing" required><br><br>
+        <div class="form-group">
+          <label for="resume-title">Resume Title</label>
+          <input
+            type="text"
+            name="title"
+            id="resume-title"
+            placeholder="e.g., Software Engineer Resume 2025"
+            maxlength="48"
+            required
+          >
+        </div>
 
-      <textarea name="paste-text" rows="10" cols="50" placeholder="Paste your text here..." style="max-width: 95vw;"></textarea><br>
-      
-      <button type="submit" name="submit">Upload</button>
-    </form>
+        <div class="form-group">
+          <label for="file">Choose File</label>
+          <div class="file-input-wrapper">
+            <label for="file" class="file-input-label">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M16.88 9.1A4 4 0 0 1 16 17H5a5 5 0 0 1-1-9.9V7a3 3 0 0 1 4.52-2.59A4.98 4.98 0 0 1 17 8c0 .38-.04.74-.12 1.1zM11 11h3l-4-4-4 4h3v3h2v-3z" />
+              </svg>
+              <span>Click to upload PDF or Word document</span>
+            </label>
+            <input
+              type="file"
+              name="file"
+              id="file"
+              accept=".pdf,.doc,.docx"
+              required
+              aria-label="Upload your resume file"
+              aria-describedby="file-upload-desc"
+            >
+            <span id="file-upload-desc" class="visually-hidden">Upload a PDF or Word document containing your resume. Accepted formats: .pdf, .doc, .docx</span>
+          </div>
+          <div class="file-name-display" id="file-name-display"></div>
+        </div>
 
+        <button type="submit" class="btn-upload" name="submit" id="uploadBtn">
+          <span class="loading-spinner-button"
+                id="uploadSpinner"
+                role="status"
+                aria-hidden="true"
+                style="display:none;"></span>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" id="uploadIcon">
+            <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 13A6 6 0 1 1 8 2a6 6 0 0 1 0 12z"/>
+            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+          </svg>
+          <span id="uploadBtnText">Upload Resume</span>
+        </button>
+      </form>
+    </div>
+
+    <hr class="section-divider">
+
+    <!-- Job Listing Section (Issues #21, #51, #52, #53) -->
+    <div class="upload-section">
+      <h2>Add Job Listing</h2>
+      <form method="post" id="jobListingForm" onsubmit="return analyzeJobListing(event)">
+        {% csrf_token %}
+
+        <div class="form-group">
+          <label for="job-title">Job Listing Title</label>
+          <input
+            type="text"
+            name="title"
+            id="job-title"
+            placeholder="e.g., Senior Software Engineer at Company XYZ"
+            maxlength="100"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="job-description">Job Description</label>
+          <textarea
+            name="paste-text"
+            id="job-description"
+            placeholder="Paste the job listing details here...&#10;&#10;Include:&#10;• Job requirements&#10;• Responsibilities&#10;• Qualifications&#10;• Company information&#10;&#10;Click 'Analyze Job Description' to extract skills and get interview template recommendations."
+            required
+          ></textarea>
+        </div>
+
+        <button type="submit" class="btn-upload" id="analyzeJobBtn" name="submit">
+          <span class="loading-spinner-button"
+                id="jobSpinner"
+                role="status"
+                aria-hidden="true"
+                style="display:none;"></span>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" id="analyzeIcon">
+            <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 13A6 6 0 1 1 8 2a6 6 0 0 1 0 12z"/>
+            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+          </svg>
+          <span id="analyzeBtnText">Analyze Job Description</span>
+        </button>
+      </form>
+
+      <!-- Analysis Results Section (hidden by default) -->
+      <div id="job-analysis-results" style="display:none; margin-top: 2rem;">
+        <div class="analysis-card">
+          <h3 style="color: var(--text-primary); margin-bottom: 1.5rem;">Analysis Results</h3>
+
+          <!-- Seniority Level -->
+          <div style="margin-bottom: 1.5rem;">
+            <h4 style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem;">Seniority Level</h4>
+            <div id="seniority-display">
+              <span class="seniority-badge" id="seniority-badge"></span>
+            </div>
+          </div>
+
+          <!-- Required Skills -->
+          <div style="margin-bottom: 1.5rem;">
+            <h4 style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem;">Required Skills</h4>
+            <div class="skill-tags" id="skills-display"></div>
+          </div>
+
+          <!-- Recommended Template -->
+          <div id="template-recommendation" style="display:none;">
+            <h4 style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem;">Recommended Interview Template</h4>
+            <div class="template-preview" id="template-preview"></div>
+          </div>
+
+          <!-- No Template Message -->
+          <div id="no-template-message" style="display:none; padding: 1rem; background: var(--surface); border-radius: var(--radius); color: var(--text-secondary);">
+            <p>No matching interview template found. You can create a custom template for this role.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Markdown Preview (if available) -->
     {% if markdown_text %}
-      <hr class="white-break">
-      <h2>Converted Markdown</h2>
-      <div>{{ markdown_text|safe|linebreaksbr }}</div>
+      <div class="markdown-preview">
+        <h2>Converted Markdown</h2>
+        <div>{{ markdown_text|safe|linebreaksbr }}</div>
+      </div>
     {% endif %}
   </div>
+
+  <script>
+    // File input handling
+    const fileInput = document.getElementById('file');
+    const fileNameDisplay = document.getElementById('file-name-display');
+    const fileLabel = document.querySelector('.file-input-label span');
+
+    if (fileInput) {
+      fileInput.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+          const fileName = this.files[0].name;
+          fileNameDisplay.textContent = `Selected: ${fileName}`;
+          fileNameDisplay.classList.add('active');
+          fileLabel.textContent = 'Change file';
+        }
+      });
+    }
+
+    /**
+     * Show loading spinner when upload form is submitted
+     * Prevents double-submission and provides visual feedback
+     */
+    function showUploadSpinner() {
+      const button = document.getElementById('uploadBtn');
+      const spinner = document.getElementById('uploadSpinner');
+      const buttonText = document.getElementById('uploadBtnText');
+      const uploadIcon = document.getElementById('uploadIcon');
+
+      // Validate file is selected
+      const fileInput = document.getElementById('file');
+      if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+        alert('Please select a file to upload.');
+        return false;
+      }
+
+      // Show spinner
+      spinner.style.display = 'inline-block';
+
+      // Hide the upload icon
+      if (uploadIcon) {
+        uploadIcon.style.display = 'none';
+      }
+
+      // Update button text
+      buttonText.textContent = 'Uploading & Parsing Resume...';
+
+      // Disable button to prevent double-submit
+      button.disabled = true;
+
+      // Allow form submission
+      return true;
+    }
+
+    /**
+     * Analyze job listing and extract structured data
+     * Issues: #21, #51, #52, #53
+     */
+    function analyzeJobListing(event) {
+      event.preventDefault();
+
+      const title = document.getElementById('job-title').value.trim();
+      const description = document.getElementById('job-description').value.trim();
+
+      // Validation
+      if (!title || !description) {
+        alert('Please fill in both title and job description');
+        return false;
+      }
+
+      // Get UI elements
+      const button = document.getElementById('analyzeJobBtn');
+      const spinner = document.getElementById('jobSpinner');
+      const buttonText = document.getElementById('analyzeBtnText');
+      const analyzeIcon = document.getElementById('analyzeIcon');
+
+      // Show spinner
+      spinner.style.display = 'inline-block';
+      analyzeIcon.style.display = 'none';
+      buttonText.textContent = 'Analyzing...';
+      button.disabled = true;
+
+      // Get CSRF token
+      const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+      // Make API call
+      fetch('/api/job-listing/analyze/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({
+          title: title,
+          description: description
+        })
+      })
+      .then(response => {
+        if (!response.ok) {
+          return response.json().then(err => { throw err; });
+        }
+        return response.json();
+      })
+      .then(data => {
+        // Hide spinner
+        spinner.style.display = 'none';
+        analyzeIcon.style.display = 'inline';
+        buttonText.textContent = 'Analyze Job Description';
+        button.disabled = false;
+
+        // Display results
+        displayJobAnalysis(data);
+
+        // Clear form
+        document.getElementById('jobListingForm').reset();
+      })
+      .catch(error => {
+        // Error handling
+        spinner.style.display = 'none';
+        analyzeIcon.style.display = 'inline';
+        buttonText.textContent = 'Analyze Job Description';
+        button.disabled = false;
+
+        console.error('Analysis failed:', error);
+        alert('Failed to analyze job description: ' + (error.detail || error.error || 'Unknown error'));
+      });
+
+      return false;
+    }
+
+    /**
+     * Display job analysis results in the UI
+     */
+    function displayJobAnalysis(data) {
+      // Show results section
+      const resultsSection = document.getElementById('job-analysis-results');
+      resultsSection.style.display = 'block';
+
+      // Scroll to results
+      resultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+      // Display seniority level
+      const seniorityBadge = document.getElementById('seniority-badge');
+      const seniorityLevel = data.seniority_level || 'Not specified';
+      seniorityBadge.textContent = seniorityLevel;
+      seniorityBadge.className = 'seniority-badge ' + seniorityLevel;
+
+      // Display required skills
+      const skillsDisplay = document.getElementById('skills-display');
+      skillsDisplay.innerHTML = '';
+      if (data.required_skills && data.required_skills.length > 0) {
+        data.required_skills.forEach(skill => {
+          const skillTag = document.createElement('span');
+          skillTag.className = 'skill-tag';
+          skillTag.textContent = skill;
+          skillsDisplay.appendChild(skillTag);
+        });
+      } else {
+        skillsDisplay.innerHTML = '<p style="color: var(--text-secondary);">No skills extracted</p>';
+      }
+
+      // Display recommended template
+      const templateRecommendation = document.getElementById('template-recommendation');
+      const noTemplateMessage = document.getElementById('no-template-message');
+      const templatePreview = document.getElementById('template-preview');
+
+      if (data.recommended_template) {
+        templateRecommendation.style.display = 'block';
+        noTemplateMessage.style.display = 'none';
+
+        templatePreview.innerHTML = `
+          <div class="template-card">
+            <h5 style="color: var(--text-primary); margin-bottom: 0.75rem;">
+              ${data.recommended_template_name || 'Interview Template'}
+            </h5>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem; font-style: italic;">
+              This template has been automatically recommended based on the job requirements.
+            </p>
+
+            <div class="template-actions" style="display: flex; gap: 0.75rem; margin-top: 1rem;">
+              <a href="/templates/${data.recommended_template}/edit/?from=job-analysis&job_id=${data.job_listing_id}"
+                 class="btn-template-action btn-secondary"
+                 style="flex: 1; padding: 0.75rem; text-align: center; text-decoration: none;
+                        background: var(--surface); color: var(--text-primary);
+                        border: 1px solid var(--border); border-radius: var(--radius);
+                        transition: all 0.2s;">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="vertical-align: middle; margin-right: 0.5rem;">
+                  <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708l-3-3zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207l6.5-6.5zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.499.499 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11l.178-.178z"/>
+                </svg>
+                Edit Template
+              </a>
+
+              <a href="/chat/create/?template_id=${data.recommended_template}&job_id=${data.job_listing_id}"
+                 class="btn-template-action btn-primary"
+                 style="flex: 1; padding: 0.75rem; text-align: center; text-decoration: none;
+                        background: var(--primary); color: var(--text-white);
+                        border: none; border-radius: var(--radius);
+                        transition: all 0.2s;">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="vertical-align: middle; margin-right: 0.5rem;">
+                  <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                  <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                </svg>
+                Use This Template
+              </a>
+            </div>
+          </div>
+        `;
+      } else {
+        templateRecommendation.style.display = 'none';
+        noTemplateMessage.style.display = 'block';
+      }
+    }
+  </script>
 
 {% endblock content %}

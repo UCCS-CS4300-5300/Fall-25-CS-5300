@@ -7,6 +7,7 @@ from unittest.mock import patch, MagicMock
 
 # from ..forms import CreateChatForm, EditChatForm
 from ..models import Chat, UploadedJobListing, UploadedResume
+from .test_utils import create_mock_openai_response
 
 
 # === Helper Fucntions ===
@@ -143,13 +144,11 @@ class TestCreateChatView(TestCase):
         # Validate that the index template was used
         self.assertTemplateUsed(response, 'base-sidebar.html')
 
-    @patch('active_interview_app.views.get_openai_client')
-    def testPOSTCreateChatView(self, mock_get_client):
+    @patch('active_interview_app.views.get_client_and_model')
+    def testPOSTCreateChatView(self, mock_get_client_and_model):
         # Mock the OpenAI client and API response
         mock_client = MagicMock()
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = '''[
+        mock_response = create_mock_openai_response('''[
             {
                 "id": 0,
                 "title": "Test Question 1",
@@ -162,20 +161,21 @@ class TestCreateChatView(TestCase):
                 "duration": 90,
                 "content": "Tell me about a challenge you faced."
             }
-        ]'''
+        ]''')
         mock_client.chat.completions.create.return_value = mock_response
-        mock_get_client.return_value = mock_client
+        # get_client_and_model returns (client, model, tier_info)
+        mock_get_client_and_model.return_value = (mock_client, "gpt-4o", {"tier": "premium"})
 
         # Call the view with a response
         response = self.client.post(reverse('chat-create'),
                                     {
-                "title": "Example Title Strikes Back",
-                "type": Chat.GENERAL,
-                "difficulty": 5,
-                "listing_choice": generateExampleJobListing(self.user).id,
-                "resume_choice": generateExampleResume(self.user).id,
-                "create": "create"
-            }
+            "title": "Example Title Strikes Back",
+            "type": Chat.GENERAL,
+            "difficulty": 5,
+            "listing_choice": generateExampleJobListing(self.user).id,
+            "resume_choice": generateExampleResume(self.user).id,
+            "create": "create"
+        }
         )
 
         # Validate that the view is valid.  This view redirects
@@ -202,21 +202,20 @@ class TestChatView(TestCase):
         # Validate that the index template was used
         self.assertTemplateUsed(response, 'base-sidebar.html')
 
-    @patch('active_interview_app.views.get_openai_client')
-    def testPOSTChatView(self, mock_get_client):
+    @patch('active_interview_app.views.get_client_and_model')
+    def testPOSTChatView(self, mock_get_client_and_model):
         # Mock the OpenAI client and API response
         mock_client = MagicMock()
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = "Pi is approximately 3.14159, a mathematical constant."
+        mock_response = create_mock_openai_response("Pi is approximately 3.14159, a mathematical constant.")
         mock_client.chat.completions.create.return_value = mock_response
-        mock_get_client.return_value = mock_client
+        # get_client_and_model returns (client, model, tier_info)
+        mock_get_client_and_model.return_value = (mock_client, "gpt-4o", {"tier": "premium"})
 
         # Call view with an ai prompt
         response = self.client.post(reverse('chat-view', args=[self.chat.id]),
                                     {
-                "message": "What is pi?"
-            }
+            "message": "What is pi?"
+        }
         )
 
         # Validate that the view is valid.  This view redirects
@@ -247,10 +246,10 @@ class TestEditChatView(TestCase):
         # Call the view to update the current item's title
         response = self.client.post(reverse('chat-edit', args=[self.chat.id]),
                                     {
-                "title": "Changed Title",
-                "difficulty": 3,
-                "update": "update"
-            }
+            "title": "Changed Title",
+            "difficulty": 3,
+            "update": "update"
+        }
         )
 
         # Validate that the view is valid.  This view redirects
@@ -273,8 +272,8 @@ class TestDeleteChatView(TestCase):
         response = self.client.post(reverse('chat-delete',
                                             args=[self.chat.id]),
                                     {
-                "delete": "delete"
-            }
+            "delete": "delete"
+        }
         )
 
         # Validate that the view is valid.  This view redirects
@@ -300,8 +299,8 @@ class TestRestartChatView(TestCase):
         response = self.client.post(reverse('chat-restart',
                                             args=[self.chat.id]),
                                     {
-                "restart": "restart"
-            }
+            "restart": "restart"
+        }
         )
 
         # Validate that the view is valid.  This view redirects
@@ -337,23 +336,22 @@ class TestKeyQuestionsView(TestCase):
         # Validate that the index template was used
         self.assertTemplateUsed(response, 'base-sidebar.html')
 
-    @patch('active_interview_app.views.get_openai_client')
-    def testPOSTChatView(self, mock_get_client):
+    @patch('active_interview_app.views.get_client_and_model')
+    def testPOSTChatView(self, mock_get_client_and_model):
         # Mock the OpenAI client and API response
         mock_client = MagicMock()
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = "That answer is off-topic and doesn't address the interview question. Rating: 2/10"
+        mock_response = create_mock_openai_response("That answer is off-topic and doesn't address the interview question. Rating: 2/10")
         mock_client.chat.completions.create.return_value = mock_response
-        mock_get_client.return_value = mock_client
+        # get_client_and_model returns (client, model, tier_info)
+        mock_get_client_and_model.return_value = (mock_client, "gpt-4o", {"tier": "premium"})
 
         # Call view with an ai prompt
         response = self.client.post(reverse('key-questions',
                                             args=[self.chat.id,
                                                   self.question["id"]]),
                                     {
-                "message": "What is pi?"
-            }
+            "message": "What is pi?"
+        }
         )
 
         # Validate that the view is valid.  This view redirects
@@ -363,7 +361,7 @@ class TestKeyQuestionsView(TestCase):
         # question is off topic, and should be graded poorly
         clean_response = response.content.decode('utf-8')
         print(clean_response)
-        self.assertFalse(re.search("([123]/10)", clean_response) == None)
+        self.assertFalse(re.search("([123]/10)", clean_response) is None)
 
 
 class TestOpenAIClient(TestCase):
@@ -371,19 +369,20 @@ class TestOpenAIClient(TestCase):
 
     def setUp(self):
         # Reset the global client before each test
-        import active_interview_app.views as views
-        views._openai_client = None
+        import active_interview_app.openai_utils as openai_utils
+        openai_utils._openai_client = None
 
     def tearDown(self):
         # Reset the global client after each test
-        import active_interview_app.views as views
-        views._openai_client = None
+        import active_interview_app.openai_utils as openai_utils
+        openai_utils._openai_client = None
 
-    @patch('active_interview_app.views.settings')
-    @patch('active_interview_app.views.OpenAI')
-    def test_get_openai_client_creates_client(self, mock_openai_class, mock_settings):
+    @patch('active_interview_app.openai_utils.settings')
+    @patch('active_interview_app.openai_utils.OpenAI')
+    def test_get_openai_client_creates_client(
+            self, mock_openai_class, mock_settings):
         """Test that get_openai_client creates and returns OpenAI client"""
-        from active_interview_app.views import get_openai_client
+        from active_interview_app.openai_utils import get_openai_client
 
         # Setup mock
         mock_settings.OPENAI_API_KEY = "test-api-key"
@@ -397,11 +396,12 @@ class TestOpenAIClient(TestCase):
         mock_openai_class.assert_called_once_with(api_key="test-api-key")
         self.assertEqual(client, mock_client_instance)
 
-    @patch('active_interview_app.views.settings')
-    @patch('active_interview_app.views.OpenAI')
-    def test_get_openai_client_caches_client(self, mock_openai_class, mock_settings):
+    @patch('active_interview_app.openai_utils.settings')
+    @patch('active_interview_app.openai_utils.OpenAI')
+    def test_get_openai_client_caches_client(
+            self, mock_openai_class, mock_settings):
         """Test that get_openai_client caches the client (lazy loading)"""
-        from active_interview_app.views import get_openai_client
+        from active_interview_app.openai_utils import get_openai_client
 
         # Setup mock
         mock_settings.OPENAI_API_KEY = "test-api-key"
@@ -416,10 +416,10 @@ class TestOpenAIClient(TestCase):
         mock_openai_class.assert_called_once_with(api_key="test-api-key")
         self.assertEqual(client1, client2)
 
-    @patch('active_interview_app.views.settings')
+    @patch('active_interview_app.openai_utils.settings')
     def test_get_openai_client_missing_api_key(self, mock_settings):
         """Test that get_openai_client raises error when API key is missing"""
-        from active_interview_app.views import get_openai_client
+        from active_interview_app.openai_utils import get_openai_client
 
         # Setup mock with no API key
         mock_settings.OPENAI_API_KEY = None
@@ -428,13 +428,14 @@ class TestOpenAIClient(TestCase):
         with self.assertRaises(ValueError) as context:
             get_openai_client()
 
-        self.assertIn("OPENAI_API_KEY is not set", str(context.exception))
+        self.assertIn("No OpenAI API key available", str(context.exception))
 
-    @patch('active_interview_app.views.settings')
-    @patch('active_interview_app.views.OpenAI')
-    def test_get_openai_client_initialization_failure(self, mock_openai_class, mock_settings):
+    @patch('active_interview_app.openai_utils.settings')
+    @patch('active_interview_app.openai_utils.OpenAI')
+    def test_get_openai_client_initialization_failure(
+            self, mock_openai_class, mock_settings):
         """Test that get_openai_client handles OpenAI initialization failure"""
-        from active_interview_app.views import get_openai_client
+        from active_interview_app.openai_utils import get_openai_client
 
         # Setup mock
         mock_settings.OPENAI_API_KEY = "test-api-key"
@@ -444,29 +445,30 @@ class TestOpenAIClient(TestCase):
         with self.assertRaises(ValueError) as context:
             get_openai_client()
 
-        self.assertIn("Failed to initialize OpenAI client", str(context.exception))
+        self.assertIn("Failed to initialize OpenAI client",
+                      str(context.exception))
 
-    @patch('active_interview_app.views.get_openai_client')
-    def test_ai_available_returns_true_when_client_works(self, mock_get_client):
-        """Test that _ai_available returns True when client is available"""
-        from active_interview_app.views import _ai_available
+    @patch('active_interview_app.openai_utils.get_openai_client')
+    def testai_available_returns_true_when_client_works(self, mock_get_client):
+        """Test that ai_available returns True when client is available"""
+        from active_interview_app.openai_utils import ai_available
 
         # Setup mock to return successfully
         mock_get_client.return_value = MagicMock()
 
         # Should return True
-        self.assertTrue(_ai_available())
+        self.assertTrue(ai_available())
 
-    @patch('active_interview_app.views.get_openai_client')
-    def test_ai_available_returns_false_on_error(self, mock_get_client):
-        """Test that _ai_available returns False when client fails"""
-        from active_interview_app.views import _ai_available
+    @patch('active_interview_app.openai_utils.get_openai_client')
+    def testai_available_returns_false_on_error(self, mock_get_client):
+        """Test that ai_available returns False when client fails"""
+        from active_interview_app.openai_utils import ai_available
 
         # Setup mock to raise error
         mock_get_client.side_effect = ValueError("API key missing")
 
         # Should return False
-        self.assertFalse(_ai_available())
+        self.assertFalse(ai_available())
 
     def test_ai_unavailable_json(self):
         """Test that _ai_unavailable_json returns proper error response"""
@@ -477,4 +479,5 @@ class TestOpenAIClient(TestCase):
         # Check response
         self.assertEqual(response.status_code, 503)
         response_data = json.loads(response.content)
-        self.assertEqual(response_data['error'], 'AI features are disabled on this server.')
+        self.assertEqual(response_data['error'],
+                         'AI features are disabled on this server.')

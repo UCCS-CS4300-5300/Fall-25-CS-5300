@@ -6,8 +6,9 @@ from django.urls import reverse
 from django.contrib.auth.models import User, Group
 from django.core.files.uploadedfile import SimpleUploadedFile
 from unittest.mock import patch, MagicMock
+from .test_credentials import TEST_PASSWORD
+from .test_utils import create_mock_openai_response
 import json
-import io
 
 from active_interview_app.models import (
     UploadedResume,
@@ -23,7 +24,7 @@ class BasicViewsCoverageTest(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
     def test_aboutus_view(self):
@@ -45,12 +46,13 @@ class RegisterViewCoverageTest(TestCase):
     def setUp(self):
         self.client = Client()
         # Create the required group
-        Group.objects.create(name='average_role')
+        Group.objects.get_or_create(name='average_role')
 
     def test_register_success(self):
         """Test successful user registration"""
         response = self.client.post(reverse('register_page'), {
             'username': 'newuser',
+            'email': 'newuser@example.com',
             'password1': 'ComplexPass123!',
             'password2': 'ComplexPass123!',
         })
@@ -69,9 +71,9 @@ class FileUploadCoverageTest(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
     def test_upload_file_get(self):
         """Test GET request to upload_file view"""
@@ -110,7 +112,8 @@ class FileUploadCoverageTest(TestCase):
 
         # Check redirect after successful upload
         self.assertEqual(response.status_code, 302)
-        self.assertTrue(UploadedResume.objects.filter(title='Test DOCX Resume').exists())
+        self.assertTrue(UploadedResume.objects.filter(
+            title='Test DOCX Resume').exists())
 
 
 class JobListingViewCoverageTest(TestCase):
@@ -120,9 +123,9 @@ class JobListingViewCoverageTest(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         # UploadedJobListing requires a file field
         from django.core.files.uploadedfile import SimpleUploadedFile
         fake_file = SimpleUploadedFile("test.txt", b"test content")
@@ -141,7 +144,8 @@ class JobListingViewCoverageTest(TestCase):
             reverse('delete_job', kwargs={'job_id': self.job.id})
         )
         self.assertEqual(response.status_code, 302)
-        self.assertFalse(UploadedJobListing.objects.filter(id=self.job.id).exists())
+        self.assertFalse(UploadedJobListing.objects.filter(
+            id=self.job.id).exists())
 
     def test_uploaded_job_listing_view_empty_text(self):
         """Test UploadedJobListingView with empty text"""
@@ -167,9 +171,9 @@ class ChatViewsCoverageTest(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         # Create job listing and resume with proper fields
         from django.core.files.uploadedfile import SimpleUploadedFile
         fake_job_file = SimpleUploadedFile("job.txt", b"job content")
@@ -192,10 +196,10 @@ class ChatViewsCoverageTest(TestCase):
             file=fake_resume_file
         )
 
-    @patch('active_interview_app.views._ai_available')
-    def test_create_chat_ai_unavailable(self, mock_ai_available):
+    @patch('active_interview_app.views.ai_available')
+    def test_create_chat_ai_unavailable(self, mockai_available):
         """Test creating chat when AI is unavailable"""
-        mock_ai_available.return_value = False
+        mockai_available.return_value = False
 
         response = self.client.post(reverse('chat-create'), {
             'create': 'true',
@@ -208,11 +212,12 @@ class ChatViewsCoverageTest(TestCase):
         # Should still create chat but with empty AI message
         self.assertEqual(response.status_code, 302)
 
-    @patch('active_interview_app.views._ai_available')
-    @patch('active_interview_app.views.get_openai_client')
-    def test_create_chat_without_resume_ai_unavailable(self, mock_client, mock_ai_available):
+    @patch('active_interview_app.views.ai_available')
+    @patch('active_interview_app.views.get_client_and_model')
+    def test_create_chat_without_resume_ai_unavailable(
+            self, mock_get_client_and_model, mockai_available):
         """Test creating chat without resume when AI is unavailable"""
-        mock_ai_available.return_value = False
+        mockai_available.return_value = False
 
         response = self.client.post(reverse('chat-create'), {
             'create': 'true',
@@ -224,18 +229,18 @@ class ChatViewsCoverageTest(TestCase):
         })
         self.assertEqual(response.status_code, 302)
 
-    @patch('active_interview_app.views._ai_available')
-    @patch('active_interview_app.views.get_openai_client')
-    def test_create_chat_key_questions_regex_fail(self, mock_client, mock_ai_available):
+    @patch('active_interview_app.views.ai_available')
+    @patch('active_interview_app.views.get_client_and_model')
+    def test_create_chat_key_questions_regex_fail(
+            self, mock_get_client_and_model, mockai_available):
         """Test creating chat when key questions regex doesn't match"""
-        mock_ai_available.return_value = True
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = "Invalid response without JSON array"
+        mockai_available.return_value = True
+        mock_response = create_mock_openai_response("Invalid response without JSON array")
 
         mock_openai = MagicMock()
         mock_openai.chat.completions.create.return_value = mock_response
-        mock_client.return_value = mock_openai
+        # get_client_and_model returns (client, model, tier_info)
+        mock_get_client_and_model.return_value = (mock_openai, "gpt-4o", {"tier": "premium"})
 
         response = self.client.post(reverse('chat-create'), {
             'create': 'true',
@@ -247,10 +252,10 @@ class ChatViewsCoverageTest(TestCase):
         })
         self.assertEqual(response.status_code, 302)
 
-    @patch('active_interview_app.views._ai_available')
-    def test_chat_view_post_ai_unavailable(self, mock_ai_available):
+    @patch('active_interview_app.views.ai_available')
+    def test_chat_view_post_ai_unavailable(self, mockai_available):
         """Test ChatView POST when AI is unavailable"""
-        mock_ai_available.return_value = False
+        mockai_available.return_value = False
 
         chat = Chat.objects.create(
             owner=self.user,
@@ -274,10 +279,10 @@ class ChatViewsCoverageTest(TestCase):
         json_response = json.loads(response.content)
         self.assertIn('error', json_response)
 
-    @patch('active_interview_app.views._ai_available')
-    def test_key_questions_view_ai_unavailable(self, mock_ai_available):
+    @patch('active_interview_app.views.ai_available')
+    def test_key_questions_view_ai_unavailable(self, mockai_available):
         """Test KeyQuestionsView POST when AI is unavailable"""
-        mock_ai_available.return_value = False
+        mockai_available.return_value = False
 
         chat = Chat.objects.create(
             owner=self.user,
@@ -298,7 +303,8 @@ class ChatViewsCoverageTest(TestCase):
         )
 
         response = self.client.post(
-            reverse('key-questions', kwargs={'chat_id': chat.id, 'question_id': 0}),
+            reverse('key-questions',
+                    kwargs={'chat_id': chat.id, 'question_id': 0}),
             {'message': 'My answer'},
             HTTP_X_REQUESTED_WITH='XMLHttpRequest'
         )
@@ -306,10 +312,10 @@ class ChatViewsCoverageTest(TestCase):
         json_response = json.loads(response.content)
         self.assertIn('error', json_response)
 
-    @patch('active_interview_app.views._ai_available')
-    def test_key_questions_view_without_resume(self, mock_ai_available):
+    @patch('active_interview_app.views.ai_available')
+    def test_key_questions_view_without_resume(self, mockai_available):
         """Test KeyQuestionsView with chat that has no resume"""
-        mock_ai_available.return_value = False
+        mockai_available.return_value = False
 
         chat = Chat.objects.create(
             owner=self.user,
@@ -330,7 +336,8 @@ class ChatViewsCoverageTest(TestCase):
         )
 
         response = self.client.post(
-            reverse('key-questions', kwargs={'chat_id': chat.id, 'question_id': 0}),
+            reverse('key-questions',
+                    kwargs={'chat_id': chat.id, 'question_id': 0}),
             {'message': 'My answer'},
             HTTP_X_REQUESTED_WITH='XMLHttpRequest'
         )
@@ -346,9 +353,9 @@ class ResultsViewsCoverageTest(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         # Create job listing with proper fields
         from django.core.files.uploadedfile import SimpleUploadedFile
         fake_job_file = SimpleUploadedFile("job.txt", b"job content")
@@ -374,20 +381,16 @@ class ResultsViewsCoverageTest(TestCase):
             ]
         )
 
-    @patch('active_interview_app.views._ai_available')
-    @patch('active_interview_app.views.get_openai_client')
-    def test_result_charts_view(self, mock_client, mock_ai_available):
+    @patch('active_interview_app.views.ai_available')
+    @patch('active_interview_app.views.get_client_and_model')
+    def test_result_charts_view(self, mock_get_client, mockai_available):
         """Test ResultCharts view (which is what chat-results URL points to)"""
-        mock_ai_available.return_value = True
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-
-        # First call returns scores, second call returns explanation
-        mock_response.choices[0].message.content = "85\n90\n80\n88"
+        mockai_available.return_value = True
+        mock_response = create_mock_openai_response("85\n90\n80\n88")
 
         mock_openai = MagicMock()
         mock_openai.chat.completions.create.return_value = mock_response
-        mock_client.return_value = mock_openai
+        mock_get_client.return_value = (mock_openai, 'gpt-4o', {'tier': 'premium'})
 
         response = self.client.get(
             reverse('chat-results', kwargs={'chat_id': self.chat.id})
@@ -396,10 +399,10 @@ class ResultsViewsCoverageTest(TestCase):
         self.assertEqual(response.context['scores']['Professionalism'], 85)
         self.assertEqual(response.context['scores']['Subject Knowledge'], 90)
 
-    @patch('active_interview_app.views._ai_available')
-    def test_result_charts_view_ai_unavailable(self, mock_ai_available):
+    @patch('active_interview_app.views.ai_available')
+    def test_result_charts_view_ai_unavailable(self, mockai_available):
         """Test ResultCharts view when AI is unavailable"""
-        mock_ai_available.return_value = False
+        mockai_available.return_value = False
 
         response = self.client.get(
             reverse('chat-results', kwargs={'chat_id': self.chat.id})
@@ -409,20 +412,18 @@ class ResultsViewsCoverageTest(TestCase):
         self.assertEqual(response.context['scores']['Professionalism'], 0)
         self.assertEqual(response.context['scores']['Overall'], 0)
 
-    @patch('active_interview_app.views._ai_available')
-    @patch('active_interview_app.views.get_openai_client')
-    def test_result_charts_invalid_scores(self, mock_client, mock_ai_available):
+    @patch('active_interview_app.views.ai_available')
+    @patch('active_interview_app.views.get_client_and_model')
+    def test_result_charts_invalid_scores(self, mock_get_client_and_model, mockai_available):
         """Test ResultCharts view with invalid score format"""
-        mock_ai_available.return_value = True
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-
+        mockai_available.return_value = True
         # Return invalid scores (not 4 values)
-        mock_response.choices[0].message.content = "85\n90"
+        mock_response = create_mock_openai_response("85\n90")
 
         mock_openai = MagicMock()
         mock_openai.chat.completions.create.return_value = mock_response
-        mock_client.return_value = mock_openai
+        # get_client_and_model returns (client, model, tier_info)
+        mock_get_client_and_model.return_value = (mock_openai, "gpt-4o", {"tier": "premium"})
 
         response = self.client.get(
             reverse('chat-results', kwargs={'chat_id': self.chat.id})
@@ -439,7 +440,7 @@ class APIViewsCoverageTest(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.client.force_login(self.user)
 
@@ -470,4 +471,3 @@ class APIViewsCoverageTest(TestCase):
             content_type='application/json'
         )
         self.assertEqual(response.status_code, 400)
-

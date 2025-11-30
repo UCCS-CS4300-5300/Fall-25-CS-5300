@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Data Export is Ready</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background-color: #1F7BA6; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
+    <h1 style="margin: 0; font-size: 24px;">Your Data Export is Ready!</h1>
+  </div>
+
+  <div style="background-color: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px;">
+    <p>Hello {{ user.username }},</p>
+
+    <p>Great news! Your personal data export from Active Interview Service has been successfully processed and is now ready for download.</p>
+
+    <div style="background-color: #d1ecf1; border-left: 4px solid #0c5460; padding: 15px; margin: 20px 0; border-radius: 4px;">
+      <p style="margin: 0; font-weight: bold; color: #0c5460;">Download Your Data</p>
+      <p style="margin: 10px 0 0 0;">Click the button below to download your data export:</p>
+    </div>
+
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="{{ download_url }}" style="display: inline-block; background-color: #1F7BA6; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+        Download My Data
+      </a>
+    </div>
+
+    <div style="background-color: #fff3cd; border-left: 4px solid #856404; padding: 15px; margin: 20px 0; border-radius: 4px;">
+      <p style="margin: 0; font-weight: bold; color: #856404;">⚠️ Important Information</p>
+      <ul style="margin: 10px 0 0 0; padding-left: 20px; color: #856404;">
+        <li><strong>Expiration:</strong> This download link will expire on {{ expires_at|date:"F d, Y \a\t g:i A" }}</li>
+        <li><strong>Security:</strong> Only you can access this download link</li>
+        <li><strong>Format:</strong> Your data is provided as a ZIP file containing JSON and CSV formats</li>
+      </ul>
+    </div>
+
+    <h3 style="color: #1F7BA6; margin-top: 30px;">What's Included:</h3>
+    <ul style="padding-left: 20px;">
+      <li>Profile information and account details</li>
+      <li>Interview transcripts and performance scores</li>
+      <li>Uploaded resumes and job listings</li>
+      <li>Interview templates and role requests</li>
+      <li>Complete history of your activity</li>
+    </ul>
+
+    <div style="background-color: #d1ecf1; padding: 15px; margin: 20px 0; border-radius: 4px;">
+      <p style="margin: 0; font-size: 14px;"><strong>Need to download again?</strong> You can access your export from your profile settings at any time before it expires.</p>
+    </div>
+
+    <p style="margin-top: 30px;">If you have any questions or did not request this export, please contact our support team immediately.</p>
+
+    <p>Best regards,<br>
+    <strong>Active Interview Service Team</strong></p>
+
+    <hr style="border: none; border-top: 1px solid #dee2e6; margin: 30px 0;">
+
+    <p style="font-size: 12px; color: #6c757d; text-align: center;">
+      This email was sent to {{ user.email }} because you requested a data export.<br>
+      Active Interview Service | GDPR/CCPA Compliance
+    </p>
+  </div>
+</body>
+</html>

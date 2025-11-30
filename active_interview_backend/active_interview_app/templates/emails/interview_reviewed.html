@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interview Reviewed</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background-color: #1F7BA6; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
+    <h1 style="margin: 0; font-size: 24px;">Your Interview Has Been Reviewed!</h1>
+  </div>
+
+  <div style="background-color: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px;">
+    <p>Hello,</p>
+
+    <p>Good news! {{ invitation.interviewer.get_full_name|default:invitation.interviewer.username }} has reviewed your interview and provided feedback.</p>
+
+    <div style="background-color: #d1ecf1; border-left: 4px solid #0c5460; padding: 15px; margin: 20px 0; border-radius: 4px;">
+      <p style="margin: 0; font-weight: bold; color: #0c5460;">Interview Details</p>
+      <ul style="margin: 10px 0 0 0; padding-left: 20px; color: #0c5460;">
+        <li><strong>Position:</strong> {{ invitation.template.name }}</li>
+        <li><strong>Completed:</strong> {{ invitation.completed_at|date:"F j, Y \a\\t g:i A" }}</li>
+        <li><strong>Reviewed:</strong> {{ invitation.reviewed_at|date:"F j, Y \a\\t g:i A" }}</li>
+        <li><strong>Reviewer:</strong> {{ invitation.interviewer.get_full_name|default:invitation.interviewer.username }}</li>
+      </ul>
+    </div>
+
+    <h3 style="color: #1F7BA6; margin-top: 30px;">View Your Feedback</h3>
+    <p>You can now view both the AI-generated feedback and the interviewer's personal feedback:</p>
+
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="{{ results_url }}" style="display: inline-block; background-color: #1F7BA6; color: white; padding: 15px 40px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">
+        View Feedback
+      </a>
+    </div>
+
+    <div style="background-color: #d4edda; border-left: 4px solid #28a745; padding: 15px; margin: 20px 0; border-radius: 4px;">
+      <p style="margin: 0; font-weight: bold; color: #155724;">What You'll See</p>
+      <ul style="margin: 10px 0 0 0; padding-left: 20px; color: #155724;">
+        <li><strong>AI Performance Scores:</strong> Professionalism, subject knowledge, clarity, and overall score</li>
+        <li><strong>AI Feedback:</strong> Detailed analysis of your responses</li>
+        <li><strong>Interviewer Feedback:</strong> Personal notes and recommendations from {{ invitation.interviewer.get_full_name|default:invitation.interviewer.username }}</li>
+        <li><strong>Downloadable PDF:</strong> Generate a professional report to share with others</li>
+      </ul>
+    </div>
+
+    <h3 style="color: #1F7BA6; margin-top: 30px;">Keep Practicing!</h3>
+    <p>Use this feedback to improve your interview skills. You can take practice interviews anytime to continue developing your abilities.</p>
+
+    <p style="margin-top: 30px;">Thank you for using Active Interview Service!</p>
+
+    <hr style="border: none; border-top: 1px solid #dee2e6; margin: 30px 0;">
+
+    <p style="font-size: 12px; color: #6c757d; text-align: center;">
+      This notification was sent to {{ invitation.candidate_email }}<br>
+      Active Interview Service | Professional Interview Practice
+    </p>
+  </div>
+</body>
+</html>

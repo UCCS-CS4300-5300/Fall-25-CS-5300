@@ -5,30 +5,23 @@
 {% endblock title %}
 
 {% block content %}
-  <style>
-    .logout-page {
-       background-color: #dcd9e2;
-       background-size: 10%;
-       display: flex;
-       flex-direction: column; 
-       justify-content: center;
-       align-items: center;
-       border: 13px solid grey;
-    }
-    p {
-      font-size: 30px;
-      color: white !important;
-    }
-    td {
-      font-size: 20px;
-    }
-  </style>
- 
-  <div class="centered-container">
-    <div class="login-page">
-      <p>Logged out!</p>
-      <a href="{% url 'login' %}?next={% url 'index' %}">Click here to login again.</a>
+<body>
+  <!-- All styles moved to main.css Authentication Components section -->
+
+  <div class="container">
+    <div class="logout-page">
+      <h2>You've Been Logged Out</h2>
+
+      <div class="logout-message">
+        <p>You have successfully logged out of your account.</p>
+        <p>Thank you for using Active Interview Service!</p>
+      </div>
+
+      <div class="action-buttons">
+        <a href="{% url 'login' %}" class="btn btn-primary">Login Again</a>
+        <a href="{% url 'index' %}" class="btn btn-secondary">Return to Home</a>
+      </div>
     </div>
   </div>
-
+</body>
 {% endblock content %}

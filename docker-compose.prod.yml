@@ -1,6 +1,10 @@
 services:
   backend:
-    build: active_interview_backend/.
+    image: fall-25-cs-5300-backend
+    build:
+      context: active_interview_backend
+      target: ci
+    user: root  # Start as root, entrypoint will fix permissions then drop to paracord
     environment:
       - PROD=true
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
@@ -11,13 +15,12 @@ services:
     volumes:
       - static_volume:/app/staticfiles # shared staticfiles volume
       - media_volume:/app/media # shared media volume
-      - ./active_interview_backend:/app
       - db_data:/app/db
       #    ports:
       #      - "8000:8000"
     expose:
       - "8000"  # Exposed internally
-    command: bash ./start.sh
+    command: bash ./paracord_runner.sh
     # network_mode: "host"
 
 #   react:

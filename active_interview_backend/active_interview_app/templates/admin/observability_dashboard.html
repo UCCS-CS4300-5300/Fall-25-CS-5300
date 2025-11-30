@@ -1,0 +1,329 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} - Active Interview{% endblock title %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">
+                <i class="fas fa-chart-line"></i> Observability Dashboard
+            </h1>
+        </div>
+    </div>
+
+    <!-- Controls Row -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="btn-group" role="group" aria-label="Time Range">
+                <input type="radio" class="btn-check" name="timeRange" id="range1h" value="1h" autocomplete="off">
+                <label class="btn btn-outline-primary" for="range1h">1 Hour</label>
+
+                <input type="radio" class="btn-check" name="timeRange" id="range24h" value="24h" autocomplete="off" checked>
+                <label class="btn btn-outline-primary" for="range24h">24 Hours</label>
+
+                <input type="radio" class="btn-check" name="timeRange" id="range7d" value="7d" autocomplete="off">
+                <label class="btn btn-outline-primary" for="range7d">7 Days</label>
+
+                <input type="radio" class="btn-check" name="timeRange" id="range30d" value="30d" autocomplete="off">
+                <label class="btn btn-outline-primary" for="range30d">30 Days</label>
+            </div>
+        </div>
+        <div class="col-md-6 text-end">
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-outline-secondary" id="btnRefresh" title="Refresh Data">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+                <button type="button" class="btn btn-outline-secondary" id="btnAutoRefresh" title="Auto-refresh every 30s">
+                    <i class="fas fa-play"></i> Auto-refresh
+                </button>
+                <button type="button" class="btn btn-outline-success" id="btnExport" title="Export to CSV">
+                    <i class="fas fa-download"></i> Export
+                </button>
+                <button type="button" class="btn btn-outline-info" id="btnShare" title="Share Dashboard">
+                    <i class="fas fa-share-alt"></i> Share
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Last Updated -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <small class="text-muted">Last updated: <span id="lastUpdated">Never</span></small>
+        </div>
+    </div>
+
+    <!-- Monthly Spending Tracker (Issues #10, #11, #12) -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-wallet"></i> Monthly Spending Tracker
+                    </h5>
+                    <button type="button" class="btn btn-sm btn-dark" id="btnConfigureCap" title="Configure Spending Cap">
+                        <i class="fas fa-cog"></i> Configure Cap
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div id="spendingCapCard">
+                                <h6>Current Month: <span id="spendingMonth">--</span></h6>
+                                <div class="progress mb-3" style="height: 30px;">
+                                    <div id="spendingProgress" class="progress-bar" role="progressbar"
+                                         style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                        <span id="spendingPercentage">0%</span>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <strong>Spent:</strong> $<span id="spendingCurrent">0.00</span>
+                                    </div>
+                                    <div>
+                                        <strong>Cap:</strong> $<span id="spendingCap">--</span>
+                                    </div>
+                                    <div>
+                                        <strong>Remaining:</strong> $<span id="spendingRemaining">--</span>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <small class="text-muted">
+                                        Last updated: <span id="spendingLastUpdated">Never</span>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Breakdown by Service</h6>
+                            <table class="table table-sm">
+                                <tbody>
+                                    <tr>
+                                        <td>LLM (GPT-4o, Claude)</td>
+                                        <td class="text-end">$<span id="llmCost">0.00</span></td>
+                                        <td class="text-end text-muted"><span id="llmRequests">0</span> requests</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Text-to-Speech</td>
+                                        <td class="text-end">$<span id="ttsCost">0.00</span></td>
+                                        <td class="text-end text-muted"><span id="ttsRequests">0</span> requests</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Other Services</td>
+                                        <td class="text-end">$<span id="otherCost">0.00</span></td>
+                                        <td class="text-end text-muted">--</td>
+                                    </tr>
+                                    <tr class="table-active">
+                                        <td><strong>Total</strong></td>
+                                        <td class="text-end"><strong>$<span id="totalCost">0.00</span></strong></td>
+                                        <td class="text-end text-muted"><span id="totalRequests">0</span> requests</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Grid -->
+    <div class="row">
+        <!-- RPS Chart -->
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tachometer-alt"></i> Requests Per Second (RPS)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="chartRPS"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Latency Chart -->
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock"></i> Latency (p50/p95)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="chartLatency"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Rate Chart -->
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> Error Rate
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="chartErrors"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Provider Costs Chart -->
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-dollar-sign"></i> Provider Costs
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="chartCosts"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Stats Row -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-list"></i> Summary Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="stat-box">
+                                <h3 id="statAvgRPS" class="text-primary">--</h3>
+                                <p class="text-muted mb-0">Avg RPS</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-box">
+                                <h3 id="statP95Latency" class="text-info">--</h3>
+                                <p class="text-muted mb-0">p95 Latency (ms)</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-box">
+                                <h3 id="statErrorRate" class="text-danger">--</h3>
+                                <p class="text-muted mb-0">Error Rate (%)</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-box">
+                                <h3 id="statTotalCost" class="text-success">--</h3>
+                                <p class="text-muted mb-0">Total Cost ($)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Share Modal -->
+<div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="shareModalLabel">Share Dashboard</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Share this dashboard view:</p>
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="shareUrl" readonly>
+                    <button class="btn btn-outline-secondary" type="button" id="btnCopyUrl">
+                        <i class="fas fa-copy"></i> Copy
+                    </button>
+                </div>
+                <p class="text-muted small">This URL includes the current time range selection.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Configure Spending Cap Modal -->
+<div class="modal fade" id="configureCapModal" tabindex="-1" aria-labelledby="configureCapModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="configureCapModalLabel">Configure Monthly Spending Cap</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="capConfigForm">
+                    <div class="mb-3">
+                        <label for="capAmountInput" class="form-label">Monthly Spending Limit (USD)</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" class="form-control" id="capAmountInput"
+                                   placeholder="200.00" min="0.01" step="0.01" required>
+                        </div>
+                        <div class="form-text">
+                            Set the maximum amount you want to spend per month on API services.
+                            This includes LLM (GPT-4o, Claude) and TTS costs.
+                        </div>
+                        <div id="capErrorMessage" class="alert alert-danger mt-2 d-none"></div>
+                        <div id="capSuccessMessage" class="alert alert-success mt-2 d-none"></div>
+                    </div>
+                    <div class="mb-3">
+                        <h6>Current Cap Information</h6>
+                        <p class="mb-1"><strong>Current Cap:</strong> $<span id="currentCapAmount">--</span></p>
+                        <p class="mb-1"><strong>Current Spending:</strong> $<span id="currentSpending">--</span></p>
+                        <p class="mb-0"><strong>Status:</strong> <span id="currentStatus">--</span></p>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="btnSaveCap">
+                    <i class="fas fa-save"></i> Save Cap
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+<script src="{% static 'js/observability_dashboard.js' %}"></script>
+{% endblock extra_js %}
+
+{% block extra_css %}
+<style>
+.stat-box {
+    padding: 1rem;
+    border-radius: var(--radius);
+    background: var(--surface);
+}
+
+.stat-box h3 {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.card-header {
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
+
+.btn-check:checked + .btn-outline-primary {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: var(--text-white);
+}
+
+canvas {
+    max-height: 300px;
+}
+</style>
+{% endblock extra_css %}

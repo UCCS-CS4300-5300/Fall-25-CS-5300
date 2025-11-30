@@ -4,13 +4,20 @@ After a user completes their mock interview they will be given a page of their r
 
 const inputData = JSON.parse(document.getElementById('chart-data').textContent);
 
+// Get CSS theme variables
+const styles = getComputedStyle(document.documentElement);
+const textPrimaryColor = styles.getPropertyValue('--text-primary').trim();
+const primaryColor = styles.getPropertyValue('--primary').trim();
+const primaryLightColor = styles.getPropertyValue('--primary-light').trim();
+const accentColor = styles.getPropertyValue('--accent').trim();
+const successColor = styles.getPropertyValue('--success').trim();
 
-//Bar Graph
-const barColors = ["#4482A6", "#F5F9E9","#96A13A","#564256"];
+//Bar Graph - Use CSS variables for theme compatibility
+const barColors = [primaryColor, primaryLightColor, accentColor, successColor];
 
-Chart.defaults.backgroundColor = '#9BD0F5';
-Chart.defaults.borderColor = '#36A2EB';
-Chart.defaults.color = '#000';
+Chart.defaults.backgroundColor = primaryLightColor;
+Chart.defaults.borderColor = primaryColor;
+Chart.defaults.color = textPrimaryColor;
 
 const BarChart = document.getElementById('BarChart').getContext('2d');
 const chart1 = new Chart(BarChart, {
@@ -23,17 +30,15 @@ const chart1 = new Chart(BarChart, {
       }]
     },
     options: {
-        font: {
-          family: "Verdana, Geneva, Tahoma, sans-serif",
-          size: 15,
-          color: "blue",
-        },
         legend: {
           display: false,
         },
         title: {
           display: true,
           text: "Category scores (out of 100)",
+          fontColor: textPrimaryColor,
+          fontFamily: "Verdana, Geneva, Tahoma, sans-serif",
+          fontSize: 16,
         },
         scales: {
           yAxes: [{
@@ -41,11 +46,25 @@ const chart1 = new Chart(BarChart, {
               beginAtZero: true,
               min: 0,
               max: 100,
-              stepSize: 20
+              stepSize: 20,
+              fontColor: textPrimaryColor,
+              fontFamily: "Verdana, Geneva, Tahoma, sans-serif",
+            },
+            gridLines: {
+              color: 'rgba(128, 128, 128, 0.2)',
             }
           }],
-      }  
-    } 
+          xAxes: [{
+            ticks: {
+              fontColor: textPrimaryColor,
+              fontFamily: "Verdana, Geneva, Tahoma, sans-serif",
+            },
+            gridLines: {
+              color: 'rgba(128, 128, 128, 0.2)',
+            }
+          }]
+      }
+    }
   });
 
 
@@ -72,6 +91,15 @@ const chart2 = new Chart(DonutChart, {
     title:{
       display: true,
       text: 'Categories',
+      fontColor: textPrimaryColor,
+      fontFamily: "Verdana, Geneva, Tahoma, sans-serif",
+      fontSize: 16,
+    },
+    legend: {
+      labels: {
+        fontColor: textPrimaryColor,
+        fontFamily: "Verdana, Geneva, Tahoma, sans-serif",
+      }
     },
   },
 });
