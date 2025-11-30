@@ -91,7 +91,7 @@ class TestConnectionHandlingChatView(TestCase):
         self.chat = generateConnectionTestChat(self.user)
         self.client.force_login(self.user)
 
-    def testGETChatViewHasConnectionFeatures(self):
+    def test_get_chat_view_has_connection_features(self):
         """Test that GET requests to chat view include connection handling features."""
         url = reverse('chat-view', args=[self.chat.id])
         response = self.client.get(url)
@@ -103,7 +103,7 @@ class TestConnectionHandlingChatView(TestCase):
         self.assertTemplateUsed(response, 'base-sidebar.html')
 
     @patch('active_interview_app.views.get_client_and_model')
-    def testPOSTChatViewSuccess(self, mock_get_client_and_model):
+    def test_post_chat_view_success(self, mock_get_client_and_model):
         """Test successful message post to chat view."""
         # Mock the OpenAI client and API response
         mock_client = MagicMock()
@@ -121,7 +121,7 @@ class TestConnectionHandlingChatView(TestCase):
         self.assertEqual(data['message'], 'Test AI response')
 
     @patch('active_interview_app.views.get_client_and_model')
-    def testPOSTChatViewAIUnavailable(self, mock_get_client_and_model):
+    def test_post_chat_view_ai_unavailable(self, mock_get_client_and_model):
         """Test chat view when AI service raises an exception."""
         # Mock get_client_and_model to raise an exception
         mock_get_client_and_model.side_effect = Exception("AI service unavailable")
@@ -133,7 +133,7 @@ class TestConnectionHandlingChatView(TestCase):
         # Response code may vary based on implementation
         self.assertIn(response.status_code, [200, 500, 503])
 
-    def testChatViewUnauthorizedAccess(self):
+    def test_chat_view_unauthorized_access(self):
         """Test that unauthorized users cannot access another user's chat."""
         other_user = User.objects.create_user(
             username="otheruserconnection",
@@ -151,7 +151,7 @@ class TestConnectionHandlingChatView(TestCase):
         # Should redirect or return forbidden
         self.assertIn(response.status_code, [302, 403, 404])
 
-    def testConnectionDroppedNotificationPresent(self):
+    def test_connection_dropped_notification_present(self):
         """Test that connection dropped inline notification is present in chat view."""
         url = reverse('chat-view', args=[self.chat.id])
         response = self.client.get(url)
@@ -162,7 +162,7 @@ class TestConnectionHandlingChatView(TestCase):
         self.assertContains(response, 'Retry')
         self.assertContains(response, 'Disconnected at')
 
-    def testNotificationIsDismissible(self):
+    def test_notification_is_dismissible(self):
         """Test that inline notification has dismiss functionality."""
         url = reverse('chat-view', args=[self.chat.id])
         response = self.client.get(url)
@@ -171,7 +171,7 @@ class TestConnectionHandlingChatView(TestCase):
         self.assertContains(response, 'dismissConnectionNotification')
         self.assertContains(response, 'btn-close')
 
-    def testCachingKeysPresent(self):
+    def test_caching_keys_present(self):
         """Test that connection handler module and chat ID configuration are present."""
         url = reverse('chat-view', args=[self.chat.id])
         response = self.client.get(url)
@@ -184,7 +184,7 @@ class TestConnectionHandlingChatView(TestCase):
         self.assertContains(response, 'chatId')
         self.assertContains(response, f'{self.chat.id}')
 
-    def testConnectionStatusFunctionsPresent(self):
+    def test_connection_status_functions_present(self):
         """Test that connection handler methods and wrapper functions are present."""
         url = reverse('chat-view', args=[self.chat.id])
         response = self.client.get(url)
