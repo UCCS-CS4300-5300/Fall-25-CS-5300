@@ -13,6 +13,7 @@ from django.urls import reverse
 from unittest.mock import patch, MagicMock
 from ..models import Chat, UploadedJobListing, UploadedResume
 from .test_credentials import TEST_PASSWORD
+from .test_utils import create_mock_openai_response
 
 
 # === Helper Functions ===
@@ -106,9 +107,7 @@ class TestConnectionHandlingChatView(TestCase):
         """Test successful message post to chat view."""
         # Mock the OpenAI client and API response
         mock_client = MagicMock()
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = "Test AI response"
+        mock_response = create_mock_openai_response("Test AI response")
         mock_client.chat.completions.create.return_value = mock_response
         # get_client_and_model returns (client, model, tier_info)
         mock_get_client_and_model.return_value = (mock_client, "gpt-4o", {"tier": "premium"})
@@ -256,9 +255,7 @@ class TestConnectionHandlingKeyQuestions(TestCase):
         """Test successful answer submission to key question."""
         # Mock the OpenAI client and API response
         mock_client = MagicMock()
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = "Excellent answer!"
+        mock_response = create_mock_openai_response("Excellent answer!")
         mock_client.chat.completions.create.return_value = mock_response
         # get_client_and_model returns (client, model, tier_info)
         mock_get_client_and_model.return_value = (mock_client, "gpt-4o", {"tier": "premium"})

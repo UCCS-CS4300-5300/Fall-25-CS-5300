@@ -9,6 +9,7 @@ from django.urls import reverse
 from unittest.mock import patch, MagicMock
 from active_interview_app.models import Chat, ExportableReport, UploadedJobListing, UploadedResume
 from active_interview_app.views import GenerateReportView
+from .test_utils import create_mock_openai_response
 
 
 class GenerateReportMethodsTest(TestCase):
@@ -137,9 +138,7 @@ class GenerateReportAITest(TestCase):
         self.client.login(username='testuser', password='pass123')
         url = reverse('generate_report', kwargs={'chat_id': self.chat.id})
 
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = "invalid\nformat\nhere"
+        mock_response = create_mock_openai_response("invalid\nformat\nhere")
 
         with patch('active_interview_app.views.ai_available', return_value=True):
             with patch('active_interview_app.views.get_client_and_model') as mock_get_client:
@@ -157,9 +156,7 @@ class GenerateReportAITest(TestCase):
         self.client.login(username='testuser', password='pass123')
         url = reverse('generate_report', kwargs={'chat_id': self.chat.id})
 
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = "85\n78"  # Only 2 scores
+        mock_response = create_mock_openai_response("85\n78")  # Only 2 scores
 
         with patch('active_interview_app.views.ai_available', return_value=True):
             with patch('active_interview_app.views.get_client_and_model') as mock_get_client:
@@ -179,17 +176,11 @@ class GenerateReportAITest(TestCase):
         with patch('active_interview_app.views.ai_available', return_value=True):
             with patch('active_interview_app.views.get_client_and_model') as mock_get_client:
                 # Create proper mock responses for the three AI calls
-                mock_scores = MagicMock()
-                mock_scores.choices = [MagicMock()]
-                mock_scores.choices[0].message.content = "85\n78\n82\n81"
+                mock_scores = create_mock_openai_response("85\n78\n82\n81")
 
-                mock_feedback = MagicMock()
-                mock_feedback.choices = [MagicMock()]
-                mock_feedback.choices[0].message.content = "Good job!"
+                mock_feedback = create_mock_openai_response("Good job!")
 
-                mock_rationale = MagicMock()
-                mock_rationale.choices = [MagicMock()]
-                mock_rationale.choices[0].message.content = """
+                mock_rationale = create_mock_openai_response("""
 Professionalism: Good professional behavior.
 
 Subject Knowledge: Strong knowledge base.
@@ -197,7 +188,7 @@ Subject Knowledge: Strong knowledge base.
 Clarity: Clear communication.
 
 Overall: Great performance.
-"""
+""")
 
                 mock_client = MagicMock()
                 mock_client.chat.completions.create.side_effect = [
@@ -223,17 +214,11 @@ Overall: Great performance.
         with patch('active_interview_app.views.ai_available', return_value=True):
             with patch('active_interview_app.views.get_client_and_model') as mock_get_client:
                 # Create proper mock responses for the three AI calls
-                mock_scores = MagicMock()
-                mock_scores.choices = [MagicMock()]
-                mock_scores.choices[0].message.content = "85\n78\n82\n81"
+                mock_scores = create_mock_openai_response("85\n78\n82\n81")
 
-                mock_feedback = MagicMock()
-                mock_feedback.choices = [MagicMock()]
-                mock_feedback.choices[0].message.content = "Good!"
+                mock_feedback = create_mock_openai_response("Good!")
 
-                mock_rationale = MagicMock()
-                mock_rationale.choices = [MagicMock()]
-                mock_rationale.choices[0].message.content = """
+                mock_rationale = create_mock_openai_response("""
 Professionalism: Professional throughout.
 Maintained good posture.
 
@@ -243,7 +228,7 @@ Some gaps noted.
 Clarity: Clear.
 
 Overall: Good.
-"""
+""")
 
                 mock_client = MagicMock()
                 mock_client.chat.completions.create.side_effect = [
@@ -267,13 +252,9 @@ Overall: Good.
         with patch('active_interview_app.views.ai_available', return_value=True):
             with patch('active_interview_app.views.get_client_and_model') as mock_get_client:
                 # Create proper mock responses for the three AI calls
-                mock_scores = MagicMock()
-                mock_scores.choices = [MagicMock()]
-                mock_scores.choices[0].message.content = "85\n78\n82\n81"
+                mock_scores = create_mock_openai_response("85\n78\n82\n81")
 
-                mock_feedback = MagicMock()
-                mock_feedback.choices = [MagicMock()]
-                mock_feedback.choices[0].message.content = "Good!"
+                mock_feedback = create_mock_openai_response("Good!")
 
                 mock_client = MagicMock()
                 mock_client.chat.completions.create.side_effect = [
@@ -896,14 +877,9 @@ class CreateChatViewTest(TestCase):
     def test_create_chat_post_with_resume(self, mock_get_client_and_model, mock_ai):
         """Test CreateChat POST with resume"""
         # Mock AI responses
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = "Hello! Let's begin the interview."
+        mock_response = create_mock_openai_response("Hello! Let's begin the interview.")
 
-        mock_questions_response = MagicMock()
-        mock_questions_response.choices = [MagicMock()]
-        mock_questions_response.choices[
-            0].message.content = '[{"id": 0, "title": "Q1", "content": "Question?", "duration": 60}]'
+        mock_questions_response = create_mock_openai_response('[{"id": 0, "title": "Q1", "content": "Question?", "duration": 60}]')
 
         mock_client = MagicMock()
         mock_client.chat.completions.create.side_effect = [
@@ -944,14 +920,9 @@ class CreateChatViewTest(TestCase):
     def test_create_chat_post_without_resume(self, mock_get_client_and_model, mock_ai):
         """Test CreateChat POST without resume"""
         # Mock AI responses
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = "Hello! Let's begin the interview."
+        mock_response = create_mock_openai_response("Hello! Let's begin the interview.")
 
-        mock_questions_response = MagicMock()
-        mock_questions_response.choices = [MagicMock()]
-        mock_questions_response.choices[
-            0].message.content = '[{"id": 0, "title": "Q1", "content": "Question?", "duration": 60}]'
+        mock_questions_response = create_mock_openai_response('[{"id": 0, "title": "Q1", "content": "Question?", "duration": 60}]')
 
         mock_client = MagicMock()
         mock_client.chat.completions.create.side_effect = [

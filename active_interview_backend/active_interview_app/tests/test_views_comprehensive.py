@@ -14,6 +14,7 @@ from active_interview_app.models import (
 from unittest.mock import patch, Mock
 import json
 from .test_credentials import TEST_PASSWORD
+from .test_utils import create_mock_openai_response
 
 
 class AboutUsViewTest(TestCase):
@@ -149,12 +150,7 @@ class KeyQuestionsViewTest(TestCase):
 
         # Mock OpenAI response
         mock_client = Mock()
-        mock_response = Mock()
-        mock_choice = Mock()
-        mock_message = Mock()
-        mock_message.content = "Great answer! 8/10"
-        mock_choice.message = mock_message
-        mock_response.choices = [mock_choice]
+        mock_response = create_mock_openai_response("Great answer! 8/10")
         mock_client.chat.completions.create.return_value = mock_response
         mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
@@ -211,12 +207,7 @@ class KeyQuestionsViewTest(TestCase):
 
         # Mock OpenAI response
         mock_client = Mock()
-        mock_response = Mock()
-        mock_choice = Mock()
-        mock_message = Mock()
-        mock_message.content = "Good answer! 7/10"
-        mock_choice.message = mock_message
-        mock_response.choices = [mock_choice]
+        mock_response = create_mock_openai_response("Good answer! 7/10")
         mock_client.chat.completions.create.return_value = mock_response
         mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
@@ -323,12 +314,7 @@ class ChatViewPostTest(TestCase):
 
         # Mock OpenAI response
         mock_client = Mock()
-        mock_response = Mock()
-        mock_choice = Mock()
-        mock_message = Mock()
-        mock_message.content = "AI response"
-        mock_choice.message = mock_message
-        mock_response.choices = [mock_choice]
+        mock_response = create_mock_openai_response("AI response")
         mock_client.chat.completions.create.return_value = mock_response
         mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
@@ -391,19 +377,8 @@ class CreateChatViewComprehensiveTest(TestCase):
                 Chat.SKILLS,
                 Chat.PERSONALITY,
                 Chat.FINAL_SCREENING]:
-            mock_response1 = Mock()
-            mock_choice1 = Mock()
-            mock_message1 = Mock()
-            mock_message1.content = "Greeting message"
-            mock_choice1.message = mock_message1
-            mock_response1.choices = [mock_choice1]
-
-            mock_response2 = Mock()
-            mock_choice2 = Mock()
-            mock_message2 = Mock()
-            mock_message2.content = '[{"id": 0, "title": "Q1", "duration": 60, "content": "Question 1"}]'
-            mock_choice2.message = mock_message2
-            mock_response2.choices = [mock_choice2]
+            mock_response1 = create_mock_openai_response("Greeting message")
+            mock_response2 = create_mock_openai_response('[{"id": 0, "title": "Q1", "duration": 60, "content": "Question 1"}]')
 
             mock_client.chat.completions.create.side_effect = [mock_response1, mock_response2]
             mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
@@ -434,20 +409,8 @@ class CreateChatViewComprehensiveTest(TestCase):
 
         # Mock OpenAI responses
         mock_client = Mock()
-        mock_response1 = Mock()
-        mock_choice1 = Mock()
-        mock_message1 = Mock()
-        mock_message1.content = "Greeting"
-        mock_choice1.message = mock_message1
-        mock_response1.choices = [mock_choice1]
-
-        # Second response without valid JSON
-        mock_response2 = Mock()
-        mock_choice2 = Mock()
-        mock_message2 = Mock()
-        mock_message2.content = "This is not valid JSON"
-        mock_choice2.message = mock_message2
-        mock_response2.choices = [mock_choice2]
+        mock_response1 = create_mock_openai_response("Greeting")
+        mock_response2 = create_mock_openai_response("This is not valid JSON")
 
         mock_client.chat.completions.create.side_effect = [mock_response1, mock_response2]
         mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})

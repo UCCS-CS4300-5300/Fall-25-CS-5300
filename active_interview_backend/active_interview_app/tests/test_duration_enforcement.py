@@ -17,6 +17,7 @@ from django.core import mail
 from unittest.mock import patch, MagicMock
 from datetime import timedelta
 import uuid
+from .test_utils import create_mock_openai_response
 
 from active_interview_app.models import (
     InvitedInterview,
@@ -403,9 +404,7 @@ class ChatViewDurationEnforcementPOSTTests(TestCase):
         """Test POST on non-expired invited interview processes normally"""
         # Mock OpenAI response
         mock_ai_client = MagicMock()
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = "Test AI response"
+        mock_response = create_mock_openai_response("Test AI response")
         mock_ai_client.chat.completions.create.return_value = mock_response
         # get_client_and_model returns (client, model, tier_info)
         mock_get_client_and_model.return_value = (mock_ai_client, "gpt-4o", {"tier": "premium"})
@@ -507,9 +506,7 @@ class ChatViewDurationEnforcementPOSTTests(TestCase):
         # first
         with patch('active_interview_app.views.get_openai_client') as mock_client:
             mock_ai_client = MagicMock()
-            mock_response = MagicMock()
-            mock_response.choices = [MagicMock()]
-            mock_response.choices[0].message.content = "AI response"
+            mock_response = create_mock_openai_response("AI response")
             mock_ai_client.chat.completions.create.return_value = mock_response
             mock_client.return_value = mock_ai_client
 

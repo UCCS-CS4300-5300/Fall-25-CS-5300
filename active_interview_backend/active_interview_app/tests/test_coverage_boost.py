@@ -17,6 +17,7 @@ from active_interview_app.merge_stats_models import MergeTokenStats
 from active_interview_app.token_usage_models import TokenUsage
 from active_interview_app import views
 from .test_credentials import TEST_PASSWORD
+from .test_utils import create_mock_openai_response
 
 
 # ============================================================================
@@ -223,13 +224,9 @@ class ViewsCriticalPathsTest(TransactionTestCase):
     @patch('active_interview_app.views.get_client_and_model')
     def test_create_chat_with_ai(self, mock_get_client, mock_ai):
         """Test CreateChat with AI available"""
-        mock_resp1 = MagicMock()
-        mock_resp1.choices = [MagicMock()]
-        mock_resp1.choices[0].message.content = "Hello"
+        mock_resp1 = create_mock_openai_response("Hello")
 
-        mock_resp2 = MagicMock()
-        mock_resp2.choices = [MagicMock()]
-        mock_resp2.choices[0].message.content = '[{"id":0,"title":"Q","duration":60,"content":"Q1"}]'
+        mock_resp2 = create_mock_openai_response('[{"id":0,"title":"Q","duration":60,"content":"Q1"}]')
 
         mock_client = MagicMock()
         mock_client.chat.completions.create.side_effect = [mock_resp1, mock_resp2]
@@ -261,13 +258,9 @@ class ViewsCriticalPathsTest(TransactionTestCase):
     @patch('active_interview_app.views.get_client_and_model')
     def test_create_chat_regex_failure(self, mock_get_client, mock_ai):
         """Test CreateChat when regex doesn't match"""
-        mock_resp1 = MagicMock()
-        mock_resp1.choices = [MagicMock()]
-        mock_resp1.choices[0].message.content = "Hello"
+        mock_resp1 = create_mock_openai_response("Hello")
 
-        mock_resp2 = MagicMock()
-        mock_resp2.choices = [MagicMock()]
-        mock_resp2.choices[0].message.content = "Not valid JSON"
+        mock_resp2 = create_mock_openai_response("Not valid JSON")
 
         mock_client = MagicMock()
         mock_client.chat.completions.create.side_effect = [mock_resp1, mock_resp2]
@@ -296,9 +289,7 @@ class ViewsCriticalPathsTest(TransactionTestCase):
             messages=[{"role": "system", "content": "test"}]
         )
 
-        mock_resp = MagicMock()
-        mock_resp.choices = [MagicMock()]
-        mock_resp.choices[0].message.content = "Response"
+        mock_resp = create_mock_openai_response("Response")
         mock_client = MagicMock()
         mock_client.chat.completions.create.return_value = mock_resp
         mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
@@ -404,9 +395,7 @@ class ViewsCriticalPathsTest(TransactionTestCase):
                             "duration": 60, "content": "Q1"}]
         )
 
-        mock_resp = MagicMock()
-        mock_resp.choices = [MagicMock()]
-        mock_resp.choices[0].message.content = "Feedback"
+        mock_resp = create_mock_openai_response("Feedback")
         mock_client = MagicMock()
         mock_client.chat.completions.create.return_value = mock_resp
         mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
@@ -431,9 +420,7 @@ class ViewsCriticalPathsTest(TransactionTestCase):
             messages=[{"role": "system", "content": "test"}]
         )
 
-        mock_resp = MagicMock()
-        mock_resp.choices = [MagicMock()]
-        mock_resp.choices[0].message.content = "Feedback"
+        mock_resp = create_mock_openai_response("Feedback")
         mock_client = MagicMock()
         mock_client.chat.completions.create.return_value = mock_resp
         mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
@@ -471,13 +458,9 @@ class ViewsCriticalPathsTest(TransactionTestCase):
             messages=[{"role": "system", "content": "test"}]
         )
 
-        mock_resp1 = MagicMock()
-        mock_resp1.choices = [MagicMock()]
-        mock_resp1.choices[0].message.content = "80\n70\n90\n75"
+        mock_resp1 = create_mock_openai_response("80\n70\n90\n75")
 
-        mock_resp2 = MagicMock()
-        mock_resp2.choices = [MagicMock()]
-        mock_resp2.choices[0].message.content = "Good"
+        mock_resp2 = create_mock_openai_response("Good")
 
         mock_client = MagicMock()
         mock_client.chat.completions.create.side_effect = [mock_resp1, mock_resp2]

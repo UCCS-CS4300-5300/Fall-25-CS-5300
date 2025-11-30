@@ -12,6 +12,7 @@ from active_interview_app.job_listing_parser import (
     parse_job_listing_with_ai,
     validate_parsed_data
 )
+from .test_utils import create_mock_openai_response
 
 
 class JobListingParserTests(TestCase):
@@ -58,8 +59,7 @@ class JobListingParserTests(TestCase):
         mockai_available.return_value = True
 
         mock_client = MagicMock()
-        mock_message = MagicMock()
-        mock_message.content = '''
+        mock_response = create_mock_openai_response('''
         {
             "required_skills": ["Python", "Django", "Flask", "PostgreSQL", "AWS", "Docker"],
             "seniority_level": "senior",
@@ -74,11 +74,7 @@ class JobListingParserTests(TestCase):
                 ]
             }
         }
-        '''
-        mock_choice = MagicMock()
-        mock_choice.message = mock_message
-        mock_response = MagicMock()
-        mock_response.choices = [mock_choice]
+        ''')
         mock_client.chat.completions.create.return_value = mock_response
         mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
@@ -122,8 +118,7 @@ class JobListingParserTests(TestCase):
         """
 
         mock_client = MagicMock()
-        mock_message = MagicMock()
-        mock_message.content = '''
+        mock_response = create_mock_openai_response('''
         {
             "required_skills": ["Python", "Java"],
             "seniority_level": "entry",
@@ -134,11 +129,7 @@ class JobListingParserTests(TestCase):
                 "responsibilities": ["Write clean code", "Learn from senior developers"]
             }
         }
-        '''
-        mock_choice = MagicMock()
-        mock_choice.message = mock_message
-        mock_response = MagicMock()
-        mock_response.choices = [mock_choice]
+        ''')
         mock_client.chat.completions.create.return_value = mock_response
         mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
@@ -169,8 +160,7 @@ class JobListingParserTests(TestCase):
         """
 
         mock_client = MagicMock()
-        mock_message = MagicMock()
-        mock_message.content = '''
+        mock_response = create_mock_openai_response('''
         {
             "required_skills": ["Software Architecture", "Technical Leadership", "Platform Engineering"],
             "seniority_level": "lead",
@@ -181,11 +171,7 @@ class JobListingParserTests(TestCase):
                 "responsibilities": ["Lead platform architecture", "Mentor engineering teams"]
             }
         }
-        '''
-        mock_choice = MagicMock()
-        mock_choice.message = mock_message
-        mock_response = MagicMock()
-        mock_response.choices = [mock_choice]
+        ''')
         mock_client.chat.completions.create.return_value = mock_response
         mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
@@ -220,8 +206,7 @@ class JobListingParserTests(TestCase):
         long_job = "Senior Developer\n" + ("Long description. " * 1000)
 
         mock_client = MagicMock()
-        mock_message = MagicMock()
-        mock_message.content = '''
+        mock_response = create_mock_openai_response('''
         {
             "required_skills": ["Python"],
             "seniority_level": "senior",
@@ -232,11 +217,7 @@ class JobListingParserTests(TestCase):
                 "responsibilities": []
             }
         }
-        '''
-        mock_choice = MagicMock()
-        mock_choice.message = mock_message
-        mock_response = MagicMock()
-        mock_response.choices = [mock_choice]
+        ''')
         mock_client.chat.completions.create.return_value = mock_response
         mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
@@ -257,9 +238,8 @@ class JobListingParserTests(TestCase):
         mockai_available.return_value = True
 
         mock_client = MagicMock()
-        mock_message = MagicMock()
         # OpenAI sometimes wraps JSON in markdown code blocks despite json_object format
-        mock_message.content = '''```json
+        mock_response = create_mock_openai_response('''```json
         {
             "required_skills": ["Python"],
             "seniority_level": "senior",
@@ -270,11 +250,7 @@ class JobListingParserTests(TestCase):
                 "responsibilities": []
             }
         }
-        ```'''
-        mock_choice = MagicMock()
-        mock_choice.message = mock_message
-        mock_response = MagicMock()
-        mock_response.choices = [mock_choice]
+        ```''')
         mock_client.chat.completions.create.return_value = mock_response
         mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
@@ -295,8 +271,7 @@ class JobListingParserTests(TestCase):
 
         # Test case where OpenAI returns "Junior" instead of "entry"
         mock_client = MagicMock()
-        mock_message = MagicMock()
-        mock_message.content = '''
+        mock_response = create_mock_openai_response('''
         {
             "required_skills": ["Python"],
             "seniority_level": "Junior Developer",
@@ -307,11 +282,7 @@ class JobListingParserTests(TestCase):
                 "responsibilities": []
             }
         }
-        '''
-        mock_choice = MagicMock()
-        mock_choice.message = mock_message
-        mock_response = MagicMock()
-        mock_response.choices = [mock_choice]
+        ''')
         mock_client.chat.completions.create.return_value = mock_response
         mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
@@ -333,8 +304,7 @@ class JobListingParserTests(TestCase):
         minimal_job = "Looking for a developer."
 
         mock_client = MagicMock()
-        mock_message = MagicMock()
-        mock_message.content = '''
+        mock_response = create_mock_openai_response('''
         {
             "required_skills": [],
             "seniority_level": "",
@@ -345,11 +315,7 @@ class JobListingParserTests(TestCase):
                 "responsibilities": []
             }
         }
-        '''
-        mock_choice = MagicMock()
-        mock_choice.message = mock_message
-        mock_response = MagicMock()
-        mock_response.choices = [mock_choice]
+        ''')
         mock_client.chat.completions.create.return_value = mock_response
         mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
@@ -466,13 +432,8 @@ class JobListingParserTests(TestCase):
         mockai_available.return_value = True
 
         mock_client = MagicMock()
-        mock_message = MagicMock()
         # Return completely invalid JSON that can't be parsed
-        mock_message.content = 'This is not JSON at all, just plain text'
-        mock_choice = MagicMock()
-        mock_choice.message = mock_message
-        mock_response = MagicMock()
-        mock_response.choices = [mock_choice]
+        mock_response = create_mock_openai_response('This is not JSON at all, just plain text')
         mock_client.chat.completions.create.return_value = mock_response
         mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
@@ -492,13 +453,8 @@ class JobListingParserTests(TestCase):
         mockai_available.return_value = True
 
         mock_client = MagicMock()
-        mock_message = MagicMock()
         # Return a JSON array instead of object
-        mock_message.content = '["item1", "item2"]'
-        mock_choice = MagicMock()
-        mock_choice.message = mock_message
-        mock_response = MagicMock()
-        mock_response.choices = [mock_choice]
+        mock_response = create_mock_openai_response('["item1", "item2"]')
         mock_client.chat.completions.create.return_value = mock_response
         mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
@@ -518,18 +474,13 @@ class JobListingParserTests(TestCase):
         mockai_available.return_value = True
 
         mock_client = MagicMock()
-        mock_message = MagicMock()
         # Return wrong types: skills as string, seniority as int,
         # requirements as string
-        mock_message.content = '''{
+        mock_response = create_mock_openai_response('''{
             "required_skills": "Python, Django",
             "seniority_level": 123,
             "requirements": "some requirements"
-        }'''
-        mock_choice = MagicMock()
-        mock_choice.message = mock_message
-        mock_response = MagicMock()
-        mock_response.choices = [mock_choice]
+        }''')
         mock_client.chat.completions.create.return_value = mock_response
         mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
@@ -552,9 +503,8 @@ class JobListingParserTests(TestCase):
         mockai_available.return_value = True
 
         mock_client = MagicMock()
-        mock_message = MagicMock()
         # AI returns "Intermediate Level" instead of "mid"
-        mock_message.content = '''{
+        mock_response = create_mock_openai_response('''{
             "required_skills": ["Python"],
             "seniority_level": "Intermediate Level",
             "requirements": {
@@ -563,11 +513,7 @@ class JobListingParserTests(TestCase):
                 "certifications": [],
                 "responsibilities": []
             }
-        }'''
-        mock_choice = MagicMock()
-        mock_choice.message = mock_message
-        mock_response = MagicMock()
-        mock_response.choices = [mock_choice]
+        }''')
         mock_client.chat.completions.create.return_value = mock_response
         mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
@@ -586,9 +532,8 @@ class JobListingParserTests(TestCase):
         mockai_available.return_value = True
 
         mock_client = MagicMock()
-        mock_message = MagicMock()
         # AI returns "Principal Engineer"
-        mock_message.content = '''{
+        mock_response = create_mock_openai_response('''{
             "required_skills": ["System Design"],
             "seniority_level": "Principal Engineer",
             "requirements": {
@@ -597,11 +542,7 @@ class JobListingParserTests(TestCase):
                 "certifications": [],
                 "responsibilities": []
             }
-        }'''
-        mock_choice = MagicMock()
-        mock_choice.message = mock_message
-        mock_response = MagicMock()
-        mock_response.choices = [mock_choice]
+        }''')
         mock_client.chat.completions.create.return_value = mock_response
         mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
@@ -620,9 +561,8 @@ class JobListingParserTests(TestCase):
         mockai_available.return_value = True
 
         mock_client = MagicMock()
-        mock_message = MagicMock()
         # AI returns "VP of Engineering"
-        mock_message.content = '''{
+        mock_response = create_mock_openai_response('''{
             "required_skills": ["Leadership", "Strategy"],
             "seniority_level": "VP of Engineering",
             "requirements": {
@@ -631,11 +571,7 @@ class JobListingParserTests(TestCase):
                 "certifications": [],
                 "responsibilities": []
             }
-        }'''
-        mock_choice = MagicMock()
-        mock_choice.message = mock_message
-        mock_response = MagicMock()
-        mock_response.choices = [mock_choice]
+        }''')
         mock_client.chat.completions.create.return_value = mock_response
         mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
@@ -654,9 +590,8 @@ class JobListingParserTests(TestCase):
         mockai_available.return_value = True
 
         mock_client = MagicMock()
-        mock_message = MagicMock()
         # AI returns unrecognizable seniority
-        mock_message.content = '''{
+        mock_response = create_mock_openai_response('''{
             "required_skills": ["Python"],
             "seniority_level": "Astronaut Level 5",
             "requirements": {
@@ -665,11 +600,7 @@ class JobListingParserTests(TestCase):
                 "certifications": [],
                 "responsibilities": []
             }
-        }'''
-        mock_choice = MagicMock()
-        mock_choice.message = mock_message
-        mock_response = MagicMock()
-        mock_response.choices = [mock_choice]
+        }''')
         mock_client.chat.completions.create.return_value = mock_response
         mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
@@ -688,9 +619,8 @@ class JobListingParserTests(TestCase):
         mockai_available.return_value = True
 
         mock_client = MagicMock()
-        mock_message = MagicMock()
         # Return requirements with wrong types
-        mock_message.content = '''{
+        mock_response = create_mock_openai_response('''{
             "required_skills": ["Python"],
             "seniority_level": "senior",
             "requirements": {
@@ -699,11 +629,7 @@ class JobListingParserTests(TestCase):
                 "certifications": "AWS",
                 "responsibilities": "Lead team"
             }
-        }'''
-        mock_choice = MagicMock()
-        mock_choice.message = mock_message
-        mock_response = MagicMock()
-        mock_response.choices = [mock_choice]
+        }''')
         mock_client.chat.completions.create.return_value = mock_response
         mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 

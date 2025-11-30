@@ -20,6 +20,7 @@ from active_interview_app.merge_stats_models import MergeTokenStats
 from active_interview_app.token_usage_models import TokenUsage
 from active_interview_app import views
 from .test_credentials import TEST_PASSWORD
+from .test_utils import create_mock_openai_response
 
 
 # ============================================================================
@@ -255,20 +256,16 @@ class ViewsCompleteCoverageTest(TestCase):
 
         # Mock AI responses
         mock_client = MagicMock()
-        mock_response1 = MagicMock()
-        mock_response1.choices = [MagicMock()]
-        mock_response1.choices[0].message.content = "Hello! Let's start the interview."
+        mock_response1 = create_mock_openai_response("Hello! Let's start the interview.")
 
-        mock_response2 = MagicMock()
-        mock_response2.choices = [MagicMock()]
-        mock_response2.choices[0].message.content = '''[
+        mock_response2 = create_mock_openai_response('''[
             {
                 "id": 0,
                 "title": "Experience",
                 "duration": 60,
                 "content": "Tell me about your experience."
             }
-        ]'''
+        ]''')
 
         mock_client.chat.completions.create.side_effect = [
             mock_response1, mock_response2
@@ -329,14 +326,10 @@ class ViewsCompleteCoverageTest(TestCase):
         mock_ai.return_value = True
 
         mock_client = MagicMock()
-        mock_response1 = MagicMock()
-        mock_response1.choices = [MagicMock()]
-        mock_response1.choices[0].message.content = "Hello!"
+        mock_response1 = create_mock_openai_response("Hello!")
 
         # Return invalid JSON that won't match regex
-        mock_response2 = MagicMock()
-        mock_response2.choices = [MagicMock()]
-        mock_response2.choices[0].message.content = "This is not valid JSON"
+        mock_response2 = create_mock_openai_response("This is not valid JSON")
 
         mock_client.chat.completions.create.side_effect = [
             mock_response1, mock_response2
@@ -381,9 +374,7 @@ class ViewsCompleteCoverageTest(TestCase):
 
         # Mock the client and model returned by get_client_and_model
         mock_client = MagicMock()
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = "AI response"
+        mock_response = create_mock_openai_response("AI response")
         mock_client.chat.completions.create.return_value = mock_response
 
         # get_client_and_model returns (client, model, tier_info)
@@ -548,9 +539,7 @@ class ViewsCompleteCoverageTest(TestCase):
         mock_ai.return_value = True
 
         mock_client = MagicMock()
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = "Good answer! 8/10"
+        mock_response = create_mock_openai_response("Good answer! 8/10")
         mock_client.chat.completions.create.return_value = mock_response
 
         # get_client_and_model returns (client, model, tier_info)
@@ -597,9 +586,7 @@ class ViewsCompleteCoverageTest(TestCase):
         mock_ai.return_value = True
 
         mock_client = MagicMock()
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = "Feedback"
+        mock_response = create_mock_openai_response("Feedback")
         mock_client.chat.completions.create.return_value = mock_response
 
         # get_client_and_model returns (client, model, tier_info)
@@ -659,9 +646,7 @@ class ViewsCompleteCoverageTest(TestCase):
         mock_ai.return_value = True
 
         mock_client = MagicMock()
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = "Great job!"
+        mock_response = create_mock_openai_response("Great job!")
         mock_client.chat.completions.create.return_value = mock_response
 
         # get_client_and_model returns (client, model, tier_info)
@@ -711,13 +696,9 @@ class ViewsCompleteCoverageTest(TestCase):
         mock_ai.return_value = True
 
         mock_client = MagicMock()
-        mock_response1 = MagicMock()
-        mock_response1.choices = [MagicMock()]
-        mock_response1.choices[0].message.content = "80\n70\n90\n75"
+        mock_response1 = create_mock_openai_response("80\n70\n90\n75")
 
-        mock_response2 = MagicMock()
-        mock_response2.choices = [MagicMock()]
-        mock_response2.choices[0].message.content = "You did well"
+        mock_response2 = create_mock_openai_response("You did well")
 
         mock_client.chat.completions.create.side_effect = [
             mock_response1, mock_response2

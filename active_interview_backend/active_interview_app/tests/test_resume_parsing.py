@@ -18,6 +18,7 @@ from docx import Document as DocxDocument
 
 from ..models import UploadedResume
 from ..openai_utils import get_openai_client, ai_available, MAX_TOKENS
+from .test_utils import create_mock_openai_response
 from ..resume_parser import parse_resume_with_ai, validate_parsed_data
 from .test_credentials import TEST_PASSWORD
 
@@ -184,12 +185,7 @@ class ResumeParserTests(TestCase):
 
         # Mock OpenAI client response with proper nested structure
         mock_client = MagicMock()
-        mock_message = MagicMock()
-        mock_message.content = json.dumps(create_sample_parsed_data())
-        mock_choice = MagicMock()
-        mock_choice.message = mock_message
-        mock_response = MagicMock()
-        mock_response.choices = [mock_choice]
+        mock_response = create_mock_openai_response(json.dumps(create_sample_parsed_data()))
         mock_client.chat.completions.create.return_value = mock_response
         mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
@@ -230,12 +226,7 @@ class ResumeParserTests(TestCase):
 
         # Mock client with invalid JSON
         mock_client = MagicMock()
-        mock_message = MagicMock()
-        mock_message.content = "Not valid JSON"
-        mock_choice = MagicMock()
-        mock_choice.message = mock_message
-        mock_response = MagicMock()
-        mock_response.choices = [mock_choice]
+        mock_response = create_mock_openai_response("Not valid JSON")
         mock_client.chat.completions.create.return_value = mock_response
         mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
@@ -256,12 +247,7 @@ class ResumeParserTests(TestCase):
         # Mock client with markdown-wrapped JSON
         mock_client = MagicMock()
         markdown_json = "```json\n" + json.dumps(create_sample_parsed_data()) + "\n```"
-        mock_message = MagicMock()
-        mock_message.content = markdown_json
-        mock_choice = MagicMock()
-        mock_choice.message = mock_message
-        mock_response = MagicMock()
-        mock_response.choices = [mock_choice]
+        mock_response = create_mock_openai_response(markdown_json)
         mock_client.chat.completions.create.return_value = mock_response
         mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
@@ -282,12 +268,7 @@ class ResumeParserTests(TestCase):
         # Mock client with partial data
         mock_client = MagicMock()
         partial_data = {"skills": ["Python"]}  # Missing experience and education
-        mock_message = MagicMock()
-        mock_message.content = json.dumps(partial_data)
-        mock_choice = MagicMock()
-        mock_choice.message = mock_message
-        mock_response = MagicMock()
-        mock_response.choices = [mock_choice]
+        mock_response = create_mock_openai_response(json.dumps(partial_data))
         mock_client.chat.completions.create.return_value = mock_response
         mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
@@ -308,12 +289,7 @@ class ResumeParserTests(TestCase):
 
         # Mock successful response
         mock_client = MagicMock()
-        mock_message = MagicMock()
-        mock_message.content = json.dumps(create_sample_parsed_data())
-        mock_choice = MagicMock()
-        mock_choice.message = mock_message
-        mock_response = MagicMock()
-        mock_response.choices = [mock_choice]
+        mock_response = create_mock_openai_response(json.dumps(create_sample_parsed_data()))
         mock_client.chat.completions.create.return_value = mock_response
         mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 

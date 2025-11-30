@@ -7,6 +7,7 @@ from django.contrib.auth.models import User, Group
 from django.core.files.uploadedfile import SimpleUploadedFile
 from unittest.mock import patch, MagicMock
 from .test_credentials import TEST_PASSWORD
+from .test_utils import create_mock_openai_response
 import json
 
 from active_interview_app.models import (
@@ -234,9 +235,7 @@ class ChatViewsCoverageTest(TestCase):
             self, mock_get_client_and_model, mockai_available):
         """Test creating chat when key questions regex doesn't match"""
         mockai_available.return_value = True
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = "Invalid response without JSON array"
+        mock_response = create_mock_openai_response("Invalid response without JSON array")
 
         mock_openai = MagicMock()
         mock_openai.chat.completions.create.return_value = mock_response
@@ -387,12 +386,7 @@ class ResultsViewsCoverageTest(TestCase):
     def test_result_charts_view(self, mock_get_client, mockai_available):
         """Test ResultCharts view (which is what chat-results URL points to)"""
         mockai_available.return_value = True
-        mock_response = MagicMock()
-        mock_message = MagicMock()
-        mock_message.content = "85\n90\n80\n88"
-        mock_choice = MagicMock()
-        mock_choice.message = mock_message
-        mock_response.choices = [mock_choice]
+        mock_response = create_mock_openai_response("85\n90\n80\n88")
 
         mock_openai = MagicMock()
         mock_openai.chat.completions.create.return_value = mock_response
@@ -423,11 +417,8 @@ class ResultsViewsCoverageTest(TestCase):
     def test_result_charts_invalid_scores(self, mock_get_client_and_model, mockai_available):
         """Test ResultCharts view with invalid score format"""
         mockai_available.return_value = True
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-
         # Return invalid scores (not 4 values)
-        mock_response.choices[0].message.content = "85\n90"
+        mock_response = create_mock_openai_response("85\n90")
 
         mock_openai = MagicMock()
         mock_openai.chat.completions.create.return_value = mock_response
