@@ -9,8 +9,12 @@ Updated for:
 - Issue #14: Automatic fallback tier switching based on spending cap
 """
 
+import logging
 from openai import OpenAI
 from django.conf import settings
+
+# Configure logger for this module
+logger = logging.getLogger(__name__)
 
 
 # OpenAI client configuration with graceful degradation
@@ -55,10 +59,13 @@ def get_api_key_from_pool(model_tier='premium'):
             active_key.increment_usage()
             return active_key.get_key()
 
-    except Exception:
+    except Exception as e:
         # If key pool is not set up or fails, fall back to settings
         # This is normal during tests, migrations, or when pool is not configured
-        pass
+        logger.debug(
+            f"API Key Pool not available for tier '{model_tier}', "
+            f"falling back to environment variables. Reason: {type(e).__name__}: {e}"
+        )
 
     # Fallback to environment variables based on tier
     if model_tier == 'fallback':
@@ -161,8 +168,12 @@ def get_current_api_key_info(model_tier='premium'):
                 'source': 'key_pool'
             }
 
-    except Exception:
-        pass
+    except Exception as e:
+        # Log when key pool is not available (informational, not an error)
+        logger.debug(
+            f"Could not retrieve key info from API Key Pool for tier '{model_tier}', "
+            f"checking environment variables. Reason: {type(e).__name__}: {e}"
+        )
 
     # Using environment variable fallback
     if model_tier == 'fallback':
