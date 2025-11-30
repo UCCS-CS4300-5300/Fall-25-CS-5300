@@ -216,7 +216,7 @@ class TestConnectionHandlingKeyQuestions(TestCase):
         self.chat = generateConnectionTestChatWithQuestions(self.user)
         self.client.force_login(self.user)
 
-    def testGETKeyQuestionsHasConnectionStatus(self):
+    def test_get_key_questions_has_connection_status(self):
         """Test that connection status indicator is present in key questions."""
         url = reverse('key-questions', args=[self.chat.id, 0])
         response = self.client.get(url)
@@ -226,7 +226,7 @@ class TestConnectionHandlingKeyQuestions(TestCase):
         self.assertContains(response, 'Saved by server')
         self.assertTemplateUsed(response, 'base-sidebar.html')
 
-    def testKeyQuestionsNotificationPresent(self):
+    def test_key_questions_notification_present(self):
         """Test that connection dropped inline notification is present in key questions."""
         url = reverse('key-questions', args=[self.chat.id, 0])
         response = self.client.get(url)
@@ -237,7 +237,7 @@ class TestConnectionHandlingKeyQuestions(TestCase):
         self.assertContains(response, 'Retry')
         self.assertContains(response, 'Disconnected at')
 
-    def testKeyQuestionsCachingKeysPresent(self):
+    def test_key_questions_caching_keys_present(self):
         """Test that connection handler module is present for key questions."""
         url = reverse('key-questions', args=[self.chat.id, 0])
         response = self.client.get(url)
@@ -251,7 +251,7 @@ class TestConnectionHandlingKeyQuestions(TestCase):
         self.assertContains(response, f'{self.chat.id}')
 
     @patch('active_interview_app.views.get_client_and_model')
-    def testPOSTKeyQuestionsSuccess(self, mock_get_client_and_model):
+    def test_post_key_questions_success(self, mock_get_client_and_model):
         """Test successful answer submission to key question."""
         # Mock the OpenAI client and API response
         mock_client = MagicMock()
@@ -278,7 +278,7 @@ class TestConnectionMonitoringJavaScript(TestCase):
         self.chat = generateConnectionTestChat(self.user)
         self.client.force_login(self.user)
 
-    def testHeartbeatFunctionPresent(self):
+    def test_heartbeat_function_present(self):
         """Test that connection handler starts heartbeat monitoring."""
         url = reverse('chat-view', args=[self.chat.id])
         response = self.client.get(url)
@@ -289,7 +289,7 @@ class TestConnectionMonitoringJavaScript(TestCase):
         # Check for CONFIG constants from connection-handler.js
         self.assertContains(response, 'CONFIG')
 
-    def testSyncCheckIntervalPresent(self):
+    def test_sync_check_interval_present(self):
         """Test that sync check is started via connection handler."""
         url = reverse('chat-view', args=[self.chat.id])
         response = self.client.get(url)
@@ -300,7 +300,7 @@ class TestConnectionMonitoringJavaScript(TestCase):
         # Check for CONFIG object which contains SYNC_CHECK_INTERVAL
         self.assertContains(response, 'CONFIG')
 
-    def testAjaxErrorHandlingPresent(self):
+    def test_ajax_error_handling_present(self):
         """Test that AJAX error handling uses CONFIG timeout."""
         url = reverse('chat-view', args=[self.chat.id])
         response = self.client.get(url)
@@ -311,7 +311,7 @@ class TestConnectionMonitoringJavaScript(TestCase):
         # Check for CONFIG.AJAX_TIMEOUT usage
         self.assertContains(response, 'CONFIG.AJAX_TIMEOUT')
 
-    def testConnectionStatusStylingPresent(self):
+    def test_connection_status_styling_present(self):
         """Test that connection status CSS styling is present."""
         url = reverse('chat-view', args=[self.chat.id])
         response = self.client.get(url)
@@ -322,7 +322,7 @@ class TestConnectionMonitoringJavaScript(TestCase):
         self.assertContains(response, '.connection-status.offline')
         self.assertContains(response, 'animation: pulse')
 
-    def testDarkModeCompatibleStyles(self):
+    def test_dark_mode_compatible_styles(self):
         """Test that connection modal uses theme-aware colors."""
         url = reverse('chat-view', args=[self.chat.id])
         response = self.client.get(url)
@@ -344,7 +344,7 @@ class TestMessageCaching(TestCase):
         self.chat = generateConnectionTestChat(self.user)
         self.client.force_login(self.user)
 
-    def testAutoSaveConfiguration(self):
+    def test_auto_save_configuration(self):
         """Test that auto-save is configured via connection handler."""
         url = reverse('chat-view', args=[self.chat.id])
         response = self.client.get(url)
@@ -356,7 +356,7 @@ class TestMessageCaching(TestCase):
         self.assertContains(response, 'CONFIG')
         self.assertContains(response, 'connectionHandler.saveCachedInput')
 
-    def testLocalStorageOperationsPresent(self):
+    def test_local_storage_operations_present(self):
         """Test that localStorage operations are available via connection handler."""
         url = reverse('chat-view', args=[self.chat.id])
         response = self.client.get(url)
@@ -369,7 +369,7 @@ class TestMessageCaching(TestCase):
         # Some localStorage operations still exist in template (e.g., for cache removal)
         self.assertContains(response, 'localStorage.removeItem')
 
-    def testPendingMessageProtection(self):
+    def test_pending_message_protection(self):
         """Test that pending message protection is configured via connection handler."""
         url = reverse('chat-view', args=[self.chat.id])
         response = self.client.get(url)
@@ -381,7 +381,7 @@ class TestMessageCaching(TestCase):
         # Check that connectionHandler has storage keys
         self.assertContains(response, 'connectionHandler')
 
-    def testMessageRestorationOnError(self):
+    def test_message_restoration_on_error(self):
         """Test that messages are restored on send error."""
         url = reverse('chat-view', args=[self.chat.id])
         response = self.client.get(url)
@@ -402,7 +402,7 @@ class TestSyncStatusIndicators(TestCase):
         self.chat = generateConnectionTestChat(self.user)
         self.client.force_login(self.user)
 
-    def testSyncPendingIndicatorCSSPresent(self):
+    def test_sync_pending_indicator_css_present(self):
         """Test that Sync Pending indicator CSS and logic are present."""
         url = reverse('chat-view', args=[self.chat.id])
         response = self.client.get(url)
@@ -414,7 +414,7 @@ class TestSyncStatusIndicators(TestCase):
         self.assertContains(response, 'connectionHandler.addSyncPendingIndicator')
         self.assertContains(response, 'bi-arrow-repeat')
 
-    def testSyncSuccessfulIndicatorCSSPresent(self):
+    def test_sync_successful_indicator_css_present(self):
         """Test that Sync Successful indicator CSS and logic are present."""
         url = reverse('chat-view', args=[self.chat.id])
         response = self.client.get(url)
@@ -426,7 +426,7 @@ class TestSyncStatusIndicators(TestCase):
         self.assertContains(response, 'connectionHandler.showSyncSuccessful')
         self.assertContains(response, 'bi-check-circle-fill')
 
-    def testSyncSuccessfulFadeOutAnimation(self):
+    def test_sync_successful_fade_out_animation(self):
         """Test that Sync Successful indicator has fade out animation."""
         url = reverse('chat-view', args=[self.chat.id])
         response = self.client.get(url)
@@ -435,7 +435,7 @@ class TestSyncStatusIndicators(TestCase):
         self.assertContains(response, '@keyframes fadeOut')
         self.assertContains(response, 'animation: fadeOut 3s ease-out forwards')
 
-    def testSyncSuccessfulUsesThemeColors(self):
+    def test_sync_successful_uses_theme_colors(self):
         """Test that Sync Successful indicator uses theme-aware colors."""
         url = reverse('chat-view', args=[self.chat.id])
         response = self.client.get(url)
@@ -443,7 +443,7 @@ class TestSyncStatusIndicators(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'var(--success)')
 
-    def testSyncSuccessfulReplacementLogic(self):
+    def test_sync_successful_replacement_logic(self):
         """Test that sync logic replaces pending indicator with successful indicator."""
         url = reverse('chat-view', args=[self.chat.id])
         response = self.client.get(url)
@@ -456,7 +456,7 @@ class TestSyncStatusIndicators(TestCase):
         # Check that we're calling the method from our custom sync function
         self.assertContains(response, 'connectionHandler.syncPendingMessages')
 
-    def testSyncPendingAddedOnNetworkError(self):
+    def test_sync_pending_added_on_network_error(self):
         """Test that Sync Pending is added when network error occurs."""
         url = reverse('chat-view', args=[self.chat.id])
         response = self.client.get(url)
@@ -467,7 +467,7 @@ class TestSyncStatusIndicators(TestCase):
         self.assertContains(response, 'connectionHandler.addSyncPendingIndicator')
         self.assertContains(response, 'text-warning')
 
-    def testSyncIndicatorPositioning(self):
+    def test_sync_indicator_positioning(self):
         """Test that sync indicators are positioned correctly below messages."""
         url = reverse('chat-view', args=[self.chat.id])
         response = self.client.get(url)
