@@ -14,6 +14,7 @@ from unittest.mock import patch, Mock
 from unittest import skip
 import json
 from .test_credentials import TEST_PASSWORD
+from .test_utils import create_mock_openai_response
 
 
 class RegisterViewTest(TestCase):
@@ -413,7 +414,7 @@ class ResultsChatViewTest(TestCase):
         self.assertEqual(response.context['feedback'],
                          'AI features are currently unavailable.')
 
-    @patch('active_interview_app.views.get_openai_client')
+    @patch('active_interview_app.views.get_client_and_model')
     @patch('active_interview_app.views.ai_available')
     def test_results_chatai_available(self, mockai_available, mock_get_client):
         """Test results chat when AI is available"""
@@ -421,14 +422,9 @@ class ResultsChatViewTest(TestCase):
 
         # Mock OpenAI response
         mock_client = Mock()
-        mock_response = Mock()
-        mock_choice = Mock()
-        mock_message = Mock()
-        mock_message.content = "Great interview performance!"
-        mock_choice.message = mock_message
-        mock_response.choices = [mock_choice]
+        mock_response = create_mock_openai_response("Great interview performance!")
         mock_client.chat.completions.create.return_value = mock_response
-        mock_get_client.return_value = mock_client
+        mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
         self.client.login(username='testuser', password=TEST_PASSWORD)
 
@@ -487,32 +483,22 @@ class ResultChartsViewTest(TestCase):
         self.assertEqual(scores['Overall'], 0)
 
     @skip("chat-results-charts URL not implemented yet")
-    @patch('active_interview_app.views.get_openai_client')
+    @patch('active_interview_app.views.get_client_and_model')
     @patch('active_interview_app.views.ai_available')
     def test_result_chartsai_available_valid_scores(
-            self, mockai_available, mock_get_client):
+            self, mockai_available, mock_get_client_and_model):
         """Test result charts with valid AI scores"""
         mockai_available.return_value = True
 
         # Mock OpenAI response
         mock_client = Mock()
-        mock_response1 = Mock()
-        mock_choice1 = Mock()
-        mock_message1 = Mock()
-        mock_message1.content = "85\n78\n92\n88"
-        mock_choice1.message = mock_message1
-        mock_response1.choices = [mock_choice1]
-
-        mock_response2 = Mock()
-        mock_choice2 = Mock()
-        mock_message2 = Mock()
-        mock_message2.content = "You performed well overall."
-        mock_choice2.message = mock_message2
-        mock_response2.choices = [mock_choice2]
+        mock_response1 = create_mock_openai_response("85\n78\n92\n88")
+        mock_response2 = create_mock_openai_response("You performed well overall.")
 
         mock_client.chat.completions.create.side_effect = [
             mock_response1, mock_response2]
-        mock_get_client.return_value = mock_client
+        # get_client_and_model returns (client, model, tier_info)
+        mock_get_client_and_model.return_value = (mock_client, "gpt-4o", {"tier": "premium"})
 
         self.client.login(username='testuser', password=TEST_PASSWORD)
 
@@ -529,32 +515,22 @@ class ResultChartsViewTest(TestCase):
         self.assertEqual(scores['Overall'], 88)
 
     @skip("chat-results-charts URL not implemented yet")
-    @patch('active_interview_app.views.get_openai_client')
+    @patch('active_interview_app.views.get_client_and_model')
     @patch('active_interview_app.views.ai_available')
     def test_result_charts_ai_invalid_scores(
-            self, mockai_available, mock_get_client):
+            self, mockai_available, mock_get_client_and_model):
         """Test result charts with invalid AI response"""
         mockai_available.return_value = True
 
         # Mock OpenAI response with invalid format
         mock_client = Mock()
-        mock_response1 = Mock()
-        mock_choice1 = Mock()
-        mock_message1 = Mock()
-        mock_message1.content = "Not a valid score format"
-        mock_choice1.message = mock_message1
-        mock_response1.choices = [mock_choice1]
-
-        mock_response2 = Mock()
-        mock_choice2 = Mock()
-        mock_message2 = Mock()
-        mock_message2.content = "Feedback"
-        mock_choice2.message = mock_message2
-        mock_response2.choices = [mock_choice2]
+        mock_response1 = create_mock_openai_response("Not a valid score format")
+        mock_response2 = create_mock_openai_response("Feedback")
 
         mock_client.chat.completions.create.side_effect = [
             mock_response1, mock_response2]
-        mock_get_client.return_value = mock_client
+        # get_client_and_model returns (client, model, tier_info)
+        mock_get_client_and_model.return_value = (mock_client, "gpt-4o", {"tier": "premium"})
 
         self.client.login(username='testuser', password=TEST_PASSWORD)
 
@@ -594,7 +570,7 @@ class CreateChatViewExtendedTest(TestCase):
         self.client = Client()
         self.client.login(username='testuser', password=TEST_PASSWORD)
 
-    @patch('active_interview_app.views.get_openai_client')
+    @patch('active_interview_app.views.get_client_and_model')
     @patch('active_interview_app.views.ai_available')
     def test_create_chat_without_resumeai_available(
             self, mockai_available, mock_get_client):
@@ -603,23 +579,11 @@ class CreateChatViewExtendedTest(TestCase):
 
         # Mock OpenAI responses
         mock_client = Mock()
-        mock_response1 = Mock()
-        mock_choice1 = Mock()
-        mock_message1 = Mock()
-        mock_message1.content = "Hello, welcome to the interview!"
-        mock_choice1.message = mock_message1
-        mock_response1.choices = [mock_choice1]
+        mock_response1 = create_mock_openai_response("Hello, welcome to the interview!")
+        mock_response2 = create_mock_openai_response('[{"id": 0, "title": "Test Question", "duration": 60, "content": "What is Python?"}]')
 
-        mock_response2 = Mock()
-        mock_choice2 = Mock()
-        mock_message2 = Mock()
-        mock_message2.content = '[{"id": 0, "title": "Test Question", "duration": 60, "content": "What is Python?"}]'
-        mock_choice2.message = mock_message2
-        mock_response2.choices = [mock_choice2]
-
-        mock_client.chat.completions.create.side_effect = [
-            mock_response1, mock_response2]
-        mock_get_client.return_value = mock_client
+        mock_client.chat.completions.create.side_effect = [mock_response1, mock_response2]
+        mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
         data = {
             'create': 'true',

@@ -7,6 +7,7 @@ from django.contrib.auth.models import User, Group
 from django.core.files.uploadedfile import SimpleUploadedFile
 from unittest.mock import patch, MagicMock
 from .test_credentials import TEST_PASSWORD
+from .test_utils import create_mock_openai_response
 import json
 
 from active_interview_app.models import (
@@ -212,9 +213,9 @@ class ChatViewsCoverageTest(TestCase):
         self.assertEqual(response.status_code, 302)
 
     @patch('active_interview_app.views.ai_available')
-    @patch('active_interview_app.views.get_openai_client')
+    @patch('active_interview_app.views.get_client_and_model')
     def test_create_chat_without_resume_ai_unavailable(
-            self, mock_client, mockai_available):
+            self, mock_get_client_and_model, mockai_available):
         """Test creating chat without resume when AI is unavailable"""
         mockai_available.return_value = False
 
@@ -229,18 +230,17 @@ class ChatViewsCoverageTest(TestCase):
         self.assertEqual(response.status_code, 302)
 
     @patch('active_interview_app.views.ai_available')
-    @patch('active_interview_app.views.get_openai_client')
+    @patch('active_interview_app.views.get_client_and_model')
     def test_create_chat_key_questions_regex_fail(
-            self, mock_client, mockai_available):
+            self, mock_get_client_and_model, mockai_available):
         """Test creating chat when key questions regex doesn't match"""
         mockai_available.return_value = True
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = "Invalid response without JSON array"
+        mock_response = create_mock_openai_response("Invalid response without JSON array")
 
         mock_openai = MagicMock()
         mock_openai.chat.completions.create.return_value = mock_response
-        mock_client.return_value = mock_openai
+        # get_client_and_model returns (client, model, tier_info)
+        mock_get_client_and_model.return_value = (mock_openai, "gpt-4o", {"tier": "premium"})
 
         response = self.client.post(reverse('chat-create'), {
             'create': 'true',
@@ -382,19 +382,15 @@ class ResultsViewsCoverageTest(TestCase):
         )
 
     @patch('active_interview_app.views.ai_available')
-    @patch('active_interview_app.views.get_openai_client')
-    def test_result_charts_view(self, mock_client, mockai_available):
+    @patch('active_interview_app.views.get_client_and_model')
+    def test_result_charts_view(self, mock_get_client, mockai_available):
         """Test ResultCharts view (which is what chat-results URL points to)"""
         mockai_available.return_value = True
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-
-        # First call returns scores, second call returns explanation
-        mock_response.choices[0].message.content = "85\n90\n80\n88"
+        mock_response = create_mock_openai_response("85\n90\n80\n88")
 
         mock_openai = MagicMock()
         mock_openai.chat.completions.create.return_value = mock_response
-        mock_client.return_value = mock_openai
+        mock_get_client.return_value = (mock_openai, 'gpt-4o', {'tier': 'premium'})
 
         response = self.client.get(
             reverse('chat-results', kwargs={'chat_id': self.chat.id})
@@ -417,19 +413,17 @@ class ResultsViewsCoverageTest(TestCase):
         self.assertEqual(response.context['scores']['Overall'], 0)
 
     @patch('active_interview_app.views.ai_available')
-    @patch('active_interview_app.views.get_openai_client')
-    def test_result_charts_invalid_scores(self, mock_client, mockai_available):
+    @patch('active_interview_app.views.get_client_and_model')
+    def test_result_charts_invalid_scores(self, mock_get_client_and_model, mockai_available):
         """Test ResultCharts view with invalid score format"""
         mockai_available.return_value = True
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-
         # Return invalid scores (not 4 values)
-        mock_response.choices[0].message.content = "85\n90"
+        mock_response = create_mock_openai_response("85\n90")
 
         mock_openai = MagicMock()
         mock_openai.chat.completions.create.return_value = mock_response
-        mock_client.return_value = mock_openai
+        # get_client_and_model returns (client, model, tier_info)
+        mock_get_client_and_model.return_value = (mock_openai, "gpt-4o", {"tier": "premium"})
 
         response = self.client.get(
             reverse('chat-results', kwargs={'chat_id': self.chat.id})

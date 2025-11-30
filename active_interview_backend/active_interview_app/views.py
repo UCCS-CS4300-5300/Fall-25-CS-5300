@@ -63,9 +63,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 
-# Import OpenAI utilities (moved to separate module to prevent circular
-# imports)
-from .openai_utils import get_openai_client, ai_available, MAX_TOKENS
+# Import OpenAI utilities (moved to separate module to prevent circular imports)
+# Updated for Issue #14: Multi-tier model selection with automatic fallback
+from .openai_utils import get_openai_client, get_client_and_model, ai_available, MAX_TOKENS
+
+# Import token tracking (Issue #15.10)
+from .token_tracking import record_openai_usage
 
 # Import RBAC decorators (Issue #69)
 from .decorators import (
@@ -318,11 +321,15 @@ class CreateChat(LoginRequiredMixin, View):
                         request, "AI features are disabled on this server.")
                     ai_message = ""
                 else:
-                    response = get_openai_client().chat.completions.create(
-                        model="gpt-4o",
+                    # Auto-select model tier based on spending cap (Issue #14)
+                    client, model, tier_info = get_client_and_model()
+                    response = client.chat.completions.create(
+                        model=model,
                         messages=chat.messages,
                         max_tokens=MAX_TOKENS
                     )
+                    # Track token usage for spending cap (Issue #15.10)
+                    record_openai_usage(request.user, 'create_chat', response)
                     ai_message = response.choices[0].message.content
                 chat.messages.append(
                     {
@@ -448,11 +455,15 @@ class CreateChat(LoginRequiredMixin, View):
                         request, "AI features are disabled on this server.")
                     ai_message = "[]"
                 else:
-                    response = get_openai_client().chat.completions.create(
-                        model="gpt-4o",
+                    # Auto-select model tier based on spending cap (Issue #14)
+                    client, model, tier_info = get_client_and_model()
+                    response = client.chat.completions.create(
+                        model=model,
                         messages=timed_question_messages,
                         max_tokens=MAX_TOKENS
                     )
+                    # Track token usage for spending cap (Issue #15.10)
+                    record_openai_usage(request.user, 'create_chat_timed_questions', response)
                     ai_message = response.choices[0].message.content
 
                 # Extract JSON array from the AI response
@@ -555,11 +566,15 @@ class ChatView(LoginRequiredMixin, UserPassesTestMixin, View):
             return _ai_unavailable_json()
 
         try:
-            response = get_openai_client().chat.completions.create(
-                model="gpt-4o",
+            # Auto-select model tier based on spending cap (Issue #14)
+            client, model, tier_info = get_client_and_model()
+            response = client.chat.completions.create(
+                model=model,
                 messages=new_messages,
                 max_tokens=MAX_TOKENS
             )
+            # Track token usage for spending cap (Issue #15.10)
+            record_openai_usage(request.user, 'chat_view', response)
             ai_message = response.choices[0].message.content
             new_messages.append({"role": "assistant", "content": ai_message})
 
@@ -808,11 +823,15 @@ class KeyQuestionsView(LoginRequiredMixin, UserPassesTestMixin, View):
         if not ai_available():
             return _ai_unavailable_json()
 
-        response = get_openai_client().chat.completions.create(
-            model="gpt-4o",
+        # Auto-select model tier based on spending cap (Issue #14)
+        client, model, tier_info = get_client_and_model()
+        response = client.chat.completions.create(
+            model=model,
             messages=ai_input,
             max_tokens=MAX_TOKENS
         )
+        # Track token usage for spending cap (Issue #15.10)
+        record_openai_usage(request.user, 'single_question', response)
         ai_message = response.choices[0].message.content
         print(ai_message)
 
@@ -845,11 +864,15 @@ class ResultsChat(LoginRequiredMixin, UserPassesTestMixin, View):
         if not ai_available():
             ai_message = "AI features are currently unavailable."
         else:
-            response = get_openai_client().chat.completions.create(
-                model="gpt-4o",
+            # Auto-select model tier based on spending cap (Issue #14)
+            client, model, tier_info = get_client_and_model()
+            response = client.chat.completions.create(
+                model=model,
                 messages=input_messages,
                 max_tokens=MAX_TOKENS
             )
+            # Track token usage for spending cap (Issue #15.10)
+            record_openai_usage(request.user, 'results_chat', response)
             ai_message = response.choices[0].message.content
 
         # Check if this is an invited interview and get invitation details
@@ -907,11 +930,15 @@ class ResultCharts(LoginRequiredMixin, UserPassesTestMixin, View):
         if not ai_available():
             professionalism, subject_knowledge, clarity, overall = [0, 0, 0, 0]
         else:
-            response = get_openai_client().chat.completions.create(
-                model="gpt-4o",
+            # Auto-select model tier based on spending cap (Issue #14)
+            client, model, tier_info = get_client_and_model()
+            response = client.chat.completions.create(
+                model=model,
                 messages=input_messages,
                 max_tokens=MAX_TOKENS
             )
+            # Track token usage for spending cap (Issue #15.10)
+            record_openai_usage(request.user, 'result_charts_scores', response)
             ai_message = response.choices[0].message.content.strip()
             scores = [int(line.strip())
                       for line in ai_message.splitlines() if line.strip()
@@ -942,11 +969,15 @@ class ResultCharts(LoginRequiredMixin, UserPassesTestMixin, View):
         if not ai_available():
             ai_message = "AI features are currently unavailable."
         else:
-            response = get_openai_client().chat.completions.create(
-                model="gpt-4o",
+            # Auto-select model tier based on spending cap (Issue #14)
+            client, model, tier_info = get_client_and_model()
+            response = client.chat.completions.create(
+                model=model,
                 messages=input_messages,
                 max_tokens=MAX_TOKENS
             )
+            # Track token usage for spending cap (Issue #15.10)
+            record_openai_usage(request.user, 'result_charts_feedback', response)
             ai_message = response.choices[0].message.content
         context['feedback'] = ai_message
 
@@ -1006,11 +1037,48 @@ def profile(request):
         status=RoleChangeRequest.PENDING
     ).exists()
 
+    # Get spending information (Issue #15.10)
+    spending_data = None
+    try:
+        from .spending_tracker_models import MonthlySpending
+        from .model_tier_manager import get_active_tier, TIER_TO_MODEL
+
+        current_month = MonthlySpending.get_current_month()
+        cap_status = current_month.get_cap_status()
+
+        # Get currently active tier based on spending
+        active_tier = get_active_tier()
+
+        spending_data = {
+            'total_cost': current_month.total_cost_usd,
+            'llm_cost': current_month.llm_cost_usd,
+            'tts_cost': current_month.tts_cost_usd,
+            'total_requests': current_month.total_requests,
+            'llm_requests': current_month.llm_requests,
+            'cap_status': cap_status,
+            'year': current_month.year,
+            'month': current_month.month,
+            # Tier breakdown
+            'premium_cost': current_month.premium_cost_usd,
+            'standard_cost': current_month.standard_cost_usd,
+            'fallback_cost': current_month.fallback_cost_usd,
+            'premium_requests': current_month.premium_requests,
+            'standard_requests': current_month.standard_requests,
+            'fallback_requests': current_month.fallback_requests,
+            # Active tier and available models
+            'active_tier': active_tier,
+            'available_models': TIER_TO_MODEL,
+        }
+    except Exception:
+        # Spending tracker not configured or error occurred
+        spending_data = None
+
     return render(request, 'profile.html', {
         'resumes': resumes,
         'job_listings': job_listings,
         'templates': templates,
-        'has_pending_request': has_pending_request
+        'has_pending_request': has_pending_request,
+        'spending_data': spending_data
     })
 
 
@@ -1632,11 +1700,15 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
             professionalism, subject_knowledge, clarity, overall = [0, 0, 0, 0]
         else:
             try:
-                response = get_openai_client().chat.completions.create(
-                    model="gpt-4o",
+                # Auto-select model tier based on spending cap (Issue #14)
+                client, model, tier_info = get_client_and_model()
+                response = client.chat.completions.create(
+                    model=model,
                     messages=input_messages,
                     max_tokens=MAX_TOKENS
                 )
+                # Track token usage for spending cap (Issue #15.10)
+                record_openai_usage(chat.owner, 'generate_report_scores', response)
                 ai_message = response.choices[0].message.content.strip()
                 scores = [int(line.strip())
                           for line in ai_message.splitlines() if line.strip()
@@ -1673,11 +1745,15 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
             return "AI features are currently unavailable."
 
         try:
-            response = get_openai_client().chat.completions.create(
-                model="gpt-4o",
+            # Auto-select model tier based on spending cap (Issue #14)
+            client, model, tier_info = get_client_and_model()
+            response = client.chat.completions.create(
+                model=model,
                 messages=input_messages,
                 max_tokens=MAX_TOKENS
             )
+            # Track token usage for spending cap (Issue #15.10)
+            record_openai_usage(chat.owner, 'generate_report_feedback', response)
             return response.choices[0].message.content.strip()
         except Exception:
             return "Unable to generate feedback at this time."
@@ -1712,11 +1788,15 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
             }
 
         try:
-            response = get_openai_client().chat.completions.create(
-                model="gpt-4o",
+            # Auto-select model tier based on spending cap (Issue #14)
+            client, model, tier_info = get_client_and_model()
+            response = client.chat.completions.create(
+                model=model,
                 messages=input_messages,
                 max_tokens=MAX_TOKENS
             )
+            # Track token usage for spending cap (Issue #15.10)
+            record_openai_usage(chat.owner, 'generate_report_rationales', response)
             rationale_text = response.choices[0].message.content.strip()
 
             # Parse the rationale text to extract each component
@@ -3241,11 +3321,15 @@ def start_invited_interview(request, invitation_id):
             "features are currently disabled. Please contact support."
         )
     else:
-        response = get_openai_client().chat.completions.create(
-            model="gpt-4o",
+        # Auto-select model tier based on spending cap (Issue #14)
+        client, model, tier_info = get_client_and_model()
+        response = client.chat.completions.create(
+            model=model,
             messages=chat.messages,
             max_tokens=MAX_TOKENS
         )
+        # Track token usage for spending cap (Issue #15.10)
+        record_openai_usage(request.user, 'start_invited_interview', response)
         ai_message = response.choices[0].message.content
 
     chat.messages.append(

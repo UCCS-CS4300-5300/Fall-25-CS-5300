@@ -69,7 +69,7 @@ class ViewsHelperFunctionsTest(TestCase):
         with self.assertRaises(ValueError) as context:
             openai_utils.get_openai_client()
 
-        self.assertIn('OPENAI_API_KEY is not set', str(context.exception))
+        self.assertIn('No OpenAI API key available', str(context.exception))
 
 
 class StaticViewsTest(TestCase):

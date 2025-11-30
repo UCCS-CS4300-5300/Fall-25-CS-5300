@@ -118,6 +118,100 @@ class ProfileViewTest(TestCase):
         self.assertIn('job_listings', response.context)
         self.assertIn(job_listing, response.context['job_listings'])
 
+    def test_profile_view_shows_spending_data(self):
+        """Test profile view shows monthly spending data (Issue #15.10)"""
+        from decimal import Decimal
+        from active_interview_app.spending_tracker_models import (
+            MonthlySpending, MonthlySpendingCap
+        )
+
+        self.client.login(username='testuser', password=TEST_PASSWORD)
+
+        # Create spending cap
+        cap = MonthlySpendingCap.objects.create(
+            cap_amount_usd=Decimal('200.00'),
+            is_active=True
+        )
+
+        # Create spending record
+        spending = MonthlySpending.get_current_month()
+        spending.llm_cost_usd = Decimal('50.00')
+        spending.total_cost_usd = Decimal('50.00')
+        spending.llm_requests = 10
+        spending.total_requests = 10
+        spending.save()
+
+        response = self.client.get(reverse('profile'))
+
+        # Check spending_data is in context
+        self.assertIn('spending_data', response.context)
+        spending_data = response.context['spending_data']
+
+        # Verify spending data content
+        self.assertIsNotNone(spending_data)
+        self.assertEqual(spending_data['total_cost'], Decimal('50.00'))
+        self.assertEqual(spending_data['llm_requests'], 10)
+        self.assertTrue(spending_data['cap_status']['has_cap'])
+        self.assertEqual(spending_data['cap_status']['cap_amount'], 200.00)
+
+        # Check that spending data is displayed in the response
+        self.assertContains(response, 'Monthly API Spending')
+        self.assertContains(response, '$50.00')
+        self.assertContains(response, '$200.00')
+
+    def test_spending_resets_monthly(self):
+        """Test that spending resets automatically when a new month starts (Issue #15.10)"""
+        from decimal import Decimal
+        from active_interview_app.spending_tracker_models import MonthlySpending
+        from datetime import datetime
+        from unittest.mock import patch
+
+        self.client.login(username='testuser', password=TEST_PASSWORD)
+
+        # Create spending for November 2025
+        nov_spending = MonthlySpending.objects.create(
+            year=2025,
+            month=11,
+            total_cost_usd=Decimal('150.00'),
+            llm_cost_usd=Decimal('150.00'),
+            llm_requests=100,
+            total_requests=100,
+            premium_cost_usd=Decimal('150.00'),
+            premium_requests=100
+        )
+
+        # Mock current date to be November 2025
+        with patch('django.utils.timezone.now') as mock_now:
+            mock_now.return_value = datetime(2025, 11, 15, 12, 0, 0)
+
+            # Get current month spending (should be November with $150)
+            current = MonthlySpending.get_current_month()
+            self.assertEqual(current.year, 2025)
+            self.assertEqual(current.month, 11)
+            self.assertEqual(current.total_cost_usd, Decimal('150.00'))
+            self.assertEqual(current.total_requests, 100)
+
+        # Mock current date to be December 2025 (new month)
+        with patch('django.utils.timezone.now') as mock_now:
+            mock_now.return_value = datetime(2025, 12, 1, 0, 0, 0)
+
+            # Get current month spending (should be December with $0)
+            current = MonthlySpending.get_current_month()
+            self.assertEqual(current.year, 2025)
+            self.assertEqual(current.month, 12)
+            # New month should start at zero
+            self.assertEqual(current.total_cost_usd, Decimal('0.0000'))
+            self.assertEqual(current.total_requests, 0)
+            self.assertEqual(current.premium_requests, 0)
+
+        # Verify November data is still preserved
+        nov_data = MonthlySpending.objects.get(year=2025, month=11)
+        self.assertEqual(nov_data.total_cost_usd, Decimal('150.00'))
+        self.assertEqual(nov_data.total_requests, 100)
+
+        # Verify we now have 2 separate month records
+        self.assertEqual(MonthlySpending.objects.count(), 2)
+
 
 class ResumeDetailViewTest(TestCase):
     """Test cases for resume detail view"""
@@ -521,7 +615,7 @@ class OpenAIClientTest(TestCase):
         with self.assertRaises(ValueError) as context:
             get_openai_client()
 
-        self.assertIn("OPENAI_API_KEY is not set", str(context.exception))
+        self.assertIn("No OpenAI API key available", str(context.exception))
 
     def test_ai_unavailable_json(self):
         """Test _ai_unavailable_json returns proper JSON response"""

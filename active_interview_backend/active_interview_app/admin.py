@@ -11,6 +11,12 @@ from .observability_models import (
     RequestMetric, DailyMetricsSummary,
     ProviderCostDaily, ErrorLog
 )
+from .spending_tracker_models import (
+    MonthlySpendingCap, MonthlySpending
+)
+from .api_key_rotation_models import (
+    APIKeyPool, KeyRotationSchedule, KeyRotationLog
+)
 
 # Register your models here.
 admin.site.register(Chat)
@@ -611,3 +617,326 @@ class ErrorLogAdmin(admin.ModelAdmin):
     def error_message_preview(self, obj):
         return obj.error_message[:100] + '...' if len(obj.error_message) > 100 else obj.error_message
     error_message_preview.short_description = 'Error Message'
+
+
+# Spending Tracker Admin - Issues #10, #11, #12
+@admin.register(MonthlySpendingCap)
+class MonthlySpendingCapAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'cap_amount_usd',
+        'is_active',
+        'created_by',
+        'created_at'
+    )
+    list_filter = ('is_active', 'created_at')
+    search_fields = ('created_by__username',)
+    readonly_fields = ('created_at', 'updated_at')
+    ordering = ('-created_at',)
+
+    fieldsets = (
+        ('Cap Configuration', {
+            'fields': ('cap_amount_usd', 'is_active')
+        }),
+        ('Created By', {
+            'fields': ('created_by',)
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        })
+    )
+
+    def get_queryset(self, request):
+        """Optimize query with select_related"""
+        qs = super().get_queryset(request)
+        return qs.select_related('created_by')
+
+
+@admin.register(MonthlySpending)
+class MonthlySpendingAdmin(admin.ModelAdmin):
+    list_display = (
+        'year_month_display',
+        'total_cost_display',
+        'premium_cost_display',
+        'standard_cost_display',
+        'fallback_cost_display',
+        'total_requests',
+        'cap_percentage_display',
+        'alert_status'
+    )
+    list_filter = ('year',)
+    readonly_fields = (
+        'created_at',
+        'updated_at',
+        'last_updated_from_token_usage'
+    )
+    ordering = ('-year', '-month')
+
+    fieldsets = (
+        ('Period', {
+            'fields': ('year', 'month')
+        }),
+        ('Total Costs', {
+            'fields': (
+                'total_cost_usd',
+                'llm_cost_usd',
+                'tts_cost_usd',
+                'other_cost_usd'
+            )
+        }),
+        ('Costs by Tier (Issue #15.10)', {
+            'fields': (
+                'premium_cost_usd',
+                'standard_cost_usd',
+                'fallback_cost_usd'
+            ),
+            'description': 'Breakdown of LLM costs by model tier (Premium: GPT-4o, Standard: GPT-4-turbo, Fallback: GPT-3.5)'
+        }),
+        ('Request Counts', {
+            'fields': (
+                'total_requests',
+                'llm_requests',
+                'tts_requests'
+            )
+        }),
+        ('Request Counts by Tier (Issue #15.10)', {
+            'fields': (
+                'premium_requests',
+                'standard_requests',
+                'fallback_requests'
+            )
+        }),
+        ('Metadata', {
+            'fields': (
+                'created_at',
+                'updated_at',
+                'last_updated_from_token_usage'
+            ),
+            'classes': ('collapse',)
+        })
+    )
+
+    def year_month_display(self, obj):
+        return f"{obj.year}-{obj.month:02d}"
+    year_month_display.short_description = 'Month'
+    year_month_display.admin_order_field = 'year'
+
+    def total_cost_display(self, obj):
+        return f"${obj.total_cost_usd:.2f}"
+    total_cost_display.short_description = 'Total Cost'
+
+    def llm_cost_display(self, obj):
+        return f"${obj.llm_cost_usd:.2f}"
+    llm_cost_display.short_description = 'LLM Cost'
+
+    def tts_cost_display(self, obj):
+        return f"${obj.tts_cost_usd:.2f}"
+    tts_cost_display.short_description = 'TTS Cost'
+
+    def premium_cost_display(self, obj):
+        """Display premium tier cost with request count (only if used)"""
+        if obj.premium_requests > 0:
+            return f"${obj.premium_cost_usd:.2f} ({obj.premium_requests})"
+        return "-"
+    premium_cost_display.short_description = '💎 Premium'
+
+    def standard_cost_display(self, obj):
+        """Display standard tier cost with request count (only if used)"""
+        if obj.standard_requests > 0:
+            return f"${obj.standard_cost_usd:.2f} ({obj.standard_requests})"
+        return "-"
+    standard_cost_display.short_description = '⭐ Standard'
+
+    def fallback_cost_display(self, obj):
+        """Display fallback tier cost with request count (only if used)"""
+        if obj.fallback_requests > 0:
+            return f"${obj.fallback_cost_usd:.2f} ({obj.fallback_requests})"
+        return "-"
+    fallback_cost_display.short_description = '💰 Fallback'
+
+    def cap_percentage_display(self, obj):
+        percentage = obj.get_percentage_of_cap()
+        if percentage is None:
+            return "No cap"
+        return f"{percentage:.1f}%"
+    cap_percentage_display.short_description = 'Cap Usage'
+
+    def alert_status(self, obj):
+        cap_status = obj.get_cap_status()
+        if not cap_status['has_cap']:
+            return "-"
+
+        alert_level = cap_status['alert_level']
+        if alert_level == 'danger' or cap_status['is_over_cap']:
+            return "OVER CAP"
+        elif alert_level == 'critical':
+            return "CRITICAL"
+        elif alert_level == 'warning':
+            return "Warning"
+        elif alert_level == 'caution':
+            return "Caution"
+        else:
+            return "OK"
+    alert_status.short_description = 'Status'
+
+
+# API Key Rotation Admin - Issues #10, #13
+@admin.register(APIKeyPool)
+class APIKeyPoolAdmin(admin.ModelAdmin):
+    list_display = (
+        'key_name',
+        'provider',
+        'masked_key_display',
+        'status',
+        'usage_count',
+        'last_used_at',
+        'added_by'
+    )
+    list_filter = ('provider', 'status', 'added_at')
+    search_fields = ('key_name', 'key_prefix', 'notes')
+    readonly_fields = (
+        'encrypted_key',
+        'key_prefix',
+        'usage_count',
+        'last_used_at',
+        'added_at',
+        'updated_at',
+        'activated_at',
+        'deactivated_at'
+    )
+    ordering = ('-added_at',)
+
+    fieldsets = (
+        ('Key Information', {
+            'fields': ('provider', 'key_name', 'status')
+        }),
+        ('Key Details', {
+            'fields': ('key_prefix', 'encrypted_key'),
+            'classes': ('collapse',)
+        }),
+        ('Usage Statistics', {
+            'fields': ('usage_count', 'last_used_at')
+        }),
+        ('Rotation Tracking', {
+            'fields': ('activated_at', 'deactivated_at')
+        }),
+        ('Metadata', {
+            'fields': ('added_by', 'added_at', 'updated_at', 'notes')
+        })
+    )
+
+    def masked_key_display(self, obj):
+        return obj.get_masked_key()
+    masked_key_display.short_description = 'Key'
+
+    def get_queryset(self, request):
+        """Optimize query with select_related"""
+        qs = super().get_queryset(request)
+        return qs.select_related('added_by')
+
+    def save_model(self, request, obj, form, change):
+        """Set added_by to current user if creating."""
+        if not change:
+            obj.added_by = request.user
+        super().save_model(request, obj, form, change)
+
+
+@admin.register(KeyRotationSchedule)
+class KeyRotationScheduleAdmin(admin.ModelAdmin):
+    list_display = (
+        'provider',
+        'rotation_frequency',
+        'is_enabled',
+        'last_rotation_at',
+        'next_rotation_at',
+        'created_by'
+    )
+    list_filter = ('provider', 'is_enabled', 'rotation_frequency')
+    readonly_fields = ('created_at', 'updated_at', 'last_rotation_at')
+    ordering = ('provider',)
+
+    fieldsets = (
+        ('Provider', {
+            'fields': ('provider',)
+        }),
+        ('Schedule Configuration', {
+            'fields': ('is_enabled', 'rotation_frequency')
+        }),
+        ('Rotation Status', {
+            'fields': ('last_rotation_at', 'next_rotation_at')
+        }),
+        ('Notifications', {
+            'fields': ('notify_on_rotation', 'notification_email'),
+            'classes': ('collapse',)
+        }),
+        ('Metadata', {
+            'fields': ('created_by', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        })
+    )
+
+    def save_model(self, request, obj, form, change):
+        """Set created_by and update next_rotation_at."""
+        if not change:
+            obj.created_by = request.user
+        obj.update_next_rotation()
+        super().save_model(request, obj, form, change)
+
+
+@admin.register(KeyRotationLog)
+class KeyRotationLogAdmin(admin.ModelAdmin):
+    list_display = (
+        'rotated_at',
+        'provider',
+        'old_key_masked',
+        'new_key_masked',
+        'status',
+        'rotation_type',
+        'rotated_by'
+    )
+    list_filter = ('provider', 'status', 'rotation_type', 'rotated_at')
+    search_fields = ('old_key_masked', 'new_key_masked', 'notes', 'error_message')
+    readonly_fields = (
+        'provider',
+        'old_key',
+        'new_key',
+        'old_key_masked',
+        'new_key_masked',
+        'status',
+        'rotation_type',
+        'rotated_at',
+        'rotated_by',
+        'error_message',
+        'notes'
+    )
+    ordering = ('-rotated_at',)
+
+    fieldsets = (
+        ('Rotation Details', {
+            'fields': ('provider', 'rotated_at', 'rotation_type', 'status')
+        }),
+        ('Keys', {
+            'fields': ('old_key', 'old_key_masked', 'new_key', 'new_key_masked')
+        }),
+        ('User', {
+            'fields': ('rotated_by',)
+        }),
+        ('Additional Information', {
+            'fields': ('notes', 'error_message'),
+            'classes': ('collapse',)
+        })
+    )
+
+    def has_add_permission(self, request):
+        """Prevent manual creation of rotation logs."""
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        """Prevent deletion of rotation logs (audit trail)."""
+        return False
+
+    def get_queryset(self, request):
+        """Optimize query with select_related"""
+        qs = super().get_queryset(request)
+        return qs.select_related('old_key', 'new_key', 'rotated_by')
