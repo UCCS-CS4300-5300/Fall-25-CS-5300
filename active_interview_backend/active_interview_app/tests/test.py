@@ -8,23 +8,23 @@ from .test_credentials import TEST_PASSWORD
 
 
 class LoginTest(TestCase):
-    def testregister(self):
+    def test_register(self):
         register = User.objects.create_user(username='craig', password=TEST_PASSWORD)
         self.assertTrue(register is not None)
 
-    def testlogin(self):
+    def test_login(self):
         User.objects.create_user(username='craig', password=TEST_PASSWORD)
         login = self.client.login(username='craig', password=TEST_PASSWORD)
 
         self.assertTrue(login)
 
-    def testlogout(self):
+    def test_logout(self):
         User.objects.create_user(username='craig', password=TEST_PASSWORD)
         self.client.login(username='craig', password=TEST_PASSWORD)
         logout = self.client.logout()
         self.assertTrue(logout is None)
 
-    def testfaillogin(self):
+    def test_fail_login(self):
         User.objects.create_user(username='craig', password=TEST_PASSWORD)
         # Try to login with WRONG password - should fail
         login = self.client.login(username='craig', password='wrong_password')
@@ -32,7 +32,7 @@ class LoginTest(TestCase):
 
 
 class TestFeaturesPage(TestCase):
-    def testGETFeaturesPage(self):
+    def test_get_features_page(self):
         # Call the view with a response
         response = self.client.get(reverse('features'))
 
