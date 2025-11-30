@@ -7,6 +7,7 @@ from unittest.mock import patch, MagicMock
 
 # from ..forms import CreateChatForm, EditChatForm
 from ..models import Chat, UploadedJobListing, UploadedResume
+from .test_utils import create_mock_openai_response
 
 
 # === Helper Fucntions ===
@@ -147,9 +148,7 @@ class TestCreateChatView(TestCase):
     def testPOSTCreateChatView(self, mock_get_client_and_model):
         # Mock the OpenAI client and API response
         mock_client = MagicMock()
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = '''[
+        mock_response = create_mock_openai_response('''[
             {
                 "id": 0,
                 "title": "Test Question 1",
@@ -162,7 +161,7 @@ class TestCreateChatView(TestCase):
                 "duration": 90,
                 "content": "Tell me about a challenge you faced."
             }
-        ]'''
+        ]''')
         mock_client.chat.completions.create.return_value = mock_response
         # get_client_and_model returns (client, model, tier_info)
         mock_get_client_and_model.return_value = (mock_client, "gpt-4o", {"tier": "premium"})
@@ -207,9 +206,7 @@ class TestChatView(TestCase):
     def testPOSTChatView(self, mock_get_client_and_model):
         # Mock the OpenAI client and API response
         mock_client = MagicMock()
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = "Pi is approximately 3.14159, a mathematical constant."
+        mock_response = create_mock_openai_response("Pi is approximately 3.14159, a mathematical constant.")
         mock_client.chat.completions.create.return_value = mock_response
         # get_client_and_model returns (client, model, tier_info)
         mock_get_client_and_model.return_value = (mock_client, "gpt-4o", {"tier": "premium"})
@@ -343,9 +340,7 @@ class TestKeyQuestionsView(TestCase):
     def testPOSTChatView(self, mock_get_client_and_model):
         # Mock the OpenAI client and API response
         mock_client = MagicMock()
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = "That answer is off-topic and doesn't address the interview question. Rating: 2/10"
+        mock_response = create_mock_openai_response("That answer is off-topic and doesn't address the interview question. Rating: 2/10")
         mock_client.chat.completions.create.return_value = mock_response
         # get_client_and_model returns (client, model, tier_info)
         mock_get_client_and_model.return_value = (mock_client, "gpt-4o", {"tier": "premium"})

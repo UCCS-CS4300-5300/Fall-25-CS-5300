@@ -658,8 +658,9 @@ class MonthlySpendingAdmin(admin.ModelAdmin):
     list_display = (
         'year_month_display',
         'total_cost_display',
-        'llm_cost_display',
-        'tts_cost_display',
+        'premium_cost_display',
+        'standard_cost_display',
+        'fallback_cost_display',
         'total_requests',
         'cap_percentage_display',
         'alert_status'
@@ -684,11 +685,26 @@ class MonthlySpendingAdmin(admin.ModelAdmin):
                 'other_cost_usd'
             )
         }),
+        ('Costs by Tier (Issue #15.10)', {
+            'fields': (
+                'premium_cost_usd',
+                'standard_cost_usd',
+                'fallback_cost_usd'
+            ),
+            'description': 'Breakdown of LLM costs by model tier (Premium: GPT-4o, Standard: GPT-4-turbo, Fallback: GPT-3.5)'
+        }),
         ('Request Counts', {
             'fields': (
                 'total_requests',
                 'llm_requests',
                 'tts_requests'
+            )
+        }),
+        ('Request Counts by Tier (Issue #15.10)', {
+            'fields': (
+                'premium_requests',
+                'standard_requests',
+                'fallback_requests'
             )
         }),
         ('Metadata', {
@@ -717,6 +733,27 @@ class MonthlySpendingAdmin(admin.ModelAdmin):
     def tts_cost_display(self, obj):
         return f"${obj.tts_cost_usd:.2f}"
     tts_cost_display.short_description = 'TTS Cost'
+
+    def premium_cost_display(self, obj):
+        """Display premium tier cost with request count (only if used)"""
+        if obj.premium_requests > 0:
+            return f"${obj.premium_cost_usd:.2f} ({obj.premium_requests})"
+        return "-"
+    premium_cost_display.short_description = '💎 Premium'
+
+    def standard_cost_display(self, obj):
+        """Display standard tier cost with request count (only if used)"""
+        if obj.standard_requests > 0:
+            return f"${obj.standard_cost_usd:.2f} ({obj.standard_requests})"
+        return "-"
+    standard_cost_display.short_description = '⭐ Standard'
+
+    def fallback_cost_display(self, obj):
+        """Display fallback tier cost with request count (only if used)"""
+        if obj.fallback_requests > 0:
+            return f"${obj.fallback_cost_usd:.2f} ({obj.fallback_requests})"
+        return "-"
+    fallback_cost_display.short_description = '💰 Fallback'
 
     def cap_percentage_display(self, obj):
         percentage = obj.get_percentage_of_cap()

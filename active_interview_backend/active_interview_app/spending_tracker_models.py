@@ -79,7 +79,18 @@ class MonthlySpending(models.Model):
     broken down by service type (LLM, TTS, etc.). A new record is created
     automatically at the start of each month.
 
-    Related to Issue #11 (Track Monthly Spending).
+    IMPORTANT - Monthly Reset Behavior:
+    Spending automatically "resets" each month because each month has a separate
+    database record. When a new month starts, get_current_month() creates a fresh
+    record with all costs at $0.00. Previous months' data is preserved for
+    historical tracking.
+
+    Example:
+        November 2025: $150.00 spent (preserved in database)
+        December 2025: $0.00 spent (fresh record, automatic reset)
+        January 2026: $0.00 spent (fresh record, automatic reset)
+
+    Related to Issue #11 (Track Monthly Spending) and Issue #15.10 (Cost Caps).
     """
     year = models.IntegerField(
         help_text='Year (e.g., 2025)'
@@ -116,6 +127,26 @@ class MonthlySpending(models.Model):
         help_text='Other API costs in USD'
     )
 
+    # Breakdown by model tier (Issue #15.10)
+    premium_cost_usd = models.DecimalField(
+        max_digits=10,
+        decimal_places=4,
+        default=Decimal('0.0000'),
+        help_text='Premium tier (GPT-4o, Claude Opus) costs in USD'
+    )
+    standard_cost_usd = models.DecimalField(
+        max_digits=10,
+        decimal_places=4,
+        default=Decimal('0.0000'),
+        help_text='Standard tier (GPT-4-turbo, Claude Sonnet) costs in USD'
+    )
+    fallback_cost_usd = models.DecimalField(
+        max_digits=10,
+        decimal_places=4,
+        default=Decimal('0.0000'),
+        help_text='Fallback tier (GPT-3.5-turbo, budget models) costs in USD'
+    )
+
     # Request counts
     total_requests = models.IntegerField(
         default=0,
@@ -128,6 +159,20 @@ class MonthlySpending(models.Model):
     tts_requests = models.IntegerField(
         default=0,
         help_text='Number of TTS requests this month'
+    )
+
+    # Request counts by tier (Issue #15.10)
+    premium_requests = models.IntegerField(
+        default=0,
+        help_text='Number of premium tier requests this month'
+    )
+    standard_requests = models.IntegerField(
+        default=0,
+        help_text='Number of standard tier requests this month'
+    )
+    fallback_requests = models.IntegerField(
+        default=0,
+        help_text='Number of fallback tier requests this month'
     )
 
     # Metadata
@@ -171,8 +216,13 @@ class MonthlySpending(models.Model):
         Get the MonthlySpending record for the current month.
         Creates one if it doesn't exist.
 
+        This method provides automatic monthly reset behavior:
+        - If called in November, returns November's record (may have spending)
+        - If called in December, creates/returns December's record (starts at $0)
+        - Previous months' data is preserved for historical tracking
+
         Returns:
-            MonthlySpending: Current month's spending record
+            MonthlySpending: Current month's spending record (fresh each month)
         """
         record, _ = cls.get_or_create_current_month()
         return record
@@ -227,18 +277,31 @@ class MonthlySpending(models.Model):
             'total_requests': self.total_requests
         }
 
-    def add_llm_cost(self, cost_usd):
+    def add_llm_cost(self, cost_usd, tier='premium'):
         """
         Add an LLM cost to this month's spending.
 
         Args:
             cost_usd: Cost in USD (float or Decimal)
+            tier: Model tier ('premium', 'standard', 'fallback')
         """
         cost = Decimal(str(cost_usd))
         self.llm_cost_usd += cost
         self.llm_requests += 1
         self.total_cost_usd += cost
         self.total_requests += 1
+
+        # Track by tier (Issue #15.10)
+        if tier == 'premium':
+            self.premium_cost_usd += cost
+            self.premium_requests += 1
+        elif tier == 'standard':
+            self.standard_cost_usd += cost
+            self.standard_requests += 1
+        elif tier == 'fallback':
+            self.fallback_cost_usd += cost
+            self.fallback_requests += 1
+
         self.save()
 
     def add_tts_cost(self, cost_usd):

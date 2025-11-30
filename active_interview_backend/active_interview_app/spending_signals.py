@@ -43,7 +43,33 @@ def update_monthly_spending(sender, instance, created, **kwargs):
     # Add the cost to the monthly total
     cost = instance.estimated_cost
     if cost > 0:
-        spending.add_llm_cost(cost)
+        # Determine tier from model name (Issue #15.10)
+        tier = _get_tier_from_model(instance.model_name)
+        spending.add_llm_cost(cost, tier=tier)
+
+
+def _get_tier_from_model(model_name):
+    """
+    Determine the tier (premium/standard/fallback) from model name.
+
+    Args:
+        model_name: Model identifier (e.g., 'gpt-4o', 'gpt-3.5-turbo')
+
+    Returns:
+        str: 'premium', 'standard', or 'fallback'
+    """
+    model_lower = model_name.lower()
+
+    # Premium models
+    if 'gpt-4o' in model_lower or 'claude-opus' in model_lower:
+        return 'premium'
+
+    # Fallback models
+    if 'gpt-3.5' in model_lower or 'haiku' in model_lower:
+        return 'fallback'
+
+    # Standard models (default)
+    return 'standard'
 
 
 @receiver(post_save, sender=MonthlySpending)
