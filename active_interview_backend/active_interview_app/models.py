@@ -1037,6 +1037,179 @@ from .spending_tracker_models import (  # noqa: E402, F401
     MonthlySpending
 )
 
+class RateLimitViolation(models.Model):
+    """
+    Model to log rate limit violations for monitoring and abuse detection.
+
+    Tracks all instances where users exceed rate limits, including:
+    - Timestamp of violation
+    - User (if authenticated) or IP address
+    - Endpoint that was accessed
+    - Rate limit that was exceeded
+
+    Used for admin monitoring, abuse detection, and analytics.
+    """
+
+    # Violation details
+    timestamp = models.DateTimeField(
+        auto_now_add=True,
+        db_index=True,
+        help_text='When the violation occurred'
+    )
+
+    # User information (nullable for anonymous users)
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='rate_limit_violations',
+        help_text='User who violated rate limit (null for anonymous)'
+    )
+
+    # IP address (always recorded)
+    ip_address = models.GenericIPAddressField(
+        db_index=True,
+        help_text='IP address of the request'
+    )
+
+    # Request details
+    endpoint = models.CharField(
+        max_length=255,
+        db_index=True,
+        help_text='URL path that was accessed'
+    )
+
+    method = models.CharField(
+        max_length=10,
+        help_text='HTTP method (GET, POST, etc.)'
+    )
+
+    # Rate limit details
+    rate_limit_type = models.CharField(
+        max_length=20,
+        choices=[
+            ('default', 'Default'),
+            ('strict', 'Strict'),
+            ('lenient', 'Lenient'),
+        ],
+        help_text='Type of rate limit that was exceeded'
+    )
+
+    limit_value = models.IntegerField(
+        help_text='Rate limit value (requests per minute)'
+    )
+
+    # User agent for device tracking
+    user_agent = models.TextField(
+        blank=True,
+        help_text='User agent string from request'
+    )
+
+    # Geographic information (optional, can be populated by GeoIP)
+    country_code = models.CharField(
+        max_length=2,
+        blank=True,
+        help_text='Country code from IP (if available)'
+    )
+
+    # Alert tracking
+    alert_sent = models.BooleanField(
+        default=False,
+        help_text='Whether an alert was sent for this violation'
+    )
+
+    class Meta:
+        ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['-timestamp', 'user']),
+            models.Index(fields=['-timestamp', 'ip_address']),
+            models.Index(fields=['endpoint', '-timestamp']),
+        ]
+        verbose_name = 'Rate Limit Violation'
+        verbose_name_plural = 'Rate Limit Violations'
+
+    def __str__(self):
+        user_str = f"User {self.user.username}" if self.user else f"IP {self.ip_address}"
+        return f"{user_str} - {self.endpoint} at {self.timestamp}"
+
+    @property
+    def is_authenticated_user(self):
+        """Check if violation was by an authenticated user."""
+        return self.user is not None
+
+    @classmethod
+    def get_recent_violations(cls, minutes=5):
+        """Get violations from the last N minutes."""
+        from datetime import timedelta
+        cutoff = timezone.now() - timedelta(minutes=minutes)
+        return cls.objects.filter(timestamp__gte=cutoff)
+
+    @classmethod
+    def get_top_violators(cls, limit=10, days=7):
+        """
+        Get top violators in the last N days.
+
+        Returns list of tuples: (identifier, count)
+        where identifier is username or IP address.
+        """
+        from datetime import timedelta
+        from django.db.models import Count
+
+        cutoff = timezone.now() - timedelta(days=days)
+        violations = cls.objects.filter(timestamp__gte=cutoff)
+
+        # Group by user
+        user_violations = violations.filter(user__isnull=False).values(
+            'user__username'
+        ).annotate(
+            count=Count('id')
+        ).order_by('-count')[:limit]
+
+        # Group by IP for anonymous
+        ip_violations = violations.filter(user__isnull=True).values(
+            'ip_address'
+        ).annotate(
+            count=Count('id')
+        ).order_by('-count')[:limit]
+
+        # Combine and sort
+        results = []
+        for v in user_violations:
+            results.append((v['user__username'], v['count'], 'user'))
+        for v in ip_violations:
+            results.append((v['ip_address'], v['count'], 'ip'))
+
+        return sorted(results, key=lambda x: x[1], reverse=True)[:limit]
+
+    @classmethod
+    def check_threshold_exceeded(cls, minutes=5, threshold=10):
+        """
+        Check if violation threshold has been exceeded.
+
+        Args:
+            minutes: Time window to check
+            threshold: Number of violations to trigger alert
+
+        Returns:
+            tuple: (exceeded, count, violators)
+        """
+        recent = cls.get_recent_violations(minutes)
+        count = recent.count()
+        exceeded = count >= threshold
+
+        if exceeded:
+            # Get unique violators
+            violators = set()
+            for v in recent:
+                if v.user:
+                    violators.add(f"User: {v.user.username}")
+                else:
+                    violators.add(f"IP: {v.ip_address}")
+
+        return (exceeded, count, list(violators) if exceeded else [])
+
+
 # Import API key rotation models (Issues #10, #13)
 from .api_key_rotation_models import (  # noqa: E402, F401
     APIKeyPool,

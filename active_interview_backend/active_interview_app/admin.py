@@ -1,9 +1,12 @@
 from django.contrib import admin
+from django.urls import reverse
+from django.utils.html import format_html
 from .models import (
     Chat, UploadedJobListing, UploadedResume,
     ExportableReport, UserProfile, RoleChangeRequest,
     DataExportRequest, DeletionRequest,
-    Tag, QuestionBank, Question, InterviewTemplate, InvitedInterview
+    Tag, QuestionBank, Question, InterviewTemplate, InvitedInterview,
+    RateLimitViolation
 )
 from .token_usage_models import TokenUsage
 from .merge_stats_models import MergeTokenStats
@@ -940,3 +943,84 @@ class KeyRotationLogAdmin(admin.ModelAdmin):
         """Optimize query with select_related"""
         qs = super().get_queryset(request)
         return qs.select_related('old_key', 'new_key', 'rotated_by')
+
+
+# Rate Limit Violation Admin - Issues #10, #15
+@admin.register(RateLimitViolation)
+class RateLimitViolationAdmin(admin.ModelAdmin):
+    list_display = (
+        'timestamp',
+        'user_or_ip',
+        'endpoint',
+        'method',
+        'rate_limit_type',
+        'limit_value',
+        'alert_sent'
+    )
+    list_filter = (
+        'rate_limit_type',
+        'method',
+        'alert_sent',
+        'timestamp',
+        'country_code'
+    )
+    search_fields = (
+        'user__username',
+        'user__email',
+        'ip_address',
+        'endpoint'
+    )
+    readonly_fields = (
+        'timestamp',
+        'user',
+        'ip_address',
+        'endpoint',
+        'method',
+        'rate_limit_type',
+        'limit_value',
+        'user_agent',
+        'country_code',
+        'alert_sent'
+    )
+    date_hierarchy = 'timestamp'
+    ordering = ('-timestamp',)
+
+    fieldsets = (
+        ('Violation Details', {
+            'fields': ('timestamp', 'rate_limit_type', 'limit_value')
+        }),
+        ('User/IP Information', {
+            'fields': ('user', 'ip_address', 'country_code')
+        }),
+        ('Request Information', {
+            'fields': ('endpoint', 'method', 'user_agent')
+        }),
+        ('Alert Status', {
+            'fields': ('alert_sent',)
+        })
+    )
+
+    def user_or_ip(self, obj):
+        if obj.user:
+            return f"{obj.user.username} (ID: {obj.user.id})"
+        return f"Anonymous ({obj.ip_address})"
+    user_or_ip.short_description = 'User/IP'
+
+    def get_queryset(self, request):
+        """Optimize query with select_related"""
+        qs = super().get_queryset(request)
+        return qs.select_related('user')
+
+    def has_add_permission(self, request):
+        """Prevent manual creation of violations (auto-generated only)."""
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        """Allow deletion for cleanup purposes."""
+        return request.user.is_superuser
+
+    def changelist_view(self, request, extra_context=None):
+        """Add link to dashboard in changelist view."""
+        extra_context = extra_context or {}
+        extra_context['dashboard_url'] = reverse('ratelimit_dashboard')
+        return super().changelist_view(request, extra_context=extra_context)
