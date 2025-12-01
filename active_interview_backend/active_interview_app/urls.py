@@ -205,6 +205,17 @@ urlpatterns = [
     path('observability/api/export/',
          observability_views.api_export_metrics, name='api_export_metrics'),
 
+    # Spending Tracker URLs (Issues #10, #11, #12)
+    path('observability/api/spending/current/',
+         observability_views.api_spending_current_month,
+         name='api_spending_current_month'),
+    path('observability/api/spending/history/',
+         observability_views.api_spending_history,
+         name='api_spending_history'),
+    path('observability/api/spending/update-cap/',
+         observability_views.api_update_spending_cap,
+         name='api_update_spending_cap'),
+
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # if settings.PROD:

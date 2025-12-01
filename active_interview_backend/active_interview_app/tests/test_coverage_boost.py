@@ -17,6 +17,7 @@ from active_interview_app.merge_stats_models import MergeTokenStats
 from active_interview_app.token_usage_models import TokenUsage
 from active_interview_app import views
 from .test_credentials import TEST_PASSWORD
+from .test_utils import create_mock_openai_response
 
 
 # ============================================================================
@@ -220,19 +221,16 @@ class ViewsCriticalPathsTest(TransactionTestCase):
         self.assertTrue(user.groups.filter(name='average_role').exists())
 
     @patch('active_interview_app.views.ai_available', return_value=True)
-    @patch('active_interview_app.views.get_openai_client')
-    def test_create_chat_with_ai(self, mock_client, mock_ai):
+    @patch('active_interview_app.views.get_client_and_model')
+    def test_create_chat_with_ai(self, mock_get_client, mock_ai):
         """Test CreateChat with AI available"""
-        mock_resp1 = MagicMock()
-        mock_resp1.choices = [MagicMock()]
-        mock_resp1.choices[0].message.content = "Hello"
+        mock_resp1 = create_mock_openai_response("Hello")
 
-        mock_resp2 = MagicMock()
-        mock_resp2.choices = [MagicMock()]
-        mock_resp2.choices[0].message.content = '[{"id":0,"title":"Q","duration":60,"content":"Q1"}]'
+        mock_resp2 = create_mock_openai_response('[{"id":0,"title":"Q","duration":60,"content":"Q1"}]')
 
-        mock_client.return_value.chat.completions.create.side_effect = [
-            mock_resp1, mock_resp2]
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.side_effect = [mock_resp1, mock_resp2]
+        mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
         self.client.post(reverse('chat-create'), {
             'create': 'true',
@@ -257,19 +255,16 @@ class ViewsCriticalPathsTest(TransactionTestCase):
         self.assertEqual(Chat.objects.count(), 1)
 
     @patch('active_interview_app.views.ai_available', return_value=True)
-    @patch('active_interview_app.views.get_openai_client')
-    def test_create_chat_regex_failure(self, mock_client, mock_ai):
+    @patch('active_interview_app.views.get_client_and_model')
+    def test_create_chat_regex_failure(self, mock_get_client, mock_ai):
         """Test CreateChat when regex doesn't match"""
-        mock_resp1 = MagicMock()
-        mock_resp1.choices = [MagicMock()]
-        mock_resp1.choices[0].message.content = "Hello"
+        mock_resp1 = create_mock_openai_response("Hello")
 
-        mock_resp2 = MagicMock()
-        mock_resp2.choices = [MagicMock()]
-        mock_resp2.choices[0].message.content = "Not valid JSON"
+        mock_resp2 = create_mock_openai_response("Not valid JSON")
 
-        mock_client.return_value.chat.completions.create.side_effect = [
-            mock_resp1, mock_resp2]
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.side_effect = [mock_resp1, mock_resp2]
+        mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
         self.client.post(reverse('chat-create'), {
             'create': 'true',
@@ -282,8 +277,8 @@ class ViewsCriticalPathsTest(TransactionTestCase):
         self.assertEqual(chat.key_questions, [])
 
     @patch('active_interview_app.views.ai_available', return_value=True)
-    @patch('active_interview_app.views.get_openai_client')
-    def test_chat_view_post(self, mock_client, mock_ai):
+    @patch('active_interview_app.views.get_client_and_model')
+    def test_chat_view_post(self, mock_get_client, mock_ai):
         """Test ChatView POST"""
         chat = Chat.objects.create(
             owner=self.user,
@@ -294,10 +289,10 @@ class ViewsCriticalPathsTest(TransactionTestCase):
             messages=[{"role": "system", "content": "test"}]
         )
 
-        mock_resp = MagicMock()
-        mock_resp.choices = [MagicMock()]
-        mock_resp.choices[0].message.content = "Response"
-        mock_client.return_value.chat.completions.create.return_value = mock_resp
+        mock_resp = create_mock_openai_response("Response")
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.return_value = mock_resp
+        mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
         response = self.client.post(
             reverse('chat-view', kwargs={'chat_id': chat.id}),
@@ -386,8 +381,8 @@ class ViewsCriticalPathsTest(TransactionTestCase):
         self.assertEqual(len(chat.messages), 2)
 
     @patch('active_interview_app.views.ai_available', return_value=True)
-    @patch('active_interview_app.views.get_openai_client')
-    def test_key_questions_view(self, mock_client, mock_ai):
+    @patch('active_interview_app.views.get_client_and_model')
+    def test_key_questions_view(self, mock_get_client, mock_ai):
         """Test KeyQuestionsView"""
         chat = Chat.objects.create(
             owner=self.user,
@@ -400,10 +395,10 @@ class ViewsCriticalPathsTest(TransactionTestCase):
                             "duration": 60, "content": "Q1"}]
         )
 
-        mock_resp = MagicMock()
-        mock_resp.choices = [MagicMock()]
-        mock_resp.choices[0].message.content = "Feedback"
-        mock_client.return_value.chat.completions.create.return_value = mock_resp
+        mock_resp = create_mock_openai_response("Feedback")
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.return_value = mock_resp
+        mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
         response = self.client.post(
             reverse('key-questions',
@@ -413,8 +408,8 @@ class ViewsCriticalPathsTest(TransactionTestCase):
         self.assertEqual(response.status_code, 200)
 
     @patch('active_interview_app.views.ai_available', return_value=True)
-    @patch('active_interview_app.views.get_openai_client')
-    def test_results_chat(self, mock_client, mock_ai):
+    @patch('active_interview_app.views.get_client_and_model')
+    def test_results_chat(self, mock_get_client, mock_ai):
         """Test ResultsChat"""
         chat = Chat.objects.create(
             owner=self.user,
@@ -425,10 +420,10 @@ class ViewsCriticalPathsTest(TransactionTestCase):
             messages=[{"role": "system", "content": "test"}]
         )
 
-        mock_resp = MagicMock()
-        mock_resp.choices = [MagicMock()]
-        mock_resp.choices[0].message.content = "Feedback"
-        mock_client.return_value.chat.completions.create.return_value = mock_resp
+        mock_resp = create_mock_openai_response("Feedback")
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.return_value = mock_resp
+        mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
         response = self.client.get(
             reverse('chat-results', kwargs={'chat_id': chat.id}))
@@ -451,8 +446,8 @@ class ViewsCriticalPathsTest(TransactionTestCase):
         self.assertIn('unavailable', response.context['feedback'])
 
     @patch('active_interview_app.views.ai_available', return_value=True)
-    @patch('active_interview_app.views.get_openai_client')
-    def test_result_charts(self, mock_client, mock_ai):
+    @patch('active_interview_app.views.get_client_and_model')
+    def test_result_charts(self, mock_get_client, mock_ai):
         """Test ResultCharts"""
         chat = Chat.objects.create(
             owner=self.user,
@@ -463,16 +458,13 @@ class ViewsCriticalPathsTest(TransactionTestCase):
             messages=[{"role": "system", "content": "test"}]
         )
 
-        mock_resp1 = MagicMock()
-        mock_resp1.choices = [MagicMock()]
-        mock_resp1.choices[0].message.content = "80\n70\n90\n75"
+        mock_resp1 = create_mock_openai_response("80\n70\n90\n75")
 
-        mock_resp2 = MagicMock()
-        mock_resp2.choices = [MagicMock()]
-        mock_resp2.choices[0].message.content = "Good"
+        mock_resp2 = create_mock_openai_response("Good")
 
-        mock_client.return_value.chat.completions.create.side_effect = [
-            mock_resp1, mock_resp2]
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.side_effect = [mock_resp1, mock_resp2]
+        mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
         response = self.client.get(
             reverse('result-charts', kwargs={'chat_id': chat.id}))

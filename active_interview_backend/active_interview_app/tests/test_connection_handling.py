@@ -13,6 +13,7 @@ from django.urls import reverse
 from unittest.mock import patch, MagicMock
 from ..models import Chat, UploadedJobListing, UploadedResume
 from .test_credentials import TEST_PASSWORD
+from .test_utils import create_mock_openai_response
 
 
 # === Helper Functions ===
@@ -101,16 +102,15 @@ class TestConnectionHandlingChatView(TestCase):
         self.assertContains(response, 'Saved by server')
         self.assertTemplateUsed(response, 'base-sidebar.html')
 
-    @patch('active_interview_app.views.get_openai_client')
-    def testPOSTChatViewSuccess(self, mock_get_client):
+    @patch('active_interview_app.views.get_client_and_model')
+    def testPOSTChatViewSuccess(self, mock_get_client_and_model):
         """Test successful message post to chat view."""
         # Mock the OpenAI client and API response
         mock_client = MagicMock()
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = "Test AI response"
+        mock_response = create_mock_openai_response("Test AI response")
         mock_client.chat.completions.create.return_value = mock_response
-        mock_get_client.return_value = mock_client
+        # get_client_and_model returns (client, model, tier_info)
+        mock_get_client_and_model.return_value = (mock_client, "gpt-4o", {"tier": "premium"})
 
         url = reverse('chat-view', args=[self.chat.id])
         response = self.client.post(url, {'message': 'Test message'})
@@ -120,11 +120,11 @@ class TestConnectionHandlingChatView(TestCase):
         self.assertIn('message', data)
         self.assertEqual(data['message'], 'Test AI response')
 
-    @patch('active_interview_app.views.get_openai_client')
-    def testPOSTChatViewAIUnavailable(self, mock_get_client):
+    @patch('active_interview_app.views.get_client_and_model')
+    def testPOSTChatViewAIUnavailable(self, mock_get_client_and_model):
         """Test chat view when AI service raises an exception."""
-        # Mock the OpenAI client to raise an exception
-        mock_get_client.side_effect = Exception("AI service unavailable")
+        # Mock get_client_and_model to raise an exception
+        mock_get_client_and_model.side_effect = Exception("AI service unavailable")
 
         url = reverse('chat-view', args=[self.chat.id])
         response = self.client.post(url, {'message': 'Test message'})
@@ -250,16 +250,15 @@ class TestConnectionHandlingKeyQuestions(TestCase):
         self.assertContains(response, 'chatId')
         self.assertContains(response, f'{self.chat.id}')
 
-    @patch('active_interview_app.views.get_openai_client')
-    def testPOSTKeyQuestionsSuccess(self, mock_get_client):
+    @patch('active_interview_app.views.get_client_and_model')
+    def testPOSTKeyQuestionsSuccess(self, mock_get_client_and_model):
         """Test successful answer submission to key question."""
         # Mock the OpenAI client and API response
         mock_client = MagicMock()
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = "Excellent answer!"
+        mock_response = create_mock_openai_response("Excellent answer!")
         mock_client.chat.completions.create.return_value = mock_response
-        mock_get_client.return_value = mock_client
+        # get_client_and_model returns (client, model, tier_info)
+        mock_get_client_and_model.return_value = (mock_client, "gpt-4o", {"tier": "premium"})
 
         url = reverse('key-questions', args=[self.chat.id, 0])
         response = self.client.post(url, {'message': 'My detailed answer'})

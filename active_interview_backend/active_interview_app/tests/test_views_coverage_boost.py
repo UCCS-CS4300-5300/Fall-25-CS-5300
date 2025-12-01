@@ -9,6 +9,7 @@ from django.urls import reverse
 from unittest.mock import patch, MagicMock
 from active_interview_app.models import Chat, ExportableReport, UploadedJobListing, UploadedResume
 from active_interview_app.views import GenerateReportView
+from .test_utils import create_mock_openai_response
 
 
 class GenerateReportMethodsTest(TestCase):
@@ -121,9 +122,10 @@ class GenerateReportAITest(TestCase):
         url = reverse('generate_report', kwargs={'chat_id': self.chat.id})
 
         with patch('active_interview_app.views.ai_available', return_value=True):
-            with patch('active_interview_app.views.get_openai_client') as mock_client:
-                mock_client.return_value.chat.completions.create.side_effect = Exception(
-                    'API Error')
+            with patch('active_interview_app.views.get_client_and_model') as mock_get_client:
+                mock_client = MagicMock()
+                mock_client.chat.completions.create.side_effect = Exception('API Error')
+                mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
                 response = self.client.post(url, follow=True)
 
         # Should still create report with default values
@@ -136,14 +138,15 @@ class GenerateReportAITest(TestCase):
         self.client.login(username='testuser', password='pass123')
         url = reverse('generate_report', kwargs={'chat_id': self.chat.id})
 
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = "invalid\nformat\nhere"
+        mock_response = create_mock_openai_response("invalid\nformat\nhere")
 
         with patch('active_interview_app.views.ai_available', return_value=True):
-            with patch('active_interview_app.views.get_openai_client') as mock_client:
-                mock_client.return_value.chat.completions.create.return_value = mock_response
-                self.client.post(url, follow=True)
+            with patch('active_interview_app.views.get_client_and_model') as mock_get_client:
+                mock_client = MagicMock()
+                mock_client.chat.completions.create.return_value = mock_response
+                mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
+                response = self.client.post(url, follow=True)
+
         report = ExportableReport.objects.get(chat=self.chat)
         # Should default to 0 when parsing fails
         self.assertEqual(report.professionalism_score, 0)
@@ -153,14 +156,15 @@ class GenerateReportAITest(TestCase):
         self.client.login(username='testuser', password='pass123')
         url = reverse('generate_report', kwargs={'chat_id': self.chat.id})
 
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = "85\n78"  # Only 2 scores
+        mock_response = create_mock_openai_response("85\n78")  # Only 2 scores
 
         with patch('active_interview_app.views.ai_available', return_value=True):
-            with patch('active_interview_app.views.get_openai_client') as mock_client:
-                mock_client.return_value.chat.completions.create.return_value = mock_response
-                self.client.post(url, follow=True)
+            with patch('active_interview_app.views.get_client_and_model') as mock_get_client:
+                mock_client = MagicMock()
+                mock_client.chat.completions.create.return_value = mock_response
+                mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
+                response = self.client.post(url, follow=True)
+
         report = ExportableReport.objects.get(chat=self.chat)
         self.assertEqual(report.professionalism_score, 0)
 
@@ -170,19 +174,13 @@ class GenerateReportAITest(TestCase):
         url = reverse('generate_report', kwargs={'chat_id': self.chat.id})
 
         with patch('active_interview_app.views.ai_available', return_value=True):
-            with patch('active_interview_app.views.get_openai_client') as mock_client:
+            with patch('active_interview_app.views.get_client_and_model') as mock_get_client:
                 # Create proper mock responses for the three AI calls
-                mock_scores = MagicMock()
-                mock_scores.choices = [MagicMock()]
-                mock_scores.choices[0].message.content = "85\n78\n82\n81"
+                mock_scores = create_mock_openai_response("85\n78\n82\n81")
 
-                mock_feedback = MagicMock()
-                mock_feedback.choices = [MagicMock()]
-                mock_feedback.choices[0].message.content = "Good job!"
+                mock_feedback = create_mock_openai_response("Good job!")
 
-                mock_rationale = MagicMock()
-                mock_rationale.choices = [MagicMock()]
-                mock_rationale.choices[0].message.content = """
+                mock_rationale = create_mock_openai_response("""
 Professionalism: Good professional behavior.
 
 Subject Knowledge: Strong knowledge base.
@@ -190,11 +188,17 @@ Subject Knowledge: Strong knowledge base.
 Clarity: Clear communication.
 
 Overall: Great performance.
-"""
+""")
 
-                mock_client.return_value.chat.completions.create.side_effect = [
-                    mock_scores, mock_feedback, mock_rationale]
-                self.client.post(url, follow=True)
+                mock_client = MagicMock()
+                mock_client.chat.completions.create.side_effect = [
+                    mock_scores,
+                    mock_feedback,
+                    mock_rationale
+                ]
+                mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
+                response = self.client.post(url, follow=True)
+
         report = ExportableReport.objects.get(chat=self.chat)
         self.assertIn('professional behavior',
                       report.professionalism_rationale)
@@ -208,19 +212,13 @@ Overall: Great performance.
         url = reverse('generate_report', kwargs={'chat_id': self.chat.id})
 
         with patch('active_interview_app.views.ai_available', return_value=True):
-            with patch('active_interview_app.views.get_openai_client') as mock_client:
+            with patch('active_interview_app.views.get_client_and_model') as mock_get_client:
                 # Create proper mock responses for the three AI calls
-                mock_scores = MagicMock()
-                mock_scores.choices = [MagicMock()]
-                mock_scores.choices[0].message.content = "85\n78\n82\n81"
+                mock_scores = create_mock_openai_response("85\n78\n82\n81")
 
-                mock_feedback = MagicMock()
-                mock_feedback.choices = [MagicMock()]
-                mock_feedback.choices[0].message.content = "Good!"
+                mock_feedback = create_mock_openai_response("Good!")
 
-                mock_rationale = MagicMock()
-                mock_rationale.choices = [MagicMock()]
-                mock_rationale.choices[0].message.content = """
+                mock_rationale = create_mock_openai_response("""
 Professionalism: Professional throughout.
 Maintained good posture.
 
@@ -230,11 +228,17 @@ Some gaps noted.
 Clarity: Clear.
 
 Overall: Good.
-"""
+""")
 
-                mock_client.return_value.chat.completions.create.side_effect = [
-                    mock_scores, mock_feedback, mock_rationale]
-                self.client.post(url, follow=True)
+                mock_client = MagicMock()
+                mock_client.chat.completions.create.side_effect = [
+                    mock_scores,
+                    mock_feedback,
+                    mock_rationale
+                ]
+                mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
+                response = self.client.post(url, follow=True)
+
         report = ExportableReport.objects.get(chat=self.chat)
         # Should capture multiline
         self.assertIn('posture', report.professionalism_rationale)
@@ -246,22 +250,21 @@ Overall: Good.
         url = reverse('generate_report', kwargs={'chat_id': self.chat.id})
 
         with patch('active_interview_app.views.ai_available', return_value=True):
-            with patch('active_interview_app.views.get_openai_client') as mock_client:
+            with patch('active_interview_app.views.get_client_and_model') as mock_get_client:
                 # Create proper mock responses for the three AI calls
-                mock_scores = MagicMock()
-                mock_scores.choices = [MagicMock()]
-                mock_scores.choices[0].message.content = "85\n78\n82\n81"
+                mock_scores = create_mock_openai_response("85\n78\n82\n81")
 
-                mock_feedback = MagicMock()
-                mock_feedback.choices = [MagicMock()]
-                mock_feedback.choices[0].message.content = "Good!"
+                mock_feedback = create_mock_openai_response("Good!")
 
-                mock_client.return_value.chat.completions.create.side_effect = [
+                mock_client = MagicMock()
+                mock_client.chat.completions.create.side_effect = [
                     mock_scores,
                     mock_feedback,
                     Exception('Rationale API error')
                 ]
-                self.client.post(url, follow=True)
+                mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
+                response = self.client.post(url, follow=True)
+
         report = ExportableReport.objects.get(chat=self.chat)
         # Should have fallback text
         self.assertIn('Unable to generate', report.professionalism_rationale)
@@ -870,23 +873,21 @@ class CreateChatViewTest(TestCase):
         self.assertIn('form', response.context)
 
     @patch('active_interview_app.views.ai_available', return_value=True)
-    @patch('active_interview_app.views.get_openai_client')
-    def test_create_chat_post_with_resume(self, mock_client, mock_ai):
+    @patch('active_interview_app.views.get_client_and_model')
+    def test_create_chat_post_with_resume(self, mock_get_client_and_model, mock_ai):
         """Test CreateChat POST with resume"""
         # Mock AI responses
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = "Hello! Let's begin the interview."
+        mock_response = create_mock_openai_response("Hello! Let's begin the interview.")
 
-        mock_questions_response = MagicMock()
-        mock_questions_response.choices = [MagicMock()]
-        mock_questions_response.choices[
-            0].message.content = '[{"id": 0, "title": "Q1", "content": "Question?", "duration": 60}]'
+        mock_questions_response = create_mock_openai_response('[{"id": 0, "title": "Q1", "content": "Question?", "duration": 60}]')
 
-        mock_client.return_value.chat.completions.create.side_effect = [
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.side_effect = [
             mock_response,
             mock_questions_response
         ]
+        # get_client_and_model returns (client, model, tier_info)
+        mock_get_client_and_model.return_value = (mock_client, "gpt-4o", {"tier": "premium"})
 
         job = UploadedJobListing.objects.create(
             user=self.user,
@@ -915,23 +916,21 @@ class CreateChatViewTest(TestCase):
         self.assertTrue(Chat.objects.filter(title='Test Interview').exists())
 
     @patch('active_interview_app.views.ai_available', return_value=True)
-    @patch('active_interview_app.views.get_openai_client')
-    def test_create_chat_post_without_resume(self, mock_client, mock_ai):
+    @patch('active_interview_app.views.get_client_and_model')
+    def test_create_chat_post_without_resume(self, mock_get_client_and_model, mock_ai):
         """Test CreateChat POST without resume"""
         # Mock AI responses
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = "Hello! Let's begin the interview."
+        mock_response = create_mock_openai_response("Hello! Let's begin the interview.")
 
-        mock_questions_response = MagicMock()
-        mock_questions_response.choices = [MagicMock()]
-        mock_questions_response.choices[
-            0].message.content = '[{"id": 0, "title": "Q1", "content": "Question?", "duration": 60}]'
+        mock_questions_response = create_mock_openai_response('[{"id": 0, "title": "Q1", "content": "Question?", "duration": 60}]')
 
-        mock_client.return_value.chat.completions.create.side_effect = [
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.side_effect = [
             mock_response,
             mock_questions_response
         ]
+        # get_client_and_model returns (client, model, tier_info)
+        mock_get_client_and_model.return_value = (mock_client, "gpt-4o", {"tier": "premium"})
 
         job = UploadedJobListing.objects.create(
             user=self.user,

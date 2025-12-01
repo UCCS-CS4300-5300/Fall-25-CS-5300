@@ -1030,3 +1030,16 @@ from .observability_models import (  # noqa: E402, F401
     ProviderCostDaily,
     ErrorLog
 )
+
+# Import spending tracker models (Issues #10, #11, #12)
+from .spending_tracker_models import (  # noqa: E402, F401
+    MonthlySpendingCap,
+    MonthlySpending
+)
+
+# Import API key rotation models (Issues #10, #13)
+from .api_key_rotation_models import (  # noqa: E402, F401
+    APIKeyPool,
+    KeyRotationSchedule,
+    KeyRotationLog
+)

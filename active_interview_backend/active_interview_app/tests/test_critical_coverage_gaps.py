@@ -16,6 +16,7 @@ from active_interview_app.models import (
 )
 from active_interview_app.merge_stats_models import MergeTokenStats
 from .test_credentials import TEST_PASSWORD
+from .test_utils import create_mock_openai_response
 
 
 # ============================================================================
@@ -285,22 +286,21 @@ class ResultChartsScoreParsingEdgeCasesTest(TestCase):
         )
 
     @patch('active_interview_app.views.ai_available')
-    @patch('active_interview_app.views.get_openai_client')
-    def test_result_charts_with_non_digit_scores(self, mock_client, mock_ai):
+    @patch('active_interview_app.views.get_client_and_model')
+    def test_result_charts_with_non_digit_scores(self, mock_get_client_and_model, mock_ai):
         """Test when score response contains non-digits"""
         mock_ai.return_value = True
 
-        mock_response1 = MagicMock()
-        mock_response1.choices = [MagicMock()]
-        mock_response1.choices[0].message.content = "80\ninvalid\n90\n75"
+        mock_response1 = create_mock_openai_response("80\ninvalid\n90\n75")
 
-        mock_response2 = MagicMock()
-        mock_response2.choices = [MagicMock()]
-        mock_response2.choices[0].message.content = "Explanation"
+        mock_response2 = create_mock_openai_response("Explanation")
 
-        mock_client.return_value.chat.completions.create.side_effect = [
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.side_effect = [
             mock_response1, mock_response2
         ]
+        # get_client_and_model returns (client, model, tier_info)
+        mock_get_client_and_model.return_value = (mock_client, "gpt-4o", {"tier": "premium"})
 
         response = self.client.get(
             reverse('result-charts', kwargs={'chat_id': self.chat.id}))
@@ -311,22 +311,21 @@ class ResultChartsScoreParsingEdgeCasesTest(TestCase):
         self.assertEqual(scores['Professionalism'], 0)
 
     @patch('active_interview_app.views.ai_available')
-    @patch('active_interview_app.views.get_openai_client')
-    def test_result_charts_with_empty_response(self, mock_client, mock_ai):
+    @patch('active_interview_app.views.get_client_and_model')
+    def test_result_charts_with_empty_response(self, mock_get_client_and_model, mock_ai):
         """Test when AI returns empty score response"""
         mock_ai.return_value = True
 
-        mock_response1 = MagicMock()
-        mock_response1.choices = [MagicMock()]
-        mock_response1.choices[0].message.content = ""
+        mock_response1 = create_mock_openai_response("")
 
-        mock_response2 = MagicMock()
-        mock_response2.choices = [MagicMock()]
-        mock_response2.choices[0].message.content = "No scores available"
+        mock_response2 = create_mock_openai_response("No scores available")
 
-        mock_client.return_value.chat.completions.create.side_effect = [
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.side_effect = [
             mock_response1, mock_response2
         ]
+        # get_client_and_model returns (client, model, tier_info)
+        mock_get_client_and_model.return_value = (mock_client, "gpt-4o", {"tier": "premium"})
 
         response = self.client.get(
             reverse('result-charts', kwargs={'chat_id': self.chat.id}))
