@@ -318,12 +318,16 @@ class CreateChat(LoginRequiredMixin, View):
                         request, "AI features are disabled on this server.")
                     ai_message = ""
                 else:
-                    response = get_openai_client().chat.completions.create(
-                        model="gpt-4o",
-                        messages=chat.messages,
-                        max_tokens=MAX_TOKENS
-                    )
-                    ai_message = response.choices[0].message.content
+                    # Track latency for initial greeting (Issues #20, #54)
+                    from .latency_utils import LatencyTracker
+                    with LatencyTracker(chat, question_number=0) as tracker:
+                        with tracker.track_ai_processing():
+                            response = get_openai_client().chat.completions.create(
+                                model="gpt-4o",
+                                messages=chat.messages,
+                                max_tokens=MAX_TOKENS
+                            )
+                        ai_message = response.choices[0].message.content
                 chat.messages.append(
                     {
                         "role": "assistant",
@@ -523,6 +527,8 @@ class ChatView(LoginRequiredMixin, UserPassesTestMixin, View):
         return render(request, os.path.join('chat', 'chat-view.html'), context)
 
     def post(self, request, chat_id):
+        from .latency_utils import LatencyTracker
+
         chat = Chat.objects.get(id=chat_id)
 
         # Check if invited interview time has expired (Issue #138)
@@ -554,25 +560,28 @@ class ChatView(LoginRequiredMixin, UserPassesTestMixin, View):
         if not ai_available():
             return _ai_unavailable_json()
 
-        try:
-            response = get_openai_client().chat.completions.create(
-                model="gpt-4o",
-                messages=new_messages,
-                max_tokens=MAX_TOKENS
-            )
-            ai_message = response.choices[0].message.content
-            new_messages.append({"role": "assistant", "content": ai_message})
+        # Track latency for this response (Issues #20, #54)
+        with LatencyTracker(chat) as tracker:
+            try:
+                with tracker.track_ai_processing():
+                    response = get_openai_client().chat.completions.create(
+                        model="gpt-4o",
+                        messages=new_messages,
+                        max_tokens=MAX_TOKENS
+                    )
+                ai_message = response.choices[0].message.content
+                new_messages.append({"role": "assistant", "content": ai_message})
 
-            chat.messages = new_messages
-            chat.save()
+                chat.messages = new_messages
+                chat.save()
 
-            return JsonResponse({'message': ai_message})
-        except Exception as e:
-            # Handle AI service exceptions gracefully
-            return JsonResponse({
-                'error': 'AI service unavailable',
-                'message': str(e)
-            }, status=503)
+                return JsonResponse({'message': ai_message})
+            except Exception as e:
+                # Handle AI service exceptions gracefully
+                return JsonResponse({
+                    'error': 'AI service unavailable',
+                    'message': str(e)
+                }, status=503)
 
 
 class EditChat(LoginRequiredMixin, UserPassesTestMixin, View):
@@ -3241,12 +3250,16 @@ def start_invited_interview(request, invitation_id):
             "features are currently disabled. Please contact support."
         )
     else:
-        response = get_openai_client().chat.completions.create(
-            model="gpt-4o",
-            messages=chat.messages,
-            max_tokens=MAX_TOKENS
-        )
-        ai_message = response.choices[0].message.content
+        # Track latency for initial greeting (Issues #20, #54)
+        from .latency_utils import LatencyTracker
+        with LatencyTracker(chat, question_number=0) as tracker:
+            with tracker.track_ai_processing():
+                response = get_openai_client().chat.completions.create(
+                    model="gpt-4o",
+                    messages=chat.messages,
+                    max_tokens=MAX_TOKENS
+                )
+            ai_message = response.choices[0].message.content
 
     chat.messages.append(
         {

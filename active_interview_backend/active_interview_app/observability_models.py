@@ -380,3 +380,231 @@ class ErrorLog(models.Model):
             f"{self.error_type} at {self.endpoint} - "
             f"{self.timestamp.strftime('%Y-%m-%d %H:%M:%S')}"
         )
+
+
+class InterviewResponseLatency(models.Model):
+    """
+    Tracks latency for individual interview AI responses.
+    Used to ensure 90% of responses meet the 2-second latency budget.
+
+    Related to Issues #20, #54 (Latency Budget).
+    """
+    chat = models.ForeignKey(
+        'active_interview_app.Chat',
+        on_delete=models.CASCADE,
+        related_name='response_latencies',
+        help_text="Interview chat session"
+    )
+    user = models.ForeignKey(
+        'auth.User',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        help_text="User who received the response"
+    )
+
+    # Timing data
+    timestamp = models.DateTimeField(default=timezone.now, db_index=True)
+    response_time_ms = models.FloatField(
+        help_text="Total response time in milliseconds"
+    )
+    ai_processing_time_ms = models.FloatField(
+        null=True,
+        blank=True,
+        help_text="OpenAI API call duration in milliseconds"
+    )
+
+    # Context
+    question_number = models.IntegerField(
+        help_text="Question sequence number in the interview"
+    )
+    interview_type = models.CharField(
+        max_length=20,
+        help_text="Interview type (PRACTICE or INVITED)"
+    )
+
+    # Threshold tracking
+    exceeded_threshold = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text="True if response time exceeded latency budget (2000ms)"
+    )
+    threshold_ms = models.IntegerField(
+        default=2000,
+        help_text="Latency threshold that was configured at time of request"
+    )
+
+    class Meta:
+        ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['chat', '-timestamp']),
+            models.Index(fields=['user', '-timestamp']),
+            models.Index(fields=['exceeded_threshold', '-timestamp']),
+            models.Index(fields=['interview_type', '-timestamp']),
+            models.Index(fields=['-timestamp']),
+        ]
+        verbose_name = "Interview Response Latency"
+        verbose_name_plural = "Interview Response Latencies"
+
+    def __str__(self):
+        status = "⚠️ SLOW" if self.exceeded_threshold else "✓ OK"
+        return (
+            f"{status} Q{self.question_number} - {self.response_time_ms:.0f}ms "
+            f"(Chat #{self.chat_id})"
+        )
+
+    @property
+    def is_within_budget(self):
+        """Check if response met the latency budget."""
+        return self.response_time_ms <= self.threshold_ms
+
+    @property
+    def latency_budget_percentage(self):
+        """Calculate what percentage of the budget was used."""
+        return (self.response_time_ms / self.threshold_ms) * 100
+
+    @classmethod
+    def get_session_stats(cls, chat_id):
+        """
+        Get latency statistics for a specific interview session.
+
+        Args:
+            chat_id: Chat ID to analyze
+
+        Returns:
+            Dict with latency statistics for the session
+        """
+        metrics = cls.objects.filter(chat_id=chat_id)
+
+        if not metrics.exists():
+            return {
+                'total_responses': 0,
+                'within_budget': 0,
+                'exceeded_budget': 0,
+                'budget_compliance_rate': 0.0,
+                'p50': 0.0,
+                'p90': 0.0,
+                'p95': 0.0,
+                'min': 0.0,
+                'max': 0.0,
+                'mean': 0.0
+            }
+
+        total = metrics.count()
+        within_budget = metrics.filter(exceeded_threshold=False).count()
+        exceeded_budget = metrics.filter(exceeded_threshold=True).count()
+
+        response_times = list(metrics.values_list('response_time_ms', flat=True))
+        sorted_times = sorted(response_times)
+
+        return {
+            'total_responses': total,
+            'within_budget': within_budget,
+            'exceeded_budget': exceeded_budget,
+            'budget_compliance_rate': (within_budget / total) * 100,
+            'p50': statistics.quantiles(sorted_times, n=100)[49] if len(sorted_times) >= 100 else statistics.median(sorted_times),
+            'p90': statistics.quantiles(sorted_times, n=100)[89] if len(sorted_times) >= 100 else sorted_times[int(len(sorted_times) * 0.9)],
+            'p95': statistics.quantiles(sorted_times, n=100)[94] if len(sorted_times) >= 100 else sorted_times[int(len(sorted_times) * 0.95)],
+            'min': min(response_times),
+            'max': max(response_times),
+            'mean': statistics.mean(response_times)
+        }
+
+    @classmethod
+    def calculate_compliance_rate(cls, interview_type=None, start_time=None, end_time=None):
+        """
+        Calculate what percentage of responses met the latency budget.
+
+        Args:
+            interview_type: Filter by interview type (PRACTICE or INVITED)
+            start_time: Start of time window (default: 1 hour ago)
+            end_time: End of time window (default: now)
+
+        Returns:
+            Dict with compliance statistics
+        """
+        if end_time is None:
+            end_time = timezone.now()
+        if start_time is None:
+            start_time = end_time - timedelta(hours=1)
+
+        queryset = cls.objects.filter(
+            timestamp__gte=start_time,
+            timestamp__lte=end_time
+        )
+        if interview_type:
+            queryset = queryset.filter(interview_type=interview_type)
+
+        total = queryset.count()
+        if total == 0:
+            return {
+                'total_responses': 0,
+                'within_budget': 0,
+                'exceeded_budget': 0,
+                'compliance_rate': 0.0,
+                'target_rate': 90.0,
+                'meets_target': False
+            }
+
+        within_budget = queryset.filter(exceeded_threshold=False).count()
+        exceeded_budget = queryset.filter(exceeded_threshold=True).count()
+        compliance_rate = (within_budget / total) * 100
+
+        return {
+            'total_responses': total,
+            'within_budget': within_budget,
+            'exceeded_budget': exceeded_budget,
+            'compliance_rate': compliance_rate,
+            'target_rate': 90.0,
+            'meets_target': compliance_rate >= 90.0
+        }
+
+    @classmethod
+    def calculate_percentiles(cls, interview_type=None, start_time=None, end_time=None):
+        """
+        Calculate latency percentiles for interview responses.
+
+        Args:
+            interview_type: Filter by interview type (PRACTICE or INVITED)
+            start_time: Start of time window (default: 1 hour ago)
+            end_time: End of time window (default: now)
+
+        Returns:
+            Dict with p50, p90, p95, min, max, and mean latency in milliseconds
+        """
+        if end_time is None:
+            end_time = timezone.now()
+        if start_time is None:
+            start_time = end_time - timedelta(hours=1)
+
+        queryset = cls.objects.filter(
+            timestamp__gte=start_time,
+            timestamp__lte=end_time
+        )
+        if interview_type:
+            queryset = queryset.filter(interview_type=interview_type)
+
+        response_times = list(queryset.values_list('response_time_ms', flat=True))
+
+        if not response_times:
+            return {
+                'count': 0,
+                'p50': 0.0,
+                'p90': 0.0,
+                'p95': 0.0,
+                'min': 0.0,
+                'max': 0.0,
+                'mean': 0.0
+            }
+
+        sorted_times = sorted(response_times)
+
+        return {
+            'count': len(response_times),
+            'p50': statistics.quantiles(sorted_times, n=100)[49] if len(sorted_times) >= 100 else statistics.median(sorted_times),
+            'p90': statistics.quantiles(sorted_times, n=100)[89] if len(sorted_times) >= 100 else sorted_times[int(len(sorted_times) * 0.9)],
+            'p95': statistics.quantiles(sorted_times, n=100)[94] if len(sorted_times) >= 100 else sorted_times[int(len(sorted_times) * 0.95)],
+            'min': min(response_times),
+            'max': max(response_times),
+            'mean': statistics.mean(response_times)
+        }
