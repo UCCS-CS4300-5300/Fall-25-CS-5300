@@ -565,6 +565,67 @@ class ChatView(LoginRequiredMixin, UserPassesTestMixin, View):
         if not ai_available():
             return _ai_unavailable_json()
 
+        # Phase 6-7: For invited interviews, check if we should ask another question
+        # No new questions after T-5 minutes (graceful ending)
+        should_end_interview = False
+        if chat.interview_type == Chat.INVITED:
+            time_remaining = chat.time_remaining()
+            if time_remaining and time_remaining.total_seconds() < 300:  # Less than 5 mins
+                should_end_interview = True
+
+        if should_end_interview:
+            # Don't ask new questions - thank candidate and end
+            import textwrap
+            ai_message = textwrap.dedent("""\
+                Thank you for your response.
+
+                The interview time window is ending, so this concludes our interview.
+                Your responses will be reviewed and you'll receive feedback soon.
+
+                Thank you for your time!
+            """)
+
+            # Add final message
+            new_messages.append({"role": "assistant", "content": ai_message})
+            chat.messages = new_messages
+            chat.last_question_at = timezone.now()
+            chat.save()
+
+            # Auto-finalize
+            if not chat.is_finalized:
+                from .report_utils import generate_and_save_report
+                try:
+                    report = generate_and_save_report(chat, include_rushed_qualifier=True)
+                    chat.is_finalized = True
+                    chat.finalized_at = timezone.now()
+                    chat.save()
+
+                    # Phase 7: Update invitation status
+                    try:
+                        invitation = InvitedInterview.objects.get(chat=chat)
+                        if invitation.status != InvitedInterview.COMPLETED:
+                            invitation.status = InvitedInterview.COMPLETED
+                            invitation.completed_at = timezone.now()
+                            invitation.save()
+
+                            from .invitation_utils import send_completion_notification_email
+                            send_completion_notification_email(invitation)
+                    except InvitedInterview.DoesNotExist:
+                        pass
+                except Exception:
+                    # If report generation fails, still mark as finalized
+                    chat.is_finalized = True
+                    chat.finalized_at = timezone.now()
+                    chat.save()
+
+            return JsonResponse({
+                'role': 'assistant',
+                'content': ai_message,
+                'interview_ended': True,
+                'time_expired': True
+            })
+
+        # Normal flow - get AI response
         try:
             # Auto-select model tier based on spending cap (Issue #14)
             client, model, tier_info = get_client_and_model()
@@ -578,8 +639,23 @@ class ChatView(LoginRequiredMixin, UserPassesTestMixin, View):
             ai_message = response.choices[0].message.content
             new_messages.append({"role": "assistant", "content": ai_message})
 
+            # Update last question time for invited interviews
+            if chat.interview_type == Chat.INVITED:
+                chat.last_question_at = timezone.now()
+
             chat.messages = new_messages
             chat.save()
+
+            # Phase 8: Check if all questions answered and auto-finalize
+            # NOTE: Only applies to practice interviews with key_questions
+            # Invited interviews use time-based finalization (T-5, hard cutoff, abandonment)
+            if chat.interview_type == Chat.PRACTICE and chat.all_questions_answered() and not chat.is_finalized:
+                # For practice interviews: just signal completion, let user finalize manually
+                return JsonResponse({
+                    'message': ai_message,
+                    'all_questions_answered': True,
+                    'show_completion_message': True
+                })
 
             return JsonResponse({'message': ai_message})
         except Exception as e:
@@ -1668,7 +1744,27 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
 
         report.save()
 
-        messages.success(request, 'Report generated successfully!')
+        # Mark chat as finalized
+        chat.is_finalized = True
+        chat.finalized_at = timezone.now()
+        chat.save()
+
+        # For invited interviews: Update invitation status and send notification
+        if chat.interview_type == Chat.INVITED:
+            try:
+                invitation = InvitedInterview.objects.get(chat=chat)
+                if invitation.status != InvitedInterview.COMPLETED:
+                    invitation.status = InvitedInterview.COMPLETED
+                    invitation.completed_at = timezone.now()
+                    invitation.save()
+
+                    # Send completion notification to interviewer
+                    from .invitation_utils import send_completion_notification_email
+                    send_completion_notification_email(invitation)
+            except InvitedInterview.DoesNotExist:
+                pass
+
+        messages.success(request, 'Interview finalized and report generated successfully!')
         return redirect('export_report', chat_id=chat_id)
 
     def _extract_scores_from_chat(self, chat):
@@ -1901,9 +1997,22 @@ class ExportReportView(LoginRequiredMixin, UserPassesTestMixin, View):
     """
 
     def test_func(self):
-        """Verify that the user owns the chat"""
+        """Verify that the user owns the chat or is the interviewer"""
         chat = get_object_or_404(Chat, id=self.kwargs['chat_id'])
-        return self.request.user == chat.owner
+
+        # Allow chat owner (candidate)
+        if self.request.user == chat.owner:
+            return True
+
+        # Allow interviewer for invited interviews
+        if chat.interview_type == Chat.INVITED:
+            try:
+                invitation = InvitedInterview.objects.get(chat=chat)
+                return self.request.user == invitation.interviewer
+            except InvitedInterview.DoesNotExist:
+                pass
+
+        return False
 
     def get(self, request, chat_id):
         """Display the exportable report"""
@@ -1916,9 +2025,18 @@ class ExportReportView(LoginRequiredMixin, UserPassesTestMixin, View):
                              'No report exists yet. Generating one now...')
             return redirect('generate_report', chat_id=chat_id)
 
+        # Get invitation if this is an invited interview
+        invitation = None
+        if chat.interview_type == Chat.INVITED:
+            try:
+                invitation = InvitedInterview.objects.get(chat=chat)
+            except InvitedInterview.DoesNotExist:
+                pass
+
         context = {
             'chat': chat,
             'report': report,
+            'invitation': invitation,
         }
         return render(request, 'reports/export-report.html', context)
 
@@ -1929,9 +2047,22 @@ class DownloadPDFReportView(LoginRequiredMixin, UserPassesTestMixin, View):
     """
 
     def test_func(self):
-        """Verify that the user owns the chat"""
+        """Verify that the user owns the chat or is the interviewer"""
         chat = get_object_or_404(Chat, id=self.kwargs['chat_id'])
-        return self.request.user == chat.owner
+
+        # Allow chat owner (candidate)
+        if self.request.user == chat.owner:
+            return True
+
+        # Allow interviewer for invited interviews
+        if chat.interview_type == Chat.INVITED:
+            try:
+                invitation = InvitedInterview.objects.get(chat=chat)
+                return self.request.user == invitation.interviewer
+            except InvitedInterview.DoesNotExist:
+                pass
+
+        return False
 
     def get(self, request, chat_id):
         """Generate and download PDF report"""
@@ -1965,9 +2096,22 @@ class DownloadCSVReportView(LoginRequiredMixin, UserPassesTestMixin, View):
     """
 
     def test_func(self):
-        """Verify that the user owns the chat"""
+        """Verify that the user owns the chat or is the interviewer"""
         chat = get_object_or_404(Chat, id=self.kwargs['chat_id'])
-        return self.request.user == chat.owner
+
+        # Allow chat owner (candidate)
+        if self.request.user == chat.owner:
+            return True
+
+        # Allow interviewer for invited interviews
+        if chat.interview_type == Chat.INVITED:
+            try:
+                invitation = InvitedInterview.objects.get(chat=chat)
+                return self.request.user == invitation.interviewer
+            except InvitedInterview.DoesNotExist:
+                pass
+
+        return False
 
     def get(self, request, chat_id):
         """Generate and download CSV report"""
