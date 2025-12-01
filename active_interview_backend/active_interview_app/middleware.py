@@ -75,7 +75,7 @@ class MetricsMiddleware:
             response_time_ms: Response time in milliseconds
             exception: Exception object if one occurred
         """
-        from .observability_models import RequestMetric
+        from active_interview_app.observability_models import RequestMetric
 
         # Determine status code
         if response:
@@ -128,7 +128,7 @@ class MetricsMiddleware:
             exception: Exception object (None for HTTP errors without exceptions)
             user_id: Authenticated user ID
         """
-        from .observability_models import ErrorLog
+        from active_interview_app.observability_models import ErrorLog
 
         # Determine error details
         if exception:

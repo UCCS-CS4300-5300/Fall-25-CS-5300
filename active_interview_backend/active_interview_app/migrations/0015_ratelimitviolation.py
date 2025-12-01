@@ -1,0 +1,49 @@
+# Generated manually for RateLimitViolation model
+
+from django.conf import settings
+from django.db import migrations, models
+import django.db.models.deletion
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
+        ('active_interview_app', '0014_apikeypool_monthlyspendingcap_monthlyspending_and_more'),
+    ]
+
+    operations = [
+        migrations.CreateModel(
+            name='RateLimitViolation',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('timestamp', models.DateTimeField(auto_now_add=True, db_index=True, help_text='When the violation occurred')),
+                ('ip_address', models.GenericIPAddressField(db_index=True, help_text='IP address of the request')),
+                ('endpoint', models.CharField(db_index=True, help_text='URL path that was accessed', max_length=255)),
+                ('method', models.CharField(help_text='HTTP method (GET, POST, etc.)', max_length=10)),
+                ('rate_limit_type', models.CharField(choices=[('default', 'Default'), ('strict', 'Strict'), ('lenient', 'Lenient')], help_text='Type of rate limit that was exceeded', max_length=20)),
+                ('limit_value', models.IntegerField(help_text='Rate limit value (requests per minute)')),
+                ('user_agent', models.TextField(blank=True, help_text='User agent string from request')),
+                ('country_code', models.CharField(blank=True, help_text='Country code from IP (if available)', max_length=2)),
+                ('alert_sent', models.BooleanField(default=False, help_text='Whether an alert was sent for this violation')),
+                ('user', models.ForeignKey(blank=True, help_text='User who violated rate limit (null for anonymous)', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='rate_limit_violations', to=settings.AUTH_USER_MODEL)),
+            ],
+            options={
+                'verbose_name': 'Rate Limit Violation',
+                'verbose_name_plural': 'Rate Limit Violations',
+                'ordering': ['-timestamp'],
+            },
+        ),
+        migrations.AddIndex(
+            model_name='ratelimitviolation',
+            index=models.Index(fields=['-timestamp', 'user'], name='active_inte_timesta_e8b7c9_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='ratelimitviolation',
+            index=models.Index(fields=['-timestamp', 'ip_address'], name='active_inte_timesta_a1f5d2_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='ratelimitviolation',
+            index=models.Index(fields=['endpoint', '-timestamp'], name='active_inte_endpoin_c4e3f1_idx'),
+        ),
+    ]

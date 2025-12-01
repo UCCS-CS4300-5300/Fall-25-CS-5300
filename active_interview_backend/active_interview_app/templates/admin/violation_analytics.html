@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load ratelimit_extras %}
 
 {% block title %}Violation Analytics - Active Interview{% endblock title %}
 
@@ -92,16 +93,48 @@
                 <div class="card-body">
                     <table class="table table-sm">
                         <tbody>
-                            {% with days_of_week="Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday"|split:"," %}
-                            {% for day in days_of_week %}
                             <tr>
-                                <th>{{ day }}</th>
+                                <th>Monday</th>
                                 <td class="text-end">
-                                    <span class="badge bg-primary">{{ daily_dist|index:forloop.counter0 }}</span>
+                                    <span class="badge bg-primary">{{ daily_dist.0 }}</span>
                                 </td>
                             </tr>
-                            {% endfor %}
-                            {% endwith %}
+                            <tr>
+                                <th>Tuesday</th>
+                                <td class="text-end">
+                                    <span class="badge bg-primary">{{ daily_dist.1 }}</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Wednesday</th>
+                                <td class="text-end">
+                                    <span class="badge bg-primary">{{ daily_dist.2 }}</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Thursday</th>
+                                <td class="text-end">
+                                    <span class="badge bg-primary">{{ daily_dist.3 }}</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Friday</th>
+                                <td class="text-end">
+                                    <span class="badge bg-primary">{{ daily_dist.4 }}</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Saturday</th>
+                                <td class="text-end">
+                                    <span class="badge bg-primary">{{ daily_dist.5 }}</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Sunday</th>
+                                <td class="text-end">
+                                    <span class="badge bg-primary">{{ daily_dist.6 }}</span>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
