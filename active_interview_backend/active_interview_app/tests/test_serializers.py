@@ -19,6 +19,7 @@ from active_interview_app.models import (
     UserProfile
 )
 from django.core.files.uploadedfile import SimpleUploadedFile
+from .test_credentials import TEST_PASSWORD
 
 
 class UploadedResumeSerializerTest(TestCase):
@@ -27,7 +28,7 @@ class UploadedResumeSerializerTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.resume = UploadedResume.objects.create(
             user=self.user,
@@ -101,7 +102,8 @@ class UploadedResumeSerializerTest(TestCase):
 
         serializer = UploadedResumeSerializer(data=data)
         if serializer.is_valid():
-            resume = serializer.save(user=self.user, content='New resume content')
+            resume = serializer.save(
+                user=self.user, content='New resume content')
             self.assertIsNotNone(resume.id)
             self.assertEqual(resume.user, self.user)
 
@@ -151,7 +153,7 @@ class UploadedJobListingSerializerTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.job_listing = UploadedJobListing.objects.create(
             user=self.user,
@@ -310,7 +312,7 @@ class UploadedJobListingSerializerTest(TestCase):
         """Test serializing job listings from different users"""
         other_user = User.objects.create_user(
             username='otheruser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         other_job = UploadedJobListing.objects.create(
             user=other_user,
@@ -329,7 +331,7 @@ class UploadedJobListingSerializerTest(TestCase):
         self.assertNotEqual(serializer1.data['user'], serializer2.data['user'])
 
 
-def create_interviewer_user(username='testuser', password='testpass123'):
+def create_interviewer_user(username='testuser', password=TEST_PASSWORD):
     """Helper function to create a user with interviewer role."""
     user = User.objects.create_user(username=username, password=password)
     user.profile.role = UserProfile.INTERVIEWER

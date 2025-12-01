@@ -9,9 +9,10 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 
 from active_interview_app.models import QuestionBank, Question, Tag, InterviewTemplate, UserProfile
+from .test_credentials import TEST_PASSWORD
 
 
-def create_interviewer_user(username='testuser', password='testpass123'):
+def create_interviewer_user(username='testuser', password=TEST_PASSWORD):
     """Helper function to create a user with interviewer role."""
     user = User.objects.create_user(username=username, password=password)
     # Update the auto-created profile to interviewer role
@@ -46,7 +47,7 @@ class QuestionBankModelTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
     def test_create_question_bank(self):
@@ -74,7 +75,7 @@ class QuestionModelTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.bank = QuestionBank.objects.create(
             name="Test Bank",
@@ -398,8 +399,7 @@ class TagManagementTest(APITestCase):
         """Test merging multiple tags"""
         tag1 = Tag.objects.create(name="#sql")
         tag2 = Tag.objects.create(name="#database")
-        tag3 = Tag.objects.create(name="#rdbms")
-
+        Tag.objects.create(name="#rdbms")
         # Create questions with these tags
         bank = QuestionBank.objects.create(name="Test", owner=self.user)
         q1 = Question.objects.create(
@@ -486,7 +486,8 @@ class SaveAsTemplateTest(APITestCase):
             self.assertIn('content', section)
             self.assertIn('order', section)
             self.assertIn('weight', section)
-            self.assertEqual(section['order'], i, f"Section {i} should have order {i}")
+            self.assertEqual(section['order'], i,
+                             f"Section {i} should have order {i}")
             self.assertIn(f'Question {i+1}:', section['title'])
             self.assertIn(questions_data[i]['text'], section['title'])
 

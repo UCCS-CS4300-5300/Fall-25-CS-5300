@@ -14,6 +14,7 @@ from django.contrib.auth.models import User
 from django.http import JsonResponse
 from active_interview_app.models import UserProfile
 from active_interview_app.decorators import check_user_permission
+from .test_credentials import TEST_PASSWORD
 
 
 class UserProfileModelTest(TestCase):
@@ -46,7 +47,7 @@ class UserProfileModelTest(TestCase):
         # Create admin user
         admin_user = User.objects.create_user(
             username='admin_user',
-            password='pass123'
+            password=TEST_PASSWORD
         )
         admin_user.profile.role = UserProfile.ADMIN
         admin_user.profile.save()
@@ -54,7 +55,7 @@ class UserProfileModelTest(TestCase):
         # Create interviewer user
         interviewer_user = User.objects.create_user(
             username='interviewer_user',
-            password='pass123'
+            password=TEST_PASSWORD
         )
         interviewer_user.profile.role = UserProfile.INTERVIEWER
         interviewer_user.profile.save()
@@ -62,7 +63,7 @@ class UserProfileModelTest(TestCase):
         # Create candidate user
         candidate_user = User.objects.create_user(
             username='candidate_user',
-            password='pass123'
+            password=TEST_PASSWORD
         )
         candidate_user.profile.role = UserProfile.CANDIDATE
         candidate_user.profile.save()
@@ -80,7 +81,7 @@ class UserProfileModelTest(TestCase):
         """Test UserProfile __str__ method"""
         user = User.objects.create_user(
             username='testuser',
-            password='pass123'
+            password=TEST_PASSWORD
         )
         expected = f"{user.username} - candidate (local)"
         self.assertEqual(str(user.profile), expected)
@@ -89,10 +90,9 @@ class UserProfileModelTest(TestCase):
         """Test that auth_provider defaults to 'local'"""
         user = User.objects.create_user(
             username='testuser',
-            password='pass123'
+            password=TEST_PASSWORD
         )
         self.assertEqual(user.profile.auth_provider, 'local')
-
 
 
 class UserProfileViewTest(TestCase):
@@ -127,7 +127,7 @@ class UserProfileViewTest(TestCase):
         # Create candidate 1
         self.candidate1 = User.objects.create_user(
             username='candidate1',
-            password='pass123',
+            password=TEST_PASSWORD,
             first_name='John',
             last_name='Doe',
             email='john@example.com'
@@ -136,7 +136,7 @@ class UserProfileViewTest(TestCase):
         # Create candidate 2
         self.candidate2 = User.objects.create_user(
             username='candidate2',
-            password='pass123',
+            password=TEST_PASSWORD,
             first_name='Jane',
             last_name='Smith',
             email='jane@example.com'
@@ -149,7 +149,8 @@ class UserProfileViewTest(TestCase):
         response = self.client.get(f'/user/{self.candidate1.id}/profile/')
         self.assertEqual(response.status_code, 200)
         self.assertIn('profile_user', response.context)
-        self.assertEqual(response.context['profile_user'].id, self.candidate1.id)
+        self.assertEqual(
+            response.context['profile_user'].id, self.candidate1.id)
         self.assertTrue(response.context['is_own_profile'])
 
     def test_candidate_cannot_view_another_candidate_profile(self):
@@ -166,7 +167,8 @@ class UserProfileViewTest(TestCase):
         response = self.client.get(f'/user/{self.candidate1.id}/profile/')
         self.assertEqual(response.status_code, 200)
         self.assertIn('profile_user', response.context)
-        self.assertEqual(response.context['profile_user'].username, 'candidate1')
+        self.assertEqual(
+            response.context['profile_user'].username, 'candidate1')
         self.assertFalse(response.context['is_own_profile'])
 
     def test_interviewer_can_view_any_user_profile(self):
@@ -176,7 +178,8 @@ class UserProfileViewTest(TestCase):
         response = self.client.get(f'/user/{self.candidate1.id}/profile/')
         self.assertEqual(response.status_code, 200)
         self.assertIn('profile_user', response.context)
-        self.assertEqual(response.context['profile_user'].username, 'candidate1')
+        self.assertEqual(
+            response.context['profile_user'].username, 'candidate1')
 
     def test_view_nonexistent_user_returns_404(self):
         """Test viewing non-existent user profile returns 404"""
@@ -199,19 +202,19 @@ class RBACDecoratorTest(TestCase):
     def setUp(self):
         """Set up test users"""
         self.admin = User.objects.create_user(
-            username='admin', password='pass'
+            username='admin', password=TEST_PASSWORD
         )
         self.admin.profile.role = UserProfile.ADMIN
         self.admin.profile.save()
 
         self.interviewer = User.objects.create_user(
-            username='interviewer', password='pass'
+            username='interviewer', password=TEST_PASSWORD
         )
         self.interviewer.profile.role = UserProfile.INTERVIEWER
         self.interviewer.profile.save()
 
         self.candidate = User.objects.create_user(
-            username='candidate', password='pass'
+            username='candidate', password=TEST_PASSWORD
         )
 
     def test_check_user_permission_admin_access(self):
@@ -283,12 +286,12 @@ class RBACDecoratorTest(TestCase):
 
         # Create user and mock profile to raise AttributeError
         user_no_profile = User.objects.create_user(
-            username='noprofile', password='pass'
+            username='noprofile', password=TEST_PASSWORD
         )
 
         # Mock the profile property to raise AttributeError
         with patch.object(type(user_no_profile), 'profile',
-                         new_callable=PropertyMock) as mock_profile:
+                          new_callable=PropertyMock) as mock_profile:
             mock_profile.side_effect = AttributeError("User has no profile")
             request.user = user_no_profile
 
@@ -353,19 +356,20 @@ class RBACDecoratorTest(TestCase):
 
         # Create user and mock profile to raise AttributeError
         user_no_profile = User.objects.create_user(
-            username='noprofile2', password='pass'
+            username='noprofile2', password=TEST_PASSWORD
         )
 
         # Mock the profile property to raise AttributeError
         with patch.object(type(user_no_profile), 'profile',
-                         new_callable=PropertyMock) as mock_profile:
+                          new_callable=PropertyMock) as mock_profile:
             mock_profile.side_effect = AttributeError("User has no profile")
             request.user = user_no_profile
 
             response = test_view(request)
             self.assertEqual(response.status_code, 403)
             data = json.loads(response.content)
-            self.assertEqual(data['error'], 'Forbidden: User profile not found')
+            self.assertEqual(
+                data['error'], 'Forbidden: User profile not found')
 
     def test_role_required_decorator_allowed_role(self):
         """Test role_required allows access with correct role"""
@@ -457,7 +461,8 @@ class RBACDecoratorTest(TestCase):
         from django.test import RequestFactory
         from active_interview_app.decorators import owner_or_privileged_required
 
-        @owner_or_privileged_required(lambda request, user_id: User.objects.get(id=user_id))
+        @owner_or_privileged_required(lambda request,
+                                      user_id: User.objects.get(id=user_id))
         def test_view(request, user_id):
             return JsonResponse({'success': True})
 
@@ -475,7 +480,8 @@ class RBACDecoratorTest(TestCase):
         from active_interview_app.decorators import owner_or_privileged_required
         from unittest.mock import PropertyMock, patch
 
-        @owner_or_privileged_required(lambda request, user_id: User.objects.get(id=user_id))
+        @owner_or_privileged_required(lambda request,
+                                      user_id: User.objects.get(id=user_id))
         def test_view(request, user_id):
             return JsonResponse({'success': True})
 
@@ -484,19 +490,20 @@ class RBACDecoratorTest(TestCase):
 
         # Create user and mock profile to raise AttributeError
         user_no_profile = User.objects.create_user(
-            username='noprofile3', password='pass'
+            username='noprofile3', password=TEST_PASSWORD
         )
 
         # Mock the profile property to raise AttributeError
         with patch.object(type(user_no_profile), 'profile',
-                         new_callable=PropertyMock) as mock_profile:
+                          new_callable=PropertyMock) as mock_profile:
             mock_profile.side_effect = AttributeError("User has no profile")
             request.user = user_no_profile
 
             response = test_view(request, self.candidate.id)
             self.assertEqual(response.status_code, 403)
             data = json.loads(response.content)
-            self.assertEqual(data['error'], 'Forbidden: User profile not found')
+            self.assertEqual(
+                data['error'], 'Forbidden: User profile not found')
 
     def test_owner_or_privileged_required_admin_access(self):
         """Test owner_or_privileged_required allows admin access"""
@@ -504,7 +511,8 @@ class RBACDecoratorTest(TestCase):
         from active_interview_app.decorators import owner_or_privileged_required
         from django.http import HttpResponse
 
-        @owner_or_privileged_required(lambda request, user_id: User.objects.get(id=user_id))
+        @owner_or_privileged_required(lambda request,
+                                      user_id: User.objects.get(id=user_id))
         def test_view(request, user_id):
             return HttpResponse('success')
 
@@ -521,7 +529,8 @@ class RBACDecoratorTest(TestCase):
         from active_interview_app.decorators import owner_or_privileged_required
         from django.http import HttpResponse
 
-        @owner_or_privileged_required(lambda request, user_id: User.objects.get(id=user_id))
+        @owner_or_privileged_required(lambda request,
+                                      user_id: User.objects.get(id=user_id))
         def test_view(request, user_id):
             return HttpResponse('success')
 
@@ -538,7 +547,8 @@ class RBACDecoratorTest(TestCase):
         from active_interview_app.decorators import owner_or_privileged_required
         from django.http import HttpResponse
 
-        @owner_or_privileged_required(lambda request, user_id: User.objects.get(id=user_id))
+        @owner_or_privileged_required(lambda request,
+                                      user_id: User.objects.get(id=user_id))
         def test_view(request, user_id):
             return HttpResponse('success')
 
@@ -555,7 +565,8 @@ class RBACDecoratorTest(TestCase):
         from django.test import RequestFactory
         from active_interview_app.decorators import owner_or_privileged_required
 
-        @owner_or_privileged_required(lambda request, user_id: User.objects.get(id=user_id))
+        @owner_or_privileged_required(lambda request,
+                                      user_id: User.objects.get(id=user_id))
         def test_view(request, user_id):
             return JsonResponse({'success': True})
 
@@ -590,7 +601,6 @@ class RBACDecoratorTest(TestCase):
         self.assertEqual(response.status_code, 403)
         data = json.loads(response.content)
         self.assertEqual(data['error'], 'Forbidden')
-
 
 
 class RoleChangeRequestTest(TestCase):
@@ -854,7 +864,7 @@ class CandidateSearchTest(TestCase):
         # Create candidate users
         self.candidate1 = User.objects.create_user(
             username='john_doe',
-            password='pass123',
+            password=TEST_PASSWORD,
             email='john@example.com',
             first_name='John',
             last_name='Doe'
@@ -864,7 +874,7 @@ class CandidateSearchTest(TestCase):
 
         self.candidate2 = User.objects.create_user(
             username='jane_smith',
-            password='pass123',
+            password=TEST_PASSWORD,
             email='jane@example.com',
             first_name='Jane',
             last_name='Smith'
@@ -874,7 +884,7 @@ class CandidateSearchTest(TestCase):
 
         self.candidate3 = User.objects.create_user(
             username='bob_johnson',
-            password='pass123',
+            password=TEST_PASSWORD,
             email='bob@example.com'
         )
         self.candidate3.profile.role = UserProfile.CANDIDATE
@@ -962,7 +972,7 @@ class CandidateSearchTest(TestCase):
         # Create an admin with 'john' in username
         User.objects.create_user(
             username='john_admin',
-            password='pass123'
+            password=TEST_PASSWORD
         ).profile.role = UserProfile.ADMIN
 
         self.client.force_login(self.admin)

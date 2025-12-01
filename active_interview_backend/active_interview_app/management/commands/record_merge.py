@@ -71,14 +71,18 @@ class Command(BaseCommand):
                     )
 
         # Check if this merge has already been recorded
-        if MergeTokenStats.objects.filter(merge_commit_sha=commit_sha).exists():
+        if MergeTokenStats.objects.filter(
+                merge_commit_sha=commit_sha).exists():
             if output_json:
-                existing = MergeTokenStats.objects.get(merge_commit_sha=commit_sha)
+                existing = MergeTokenStats.objects.get(
+                    merge_commit_sha=commit_sha
+                )
                 print(json.dumps(existing.get_breakdown_summary(), indent=2))
             else:
                 self.stdout.write(
                     self.style.WARNING(
-                        f'Merge {commit_sha} has already been recorded. Skipping.'
+                        f'Merge {commit_sha} has already been recorded. '
+                        'Skipping.'
                     )
                 )
             return
@@ -123,7 +127,8 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.SUCCESS('=' * 70))
                 self.stdout.write(
                     self.style.SUCCESS(
-                        f'Successfully recorded merge statistics for branch: {source_branch}'
+                        f'Successfully recorded merge statistics for '
+                        f'branch: {source_branch}'
                     )
                 )
                 self.stdout.write(self.style.SUCCESS('=' * 70))
@@ -131,35 +136,87 @@ class Command(BaseCommand):
 
                 # Claude tokens
                 self.stdout.write(self.style.SUCCESS('Claude Tokens:'))
-                self.stdout.write(f'  Prompt tokens:     {merge_stat.claude_prompt_tokens:,}')
-                self.stdout.write(f'  Completion tokens: {merge_stat.claude_completion_tokens:,}')
-                self.stdout.write(f'  Total tokens:      {merge_stat.claude_total_tokens:,}')
-                self.stdout.write(f'  API requests:      {merge_stat.claude_request_count:,}')
+                self.stdout.write(
+                    f'  Prompt tokens:     '
+                    f'{merge_stat.claude_prompt_tokens:,}'
+                )
+                self.stdout.write(
+                    f'  Completion tokens: '
+                    f'{merge_stat.claude_completion_tokens:,}'
+                )
+                self.stdout.write(
+                    f'  Total tokens:      '
+                    f'{merge_stat.claude_total_tokens:,}'
+                )
+                self.stdout.write(
+                    f'  API requests:      '
+                    f'{merge_stat.claude_request_count:,}'
+                )
                 self.stdout.write('')
 
                 # ChatGPT tokens
                 self.stdout.write(self.style.SUCCESS('ChatGPT Tokens:'))
-                self.stdout.write(f'  Prompt tokens:     {merge_stat.chatgpt_prompt_tokens:,}')
-                self.stdout.write(f'  Completion tokens: {merge_stat.chatgpt_completion_tokens:,}')
-                self.stdout.write(f'  Total tokens:      {merge_stat.chatgpt_total_tokens:,}')
-                self.stdout.write(f'  API requests:      {merge_stat.chatgpt_request_count:,}')
+                self.stdout.write(
+                    f'  Prompt tokens:     '
+                    f'{merge_stat.chatgpt_prompt_tokens:,}'
+                )
+                self.stdout.write(
+                    f'  Completion tokens: '
+                    f'{merge_stat.chatgpt_completion_tokens:,}'
+                )
+                self.stdout.write(
+                    f'  Total tokens:      '
+                    f'{merge_stat.chatgpt_total_tokens:,}'
+                )
+                self.stdout.write(
+                    f'  API requests:      '
+                    f'{merge_stat.chatgpt_request_count:,}'
+                )
                 self.stdout.write('')
 
                 # Combined totals
                 self.stdout.write(self.style.SUCCESS('Combined Totals:'))
-                self.stdout.write(f'  Total prompt tokens:     {merge_stat.total_prompt_tokens:,}')
-                self.stdout.write(f'  Total completion tokens: {merge_stat.total_completion_tokens:,}')
-                self.stdout.write(f'  Total tokens:            {merge_stat.total_tokens:,}')
-                self.stdout.write(f'  Total API requests:      {merge_stat.request_count:,}')
-                self.stdout.write(f'  Branch cost:             ${merge_stat.branch_cost:.2f}')
+                self.stdout.write(
+                    f'  Total prompt tokens:     '
+                    f'{merge_stat.total_prompt_tokens:,}'
+                )
+                self.stdout.write(
+                    f'  Total completion tokens: '
+                    f'{merge_stat.total_completion_tokens:,}'
+                )
+                self.stdout.write(
+                    f'  Total tokens:            '
+                    f'{merge_stat.total_tokens:,}'
+                )
+                self.stdout.write(
+                    f'  Total API requests:      '
+                    f'{merge_stat.request_count:,}'
+                )
+                self.stdout.write(
+                    f'  Branch cost:             '
+                    f'${merge_stat.branch_cost:.2f}'
+                )
                 self.stdout.write('')
 
                 # Cumulative totals
-                self.stdout.write(self.style.SUCCESS('Cumulative Totals (All Merges):'))
-                self.stdout.write(f'  Claude tokens:   {merge_stat.cumulative_claude_tokens:,}')
-                self.stdout.write(f'  ChatGPT tokens:  {merge_stat.cumulative_chatgpt_tokens:,}')
-                self.stdout.write(f'  Total tokens:    {merge_stat.cumulative_total_tokens:,}')
-                self.stdout.write(f'  Total cost:      ${merge_stat.cumulative_cost:.2f}')
+                self.stdout.write(
+                    self.style.SUCCESS('Cumulative Totals (All Merges):')
+                )
+                self.stdout.write(
+                    f'  Claude tokens:   '
+                    f'{merge_stat.cumulative_claude_tokens:,}'
+                )
+                self.stdout.write(
+                    f'  ChatGPT tokens:  '
+                    f'{merge_stat.cumulative_chatgpt_tokens:,}'
+                )
+                self.stdout.write(
+                    f'  Total tokens:    '
+                    f'{merge_stat.cumulative_total_tokens:,}'
+                )
+                self.stdout.write(
+                    f'  Total cost:      ${merge_stat.cumulative_cost:.2f}'
+                )
                 self.stdout.write('')
                 self.stdout.write(self.style.SUCCESS('=' * 70))
 

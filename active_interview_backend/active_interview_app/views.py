@@ -14,7 +14,7 @@ from docx import Document
 from .models import (
     UploadedResume, UploadedJobListing, Chat,
     ExportableReport, UserProfile, RoleChangeRequest,
-    InterviewTemplate, DataExportRequest, DeletionRequest, Tag,
+    InterviewTemplate, DataExportRequest, DeletionRequest,
     InvitedInterview
 )
 from .forms import (
@@ -29,8 +29,7 @@ from .forms import (
 )
 from .serializers import (
     UploadedResumeSerializer,
-    UploadedJobListingSerializer,
-    ExportableReportSerializer
+    UploadedJobListingSerializer
 )
 from .pdf_export import generate_pdf_report, get_score_rating
 from .resume_parser import parse_resume_with_ai
@@ -65,19 +64,23 @@ from rest_framework.views import APIView
 
 
 # Import OpenAI utilities (moved to separate module to prevent circular imports)
-from .openai_utils import get_openai_client, ai_available, MAX_TOKENS
+# Updated for Issue #14: Multi-tier model selection with automatic fallback
+from .openai_utils import get_openai_client, get_client_and_model, ai_available, MAX_TOKENS
+
+# Import token tracking (Issue #15.10)
+from .token_tracking import record_openai_usage
 
 # Import RBAC decorators (Issue #69)
 from .decorators import (
     admin_required,
-    admin_or_interviewer_required,
-    check_user_permission
+    admin_or_interviewer_required
 )
 
 
 def _ai_unavailable_json():
     """Return a JSON response for when AI features are disabled."""
-    return JsonResponse({'error': 'AI features are disabled on this server.'}, status=503)
+    return JsonResponse(
+        {'error': 'AI features are disabled on this server.'}, status=503)
 
 
 # Create your views here.
@@ -152,8 +155,9 @@ def results(request):
 
 @login_required
 def chat_list(request):
-    owner_chats = Chat.objects.filter(owner=request.user)\
-        .order_by('-modified_date')
+    owner_chats = Chat.objects.filter(
+        owner=request.user
+    ).order_by('-modified_date')
 
     context = {}
     context['owner_chats'] = owner_chats
@@ -163,8 +167,9 @@ def chat_list(request):
 
 class CreateChat(LoginRequiredMixin, View):
     def get(self, request):
-        owner_chats = Chat.objects.filter(owner=request.user)\
-            .order_by('-modified_date')
+        owner_chats = Chat.objects.filter(
+            owner=request.user
+        ).order_by('-modified_date')
 
         # Pre-populate form from URL parameters (Issue #53)
         job_id = request.GET.get('job_id')
@@ -220,8 +225,10 @@ class CreateChat(LoginRequiredMixin, View):
                 # Prompts are edited by ChatGPT after being written by a human
                 # developer
                 # Default message. Should only show up if something went wrong.
-                system_prompt = "An error has occurred.  Please notify the " \
-                                "user about this."
+                system_prompt = (
+                    "An error has occurred.  Please notify the user about "
+                    "this."
+                )
                 if chat.resume:  # if resume is present
                     system_prompt = textwrap.dedent("""\
                         You are a professional interviewer for a company
@@ -310,14 +317,19 @@ class CreateChat(LoginRequiredMixin, View):
 
                 # Make ai speak first
                 if not ai_available():
-                    messages.error(request, "AI features are disabled on this server.")
+                    messages.error(
+                        request, "AI features are disabled on this server.")
                     ai_message = ""
                 else:
-                    response = get_openai_client().chat.completions.create(
-                        model="gpt-4o",
+                    # Auto-select model tier based on spending cap (Issue #14)
+                    client, model, tier_info = get_client_and_model()
+                    response = client.chat.completions.create(
+                        model=model,
                         messages=chat.messages,
                         max_tokens=MAX_TOKENS
                     )
+                    # Track token usage for spending cap (Issue #15.10)
+                    record_openai_usage(request.user, 'create_chat', response)
                     ai_message = response.choices[0].message.content
                 chat.messages.append(
                     {
@@ -439,14 +451,19 @@ class CreateChat(LoginRequiredMixin, View):
 
                 # Make ai speak first
                 if not ai_available():
-                    messages.error(request, "AI features are disabled on this server.")
+                    messages.error(
+                        request, "AI features are disabled on this server.")
                     ai_message = "[]"
                 else:
-                    response = get_openai_client().chat.completions.create(
-                        model="gpt-4o",
+                    # Auto-select model tier based on spending cap (Issue #14)
+                    client, model, tier_info = get_client_and_model()
+                    response = client.chat.completions.create(
+                        model=model,
                         messages=timed_question_messages,
                         max_tokens=MAX_TOKENS
                     )
+                    # Track token usage for spending cap (Issue #15.10)
+                    record_openai_usage(request.user, 'create_chat_timed_questions', response)
                     ai_message = response.choices[0].message.content
 
                 # Extract JSON array from the AI response
@@ -456,7 +473,8 @@ class CreateChat(LoginRequiredMixin, View):
                     chat.key_questions = json.loads(cleaned_message)
                 else:
                     # Fallback if regex doesn't match
-                    messages.error(request, "Failed to generate key questions. Please try again.")
+                    messages.error(
+                        request, "Failed to generate key questions. Please try again.")
                     chat.key_questions = []
 
                 chat.save()
@@ -464,7 +482,8 @@ class CreateChat(LoginRequiredMixin, View):
                 return redirect("chat-view", chat_id=chat.id)
             else:
                 # Form is invalid, render the form again with errors
-                owner_chats = Chat.objects.filter(owner=request.user).order_by('-modified_date')
+                owner_chats = Chat.objects.filter(
+                    owner=request.user).order_by('-modified_date')
                 return render(request, os.path.join('chat', 'chat-create.html'), {
                     'form': form,
                     'owner_chats': owner_chats
@@ -483,8 +502,9 @@ class ChatView(LoginRequiredMixin, UserPassesTestMixin, View):
 
     def get(self, request, chat_id):
         chat = Chat.objects.get(id=chat_id)
-        owner_chats = Chat.objects.filter(owner=request.user)\
-            .order_by('-modified_date')
+        owner_chats = Chat.objects.filter(
+            owner=request.user
+        ).order_by('-modified_date')
 
         # Check if invited interview time has expired (Issue #138)
         time_expired = False
@@ -516,50 +536,25 @@ class ChatView(LoginRequiredMixin, UserPassesTestMixin, View):
     def post(self, request, chat_id):
         chat = Chat.objects.get(id=chat_id)
 
-        # Track activity for invited interviews (for abandonment detection)
-        if chat.interview_type == Chat.INVITED:
+        # Check if invited interview time has expired (Issue #138)
+        if chat.interview_type == Chat.INVITED and chat.is_time_expired():
+            # Mark invitation as completed if not already
             try:
                 invitation = InvitedInterview.objects.get(chat=chat)
-                invitation.last_activity_at = timezone.now()
-                invitation.save(update_fields=['last_activity_at'])
+                if invitation.status != InvitedInterview.COMPLETED:
+                    invitation.status = InvitedInterview.COMPLETED
+                    invitation.completed_at = timezone.now()
+                    invitation.save()
+
+                    # Send completion notification to interviewer
+                    from .invitation_utils import send_completion_notification_email
+                    send_completion_notification_email(invitation)
             except InvitedInterview.DoesNotExist:
                 pass
 
-        # Check if invited interview time has expired - hard cutoff
-        if chat.interview_type == Chat.INVITED and chat.is_time_expired():
-            # Auto-finalize if not already done
-            if not chat.is_finalized:
-                from .report_utils import generate_and_save_report
-                try:
-                    report = generate_and_save_report(chat, include_rushed_qualifier=True)
-                    chat.is_finalized = True
-                    chat.finalized_at = timezone.now()
-                    chat.save()
-
-                    # Update invitation status
-                    try:
-                        invitation = InvitedInterview.objects.get(chat=chat)
-                        if invitation.status != InvitedInterview.COMPLETED:
-                            invitation.status = InvitedInterview.COMPLETED
-                            invitation.completed_at = timezone.now()
-                            invitation.save()
-
-                            # Send completion notification to interviewer
-                            from .invitation_utils import send_completion_notification_email
-                            send_completion_notification_email(invitation)
-                    except InvitedInterview.DoesNotExist:
-                        pass
-                except Exception:
-                    # If report generation fails, still mark as finalized
-                    chat.is_finalized = True
-                    chat.finalized_at = timezone.now()
-                    chat.save()
-
             return JsonResponse({
                 'error': 'Interview time has expired',
-                'time_expired': True,
-                'interview_ended': True,
-                'finalized': True
+                'time_expired': True
             }, status=403)
 
         user_message = request.POST.get('message', '')
@@ -570,94 +565,29 @@ class ChatView(LoginRequiredMixin, UserPassesTestMixin, View):
         if not ai_available():
             return _ai_unavailable_json()
 
-        # For invited interviews, check if we should ask another question
-        # No new questions after T-5 minutes (graceful ending)
-        should_end_interview = False
-        if chat.interview_type == Chat.INVITED:
-            time_remaining = chat.time_remaining()
-            if time_remaining and time_remaining.total_seconds() < 300:  # Less than 5 mins
-                should_end_interview = True
-
-        if should_end_interview:
-            # Don't ask new questions - thank candidate and end
-            import textwrap
-            ai_message = textwrap.dedent("""\
-                Thank you for your response.
-
-                The interview time window is ending, so this concludes our interview.
-                Your responses will be reviewed and you'll receive feedback soon.
-
-                Thank you for your time!
-            """)
-
-            # Add final message
+        try:
+            # Auto-select model tier based on spending cap (Issue #14)
+            client, model, tier_info = get_client_and_model()
+            response = client.chat.completions.create(
+                model=model,
+                messages=new_messages,
+                max_tokens=MAX_TOKENS
+            )
+            # Track token usage for spending cap (Issue #15.10)
+            record_openai_usage(request.user, 'chat_view', response)
+            ai_message = response.choices[0].message.content
             new_messages.append({"role": "assistant", "content": ai_message})
+
             chat.messages = new_messages
-            chat.last_question_at = timezone.now()
             chat.save()
 
-            # Auto-finalize
-            if not chat.is_finalized:
-                from .report_utils import generate_and_save_report
-                try:
-                    report = generate_and_save_report(chat, include_rushed_qualifier=True)
-                    chat.is_finalized = True
-                    chat.finalized_at = timezone.now()
-                    chat.save()
-
-                    # Update invitation
-                    try:
-                        invitation = InvitedInterview.objects.get(chat=chat)
-                        if invitation.status != InvitedInterview.COMPLETED:
-                            invitation.status = InvitedInterview.COMPLETED
-                            invitation.completed_at = timezone.now()
-                            invitation.save()
-
-                            from .invitation_utils import send_completion_notification_email
-                            send_completion_notification_email(invitation)
-                    except InvitedInterview.DoesNotExist:
-                        pass
-                except Exception:
-                    # If report generation fails, still mark as finalized
-                    chat.is_finalized = True
-                    chat.finalized_at = timezone.now()
-                    chat.save()
-
+            return JsonResponse({'message': ai_message})
+        except Exception as e:
+            # Handle AI service exceptions gracefully
             return JsonResponse({
-                'role': 'assistant',
-                'content': ai_message,
-                'interview_ended': True,
-                'time_expired': True
-            })
-
-        # Normal flow - get AI response
-        response = get_openai_client().chat.completions.create(
-            model="gpt-4o",
-            messages=new_messages,
-            max_tokens=MAX_TOKENS
-        )
-        ai_message = response.choices[0].message.content
-        new_messages.append({"role": "assistant", "content": ai_message})
-
-        # Update last question time for invited interviews
-        if chat.interview_type == Chat.INVITED:
-            chat.last_question_at = timezone.now()
-
-        chat.messages = new_messages
-        chat.save()
-
-        # Phase 8: Check if all questions answered and auto-finalize
-        # NOTE: Only applies to practice interviews with key_questions
-        # Invited interviews use time-based finalization (T-5, hard cutoff, abandonment)
-        if chat.interview_type == Chat.PRACTICE and chat.all_questions_answered() and not chat.is_finalized:
-            # For practice interviews: just signal completion, let user finalize manually
-            return JsonResponse({
-                'message': ai_message,
-                'all_questions_answered': True,
-                'show_completion_message': True
-            })
-
-        return JsonResponse({'message': ai_message})
+                'error': 'AI service unavailable',
+                'message': str(e)
+            }, status=503)
 
 
 class EditChat(LoginRequiredMixin, UserPassesTestMixin, View):
@@ -669,8 +599,9 @@ class EditChat(LoginRequiredMixin, UserPassesTestMixin, View):
 
     def get(self, request, chat_id):
         chat = Chat.objects.get(id=chat_id)
-        owner_chats = Chat.objects.filter(owner=request.user)\
-            .order_by('-modified_date')
+        owner_chats = Chat.objects.filter(
+            owner=request.user
+        ).order_by('-modified_date')
 
         form = EditChatForm(initial=model_to_dict(chat), instance=chat)
 
@@ -692,10 +623,12 @@ class EditChat(LoginRequiredMixin, UserPassesTestMixin, View):
 
                 # replace difficulty in the messages
                 chat.difficulty = form.cleaned_data["difficulty"]
-                chat.messages[0]['content'] = \
-                    re.sub(r"<<(\d{1,2})>>",
-                           "<<"+str(chat.difficulty)+">>",
-                           chat.messages[0]['content'], 1)
+                chat.messages[0]['content'] = re.sub(
+                    r"<<(\d{1,2})>>",
+                    "<<" + str(chat.difficulty) + ">>",
+                    chat.messages[0]['content'],
+                    1
+                )
 
                 # print(chat.get_type_display())
 
@@ -703,7 +636,8 @@ class EditChat(LoginRequiredMixin, UserPassesTestMixin, View):
 
                 return redirect("chat-view", chat_id=chat.id)
 
-        # If 'update' not in request.POST or form is invalid, redirect to edit page
+        # If 'update' not in request.POST or form is invalid, redirect to edit
+        # page
         return redirect("chat-edit", chat_id=chat.id)
 
 
@@ -758,8 +692,9 @@ class KeyQuestionsView(LoginRequiredMixin, UserPassesTestMixin, View):
 
     def get(self, request, chat_id, question_id):
         chat = Chat.objects.get(id=chat_id)
-        owner_chats = Chat.objects.filter(owner=request.user)\
-            .order_by('-modified_date')
+        owner_chats = Chat.objects.filter(
+            owner=request.user
+        ).order_by('-modified_date')
         question = chat.key_questions[question_id]
 
         context = {}
@@ -888,11 +823,15 @@ class KeyQuestionsView(LoginRequiredMixin, UserPassesTestMixin, View):
         if not ai_available():
             return _ai_unavailable_json()
 
-        response = get_openai_client().chat.completions.create(
-            model="gpt-4o",
+        # Auto-select model tier based on spending cap (Issue #14)
+        client, model, tier_info = get_client_and_model()
+        response = client.chat.completions.create(
+            model=model,
             messages=ai_input,
             max_tokens=MAX_TOKENS
         )
+        # Track token usage for spending cap (Issue #15.10)
+        record_openai_usage(request.user, 'single_question', response)
         ai_message = response.choices[0].message.content
         print(ai_message)
 
@@ -911,8 +850,9 @@ class ResultsChat(LoginRequiredMixin, UserPassesTestMixin, View):
 
     def get(self, request, chat_id):
         chat = Chat.objects.get(id=chat_id)
-        owner_chats = Chat.objects.filter(owner=request.user)\
-            .order_by('-modified_date')
+        owner_chats = Chat.objects.filter(
+            owner=request.user
+        ).order_by('-modified_date')
 
         feedback_prompt = textwrap.dedent("""\
             Please provide constructive feedback to me about the
@@ -924,11 +864,15 @@ class ResultsChat(LoginRequiredMixin, UserPassesTestMixin, View):
         if not ai_available():
             ai_message = "AI features are currently unavailable."
         else:
-            response = get_openai_client().chat.completions.create(
-                model="gpt-4o",
+            # Auto-select model tier based on spending cap (Issue #14)
+            client, model, tier_info = get_client_and_model()
+            response = client.chat.completions.create(
+                model=model,
                 messages=input_messages,
                 max_tokens=MAX_TOKENS
             )
+            # Track token usage for spending cap (Issue #15.10)
+            record_openai_usage(request.user, 'results_chat', response)
             ai_message = response.choices[0].message.content
 
         # Check if this is an invited interview and get invitation details
@@ -943,6 +887,107 @@ class ResultsChat(LoginRequiredMixin, UserPassesTestMixin, View):
         context['chat'] = chat
         context['owner_chats'] = owner_chats
         context['feedback'] = ai_message
+        context['invitation'] = invitation
+
+        return render(request, os.path.join('chat', 'chat-results.html'),
+                      context)
+
+
+class ResultCharts(LoginRequiredMixin, UserPassesTestMixin, View):
+    def test_func(self):
+        # manually grab chat id from kwargs and process it
+        chat = Chat.objects.get(id=self.kwargs['chat_id'])
+
+        return self.request.user == chat.owner
+
+    def get(self, request, chat_id):
+        chat = Chat.objects.get(id=chat_id)
+        owner_chats = Chat.objects.filter(
+            owner=request.user
+        ).order_by('-modified_date')
+
+        scores_prompt = textwrap.dedent("""\
+            Based on the interview so far, please rate the interviewee in the
+            following categories from 0 to 100, and return the result as a JSON
+            object with integers only, in the following order that list only
+            the integers:
+
+            - Professionalism
+            - Subject Knowledge
+            - Clarity
+            - Overall
+
+            Example format:
+                8
+                7
+                9
+                6
+        """)
+        input_messages = chat.messages
+
+        input_messages.append({"role": "user", "content": scores_prompt})
+
+        if not ai_available():
+            professionalism, subject_knowledge, clarity, overall = [0, 0, 0, 0]
+        else:
+            # Auto-select model tier based on spending cap (Issue #14)
+            client, model, tier_info = get_client_and_model()
+            response = client.chat.completions.create(
+                model=model,
+                messages=input_messages,
+                max_tokens=MAX_TOKENS
+            )
+            # Track token usage for spending cap (Issue #15.10)
+            record_openai_usage(request.user, 'result_charts_scores', response)
+            ai_message = response.choices[0].message.content.strip()
+            scores = [int(line.strip())
+                      for line in ai_message.splitlines() if line.strip()
+                      .isdigit()]
+            if len(scores) == 4:
+                professionalism, subject_knowledge, clarity, overall = scores
+            else:
+                professionalism, subject_knowledge, clarity, overall = [
+                    0, 0, 0, 0]
+
+        context = {}
+        context['chat'] = chat
+        context['owner_chats'] = owner_chats
+
+        context['scores'] = {
+            'Professionalism': professionalism,
+            'Subject Knowledge': subject_knowledge,
+            'Clarity': clarity,
+            'Overall': overall
+        }
+        explain = textwrap.dedent("""\
+            Explain the reason for the following scores so that the user can
+            understand, do not include json object for scores IF NO response
+            was given since start of interview please tell them to start
+            interview
+        """)
+        input_messages.append({"role": "user", "content": explain})
+        if not ai_available():
+            ai_message = "AI features are currently unavailable."
+        else:
+            # Auto-select model tier based on spending cap (Issue #14)
+            client, model, tier_info = get_client_and_model()
+            response = client.chat.completions.create(
+                model=model,
+                messages=input_messages,
+                max_tokens=MAX_TOKENS
+            )
+            # Track token usage for spending cap (Issue #15.10)
+            record_openai_usage(request.user, 'result_charts_feedback', response)
+            ai_message = response.choices[0].message.content
+        context['feedback'] = ai_message
+
+        # Check if this is an invited interview and get invitation details
+        invitation = None
+        if chat.interview_type == Chat.INVITED:
+            try:
+                invitation = InvitedInterview.objects.get(chat=chat)
+            except InvitedInterview.DoesNotExist:
+                pass
         context['invitation'] = invitation
 
         return render(request, os.path.join('chat', 'chat-results.html'),
@@ -992,11 +1037,48 @@ def profile(request):
         status=RoleChangeRequest.PENDING
     ).exists()
 
+    # Get spending information (Issue #15.10)
+    spending_data = None
+    try:
+        from .spending_tracker_models import MonthlySpending
+        from .model_tier_manager import get_active_tier, TIER_TO_MODEL
+
+        current_month = MonthlySpending.get_current_month()
+        cap_status = current_month.get_cap_status()
+
+        # Get currently active tier based on spending
+        active_tier = get_active_tier()
+
+        spending_data = {
+            'total_cost': current_month.total_cost_usd,
+            'llm_cost': current_month.llm_cost_usd,
+            'tts_cost': current_month.tts_cost_usd,
+            'total_requests': current_month.total_requests,
+            'llm_requests': current_month.llm_requests,
+            'cap_status': cap_status,
+            'year': current_month.year,
+            'month': current_month.month,
+            # Tier breakdown
+            'premium_cost': current_month.premium_cost_usd,
+            'standard_cost': current_month.standard_cost_usd,
+            'fallback_cost': current_month.fallback_cost_usd,
+            'premium_requests': current_month.premium_requests,
+            'standard_requests': current_month.standard_requests,
+            'fallback_requests': current_month.fallback_requests,
+            # Active tier and available models
+            'active_tier': active_tier,
+            'available_models': TIER_TO_MODEL,
+        }
+    except Exception:
+        # Spending tracker not configured or error occurred
+        spending_data = None
+
     return render(request, 'profile.html', {
         'resumes': resumes,
         'job_listings': job_listings,
         'templates': templates,
-        'has_pending_request': has_pending_request
+        'has_pending_request': has_pending_request,
+        'spending_data': spending_data
     })
 
 
@@ -1024,7 +1106,8 @@ def view_user_profile(request, user_id):
     )
 
     if not has_permission:
-        return HttpResponseForbidden("You don't have permission to view this profile.")
+        return HttpResponseForbidden(
+            "You don't have permission to view this profile.")
 
     # Get user's resumes and job listings
     resumes = UploadedResume.objects.filter(user=profile_user)
@@ -1094,9 +1177,10 @@ def upload_file(request):
                     instance.file = None  # Don't save the raw file to /media
 
                     if file_type.extension == 'pdf':
-                        with tempfile.NamedTemporaryFile(delete=False,
-                                                         suffix=".pdf")\
-                                                            as temp_file:
+                        with tempfile.NamedTemporaryFile(
+                            delete=False,
+                            suffix=".pdf"
+                        ) as temp_file:
                             for chunk in uploaded_file.chunks():
                                 temp_file.write(chunk)
                             temp_file_path = temp_file.name
@@ -1105,9 +1189,10 @@ def upload_file(request):
 
                     elif file_type.extension == 'docx':
                         # Save temporarily and load using python-docx
-                        with tempfile.NamedTemporaryFile(delete=False,
-                                                         suffix=".docx")\
-                                                            as temp_file:
+                        with tempfile.NamedTemporaryFile(
+                            delete=False,
+                            suffix=".docx"
+                        ) as temp_file:
                             for chunk in uploaded_file.chunks():
                                 temp_file.write(chunk)
                             temp_file_path = temp_file.name
@@ -1119,7 +1204,8 @@ def upload_file(request):
 
                     instance.save()
 
-                    # Trigger AI parsing for resumes (Issue #48: "upload triggers parsing")
+                    # Trigger AI parsing for resumes (Issue #48: "upload
+                    # triggers parsing")
                     if instance.__class__.__name__ == 'UploadedResume':
                         if ai_available():
                             try:
@@ -1128,19 +1214,24 @@ def upload_file(request):
                                 instance.save()
 
                                 # Parse the resume
-                                parsed_data = parse_resume_with_ai(instance.content)
+                                parsed_data = parse_resume_with_ai(
+                                    instance.content)
 
                                 # Save parsed data
                                 instance.skills = parsed_data.get('skills', [])
-                                instance.experience = parsed_data.get('experience', [])
-                                instance.education = parsed_data.get('education', [])
+                                instance.experience = parsed_data.get(
+                                    'experience', [])
+                                instance.education = parsed_data.get(
+                                    'education', [])
                                 instance.parsing_status = 'success'
                                 instance.parsed_at = now()
                                 instance.save()
 
-                                messages.success(request, "Resume uploaded and parsed successfully!")
+                                messages.success(
+                                    request, "Resume uploaded and parsed successfully!")
                             except Exception as e:
-                                # Save error (sanitize to prevent API key exposure)
+                                # Save error (sanitize to prevent API key
+                                # exposure)
                                 error_msg = str(e)
                                 # Sanitize any potential API key references
                                 if "api" in error_msg.lower() and "key" in error_msg.lower():
@@ -1148,16 +1239,19 @@ def upload_file(request):
                                 instance.parsing_status = 'error'
                                 instance.parsing_error = error_msg
                                 instance.save()
-                                messages.warning(request, f"Resume uploaded but parsing failed: {error_msg}")
+                                messages.warning(
+                                    request, f"Resume uploaded but parsing failed: {error_msg}")
                         else:
                             # AI unavailable
                             instance.parsing_status = 'error'
                             instance.parsing_error = "AI service unavailable"
                             instance.save()
-                            messages.warning(request, "Resume uploaded but AI parsing is currently unavailable.")
+                            messages.warning(
+                                request, "Resume uploaded but AI parsing is currently unavailable.")
                     else:
                         # Not a resume (job listing), just show success
-                        messages.success(request, "File uploaded successfully!")
+                        messages.success(
+                            request, "File uploaded successfully!")
 
                     return redirect('document-list')
 
@@ -1190,8 +1284,8 @@ def upload_file(request):
 def edit_resume(request, resume_id):
     # Adjust model logic as needed (for resumes or job listings)
     document = get_object_or_404(UploadedResume,
-                                  id=resume_id,
-                                  user=request.user)
+                                 id=resume_id,
+                                 user=request.user)
 
     if request.method == 'POST':
         form = DocumentEditForm(request.POST, instance=document)
@@ -1369,9 +1463,11 @@ def recommend_template_for_job(job_listing):
         score = 0
 
         # Match tags (skills) - worth up to 50 points
-        template_tags = set(tag.name.lower().replace('#', '') for tag in template.tags.all())
+        template_tags = set(tag.name.lower().replace('#', '')
+                            for tag in template.tags.all())
         if template_tags:
-            job_skills = set(skill.lower() for skill in job_listing.required_skills)
+            job_skills = set(skill.lower()
+                             for skill in job_listing.required_skills)
             matching_tags = template_tags & job_skills
             score += len(matching_tags) * 10  # 10 points per matching skill
 
@@ -1518,18 +1614,10 @@ class DocumentList(LoginRequiredMixin, View):
 
 # Exportable Report Views
 
-class FinalizeInterviewView(LoginRequiredMixin, UserPassesTestMixin, View):
+class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
     """
-    View to finalize an interview and generate its ExportableReport.
-
-    This view is called when a user is ready to finalize their interview.
-    Once finalized:
-    - An ExportableReport is generated using AI analysis (ONCE)
-    - The chat is marked as finalized (is_finalized=True)
-    - For invited interviews, the invitation status is updated to COMPLETED
-    - The report cannot be regenerated (immutable)
-
-    Related to: Report Generation Refactor (Phase 3)
+    View to generate an ExportableReport from a Chat instance.
+    This view analyzes the chat data and creates a structured report.
     """
 
     def test_func(self):
@@ -1538,46 +1626,272 @@ class FinalizeInterviewView(LoginRequiredMixin, UserPassesTestMixin, View):
         return self.request.user == chat.owner
 
     def post(self, request, chat_id):
-        """Finalize the interview and generate the report"""
+        """Generate or update the exportable report for a chat"""
         chat = get_object_or_404(Chat, id=chat_id)
 
-        # Check if already finalized
-        if chat.is_finalized:
-            messages.info(request, 'This interview has already been finalized.')
-            return redirect('export_report', chat_id=chat_id)
+        # Delete existing report to force fresh generation
+        ExportableReport.objects.filter(chat=chat).delete()
 
-        # Check if report already exists (defensive - shouldn't happen)
-        existing_report = ExportableReport.objects.filter(chat=chat).first()
-        if existing_report:
-            messages.info(request, 'A report already exists for this interview.')
-            return redirect('export_report', chat_id=chat_id)
+        # Create a new report
+        report = ExportableReport.objects.create(chat=chat)
 
-        # Generate report using shared utility (makes 4 AI calls)
-        from .report_utils import generate_and_save_report
-        report = generate_and_save_report(chat)
+        # Generate scores using AI (same approach as ResultCharts view)
+        scores = self._extract_scores_from_chat(chat)
 
-        # Mark chat as finalized
-        chat.is_finalized = True
-        chat.finalized_at = timezone.now()
-        chat.save()
+        # Update report fields
+        report.professionalism_score = scores.get('Professionalism', 0)
+        report.subject_knowledge_score = scores.get('Subject Knowledge', 0)
+        report.clarity_score = scores.get('Clarity', 0)
+        report.overall_score = scores.get('Overall', 0)
 
-        # For invited interviews: Update invitation status and send notification
-        if chat.interview_type == Chat.INVITED:
-            try:
-                invitation = InvitedInterview.objects.get(chat=chat)
-                if invitation.status != InvitedInterview.COMPLETED:
-                    invitation.status = InvitedInterview.COMPLETED
-                    invitation.completed_at = timezone.now()
-                    invitation.save()
+        # Extract feedback text using AI
+        report.feedback_text = self._extract_feedback_from_chat(chat)
 
-                    # Send completion notification to interviewer
-                    from .invitation_utils import send_completion_notification_email
-                    send_completion_notification_email(invitation)
-            except InvitedInterview.DoesNotExist:
-                pass
+        # Extract rationales for each score component
+        rationales = self._extract_rationales_from_chat(chat, scores)
+        report.professionalism_rationale = rationales.get(
+            'professionalism', '')
+        report.subject_knowledge_rationale = rationales.get(
+            'subject_knowledge', '')
+        report.clarity_rationale = rationales.get('clarity', '')
+        report.overall_rationale = rationales.get('overall', '')
 
-        messages.success(request, 'Interview finalized and report generated successfully!')
+        # Calculate statistics
+        chat_messages = chat.messages
+        user_messages = [
+            msg for msg in chat_messages if msg.get('role') == 'user']
+        assistant_messages = [msg for msg in chat_messages
+                              if msg.get('role') == 'assistant']
+
+        report.total_questions_asked = len(assistant_messages)
+        report.total_responses_given = len(user_messages)
+
+        report.save()
+
+        messages.success(request, 'Report generated successfully!')
         return redirect('export_report', chat_id=chat_id)
+
+    def _extract_scores_from_chat(self, chat):
+        """
+        Generate performance scores from chat messages using AI.
+        This uses the same approach as ResultCharts view.
+        """
+        scores_prompt = textwrap.dedent("""\
+            Based on the interview so far, please rate the interviewee in the
+            following categories from 0 to 100, and return the result as a JSON
+            object with integers only, in the following order that list only
+            the integers:
+
+            - Professionalism
+            - Subject Knowledge
+            - Clarity
+            - Overall
+
+            Example format:
+                8
+                7
+                9
+                6
+        """)
+        input_messages = list(chat.messages)
+        input_messages.append({"role": "user", "content": scores_prompt})
+
+        if not ai_available():
+            professionalism, subject_knowledge, clarity, overall = [0, 0, 0, 0]
+        else:
+            try:
+                # Auto-select model tier based on spending cap (Issue #14)
+                client, model, tier_info = get_client_and_model()
+                response = client.chat.completions.create(
+                    model=model,
+                    messages=input_messages,
+                    max_tokens=MAX_TOKENS
+                )
+                # Track token usage for spending cap (Issue #15.10)
+                record_openai_usage(chat.owner, 'generate_report_scores', response)
+                ai_message = response.choices[0].message.content.strip()
+                scores = [int(line.strip())
+                          for line in ai_message.splitlines() if line.strip()
+                          .isdigit()]
+                if len(scores) == 4:
+                    professionalism, subject_knowledge, clarity, overall = scores
+                else:
+                    professionalism, subject_knowledge, clarity, overall = [
+                        0, 0, 0, 0]
+            except Exception:
+                professionalism, subject_knowledge, clarity, overall = [
+                    0, 0, 0, 0]
+
+        return {
+            'Professionalism': professionalism,
+            'Subject Knowledge': subject_knowledge,
+            'Clarity': clarity,
+            'Overall': overall
+        }
+
+    def _extract_feedback_from_chat(self, chat):
+        """Generate AI feedback text from chat messages"""
+        explain_prompt = textwrap.dedent("""\
+            Provide a comprehensive evaluation of the interviewee's performance.
+            Include specific strengths, areas for improvement, and overall assessment.
+            Focus on professionalism, subject knowledge, and communication clarity.
+            If no response was given since start of interview, please tell them to start the interview.
+        """)
+
+        input_messages = list(chat.messages)
+        input_messages.append({"role": "user", "content": explain_prompt})
+
+        if not ai_available():
+            return "AI features are currently unavailable."
+
+        try:
+            # Auto-select model tier based on spending cap (Issue #14)
+            client, model, tier_info = get_client_and_model()
+            response = client.chat.completions.create(
+                model=model,
+                messages=input_messages,
+                max_tokens=MAX_TOKENS
+            )
+            # Track token usage for spending cap (Issue #15.10)
+            record_openai_usage(chat.owner, 'generate_report_feedback', response)
+            return response.choices[0].message.content.strip()
+        except Exception:
+            return "Unable to generate feedback at this time."
+
+    def _extract_rationales_from_chat(self, chat, scores):
+        """
+        Generate rationales for each score component using AI.
+        Returns a dict with keys: professionalism, subject_knowledge, clarity, overall
+        """
+        rationale_prompt = textwrap.dedent(f"""\
+            Based on the interview, please provide a brief rationale for each of the following scores.
+            Format your response exactly as shown below:
+
+            Professionalism: [Your explanation for the professionalism score of {scores.get('Professionalism', 0)}]
+
+            Subject Knowledge: [Your explanation for the subject knowledge score of {scores.get('Subject Knowledge', 0)}]
+
+            Clarity: [Your explanation for the clarity score of {scores.get('Clarity', 0)}]
+
+            Overall: [Your explanation for the overall score of {scores.get('Overall', 0)}]
+        """)
+
+        input_messages = list(chat.messages)
+        input_messages.append({"role": "user", "content": rationale_prompt})
+
+        if not ai_available():
+            return {
+                'professionalism': 'AI features are currently unavailable.',
+                'subject_knowledge': 'AI features are currently unavailable.',
+                'clarity': 'AI features are currently unavailable.',
+                'overall': 'AI features are currently unavailable.'
+            }
+
+        try:
+            # Auto-select model tier based on spending cap (Issue #14)
+            client, model, tier_info = get_client_and_model()
+            response = client.chat.completions.create(
+                model=model,
+                messages=input_messages,
+                max_tokens=MAX_TOKENS
+            )
+            # Track token usage for spending cap (Issue #15.10)
+            record_openai_usage(chat.owner, 'generate_report_rationales', response)
+            rationale_text = response.choices[0].message.content.strip()
+
+            # Parse the rationale text to extract each component
+            rationales = {
+                'professionalism': '',
+                'subject_knowledge': '',
+                'clarity': '',
+                'overall': ''
+            }
+
+            # Split by the section headers and extract content
+            current_section = None
+            current_text = []
+
+            for line in rationale_text.split('\n'):
+                line = line.strip()
+                if not line:
+                    continue
+
+                if line.startswith('Professionalism:'):
+                    if current_section and current_text:
+                        rationales[current_section] = ' '.join(
+                            current_text).strip()
+                    current_section = 'professionalism'
+                    current_text = [line.split(':', 1)[1].strip()]
+                elif line.startswith('Subject Knowledge:'):
+                    if current_section and current_text:
+                        rationales[current_section] = ' '.join(
+                            current_text).strip()
+                    current_section = 'subject_knowledge'
+                    current_text = [line.split(':', 1)[1].strip()]
+                elif line.startswith('Clarity:'):
+                    if current_section and current_text:
+                        rationales[current_section] = ' '.join(
+                            current_text).strip()
+                    current_section = 'clarity'
+                    current_text = [line.split(':', 1)[1].strip()]
+                elif line.startswith('Overall:'):
+                    if current_section and current_text:
+                        rationales[current_section] = ' '.join(
+                            current_text).strip()
+                    current_section = 'overall'
+                    current_text = [line.split(':', 1)[1].strip()]
+                elif current_section:
+                    # This is a continuation of the current section
+                    current_text.append(line)
+
+            # Don't forget the last section
+            if current_section and current_text:
+                rationales[current_section] = ' '.join(current_text).strip()
+
+            return rationales
+
+        except Exception:
+            # If rationale generation fails, provide fallback text
+            return {
+                'professionalism': 'Unable to generate rationale at this time.',
+                'subject_knowledge': 'Unable to generate rationale at this time.',
+                'clarity': 'Unable to generate rationale at this time.',
+                'overall': 'Unable to generate rationale at this time.'}
+
+    def _extract_question_responses(self, chat):
+        """
+        Extract question-answer pairs from the chat messages.
+        Returns a list of dicts with question, answer, score, feedback.
+        """
+        chat_messages = chat.messages
+        qa_pairs = []
+
+        # Iterate through messages to find Q&A patterns
+        for i, msg in enumerate(chat_messages):
+            if msg.get('role') == 'assistant' and i + 1 < len(chat_messages):
+                question = msg.get('content', '')
+                # Check if next message is a user response
+                if chat_messages[i + 1].get('role') == 'user':
+                    answer = chat_messages[i + 1].get('content', '')
+
+                    qa_pair = {
+                        'question': question[:500],  # Truncate long questions
+                        'answer': answer[:500],  # Truncate long answers
+                    }
+
+                    # Try to find feedback for this Q&A if it exists
+                    if (i + 2 < len(chat_messages) and
+                            chat_messages[i + 2].get('role') == 'assistant'):
+                        feedback_msg = chat_messages[i + 2].get('content', '')
+                        # Look for score in feedback
+                        score_match = re.search(r'(\d+)/10', feedback_msg)
+                        if score_match:
+                            qa_pair['score'] = int(score_match.group(1))
+                            qa_pair['feedback'] = feedback_msg[:300]
+
+                    qa_pairs.append(qa_pair)
+
+        return qa_pairs
 
 
 class ExportReportView(LoginRequiredMixin, UserPassesTestMixin, View):
@@ -1587,22 +1901,9 @@ class ExportReportView(LoginRequiredMixin, UserPassesTestMixin, View):
     """
 
     def test_func(self):
-        """Verify that the user owns the chat or is the interviewer"""
+        """Verify that the user owns the chat"""
         chat = get_object_or_404(Chat, id=self.kwargs['chat_id'])
-
-        # Allow chat owner (candidate)
-        if self.request.user == chat.owner:
-            return True
-
-        # Allow interviewer for invited interviews
-        if chat.interview_type == Chat.INVITED:
-            try:
-                invitation = InvitedInterview.objects.get(chat=chat)
-                return self.request.user == invitation.interviewer
-            except InvitedInterview.DoesNotExist:
-                pass
-
-        return False
+        return self.request.user == chat.owner
 
     def get(self, request, chat_id):
         """Display the exportable report"""
@@ -1612,21 +1913,12 @@ class ExportReportView(LoginRequiredMixin, UserPassesTestMixin, View):
             report = ExportableReport.objects.get(chat=chat)
         except ExportableReport.DoesNotExist:
             messages.warning(request,
-                           'No report exists yet. Generating one now...')
+                             'No report exists yet. Generating one now...')
             return redirect('generate_report', chat_id=chat_id)
-
-        # Get invitation if this is an invited interview
-        invitation = None
-        if chat.interview_type == Chat.INVITED:
-            try:
-                invitation = InvitedInterview.objects.get(chat=chat)
-            except InvitedInterview.DoesNotExist:
-                pass
 
         context = {
             'chat': chat,
             'report': report,
-            'invitation': invitation,
         }
         return render(request, 'reports/export-report.html', context)
 
@@ -1637,22 +1929,9 @@ class DownloadPDFReportView(LoginRequiredMixin, UserPassesTestMixin, View):
     """
 
     def test_func(self):
-        """Verify that the user owns the chat or is the interviewer"""
+        """Verify that the user owns the chat"""
         chat = get_object_or_404(Chat, id=self.kwargs['chat_id'])
-
-        # Allow chat owner (candidate)
-        if self.request.user == chat.owner:
-            return True
-
-        # Allow interviewer for invited interviews
-        if chat.interview_type == Chat.INVITED:
-            try:
-                invitation = InvitedInterview.objects.get(chat=chat)
-                return self.request.user == invitation.interviewer
-            except InvitedInterview.DoesNotExist:
-                pass
-
-        return False
+        return self.request.user == chat.owner
 
     def get(self, request, chat_id):
         """Generate and download PDF report"""
@@ -1661,7 +1940,8 @@ class DownloadPDFReportView(LoginRequiredMixin, UserPassesTestMixin, View):
         try:
             report = ExportableReport.objects.get(chat=chat)
         except ExportableReport.DoesNotExist:
-            messages.error(request, 'No report exists. Please generate one first.')
+            messages.error(
+                request, 'No report exists. Please generate one first.')
             return redirect('chat-results', chat_id=chat_id)
 
         # Generate PDF
@@ -1685,22 +1965,9 @@ class DownloadCSVReportView(LoginRequiredMixin, UserPassesTestMixin, View):
     """
 
     def test_func(self):
-        """Verify that the user owns the chat or is the interviewer"""
+        """Verify that the user owns the chat"""
         chat = get_object_or_404(Chat, id=self.kwargs['chat_id'])
-
-        # Allow chat owner (candidate)
-        if self.request.user == chat.owner:
-            return True
-
-        # Allow interviewer for invited interviews
-        if chat.interview_type == Chat.INVITED:
-            try:
-                invitation = InvitedInterview.objects.get(chat=chat)
-                return self.request.user == invitation.interviewer
-            except InvitedInterview.DoesNotExist:
-                pass
-
-        return False
+        return self.request.user == chat.owner
 
     def get(self, request, chat_id):
         """Generate and download CSV report"""
@@ -1709,7 +1976,8 @@ class DownloadCSVReportView(LoginRequiredMixin, UserPassesTestMixin, View):
         try:
             report = ExportableReport.objects.get(chat=chat)
         except ExportableReport.DoesNotExist:
-            messages.error(request, 'No report exists. Please generate one first.')
+            messages.error(
+                request, 'No report exists. Please generate one first.')
             return redirect('chat-results', chat_id=chat_id)
 
         # Create CSV in memory
@@ -1723,7 +1991,8 @@ class DownloadCSVReportView(LoginRequiredMixin, UserPassesTestMixin, View):
         # Write Interview Details section
         writer.writerow(['Interview Details'])
         writer.writerow(['Title', chat.title])
-        writer.writerow(['Generated At', report.generated_at.strftime('%Y-%m-%d %H:%M:%S')])
+        writer.writerow(['Generated At',
+                         report.generated_at.strftime('%Y-%m-%d %H:%M:%S')])
         writer.writerow(['Difficulty', f'{chat.difficulty}/10'])
 
         # Add job listing and resume if present
@@ -1734,7 +2003,8 @@ class DownloadCSVReportView(LoginRequiredMixin, UserPassesTestMixin, View):
 
         # Add interview duration if present
         if report.interview_duration_minutes:
-            writer.writerow(['Duration', f'{report.interview_duration_minutes} minutes'])
+            writer.writerow(
+                ['Duration', f'{report.interview_duration_minutes} minutes'])
 
         writer.writerow([''])
 
@@ -1807,8 +2077,10 @@ class DownloadCSVReportView(LoginRequiredMixin, UserPassesTestMixin, View):
 
         # Write statistics
         writer.writerow(['Statistics'])
-        writer.writerow(['Total Questions Asked', report.total_questions_asked])
-        writer.writerow(['Total Responses Given', report.total_responses_given])
+        writer.writerow(
+            ['Total Questions Asked', report.total_questions_asked])
+        writer.writerow(
+            ['Total Responses Given', report.total_responses_given])
 
         # Create response
         csv_content = output.getvalue()
@@ -2049,7 +2321,8 @@ def edit_template(request, template_id):
     )
 
     if request.method == 'POST':
-        form = InterviewTemplateForm(request.POST, instance=template, user=request.user)
+        form = InterviewTemplateForm(
+            request.POST, instance=template, user=request.user)
         if form.is_valid():
             form.save()
             messages.success(
@@ -2138,10 +2411,8 @@ def add_section(request, template_id):
 
         if new_total_weight > 100:
             messages.error(
-                request,
-                f'Cannot add section: Total weight would be {new_total_weight}%, '
-                f'which exceeds 100%. Current total: {current_total_weight}%'
-            )
+                request, f'Cannot add section: Total weight would be {new_total_weight}%, '
+                f'which exceeds 100%. Current total: {current_total_weight}%')
             return redirect('template_detail', template_id=template.id)
 
         # Determine order (append to end)
@@ -2203,11 +2474,9 @@ def edit_section(request, template_id, section_id):
         # Find and update section
         sections = template.sections if template.sections else []
         section_found = False
-        old_weight = 0
 
         for section in sections:
             if section.get('id') == section_id:
-                old_weight = section.get('weight', 0)
                 section_found = True
                 break
 
@@ -2224,10 +2493,8 @@ def edit_section(request, template_id, section_id):
 
         if new_total_weight > 100:
             messages.error(
-                request,
-                f'Cannot update section: Total weight would be {new_total_weight}%, '
-                f'which exceeds 100%. Current total (excluding this section): {current_total_weight}%'
-            )
+                request, f'Cannot update section: Total weight would be {new_total_weight}%, '
+                f'which exceeds 100%. Current total (excluding this section): {current_total_weight}%')
             return redirect('template_detail', template_id=template.id)
 
         # Update the section
@@ -2307,7 +2574,8 @@ def request_data_export(request):
         # Check for existing pending/processing requests
         existing = DataExportRequest.objects.filter(
             user=request.user,
-            status__in=[DataExportRequest.PENDING, DataExportRequest.PROCESSING]
+            status__in=[DataExportRequest.PENDING,
+                        DataExportRequest.PROCESSING]
         ).first()
 
         if existing:
@@ -2469,7 +2737,8 @@ def confirm_account_deletion(request):
     # Verify password
     password = request.POST.get('password', '')
     if not request.user.check_password(password):
-        messages.error(request, 'Incorrect password. Account deletion cancelled.')
+        messages.error(
+            request, 'Incorrect password. Account deletion cancelled.')
         return redirect('request_account_deletion')
 
     # Create deletion audit record
@@ -2514,7 +2783,8 @@ def user_data_settings(request):
         ).order_by('-requested_at')[:3],
         'has_pending_export': DataExportRequest.objects.filter(
             user=request.user,
-            status__in=[DataExportRequest.PENDING, DataExportRequest.PROCESSING]
+            status__in=[DataExportRequest.PENDING,
+                        DataExportRequest.PROCESSING]
         ).exists(),
     }
 
@@ -2574,7 +2844,9 @@ def invitation_create(request, template_id=None):
                 )
 
             # Redirect to confirmation page
-            return redirect('invitation_confirmation', invitation_id=invitation.id)
+            return redirect(
+                'invitation_confirmation',
+                invitation_id=invitation.id)
     else:
         # GET request - show form
         form = InvitationCreationForm(
@@ -2606,7 +2878,6 @@ def invitation_confirmation(request, invitation_id):
     Show confirmation page after successfully creating an invitation.
 
     Related to Issue #9 (Interview Confirmation Page).
-    Related to Phase 9 (Google Calendar Integration).
     """
     # Get invitation and verify ownership
     invitation = get_object_or_404(
@@ -2615,15 +2886,10 @@ def invitation_confirmation(request, invitation_id):
         interviewer=request.user
     )
 
-    # Generate Google Calendar URL for interviewer
-    from .invitation_utils import get_google_calendar_url
-    google_calendar_url = get_google_calendar_url(invitation)
-
     context = {
         'invitation': invitation,
         'join_url': invitation.get_join_url(),
         'window_end': invitation.get_window_end(),
-        'google_calendar_url': google_calendar_url,
     }
 
     return render(request, 'invitations/invitation_confirmation.html', context)
@@ -2720,7 +2986,8 @@ def invitation_review(request, invitation_id):
             from .invitation_utils import send_review_notification_email
             send_review_notification_email(invitation)
 
-            messages.success(request, 'Review completed! Notification sent to candidate.')
+            messages.success(
+                request, 'Review completed! Notification sent to candidate.')
         else:
             messages.success(request, 'Feedback saved.')
 
@@ -2792,7 +3059,8 @@ def invited_interview_detail(request, invitation_id):
 
     # Verify user is the invited candidate
     if request.user.email.lower() != invitation.candidate_email.lower():
-        messages.error(request, 'You do not have permission to access this interview.')
+        messages.error(
+            request, 'You do not have permission to access this interview.')
         return redirect('index')
 
     # Calculate time-related info
@@ -2823,7 +3091,10 @@ def invited_interview_detail(request, invitation_id):
         'now': now,
     }
 
-    return render(request, 'invitations/invited_interview_detail.html', context)
+    return render(
+        request,
+        'invitations/invited_interview_detail.html',
+        context)
 
 
 @login_required
@@ -2860,7 +3131,8 @@ def candidate_invitations(request):
         # Custom sorting for 'all' view:
         # Group by status with specific order, then sort within each group
         def sort_key(invitation):
-            # Status priority order: pending=1, completed=2, reviewed=3, expired=4
+            # Status priority order: pending=1, completed=2, reviewed=3,
+            # expired=4
             status_priority = {
                 InvitedInterview.PENDING: 1,
                 InvitedInterview.COMPLETED: 2,
@@ -2941,7 +3213,8 @@ def start_invited_interview(request, invitation_id):
 
     # Verify user is the invited candidate
     if request.user.email.lower() != invitation.candidate_email.lower():
-        messages.error(request, 'You do not have permission to start this interview.')
+        messages.error(
+            request, 'You do not have permission to start this interview.')
         return redirect('index')
 
     # Check if already started
@@ -2961,7 +3234,9 @@ def start_invited_interview(request, invitation_id):
                 request,
                 f'This interview cannot be started until {invitation.scheduled_time.strftime("%B %d, %Y at %I:%M %p")}.'
             )
-        return redirect('invited_interview_detail', invitation_id=invitation.id)
+        return redirect(
+            'invited_interview_detail',
+            invitation_id=invitation.id)
 
     # Create Chat session with time tracking (Issue #138)
     now = timezone.now()
@@ -3041,13 +3316,20 @@ def start_invited_interview(request, invitation_id):
     # Get AI's initial greeting
     if not ai_available():
         messages.error(request, "AI features are disabled on this server.")
-        ai_message = "Hello! I'm your interviewer today. Unfortunately, AI features are currently disabled. Please contact support."
+        ai_message = (
+            "Hello! I'm your interviewer today. Unfortunately, AI "
+            "features are currently disabled. Please contact support."
+        )
     else:
-        response = get_openai_client().chat.completions.create(
-            model="gpt-4o",
+        # Auto-select model tier based on spending cap (Issue #14)
+        client, model, tier_info = get_client_and_model()
+        response = client.chat.completions.create(
+            model=model,
             messages=chat.messages,
             max_tokens=MAX_TOKENS
         )
+        # Track token usage for spending cap (Issue #15.10)
+        record_openai_usage(request.user, 'start_invited_interview', response)
         ai_message = response.choices[0].message.content
 
     chat.messages.append(

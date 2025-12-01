@@ -3,18 +3,18 @@ Extended comprehensive tests for views.py to maximize coverage
 """
 from django.test import TestCase, Client
 from django.urls import reverse
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User
 from active_interview_app.models import (
     UploadedResume,
     UploadedJobListing,
     Chat
 )
 from django.core.files.uploadedfile import SimpleUploadedFile
-from unittest.mock import patch, MagicMock, Mock
+from unittest.mock import patch, Mock
 from unittest import skip
 import json
-import tempfile
-import os
+from .test_credentials import TEST_PASSWORD
+from .test_utils import create_mock_openai_response
 
 
 class RegisterViewTest(TestCase):
@@ -63,10 +63,10 @@ class UploadFileViewTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.client = Client()
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
     @patch('active_interview_app.views.filetype')
     @patch('active_interview_app.views.pymupdf4llm')
@@ -104,7 +104,11 @@ class UploadFileViewTest(TestCase):
     @patch('active_interview_app.views.filetype')
     @patch('active_interview_app.views.Document')
     @patch('active_interview_app.views.md')
-    def test_upload_docx_file(self, mock_md, mock_document_class, mock_filetype):
+    def test_upload_docx_file(
+            self,
+            mock_md,
+            mock_document_class,
+            mock_filetype):
         """Test uploading a DOCX file"""
         # Mock filetype detection
         mock_file_type = Mock()
@@ -170,7 +174,8 @@ class UploadFileViewTest(TestCase):
         self.assertRedirects(response, reverse('document-list'))
 
         # Resume should NOT be created
-        self.assertFalse(UploadedResume.objects.filter(title='Test TXT File').exists())
+        self.assertFalse(UploadedResume.objects.filter(
+            title='Test TXT File').exists())
 
     def test_upload_file_get_request(self):
         """Test GET request to upload_file returns form"""
@@ -186,10 +191,10 @@ class UploadedJobListingViewTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.client = Client()
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
     def test_post_valid_job_listing(self):
         """Test POST with valid job listing text"""
@@ -205,7 +210,8 @@ class UploadedJobListingViewTest(TestCase):
 
         # Job listing should be created
         job_listing = UploadedJobListing.objects.get(title='Software Engineer')
-        self.assertEqual(job_listing.content, 'Software Engineer position available')
+        self.assertEqual(job_listing.content,
+                         'Software Engineer position available')
         self.assertEqual(job_listing.user, self.user)
 
     def test_post_empty_text(self):
@@ -221,7 +227,8 @@ class UploadedJobListingViewTest(TestCase):
         self.assertRedirects(response, reverse('document-list'))
 
         # Job listing should NOT be created
-        self.assertFalse(UploadedJobListing.objects.filter(title='Empty Job').exists())
+        self.assertFalse(UploadedJobListing.objects.filter(
+            title='Empty Job').exists())
 
     def test_post_empty_title(self):
         """Test POST with empty title field"""
@@ -236,7 +243,8 @@ class UploadedJobListingViewTest(TestCase):
         self.assertRedirects(response, reverse('document-list'))
 
         # Job listing should NOT be created
-        self.assertFalse(UploadedJobListing.objects.filter(content='Some job content').exists())
+        self.assertFalse(UploadedJobListing.objects.filter(
+            content='Some job content').exists())
 
 
 class UploadedResumeViewAPITest(TestCase):
@@ -245,13 +253,13 @@ class UploadedResumeViewAPITest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.client = Client()
 
     def test_get_resumes_authenticated(self):
         """Test GET request returns user's resumes"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
         # Create some resumes
         UploadedResume.objects.create(
@@ -286,7 +294,7 @@ class ChatListViewTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.client = Client()
 
@@ -297,7 +305,7 @@ class ChatListViewTest(TestCase):
 
     def test_chat_list_shows_user_chats(self):
         """Test chat list shows only user's chats"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
         # Create chats for user
         job_listing = UploadedJobListing.objects.create(
@@ -322,7 +330,7 @@ class ChatListViewTest(TestCase):
         # Create chat for other user
         other_user = User.objects.create_user(
             username='otheruser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         other_job = UploadedJobListing.objects.create(
             user=other_user,
@@ -346,8 +354,198 @@ class ChatListViewTest(TestCase):
         self.assertIn(chat2, chats)
 
 
-# Tests for ResultsChatViewTest and ResultChartsViewTest removed - views deleted in Phase 3
-# See: temp/COMPLETED_PHASES_1-3.md for details
+class ResultsChatViewTest(TestCase):
+    """Extended tests for ResultsChat view"""
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='testuser',
+            password=TEST_PASSWORD
+        )
+        self.job_listing = UploadedJobListing.objects.create(
+            user=self.user,
+            content='Job content',
+            filename='job.txt'
+        )
+        self.chat = Chat.objects.create(
+            owner=self.user,
+            title='Test Chat',
+            messages=[
+                {"role": "system", "content": "You are an interviewer"},
+                {"role": "assistant", "content": "Hello"},
+                {"role": "user", "content": "Hi there"}
+            ],
+            job_listing=self.job_listing
+        )
+        self.client = Client()
+
+    def test_results_chat_requires_login(self):
+        """Test results chat requires authentication"""
+        response = self.client.get(
+            reverse('chat-results', args=[self.chat.id])
+        )
+        self.assertEqual(response.status_code, 302)
+
+    def test_results_chat_requires_ownership(self):
+        """Test user can only view their own chat results"""
+        User.objects.create_user(
+            username='otheruser',
+            password=TEST_PASSWORD
+        )
+        self.client.login(username='otheruser', password=TEST_PASSWORD)
+
+        response = self.client.get(
+            reverse('chat-results', args=[self.chat.id])
+        )
+        self.assertEqual(response.status_code, 403)
+
+    @patch('active_interview_app.views.ai_available')
+    def test_results_chat_ai_unavailable(self, mockai_available):
+        """Test results chat when AI is unavailable"""
+        mockai_available.return_value = False
+        self.client.login(username='testuser', password=TEST_PASSWORD)
+
+        response = self.client.get(
+            reverse('chat-results', args=[self.chat.id])
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('feedback', response.context)
+        self.assertEqual(response.context['feedback'],
+                         'AI features are currently unavailable.')
+
+    @patch('active_interview_app.views.get_client_and_model')
+    @patch('active_interview_app.views.ai_available')
+    def test_results_chatai_available(self, mockai_available, mock_get_client):
+        """Test results chat when AI is available"""
+        mockai_available.return_value = True
+
+        # Mock OpenAI response
+        mock_client = Mock()
+        mock_response = create_mock_openai_response("Great interview performance!")
+        mock_client.chat.completions.create.return_value = mock_response
+        mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
+
+        self.client.login(username='testuser', password=TEST_PASSWORD)
+
+        response = self.client.get(
+            reverse('chat-results', args=[self.chat.id])
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('feedback', response.context)
+        self.assertEqual(response.context['feedback'],
+                         'Great interview performance!')
+
+
+class ResultChartsViewTest(TestCase):
+    """Extended tests for ResultCharts view"""
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='testuser',
+            password=TEST_PASSWORD
+        )
+        self.job_listing = UploadedJobListing.objects.create(
+            user=self.user,
+            content='Job content',
+            filename='job.txt'
+        )
+        self.chat = Chat.objects.create(
+            owner=self.user,
+            title='Test Chat',
+            messages=[
+                {"role": "system", "content": "You are an interviewer"},
+                {"role": "assistant", "content": "Hello"},
+                {"role": "user", "content": "Hi there"}
+            ],
+            job_listing=self.job_listing
+        )
+        self.client = Client()
+
+    @skip("chat-results-charts URL not implemented yet")
+    @patch('active_interview_app.views.ai_available')
+    def test_result_charts_ai_unavailable(self, mockai_available):
+        """Test result charts when AI is unavailable"""
+        mockai_available.return_value = False
+        self.client.login(username='testuser', password=TEST_PASSWORD)
+
+        response = self.client.get(
+            reverse('chat-results-charts', args=[self.chat.id])
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('scores', response.context)
+        scores = response.context['scores']
+        self.assertEqual(scores['Professionalism'], 0)
+        self.assertEqual(scores['Subject Knowledge'], 0)
+        self.assertEqual(scores['Clarity'], 0)
+        self.assertEqual(scores['Overall'], 0)
+
+    @skip("chat-results-charts URL not implemented yet")
+    @patch('active_interview_app.views.get_client_and_model')
+    @patch('active_interview_app.views.ai_available')
+    def test_result_chartsai_available_valid_scores(
+            self, mockai_available, mock_get_client_and_model):
+        """Test result charts with valid AI scores"""
+        mockai_available.return_value = True
+
+        # Mock OpenAI response
+        mock_client = Mock()
+        mock_response1 = create_mock_openai_response("85\n78\n92\n88")
+        mock_response2 = create_mock_openai_response("You performed well overall.")
+
+        mock_client.chat.completions.create.side_effect = [
+            mock_response1, mock_response2]
+        # get_client_and_model returns (client, model, tier_info)
+        mock_get_client_and_model.return_value = (mock_client, "gpt-4o", {"tier": "premium"})
+
+        self.client.login(username='testuser', password=TEST_PASSWORD)
+
+        response = self.client.get(
+            reverse('chat-results-charts', args=[self.chat.id])
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('scores', response.context)
+        scores = response.context['scores']
+        self.assertEqual(scores['Professionalism'], 85)
+        self.assertEqual(scores['Subject Knowledge'], 78)
+        self.assertEqual(scores['Clarity'], 92)
+        self.assertEqual(scores['Overall'], 88)
+
+    @skip("chat-results-charts URL not implemented yet")
+    @patch('active_interview_app.views.get_client_and_model')
+    @patch('active_interview_app.views.ai_available')
+    def test_result_charts_ai_invalid_scores(
+            self, mockai_available, mock_get_client_and_model):
+        """Test result charts with invalid AI response"""
+        mockai_available.return_value = True
+
+        # Mock OpenAI response with invalid format
+        mock_client = Mock()
+        mock_response1 = create_mock_openai_response("Not a valid score format")
+        mock_response2 = create_mock_openai_response("Feedback")
+
+        mock_client.chat.completions.create.side_effect = [
+            mock_response1, mock_response2]
+        # get_client_and_model returns (client, model, tier_info)
+        mock_get_client_and_model.return_value = (mock_client, "gpt-4o", {"tier": "premium"})
+
+        self.client.login(username='testuser', password=TEST_PASSWORD)
+
+        response = self.client.get(
+            reverse('chat-results-charts', args=[self.chat.id])
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('scores', response.context)
+        # Should default to zeros when parsing fails
+        scores = response.context['scores']
+        self.assertEqual(scores['Professionalism'], 0)
+        self.assertEqual(scores['Subject Knowledge'], 0)
+        self.assertEqual(scores['Clarity'], 0)
+        self.assertEqual(scores['Overall'], 0)
 
 
 class CreateChatViewExtendedTest(TestCase):
@@ -356,7 +554,7 @@ class CreateChatViewExtendedTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.job_listing = UploadedJobListing.objects.create(
             user=self.user,
@@ -370,32 +568,22 @@ class CreateChatViewExtendedTest(TestCase):
             title='My Resume'
         )
         self.client = Client()
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
-    @patch('active_interview_app.views.get_openai_client')
+    @patch('active_interview_app.views.get_client_and_model')
     @patch('active_interview_app.views.ai_available')
-    def test_create_chat_without_resumeai_available(self, mockai_available, mock_get_client):
+    def test_create_chat_without_resumeai_available(
+            self, mockai_available, mock_get_client):
         """Test creating chat without resume when AI is available"""
         mockai_available.return_value = True
 
         # Mock OpenAI responses
         mock_client = Mock()
-        mock_response1 = Mock()
-        mock_choice1 = Mock()
-        mock_message1 = Mock()
-        mock_message1.content = "Hello, welcome to the interview!"
-        mock_choice1.message = mock_message1
-        mock_response1.choices = [mock_choice1]
-
-        mock_response2 = Mock()
-        mock_choice2 = Mock()
-        mock_message2 = Mock()
-        mock_message2.content = '[{"id": 0, "title": "Test Question", "duration": 60, "content": "What is Python?"}]'
-        mock_choice2.message = mock_message2
-        mock_response2.choices = [mock_choice2]
+        mock_response1 = create_mock_openai_response("Hello, welcome to the interview!")
+        mock_response2 = create_mock_openai_response('[{"id": 0, "title": "Test Question", "duration": 60, "content": "What is Python?"}]')
 
         mock_client.chat.completions.create.side_effect = [mock_response1, mock_response2]
-        mock_get_client.return_value = mock_client
+        mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
         data = {
             'create': 'true',

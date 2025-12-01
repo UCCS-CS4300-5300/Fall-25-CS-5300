@@ -7,9 +7,10 @@ to achieve >80% code coverage.
 
 from django.test import TestCase, RequestFactory
 from django.contrib.auth.models import User, Group
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 from active_interview_app.adapters import CustomSocialAccountAdapter
 from active_interview_app.models import UserProfile
+from .test_credentials import TEST_PASSWORD
 
 
 class CustomSocialAccountAdapterComprehensiveTest(TestCase):
@@ -20,13 +21,14 @@ class CustomSocialAccountAdapterComprehensiveTest(TestCase):
         self.factory = RequestFactory()
         self.adapter = CustomSocialAccountAdapter()
         # Ensure average_role group exists
-        self.average_role_group = Group.objects.get_or_create(name='average_role')[0]
+        self.average_role_group = Group.objects.get_or_create(name='average_role')[
+            0]
 
     def test_pre_social_login_with_existing_user(self):
         """Test pre_social_login when user already exists with same email"""
         # Create existing user
-        existing_user = User.objects.create_user(
-            username='existing',
+        User.objects.create_user(
+            username='existing_user',
             email='existing@example.com',
             password='testpass'
         )
@@ -101,7 +103,8 @@ class CustomSocialAccountAdapterComprehensiveTest(TestCase):
         mock_sociallogin = Mock()
         mock_sociallogin.is_existing = False
         # Make extra_data raise an exception
-        mock_sociallogin.account.extra_data.get = Mock(side_effect=Exception("Test error"))
+        mock_sociallogin.account.extra_data.get = Mock(
+            side_effect=Exception("Test error"))
 
         # Should not raise exception
         try:
@@ -136,7 +139,8 @@ class CustomSocialAccountAdapterComprehensiveTest(TestCase):
             self.assertEqual(profile.auth_provider, 'google')
 
             # Verify user added to average_role group
-            self.assertTrue(saved_user.groups.filter(name='average_role').exists())
+            self.assertTrue(saved_user.groups.filter(
+                name='average_role').exists())
 
     def test_save_user_updates_existing_profile(self):
         """Test save_user updates existing profile if user already has one"""
@@ -160,8 +164,7 @@ class CustomSocialAccountAdapterComprehensiveTest(TestCase):
             mock_parent.return_value = existing_user
 
             # Call save_user
-            saved_user = self.adapter.save_user(request, mock_sociallogin)
-
+            self.adapter.save_user(request, mock_sociallogin)
             # Verify profile was updated to google
             profile.refresh_from_db()
             self.assertEqual(profile.auth_provider, 'google')
@@ -213,7 +216,8 @@ class CustomSocialAccountAdapterComprehensiveTest(TestCase):
             mock_parent.return_value = user
 
             # Call populate_user
-            populated_user = self.adapter.populate_user(request, mock_sociallogin, google_data)
+            populated_user = self.adapter.populate_user(
+                request, mock_sociallogin, google_data)
 
             # Verify first and last names were populated
             self.assertEqual(populated_user.first_name, 'John')
@@ -240,7 +244,8 @@ class CustomSocialAccountAdapterComprehensiveTest(TestCase):
             mock_parent.return_value = user
 
             # Call populate_user
-            populated_user = self.adapter.populate_user(request, mock_sociallogin, google_data)
+            populated_user = self.adapter.populate_user(
+                request, mock_sociallogin, google_data)
 
             # Names should remain empty
             self.assertEqual(populated_user.first_name, '')
@@ -269,7 +274,8 @@ class CustomSocialAccountAdapterComprehensiveTest(TestCase):
             mock_parent.return_value = user
 
             # Call populate_user
-            populated_user = self.adapter.populate_user(request, mock_sociallogin, google_data)
+            populated_user = self.adapter.populate_user(
+                request, mock_sociallogin, google_data)
 
             # Should NOT overwrite existing names
             self.assertEqual(populated_user.first_name, 'ExistingFirst')
@@ -296,7 +302,8 @@ class CustomSocialAccountAdapterComprehensiveTest(TestCase):
             mock_parent.return_value = user
 
             # Call populate_user
-            populated_user = self.adapter.populate_user(request, mock_sociallogin, google_data)
+            populated_user = self.adapter.populate_user(
+                request, mock_sociallogin, google_data)
 
             # Should NOT overwrite existing username
             self.assertEqual(populated_user.username, 'existingusername')
@@ -320,7 +327,8 @@ class CustomSocialAccountAdapterComprehensiveTest(TestCase):
             mock_parent.return_value = user
 
             # Call populate_user
-            populated_user = self.adapter.populate_user(request, mock_sociallogin, google_data)
+            populated_user = self.adapter.populate_user(
+                request, mock_sociallogin, google_data)
 
             # Username should be 'simple'
             self.assertEqual(populated_user.username, 'simple')
@@ -341,7 +349,8 @@ class CustomSocialAccountAdapterComprehensiveTest(TestCase):
             mock_parent.return_value = user
 
             # Call populate_user
-            populated_user = self.adapter.populate_user(request, mock_sociallogin, google_data)
+            populated_user = self.adapter.populate_user(
+                request, mock_sociallogin, google_data)
 
             # Username should be 'john.doe.123'
             self.assertEqual(populated_user.username, 'john.doe.123')
@@ -360,7 +369,8 @@ class CustomSocialAccountAdapterComprehensiveTest(TestCase):
             mock_parent.return_value = user
 
             # Call populate_user
-            populated_user = self.adapter.populate_user(request, mock_sociallogin, google_data)
+            populated_user = self.adapter.populate_user(
+                request, mock_sociallogin, google_data)
 
             # Username should remain empty
             self.assertEqual(populated_user.username, '')
@@ -390,7 +400,8 @@ class CustomSocialAccountAdapterComprehensiveTest(TestCase):
             self.assertTrue(Group.objects.filter(name='average_role').exists())
 
             # Verify user is in the group
-            self.assertTrue(saved_user.groups.filter(name='average_role').exists())
+            self.assertTrue(saved_user.groups.filter(
+                name='average_role').exists())
 
     def test_save_user_calls_parent_method(self):
         """Test save_user properly calls parent class save_user"""
@@ -411,7 +422,8 @@ class CustomSocialAccountAdapterComprehensiveTest(TestCase):
             self.adapter.save_user(request, mock_sociallogin)
 
             # Verify parent was called with correct arguments
-            mock_parent.assert_called_once_with(request, mock_sociallogin, None)
+            mock_parent.assert_called_once_with(
+                request, mock_sociallogin, None)
 
     def test_save_user_with_form_parameter(self):
         """Test save_user can accept optional form parameter"""
@@ -434,7 +446,8 @@ class CustomSocialAccountAdapterComprehensiveTest(TestCase):
             self.adapter.save_user(request, mock_sociallogin, form=mock_form)
 
             # Verify parent was called with form
-            mock_parent.assert_called_once_with(request, mock_sociallogin, mock_form)
+            mock_parent.assert_called_once_with(
+                request, mock_sociallogin, mock_form)
 
     def test_populate_user_calls_parent_method(self):
         """Test populate_user properly calls parent class populate_user"""
@@ -452,7 +465,8 @@ class CustomSocialAccountAdapterComprehensiveTest(TestCase):
             self.adapter.populate_user(request, mock_sociallogin, google_data)
 
             # Verify parent was called
-            mock_parent.assert_called_once_with(request, mock_sociallogin, google_data)
+            mock_parent.assert_called_once_with(
+                request, mock_sociallogin, google_data)
 
     def test_pre_social_login_with_email_none_from_get(self):
         """Test pre_social_login when extra_data.get() explicitly returns None"""

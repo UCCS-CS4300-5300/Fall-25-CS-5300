@@ -12,11 +12,9 @@ import json
 
 from active_interview_app.observability_models import (
     RequestMetric,
-    DailyMetricsSummary,
-    ProviderCostDaily,
-    ErrorLog
+    ProviderCostDaily
 )
-from active_interview_app.token_usage_models import TokenUsage
+from .test_credentials import TEST_PASSWORD
 
 
 class ObservabilityDashboardViewTests(TestCase):
@@ -27,12 +25,12 @@ class ObservabilityDashboardViewTests(TestCase):
         self.client = Client()
         self.staff_user = User.objects.create_user(
             username='admin',
-            password='testpass123',
+            password=TEST_PASSWORD,
             is_staff=True
         )
         self.regular_user = User.objects.create_user(
             username='user',
-            password='testpass123',
+            password=TEST_PASSWORD,
             is_staff=False
         )
 
@@ -43,13 +41,13 @@ class ObservabilityDashboardViewTests(TestCase):
         self.assertEqual(response.status_code, 302)  # Redirect to login
 
         # Regular user
-        self.client.login(username='user', password='testpass123')
+        self.client.login(username='user', password=TEST_PASSWORD)
         response = self.client.get(reverse('observability_dashboard'))
         self.assertEqual(response.status_code, 302)  # Redirect
 
     def test_dashboard_accessible_to_staff(self):
         """Test that staff can access dashboard."""
-        self.client.login(username='admin', password='testpass123')
+        self.client.login(username='admin', password=TEST_PASSWORD)
         response = self.client.get(reverse('observability_dashboard'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Observability Dashboard')
@@ -60,7 +58,7 @@ class ObservabilityDashboardViewTests(TestCase):
 
     def test_dashboard_includes_time_ranges(self):
         """Test that dashboard includes time range options."""
-        self.client.login(username='admin', password='testpass123')
+        self.client.login(username='admin', password=TEST_PASSWORD)
         response = self.client.get(reverse('observability_dashboard'))
         self.assertContains(response, '1 Hour')
         self.assertContains(response, '24 Hours')
@@ -76,10 +74,10 @@ class RPSMetricsAPITests(TestCase):
         self.client = Client()
         self.staff_user = User.objects.create_user(
             username='admin',
-            password='testpass123',
+            password=TEST_PASSWORD,
             is_staff=True
         )
-        self.client.login(username='admin', password='testpass123')
+        self.client.login(username='admin', password=TEST_PASSWORD)
 
         # Create test metrics
         now = timezone.now()
@@ -142,10 +140,10 @@ class LatencyMetricsAPITests(TestCase):
         self.client = Client()
         self.staff_user = User.objects.create_user(
             username='admin',
-            password='testpass123',
+            password=TEST_PASSWORD,
             is_staff=True
         )
-        self.client.login(username='admin', password='testpass123')
+        self.client.login(username='admin', password=TEST_PASSWORD)
 
         # Create test metrics with varying response times
         now = timezone.now()
@@ -179,10 +177,10 @@ class ErrorMetricsAPITests(TestCase):
         self.client = Client()
         self.staff_user = User.objects.create_user(
             username='admin',
-            password='testpass123',
+            password=TEST_PASSWORD,
             is_staff=True
         )
-        self.client.login(username='admin', password='testpass123')
+        self.client.login(username='admin', password=TEST_PASSWORD)
 
         # Create mix of successful and error requests
         now = timezone.now()
@@ -224,10 +222,10 @@ class CostMetricsAPITests(TestCase):
         self.client = Client()
         self.staff_user = User.objects.create_user(
             username='admin',
-            password='testpass123',
+            password=TEST_PASSWORD,
             is_staff=True
         )
-        self.client.login(username='admin', password='testpass123')
+        self.client.login(username='admin', password=TEST_PASSWORD)
 
         # Create provider cost data
         today = timezone.now().date()
@@ -264,10 +262,10 @@ class ExportMetricsAPITests(TestCase):
         self.client = Client()
         self.staff_user = User.objects.create_user(
             username='admin',
-            password='testpass123',
+            password=TEST_PASSWORD,
             is_staff=True
         )
-        self.client.login(username='admin', password='testpass123')
+        self.client.login(username='admin', password=TEST_PASSWORD)
 
         # Create test metrics
         now = timezone.now()

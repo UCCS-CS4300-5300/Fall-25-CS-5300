@@ -86,7 +86,6 @@ def save_user_profile(sender, instance, **kwargs):
         instance.profile.save()
 
 
-
 class UploadedResume(models.Model):  # Renamed from UploadedFile
     # Will be saved under media/uploads/
     file = models.FileField(upload_to='uploads/')
@@ -102,10 +101,12 @@ class UploadedResume(models.Model):  # Renamed from UploadedFile
     # Structure: ["Python", "Django", "React", ...]
 
     experience = models.JSONField(default=list, blank=True)
-    # Structure: [{"company": "...", "title": "...", "duration": "...", "description": "..."}, ...]
+    # Structure: [{"company": "...", "title": "...", "duration": "...",
+    # "description": "..."}, ...]
 
     education = models.JSONField(default=list, blank=True)
-    # Structure: [{"institution": "...", "degree": "...", "field": "...", "year": "..."}, ...]
+    # Structure: [{"institution": "...", "degree": "...", "field": "...",
+    # "year": "..."}, ...]
 
     # NEW: Parsing metadata
     parsing_status = models.CharField(
@@ -170,7 +171,9 @@ class UploadedJobListing(models.Model):  # Renamed from PastedText
         null=True,
         blank=True,
         related_name='job_listings',
-        help_text='Auto-recommended interview template based on job requirements'
+        help_text=(
+            'Auto-recommended interview template based on job requirements'
+        )
     )
 
     # NEW: Parsing metadata (same pattern as UploadedResume)
@@ -204,13 +207,17 @@ class UploadedJobListing(models.Model):  # Renamed from PastedText
 class Chat(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=200)
-    difficulty = models.IntegerField(default=5,
-                                     validators=[MinValueValidator(1),
-                                                 MaxValueValidator(10)])
-    messages = models.JSONField(blank=True, default=list)  # Json of the messages object
-    key_questions = models.JSONField(blank=True, default=list)  # Json of the key questions
-    job_listing = models.ForeignKey(UploadedJobListing, null=True, blank=True,
-                                    on_delete=models.SET_NULL)
+    difficulty = models.IntegerField(
+        default=5,
+        validators=[MinValueValidator(1), MaxValueValidator(10)]
+    )
+    # Json of the messages object
+    messages = models.JSONField(blank=True, default=list)
+    # Json of the key questions
+    key_questions = models.JSONField(blank=True, default=list)
+    job_listing = models.ForeignKey(
+        UploadedJobListing, null=True, blank=True, on_delete=models.SET_NULL
+    )
     resume = models.ForeignKey(UploadedResume, null=True, blank=True,
                                on_delete=models.SET_NULL)
 
@@ -228,8 +235,8 @@ class Chat(models.Model):
     type = models.CharField(max_length=3, choices=INTERVIEW_TYPES,
                             default=GENERAL)
 
-    # Interview category: practice (self-initiated) or invited (from interviewer)
-    # Related to Issue #137 (Interview Categorization)
+    # Interview category: practice (self-initiated) or invited (from
+    # interviewer). Related to Issue #137 (Interview Categorization)
     PRACTICE = 'PRACTICE'
     INVITED = 'INVITED'
     INTERVIEW_CATEGORY_CHOICES = [
@@ -246,10 +253,16 @@ class Chat(models.Model):
     # Time tracking for invited interviews (Issue #138)
     # For invited interviews, track when the interview session started
     # and when it should end based on duration limits
-    started_at = models.DateTimeField(null=True, blank=True,
-                                      help_text='Time when the interview session started')
-    scheduled_end_at = models.DateTimeField(null=True, blank=True,
-                                            help_text='Scheduled time when interview should end')
+    started_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='Time when the interview session started'
+    )
+    scheduled_end_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='Scheduled time when interview should end'
+    )
 
     # Finalization tracking (Report Generation Refactor)
     is_finalized = models.BooleanField(
@@ -376,7 +389,8 @@ class ExportableReport(models.Model):
 
     # Question-by-question analysis
     question_responses = models.JSONField(default=list)
-    # Structure: [{"question": str, "answer": str, "score": int, "feedback": str}, ...]
+    # Structure: [{"question": str, "answer": str, "score": int,
+    # "feedback": str}, ...]
 
     # Summary statistics
     total_questions_asked = models.IntegerField(default=0)
@@ -385,10 +399,15 @@ class ExportableReport(models.Model):
 
     # Export tracking
     pdf_generated = models.BooleanField(default=False)
-    pdf_file = models.FileField(upload_to='exports/pdfs/', null=True, blank=True)
+    pdf_file = models.FileField(
+        upload_to='exports/pdfs/', null=True, blank=True
+    )
 
     def __str__(self):
-        return f"Report for {self.chat.title} - {self.generated_at.strftime('%Y-%m-%d')}"
+        return (
+            f"Report for {self.chat.title} - "
+            f"{self.generated_at.strftime('%Y-%m-%d')}"
+        )
 
     class Meta:
         ordering = ['-generated_at']
@@ -407,7 +426,9 @@ class InterviewTemplate(models.Model):
     """
     name = models.CharField(
         max_length=255,
-        help_text='Name of the interview template (e.g., "Technical Interview")'
+        help_text=(
+            'Name of the interview template (e.g., "Technical Interview")'
+        )
     )
     user = models.ForeignKey(
         User,
@@ -424,9 +445,13 @@ class InterviewTemplate(models.Model):
     sections = models.JSONField(
         default=list,
         blank=True,
-        help_text='List of sections in the template. Each section has: title, content, order, weight'
+        help_text=(
+            'List of sections in the template. Each section has: title, '
+            'content, order, weight'
+        )
     )
-    # Structure: [{"id": "uuid", "title": "...", "content": "...", "order": 0, "weight": 0}, ...]
+    # Structure: [{"id": "uuid", "title": "...", "content": "...",
+    # "order": 0, "weight": 0}, ...]
 
     # Question Bank Integration fields
     question_banks = models.ManyToManyField(
@@ -507,7 +532,10 @@ class InterviewTemplate(models.Model):
 
     def validate_difficulty_distribution(self):
         """Check if difficulty percentages sum to 100."""
-        total = self.easy_percentage + self.medium_percentage + self.hard_percentage
+        total = (
+            self.easy_percentage + self.medium_percentage +
+            self.hard_percentage
+        )
         return total == 100
 
 
@@ -578,7 +606,9 @@ class InvitedInterview(models.Model):
     duration_minutes = models.IntegerField(
         default=60,
         validators=[MinValueValidator(15), MaxValueValidator(240)],
-        help_text='Duration window for completing the interview (15-240 minutes)'
+        help_text=(
+            'Duration window for completing the interview (15-240 minutes)'
+        )
     )
 
     # Status tracking
@@ -859,8 +889,8 @@ class DataExportRequest(models.Model):
 
     def __str__(self):
         return (
-            f"Export request by {self.user.username} - "
-            f"{self.status} ({self.requested_at.strftime('%Y-%m-%d %H:%M')})"
+            f"Export request by {self.user.username} - {self.status} "
+            f"({self.requested_at.strftime('%Y-%m-%d %H:%M')})"
         )
 
     def is_expired(self):
@@ -881,7 +911,8 @@ class DataExportRequest(models.Model):
 class DeletionRequest(models.Model):
     """
     Audit trail for account deletion requests.
-    Stores anonymized user identifier and deletion timestamp for legal compliance.
+    Stores anonymized user identifier and deletion timestamp for legal
+    compliance.
 
     Related to Issue #63, #65 (GDPR/CCPA Data Deletion).
     """
@@ -952,8 +983,8 @@ class DeletionRequest(models.Model):
 
     def __str__(self):
         return (
-            f"Deletion: {self.anonymized_user_id} - "
-            f"{self.status} ({self.requested_at.strftime('%Y-%m-%d %H:%M')})"
+            f"Deletion: {self.anonymized_user_id} - {self.status} "
+            f"({self.requested_at.strftime('%Y-%m-%d %H:%M')})"
         )
 
 
@@ -982,11 +1013,14 @@ class Tag(models.Model):
 
 class QuestionBank(models.Model):
     """
-    A collection of questions that can be tagged and used for interview assembly.
+    A collection of questions that can be tagged and used for interview
+    assembly.
     """
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='question_banks')
+    owner = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='question_banks'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -1008,13 +1042,17 @@ class Question(models.Model):
         ('hard', 'Hard'),
     ]
 
-    question_bank = models.ForeignKey(QuestionBank, on_delete=models.CASCADE,
-                                     related_name='questions')
+    question_bank = models.ForeignKey(
+        QuestionBank, on_delete=models.CASCADE, related_name='questions'
+    )
     text = models.TextField()
-    difficulty = models.CharField(max_length=10, choices=DIFFICULTY_CHOICES,
-                                 default='medium')
+    difficulty = models.CharField(
+        max_length=10, choices=DIFFICULTY_CHOICES, default='medium'
+    )
     tags = models.ManyToManyField(Tag, blank=True, related_name='questions')
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='questions')
+    owner = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='questions'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -1035,4 +1073,17 @@ from .observability_models import (  # noqa: E402, F401
     DailyMetricsSummary,
     ProviderCostDaily,
     ErrorLog
+)
+
+# Import spending tracker models (Issues #10, #11, #12)
+from .spending_tracker_models import (  # noqa: E402, F401
+    MonthlySpendingCap,
+    MonthlySpending
+)
+
+# Import API key rotation models (Issues #10, #13)
+from .api_key_rotation_models import (  # noqa: E402, F401
+    APIKeyPool,
+    KeyRotationSchedule,
+    KeyRotationLog
 )

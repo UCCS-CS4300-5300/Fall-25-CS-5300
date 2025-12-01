@@ -8,8 +8,7 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils import timezone
 from django.core.files.uploadedfile import SimpleUploadedFile
-from unittest.mock import patch, MagicMock
-import json
+from unittest.mock import patch
 import zipfile
 import io
 
@@ -19,9 +18,7 @@ from active_interview_app.models import (
     UploadedResume,
     UploadedJobListing,
     Chat,
-    ExportableReport,
-    UserProfile,
-    InterviewTemplate
+    ExportableReport
 )
 from active_interview_app.user_data_utils import (
     generate_anonymized_id,
@@ -31,6 +28,7 @@ from active_interview_app.user_data_utils import (
     anonymize_user_interviews,
     delete_user_account
 )
+from .test_credentials import TEST_PASSWORD
 
 
 class DataExportRequestModelTest(TestCase):
@@ -40,7 +38,7 @@ class DataExportRequestModelTest(TestCase):
         self.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
     def test_create_export_request(self):
@@ -102,7 +100,7 @@ class DeletionRequestModelTest(TestCase):
         self.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
     def test_create_deletion_request(self):
@@ -149,7 +147,7 @@ class UserDataUtilsTest(TestCase):
         self.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
-            password='testpass123',
+            password=TEST_PASSWORD,
             first_name='Test',
             last_name='User'
         )
@@ -179,7 +177,7 @@ class UserDataUtilsTest(TestCase):
 
     def test_export_user_data_with_resumes(self):
         """Test exporting user data with resumes"""
-        resume = UploadedResume.objects.create(
+        UploadedResume.objects.create(
             user=self.user,
             title='My Resume',
             content='Resume content',
@@ -196,7 +194,7 @@ class UserDataUtilsTest(TestCase):
 
     def test_export_user_data_with_interviews(self):
         """Test exporting user data with interviews"""
-        chat = Chat.objects.create(
+        Chat.objects.create(
             owner=self.user,
             title='Test Interview',
             difficulty=5,
@@ -261,9 +259,9 @@ class DataExportViewsTest(TestCase):
         self.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
     def test_user_data_settings_view(self):
         """Test accessing data settings page"""
@@ -289,7 +287,8 @@ class DataExportViewsTest(TestCase):
         response = self.client.post(reverse('request_data_export'))
 
         # Should create export request
-        self.assertTrue(DataExportRequest.objects.filter(user=self.user).exists())
+        self.assertTrue(DataExportRequest.objects.filter(
+            user=self.user).exists())
         request = DataExportRequest.objects.get(user=self.user)
 
         # Should redirect to status page
@@ -318,7 +317,8 @@ class DataExportViewsTest(TestCase):
         )
 
         # Should not create new request
-        self.assertEqual(DataExportRequest.objects.filter(user=self.user).count(), 1)
+        self.assertEqual(DataExportRequest.objects.filter(
+            user=self.user).count(), 1)
 
     def test_data_export_status_view(self):
         """Test viewing export status"""
@@ -360,7 +360,8 @@ class DataExportViewsTest(TestCase):
 
         # Create a mock file
         test_content = b'test zip content'
-        export.export_file.save('test.zip', io.BytesIO(test_content), save=True)
+        export.export_file.save(
+            'test.zip', io.BytesIO(test_content), save=True)
 
         response = self.client.get(
             reverse('download_data_export', kwargs={'request_id': export.id})
@@ -418,9 +419,9 @@ class AccountDeletionViewsTest(TestCase):
         self.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
     def test_request_account_deletion_get(self):
         """Test GET request to account deletion page"""
@@ -442,7 +443,8 @@ class AccountDeletionViewsTest(TestCase):
 
     @patch('active_interview_app.views.delete_user_account')
     @patch('active_interview_app.views.generate_anonymized_id')
-    def test_confirm_account_deletion_correct_password(self, mock_anon_id, mock_delete):
+    def test_confirm_account_deletion_correct_password(
+            self, mock_anon_id, mock_delete):
         """Test account deletion with correct password"""
         mock_anon_id.return_value = 'abc123'
         mock_delete.return_value = (True, None)
@@ -456,7 +458,8 @@ class AccountDeletionViewsTest(TestCase):
         self.assertTemplateUsed(response, 'user_data/deletion_complete.html')
 
         # Check deletion request created
-        self.assertTrue(DeletionRequest.objects.filter(username='testuser').exists())
+        self.assertTrue(DeletionRequest.objects.filter(
+            username='testuser').exists())
 
         # Check delete function called
         mock_delete.assert_called_once()
@@ -472,7 +475,8 @@ class AccountDeletionViewsTest(TestCase):
         self.assertRedirects(response, reverse('request_account_deletion'))
 
         # Should not create deletion request
-        self.assertFalse(DeletionRequest.objects.filter(username='testuser').exists())
+        self.assertFalse(DeletionRequest.objects.filter(
+            username='testuser').exists())
 
         # User should still exist
         self.assertTrue(User.objects.filter(username='testuser').exists())
@@ -490,7 +494,7 @@ class DataDeletionFunctionalityTest(TestCase):
         self.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
     @patch('active_interview_app.user_data_utils.send_deletion_confirmation_email')
@@ -507,7 +511,7 @@ class DataDeletionFunctionalityTest(TestCase):
             filename='job.txt',
             content='Job content'
         )
-        chat = Chat.objects.create(
+        Chat.objects.create(
             owner=self.user,
             title='Interview',
             messages=[{'role': 'user', 'content': 'Test'}]
@@ -580,7 +584,7 @@ class ProcessExportRequestTest(TestCase):
         self.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
     @patch('active_interview_app.user_data_utils.send_export_ready_email')
@@ -626,13 +630,13 @@ class IntegrationTest(TestCase):
         self.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
     @patch('active_interview_app.user_data_utils.send_export_ready_email')
     def test_complete_export_workflow(self, mock_email):
         """Test complete export workflow from request to download"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
         # Create some user data
         UploadedResume.objects.create(
@@ -676,7 +680,7 @@ class EmailErrorHandlingTest(TestCase):
         self.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
     @patch('active_interview_app.user_data_utils.send_mail')
@@ -699,7 +703,8 @@ class EmailErrorHandlingTest(TestCase):
 
         # Verify warning was logged
         mock_logger.warning.assert_called_once()
-        self.assertIn("Failed to send export notification email", str(mock_logger.warning.call_args))
+        self.assertIn("Failed to send export notification email",
+                      str(mock_logger.warning.call_args))
 
     @patch('active_interview_app.user_data_utils.send_mail')
     @patch('active_interview_app.user_data_utils.logger')
@@ -715,11 +720,13 @@ class EmailErrorHandlingTest(TestCase):
 
         # Verify warning was logged
         mock_logger.warning.assert_called_once()
-        self.assertIn("Failed to send deletion confirmation email", str(mock_logger.warning.call_args))
+        self.assertIn("Failed to send deletion confirmation email",
+                      str(mock_logger.warning.call_args))
 
     @patch('active_interview_app.user_data_utils.create_export_zip')
     @patch('active_interview_app.user_data_utils.logger')
-    def test_export_processing_error_logging(self, mock_logger, mock_create_zip):
+    def test_export_processing_error_logging(
+            self, mock_logger, mock_create_zip):
         """Test that export processing errors are logged"""
         # Create export request
         export = DataExportRequest.objects.create(user=self.user)
@@ -738,7 +745,8 @@ class EmailErrorHandlingTest(TestCase):
 
         # Verify error was logged
         mock_logger.error.assert_called_once()
-        self.assertIn("Failed to process export request", str(mock_logger.error.call_args))
+        self.assertIn("Failed to process export request",
+                      str(mock_logger.error.call_args))
 
 
 class EdgeCaseTest(TestCase):
@@ -748,7 +756,7 @@ class EdgeCaseTest(TestCase):
         self.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
     def test_export_with_no_data(self):
@@ -765,7 +773,7 @@ class EdgeCaseTest(TestCase):
         long_user = User.objects.create_user(
             username='a' * 150,  # Max length for username
             email='long@example.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         anonymized = generate_anonymized_id(long_user)
 
@@ -814,7 +822,7 @@ class EdgeCaseTest(TestCase):
         from active_interview_app.user_data_utils import delete_user_account
 
         # Create resume with file reference
-        resume = UploadedResume.objects.create(
+        UploadedResume.objects.create(
             user=self.user,
             title='Test Resume',
             content='Test content',

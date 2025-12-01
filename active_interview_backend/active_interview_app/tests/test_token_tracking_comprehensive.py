@@ -15,14 +15,17 @@ from active_interview_app.token_tracking import (
     record_openai_usage
 )
 from active_interview_app.token_usage_models import TokenUsage
+from .test_credentials import TEST_PASSWORD
 
 
 class GetCurrentGitBranchTest(TestCase):
     """Test get_current_git_branch function"""
 
-    @patch('subprocess.run')
-    def test_get_current_git_branch_success(self, mock_run):
+    @patch('active_interview_app.token_tracking.shutil.which')
+    @patch('active_interview_app.token_tracking.subprocess.run')
+    def test_get_current_git_branch_success(self, mock_run, mock_which):
         """Test successful git branch retrieval"""
+        mock_which.return_value = '/usr/bin/git'
         mock_run.return_value = MagicMock(
             stdout='main\n',
             returncode=0
@@ -33,9 +36,11 @@ class GetCurrentGitBranchTest(TestCase):
         self.assertEqual(branch, 'main')
         mock_run.assert_called_once()
 
-    @patch('subprocess.run')
-    def test_get_current_git_branch_feature_branch(self, mock_run):
+    @patch('active_interview_app.token_tracking.shutil.which')
+    @patch('active_interview_app.token_tracking.subprocess.run')
+    def test_get_current_git_branch_feature_branch(self, mock_run, mock_which):
         """Test git branch retrieval for feature branch"""
+        mock_which.return_value = '/usr/bin/git'
         mock_run.return_value = MagicMock(
             stdout='feature/oauth-integration\n',
             returncode=0
@@ -45,9 +50,11 @@ class GetCurrentGitBranchTest(TestCase):
 
         self.assertEqual(branch, 'feature/oauth-integration')
 
-    @patch('subprocess.run')
-    def test_get_current_git_branch_with_whitespace(self, mock_run):
+    @patch('active_interview_app.token_tracking.shutil.which')
+    @patch('active_interview_app.token_tracking.subprocess.run')
+    def test_get_current_git_branch_with_whitespace(self, mock_run, mock_which):
         """Test git branch retrieval strips whitespace"""
+        mock_which.return_value = '/usr/bin/git'
         mock_run.return_value = MagicMock(
             stdout='  develop  \n',
             returncode=0
@@ -57,30 +64,36 @@ class GetCurrentGitBranchTest(TestCase):
 
         self.assertEqual(branch, 'develop')
 
-    @patch('subprocess.run', side_effect=subprocess.CalledProcessError(128, 'git'))
-    def test_get_current_git_branch_not_git_repo(self, mock_run):
+    @patch('active_interview_app.token_tracking.shutil.which')
+    @patch('active_interview_app.token_tracking.subprocess.run', side_effect=subprocess.CalledProcessError(128, 'git'))
+    def test_get_current_git_branch_not_git_repo(self, mock_run, mock_which):
         """Test git branch when not in a git repository"""
+        mock_which.return_value = '/usr/bin/git'
         branch = get_current_git_branch()
 
         self.assertEqual(branch, 'unknown')
 
-    @patch('subprocess.run', side_effect=subprocess.TimeoutExpired('git', 5))
-    def test_get_current_git_branch_timeout(self, mock_run):
+    @patch('active_interview_app.token_tracking.shutil.which')
+    @patch('active_interview_app.token_tracking.subprocess.run', side_effect=subprocess.TimeoutExpired('git', 5))
+    def test_get_current_git_branch_timeout(self, mock_run, mock_which):
         """Test git branch with timeout"""
+        mock_which.return_value = '/usr/bin/git'
         branch = get_current_git_branch()
 
         self.assertEqual(branch, 'unknown')
 
-    @patch('subprocess.run', side_effect=FileNotFoundError)
-    def test_get_current_git_branch_git_not_installed(self, mock_run):
+    @patch('active_interview_app.token_tracking.shutil.which', return_value=None)
+    def test_get_current_git_branch_git_not_installed(self, mock_which):
         """Test git branch when git is not installed"""
         branch = get_current_git_branch()
 
         self.assertEqual(branch, 'unknown')
 
-    @patch('subprocess.run')
-    def test_get_current_git_branch_detached_head(self, mock_run):
+    @patch('active_interview_app.token_tracking.shutil.which')
+    @patch('active_interview_app.token_tracking.subprocess.run')
+    def test_get_current_git_branch_detached_head(self, mock_run, mock_which):
         """Test git branch in detached HEAD state"""
+        mock_which.return_value = '/usr/bin/git'
         mock_run.return_value = MagicMock(
             stdout='HEAD\n',
             returncode=0
@@ -90,9 +103,11 @@ class GetCurrentGitBranchTest(TestCase):
 
         self.assertEqual(branch, 'HEAD')
 
-    @patch('subprocess.run')
-    def test_get_current_git_branch_special_characters(self, mock_run):
+    @patch('active_interview_app.token_tracking.shutil.which')
+    @patch('active_interview_app.token_tracking.subprocess.run')
+    def test_get_current_git_branch_special_characters(self, mock_run, mock_which):
         """Test git branch with special characters"""
+        mock_which.return_value = '/usr/bin/git'
         mock_run.return_value = MagicMock(
             stdout='fix/issue-#123\n',
             returncode=0
@@ -110,7 +125,7 @@ class RecordTokenUsageTest(TestCase):
         """Set up test user"""
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
     @patch('active_interview_app.token_tracking.get_current_git_branch')
@@ -184,7 +199,8 @@ class RecordTokenUsageTest(TestCase):
 
         # Verify all models were recorded
         self.assertEqual(TokenUsage.objects.filter(user=self.user).count(), 3)
-        recorded_models = set(TokenUsage.objects.values_list('model_name', flat=True))
+        recorded_models = set(
+            TokenUsage.objects.values_list('model_name', flat=True))
         self.assertEqual(recorded_models, set(models))
 
     @patch('active_interview_app.token_tracking.get_current_git_branch')
@@ -250,7 +266,8 @@ class RecordTokenUsageTest(TestCase):
         )
 
         # No usage should be recorded
-        self.assertEqual(TokenUsage.objects.filter(endpoint='disabled_endpoint').count(), 0)
+        self.assertEqual(TokenUsage.objects.filter(
+            endpoint='disabled_endpoint').count(), 0)
 
     @patch('active_interview_app.token_tracking.get_current_git_branch')
     def test_record_token_usage_missing_usage_attribute(self, mock_branch):
@@ -268,11 +285,13 @@ class RecordTokenUsageTest(TestCase):
         )
 
         # No usage should be recorded
-        self.assertEqual(TokenUsage.objects.filter(endpoint='no_usage').count(), 0)
+        self.assertEqual(TokenUsage.objects.filter(
+            endpoint='no_usage').count(), 0)
 
     @patch('active_interview_app.token_tracking.get_current_git_branch')
     @patch('builtins.print')
-    def test_record_token_usage_handles_exception(self, mock_print, mock_branch):
+    def test_record_token_usage_handles_exception(
+            self, mock_print, mock_branch):
         """Test that exceptions are caught and logged"""
         mock_branch.return_value = 'main'
 
@@ -324,7 +343,7 @@ class RecordClaudeUsageTest(TestCase):
         """Set up test user"""
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
     @patch('active_interview_app.token_tracking.get_current_git_branch')
@@ -395,7 +414,7 @@ class RecordOpenAIUsageTest(TestCase):
         """Set up test user"""
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
     @patch('active_interview_app.token_tracking.get_current_git_branch')
@@ -484,8 +503,10 @@ class TokenTrackingIntegrationTest(TestCase):
 
     def setUp(self):
         """Set up test users"""
-        self.user1 = User.objects.create_user(username='user1', password='pass1')
-        self.user2 = User.objects.create_user(username='user2', password='pass2')
+        self.user1 = User.objects.create_user(
+            username='user1', password='pass1')
+        self.user2 = User.objects.create_user(
+            username='user2', password='pass2')
 
     @patch('active_interview_app.token_tracking.get_current_git_branch')
     def test_multiple_users_token_tracking(self, mock_branch):
@@ -519,7 +540,8 @@ class TokenTrackingIntegrationTest(TestCase):
         self.assertEqual(TokenUsage.objects.filter(user=self.user2).count(), 2)
 
         # Verify total tokens for user1
-        user1_total = sum(TokenUsage.objects.filter(user=self.user1).values_list('total_tokens', flat=True))
+        user1_total = sum(TokenUsage.objects.filter(
+            user=self.user1).values_list('total_tokens', flat=True))
         self.assertEqual(user1_total, 150 + 300 + 450)  # 900
 
     @patch('active_interview_app.token_tracking.get_current_git_branch')
@@ -536,8 +558,10 @@ class TokenTrackingIntegrationTest(TestCase):
             mock_response.usage.prompt_tokens = 100
             mock_response.usage.completion_tokens = 50
 
-            record_openai_usage(self.user1, f'{branch}_endpoint', mock_response)
+            record_openai_usage(
+                self.user1, f'{branch}_endpoint', mock_response)
 
         # Verify all branches were recorded
-        recorded_branches = set(TokenUsage.objects.values_list('git_branch', flat=True))
+        recorded_branches = set(
+            TokenUsage.objects.values_list('git_branch', flat=True))
         self.assertEqual(recorded_branches, set(branches))

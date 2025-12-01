@@ -1,7 +1,7 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% load static %}
 
-{% block title %}Interview Details{% endblock %}
+{% block title %}Interview Details{% endblock title %}
 
 {% block content %}
 <style>
@@ -285,7 +285,7 @@
 
         <!-- Start Interview Button -->
         <div class="text-center mt-4">
-          <form method="POST" action="{% url 'start_invited_interview' invitation_id=invitation.id %}">
+          <form method="post" action="{% url 'start_invited_interview' invitation_id=invitation.id %}">
             {% csrf_token %}
             <button type="submit" class="btn btn-success btn-lg">
               <i class="bi bi-play-circle-fill"></i> Start Interview Now
@@ -448,4 +448,4 @@ if (msUntilEnd > 0 && msUntilEnd < 3600000) { // If within 1 hour of expiry
   });
 })();
 </script>
-{% endblock %}
+{% endblock content %}

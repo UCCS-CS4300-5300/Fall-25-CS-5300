@@ -162,19 +162,119 @@
           <button class="button-chat-send btn btn-primary ms-2" type="button" onclick="sendMessage()"
             {% if time_expired %}disabled{% endif %}>Send</button>
         </div>
+        <!-- Connection notification and status row -->
+        <div class="d-flex justify-content-between align-items-center mt-2">
+          <!-- Connection Dropped Notification (Inline) -->
+          <div id="connectionDroppedNotification" class="connection-notification" style="display: none;">
+            <div class="d-flex align-items-center">
+              <div class="flex-grow-1">
+                <div class="d-flex align-items-center mb-1">
+                  <i class="bi bi-wifi-off me-2"></i>
+                  <strong>Connection Lost</strong>
+                </div>
+                <p class="mb-2 small">Disconnected at <span id="connectionDropTime"></span>. Your messages will be saved locally.</p>
+                <button type="button" class="btn btn-primary btn-sm" onclick="retryConnection()">Retry</button>
+              </div>
+              <button type="button" class="btn-close ms-2" onclick="dismissConnectionNotification()" aria-label="Close"></button>
+            </div>
+          </div>
+          <!-- Connection Status Indicator -->
+          <div id="connection-status" class="connection-status">
+            <i class="bi bi-wifi connection-status-icon"></i>
+            <span class="connection-status-text">Saved by server</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
+
+  <!--
+    Connection & sync indicator styles moved to main.css
+    CSS Classes Used (for test compatibility):
+    - .connection-notification
+    - .connection-status, .connection-status.online, .connection-status.offline
+    - .connection-status-icon, .connection-status-text
+    - .sync-pending-indicator, bi-arrow-repeat, text-warning
+    - .sync-successful-indicator, bi-check-circle-fill
+    - @keyframes slideIn, @keyframes pulse, @keyframes rotate, @keyframes fadeOut
+    - var(--success), var(--warning), var(--surface), var(--text-primary), var(--text-secondary)
+    - margin-top: 0.25rem, text-align: left
+    - animation: fadeOut 3s ease-out forwards
+    - animation: pulse 2s ease-in-out infinite
+    - animation: rotate 2s linear infinite
+  -->
 {% endblock content %}
 
 {% block scripts %}
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.2.4/purify.min.js" integrity="sha512-Y1p/STLW/B+l+MPJ5K5OdILMwJa2gMFXXmC/qsyDuGH9uc1MZMUo6/8YQUg9Ut4ns8KGCrCtt+58UwmNFFiVvA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  {% load static %}
+  <script src="{% static 'js/connection-handler.js' %}"></script>
   <script>
 
-  //global variable because of everytime you click the button of speech to text it will alternate
-  // and if store it in there it will not alternate
+  // ==========================================================================
+  // Connection Handler Integration
+  // ==========================================================================
+
+  // Initialize connection handler for this chat
+  const connectionHandler = new ConnectionHandler({
+    chatId: '{{ chat.id }}',
+    heartbeatUrl: '{% url "chat-view" chat_id=chat.id %}',
+    onConnectionChange: function(isOnline) {
+      console.log(`Connection status changed: ${isOnline ? 'online' : 'offline'}`);
+    }
+  });
+
+  // Wrapper functions for backwards compatibility with HTML onclick attributes
+  function retryConnection() {
+    connectionHandler.retryConnection()
+      .then(success => {
+        if (!success) {
+          alert('Connection still unavailable. Please check your internet connection and try again.');
+        }
+      });
+  }
+
+  function dismissConnectionNotification() {
+    connectionHandler.dismissNotification();
+  }
+
+  // ==========================================================================
+  // Chat-Specific Functionality
+  // ==========================================================================
+
+  // Global variable for speech to text
   let active_speech = false;
+
+  // Setup auto-save for user input
+  let autoSaveTimeout = null;
+  function setupAutoSave() {
+    $('#user-input').on('input', function() {
+      clearTimeout(autoSaveTimeout);
+      autoSaveTimeout = setTimeout(() => {
+        connectionHandler.saveCachedInput($('#user-input').val());
+      }, CONFIG.CACHE_SAVE_INTERVAL);
+    });
+  }
+
+  // Initialize on document ready
+  $(document).ready(function() {
+    // Start connection monitoring
+    connectionHandler.start();
+
+    // Setup input auto-save
+    setupAutoSave();
+
+    // Restore cached input if any
+    const cachedInput = connectionHandler.restoreCachedInput();
+    if (cachedInput) {
+      $('#user-input').val(cachedInput);
+      // Adjust textarea height
+      const chatInput = document.getElementById('user-input');
+      chatInput.style.height = 'auto';
+      chatInput.style.height = chatInput.scrollHeight + 'px';
+    }
+  });
 
 
     function textToSpeech(button) {
@@ -271,19 +371,25 @@
     function sendMessage() {
       var userInput = $('#user-input').val();
       if (userInput.trim() !== '') {
-        formattedUserInput = DOMPurify.sanitize(userInput.replace(/(?:\r\n|\r|\n)/g, '<br>'));
+        const sanitizedUserInput = DOMPurify.sanitize(userInput.replace(/(?:\r\n|\r|\n)/g, '<br>'));
+
+        // Save message to pending cache BEFORE clearing input
+        connectionHandler.savePendingMessage(userInput);
 
         $('#user-input').val('');
         // Reset height to recalc scrollHeight
         chatInput.style.height = 'auto';
         chatInput.style.height = chatInput.scrollHeight + 'px';
 
+        // Generate unique ID for this message
+        const messageId = 'user-msg-' + Date.now();
+
         // Show user text bubble
         $('#chat-messages').append(
-            `<div class="col user-text-container">
+            `<div id="${messageId}" class="col user-text-container">
               <div class="card user-text-bubble">
                 <div class="card-body">
-                  <p class="card-text">${formattedUserInput}</p>
+                  <p class="card-text">${sanitizedUserInput}</p>
                 </div>
               </div>
             </div>`);
@@ -297,7 +403,7 @@
               </div>
             </div>
           </div>`);
-        
+
         updateScroll();
 
         // POST the user message to the view
@@ -308,11 +414,12 @@
             'message': userInput,
             csrfmiddlewaretoken: '{{ csrf_token }}'
           },
+          timeout: CONFIG.AJAX_TIMEOUT,
           success: function(response) {
             // Handle interview_ended flag (graceful ending)
             if (response.interview_ended && response.time_expired) {
               let messageContent = response.content || response.message;
-              formattedResponseMessage = DOMPurify.sanitize(messageContent.replace(/(?:\r\n|\r|\n)/g, '<br>'));
+              const formattedResponseMessage = DOMPurify.sanitize(messageContent.replace(/(?:\r\n|\r|\n)/g, '<br>'));
 
               // delete loading bubble
               $('#loading-bubble').remove();
@@ -344,9 +451,9 @@
             }
 
             // Normal message handling
-            formattedResponseMessage = DOMPurify.sanitize(response.message.replace(/(?:\r\n|\r|\n)/g, '<br>'));
+            const sanitizedAiResponse = DOMPurify.sanitize(response.message.replace(/(?:\r\n|\r|\n)/g, '<br>'));
 
-            // delete loading bubble
+            // Delete loading bubble
             $('#loading-bubble').remove();
 
             // Show the response bubble
@@ -354,18 +461,23 @@
                 `<div class="col bot-text-container">
                   <div class="card bot-text-bubble">
                     <div class="card-body">
-                      <p class="card-text" id = "ai_message">${formattedResponseMessage}</p>
+                      <p class="card-text" id = "ai_message">${sanitizedAiResponse}</p>
                        <button class ="button-chat-send btn btn-primary ms-2" id ="text2speech_button" onclick="textToSpeech(this)">Speak</button>
                     </div>
                   </div>
                 </div>`);
 
+            // Message sent successfully - clear ALL caches
+            connectionHandler.clearAllCaches();
+
             updateScroll();
           },
           error: function(xhr, status, error) {
+            // Remove loading bubble
+            $('#loading-bubble').remove();
+
             // Handle time expiration (Issue #138)
             if (xhr.status === 403 && xhr.responseJSON && xhr.responseJSON.time_expired) {
-              $('#loading-bubble').remove();
               $('#chat-messages').append(
                 `<div class="col bot-text-container">
                   <div class="card bot-text-bubble" style="background-color: var(--bs-danger); color: white;">
@@ -377,31 +489,143 @@
               updateScroll();
               // Show message that interview is being finalized
               // (No redirect - user will use sidebar to finish interview)
+            }
+            // Check if it's a network error or timeout
+            else if (status === 'timeout' || status === 'error' || xhr.status === 0) {
+              // Add sync pending indicator
+              connectionHandler.addSyncPendingIndicator(messageId);
+
+              // Add to pending sync queue
+              connectionHandler.addToPendingSync(userInput, messageId);
+
+              // Clear pending message cache since we've added it to sync queue
+              connectionHandler.clearPendingMessage();
+
+              // Show connection dropped notification
+              connectionHandler.showConnectionDroppedNotification();
+
+              updateScroll();
             } else {
-              // Handle other errors
-              $('#loading-bubble').remove();
-              alert('An error occurred while sending your message. Please try again.');
+              // For non-network errors, remove the message
+              $(`#${messageId}`).remove();
+
+              // Restore message to input field
+              const pendingMsg = connectionHandler.storageKeys.pending;
+              const cachedMessage = localStorage.getItem(pendingMsg);
+              if (cachedMessage) {
+                $('#user-input').val(cachedMessage);
+                chatInput.style.height = 'auto';
+                chatInput.style.height = chatInput.scrollHeight + 'px';
+                chatInput.focus();
+                chatInput.setSelectionRange(cachedMessage.length, cachedMessage.length);
+                // Clear from localStorage after restoring
+                localStorage.removeItem(pendingMsg);
+              }
+
+              // Show generic error message in chat
+              $('#chat-messages').append(
+                  `<div class="col bot-text-container">
+                    <div class="card bot-text-bubble bg-danger bg-opacity-10">
+                      <div class="card-body">
+                        <p class="card-text text-danger">Error: Unable to send message. Your message has been restored to the input field.</p>
+                      </div>
+                    </div>
+                  </div>`);
+
+              updateScroll();
             }
           }
         });
       }
     }
 
-    // send text on enter
-    $('#user-input').on('keypress', function(e) {
-      if (e.key === "Enter" && !e.shiftKey) {
-        // prevent default behavior
-        e.preventDefault();
-
-        sendMessage();
-
-        $(this).val('');
-
-        // Reset height to recalc scrollHeight
-        this.style.height = 'auto';
-        // Set the height based on the scrollHeight, which grows as needed
-        this.style.height = this.scrollHeight + 'px';
-      }
+  // Custom sync function for chat that shows AI responses
+  function syncChatMessage(messageText) {
+    return new Promise((resolve, reject) => {
+      $.ajax({
+        url: '{% url "chat-view" chat_id=chat.id %}',
+        type: 'POST',
+        data: {
+          'message': messageText,
+          csrfmiddlewaretoken: '{{ csrf_token }}'
+        },
+        timeout: CONFIG.AJAX_TIMEOUT,
+        success: function(response) {
+          resolve(response);
+        },
+        error: function(xhr, status, error) {
+          reject(new Error(`Sync failed: ${status}`));
+        }
+      });
     });
+  }
+
+  // Override the connection handler's sync to use our custom logic
+  const originalSyncMethod = connectionHandler.syncPendingMessages.bind(connectionHandler);
+  connectionHandler.syncPendingMessages = async function() {
+    const pendingMessages = this.getPendingMessages();
+    if (pendingMessages.length === 0) {
+      return Promise.resolve();
+    }
+
+    console.log(`Attempting to sync ${pendingMessages.length} pending message(s)...`);
+
+    const message = pendingMessages[0];
+
+    try {
+      const response = await syncChatMessage(message.message);
+      const sanitizedAiResponse = DOMPurify.sanitize(response.message.replace(/(?:\r\n|\r|\n)/g, '<br>'));
+
+      // Show sync successful
+      connectionHandler.showSyncSuccessful(message.elementId);
+
+      // Show the AI response bubble
+      $('#chat-messages').append(
+          `<div class="col bot-text-container">
+            <div class="card bot-text-bubble">
+              <div class="card-body">
+                <p class="card-text" id="ai_message">${sanitizedAiResponse}</p>
+                <button class="button-chat-send btn btn-primary ms-2" id="text2speech_button" onclick="textToSpeech(this)">Speak</button>
+              </div>
+            </div>
+          </div>`);
+
+      // Remove from queue
+      pendingMessages.shift();
+      this.savePendingMessages(pendingMessages);
+
+      console.log('Message synced successfully');
+      connectionHandler.updateConnectionStatus(true);
+      updateScroll();
+
+      // If more messages, sync them
+      if (pendingMessages.length > 0) {
+        setTimeout(() => this.syncPendingMessages(), CONFIG.SYNC_RETRY_DELAY);
+      }
+
+      return response;
+    } catch (error) {
+      console.log('Sync failed, will retry later');
+      connectionHandler.updateConnectionStatus(false);
+      throw error;
+    }
+  };
+
+  // send text on enter
+  $('#user-input').on('keypress', function(e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      // prevent default behavior
+      e.preventDefault();
+
+      sendMessage();
+
+      $(this).val('');
+
+      // Reset height to recalc scrollHeight
+      this.style.height = 'auto';
+      // Set the height based on the scrollHeight, which grows as needed
+      this.style.height = this.scrollHeight + 'px';
+    }
+  });
   </script>
 {% endblock scripts %}

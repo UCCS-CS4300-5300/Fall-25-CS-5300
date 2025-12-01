@@ -1,10 +1,8 @@
 from django.urls import path, include
-from django.contrib.auth import views as auth_views
 from django.conf import settings
 from django.conf.urls.static import static
 
 from rest_framework import routers
-from allauth.account import views as allauth_views
 
 from . import views
 from . import question_bank_views
@@ -15,14 +13,19 @@ from . import observability_views
 router = routers.DefaultRouter()
 
 # Register Question Bank viewsets (Issue #24)
-router.register(r'question-banks', question_bank_views.QuestionBankViewSet,
-               basename='question-bank')
-router.register(r'questions', question_bank_views.QuestionViewSet,
-               basename='question')
-router.register(r'tags', question_bank_views.TagViewSet,
-               basename='tag')
-router.register(r'interview-templates', question_bank_views.InterviewTemplateViewSet,
-               basename='interview-template')
+router.register(
+    r'question-banks', question_bank_views.QuestionBankViewSet,
+    basename='question-bank')
+router.register(
+    r'questions', question_bank_views.QuestionViewSet,
+    basename='question')
+router.register(
+    r'tags', question_bank_views.TagViewSet,
+    basename='tag')
+router.register(
+    r'interview-templates',
+    question_bank_views.InterviewTemplateViewSet,
+    basename='interview-template')
 
 
 urlpatterns = [
@@ -69,15 +72,19 @@ urlpatterns = [
     path('paste-text/<int:pk>/', views.UploadedJobListingView.as_view(),
          name='pasted_text_detail'),
     # List files and uploads.
-    path('api/files/', views.UploadedResumeView.as_view(), name='file_list'),
-    path('api/files-list/', views.UploadedResumeView.as_view(), name='files_list'),
+    path('api/files/', views.UploadedResumeView.as_view(),
+         name='file_list'),
+    path('api/files-list/', views.UploadedResumeView.as_view(),
+         name='files_list'),
     # path('api/files/<int:pk>/', views.UploadedResumeDetail.as_view(),
     #      name='file_detail'), #Making changes to files.
     # For the text box input.
     path('pasted-text/', views.UploadedJobListingView.as_view(),
          name='save_pasted_text'),
-    path('api/job-listings/', views.JobListingList.as_view(), name='pasted_text_list'),
-    path('api/job-listing/analyze/', views.JobListingAnalyzeView.as_view(),
+    path('api/job-listings/', views.JobListingList.as_view(),
+         name='pasted_text_list'),
+    path('api/job-listing/analyze/',
+         views.JobListingAnalyzeView.as_view(),
          name='analyze_job_listing'),  # Issues #21, #51, #52, #53
     path('resume/<int:resume_id>/', views.resume_detail, name='resume_detail'),
     path('job-posting/<int:job_id>/',
@@ -193,6 +200,17 @@ urlpatterns = [
          observability_views.api_metrics_costs, name='api_metrics_costs'),
     path('observability/api/export/',
          observability_views.api_export_metrics, name='api_export_metrics'),
+
+    # Spending Tracker URLs (Issues #10, #11, #12)
+    path('observability/api/spending/current/',
+         observability_views.api_spending_current_month,
+         name='api_spending_current_month'),
+    path('observability/api/spending/history/',
+         observability_views.api_spending_history,
+         name='api_spending_history'),
+    path('observability/api/spending/update-cap/',
+         observability_views.api_update_spending_cap,
+         name='api_update_spending_cap'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

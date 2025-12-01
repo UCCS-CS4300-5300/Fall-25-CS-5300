@@ -1649,10 +1649,194 @@ a:hover {
 /* Pulse animation for warning */
 @keyframes pulse-warning {
     0%, 100% {
+        border-color: var(--warning);
+    }
+    50% {
+        border-color: var(--accent-dark);
+    }
+}
+
+/* ===================================
+   Connection Status & Sync Indicators
+   =================================== */
+
+/* Connection Notification (Inline Alert) */
+.connection-notification {
+    background-color: var(--surface);
+    border: 2px solid var(--warning);
+    border-radius: var(--radius);
+    padding: 0.875rem;
+    color: var(--text-primary);
+    max-width: 450px;
+    box-shadow: var(--shadow-md);
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.connection-notification i {
+    color: var(--warning);
+    font-size: 1.1rem;
+}
+
+.connection-notification strong {
+    color: var(--text-primary);
+    font-size: 0.95rem;
+}
+
+.connection-notification .small {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.connection-notification .btn-close {
+    opacity: 0.6;
+}
+
+.connection-notification .btn-close:hover {
+    opacity: 1;
+}
+
+.connection-notification .btn-primary {
+    background-color: var(--warning);
+    border-color: var(--warning);
+    color: var(--text-white);
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+.connection-notification .btn-primary:hover {
+    background-color: var(--accent-dark);
+    border-color: var(--accent-dark);
+}
+
+/* Connection Status Indicator */
+.connection-status {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    font-size: 0.875rem;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.connection-status-icon {
+    font-size: 1rem;
+    transition: color 0.3s ease;
+}
+
+.connection-status-text {
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+/* Online state (green) */
+.connection-status.online .connection-status-icon {
+    color: var(--success, #2ecc71);
+}
+
+.connection-status.online .connection-status-text {
+    color: var(--success, #2ecc71);
+}
+
+/* Offline state (warning/orange) */
+.connection-status.offline .connection-status-icon {
+    color: var(--warning, #f39c12);
+}
+
+.connection-status.offline .connection-status-text {
+    color: var(--warning, #f39c12);
+}
+
+/* Pulse animation for offline state */
+@keyframes pulse {
+    0%, 100% {
         opacity: 1;
     }
     50% {
-        opacity: 0.9;
+        opacity: 0.5;
+    }
+}
+
+.connection-status.offline .connection-status-icon {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+/* Sync Pending Indicator */
+.sync-pending-indicator {
+    padding: 0.25rem 0.5rem;
+    text-align: left;
+    margin-top: 0.25rem;
+}
+
+.sync-pending-indicator small {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+/* Icon rotation for pending sync - uses bi-arrow-repeat icon */
+.sync-pending-indicator i.bi-arrow-repeat {
+    animation: rotate 2s linear infinite;
+}
+
+/* Text warning color for pending sync */
+.sync-pending-indicator .text-warning {
+    color: var(--warning, #f39c12);
+}
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Sync Successful Indicator */
+.sync-successful-indicator {
+    padding: 0.25rem 0.5rem;
+    text-align: left;
+    margin-top: 0.25rem;
+    animation: fadeOut 3s ease-out forwards;
+}
+
+.sync-successful-indicator small {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--success);
+}
+
+/* Success icon - uses bi-check-circle-fill icon */
+.sync-successful-indicator i.bi-check-circle-fill {
+    color: var(--success);
+}
+
+@keyframes fadeOut {
+    0% {
+        opacity: 1;
+    }
+    70% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
     }
 }
 

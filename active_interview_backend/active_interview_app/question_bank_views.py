@@ -8,20 +8,19 @@ Includes:
 - Auto-Interview Assembly (Issue #42)
 """
 
-import random
+import secrets
 from typing import Optional, List, Dict, Any
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.db.models import Q, Count, QuerySet
+from django.db.models import Count, QuerySet
 from django.shortcuts import get_object_or_404, render
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import QuestionBank, Question, Tag, InterviewTemplate, Chat
+from .models import QuestionBank, Question, Tag, InterviewTemplate
 from .serializers import (
     QuestionBankSerializer,
     QuestionBankListSerializer,
@@ -38,8 +37,9 @@ class QuestionQueryBuilder:
     Utility class for building Question querysets with common filters.
     Reduces code duplication across views that need question filtering.
 
-    This class provides a fluent interface for building complex Question queries
-    with multiple filters including owner, question bank, tags, difficulty, and search.
+    This class provides a fluent interface for building complex
+    Question queries with multiple filters including owner, question
+    bank, tags, difficulty, and search.
     """
 
     @staticmethod
@@ -56,8 +56,9 @@ class QuestionQueryBuilder:
         return Question.objects.filter(owner=user)
 
     @staticmethod
-    def apply_question_bank_filter(queryset: QuerySet,
-                                     question_bank_id: Optional[int]) -> QuerySet:
+    def apply_question_bank_filter(
+            queryset: QuerySet,
+            question_bank_id: Optional[int]) -> QuerySet:
         """
         Apply question bank filter if provided.
 
@@ -82,7 +83,8 @@ class QuestionQueryBuilder:
         Args:
             queryset: Base Question queryset
             tag_ids: List of tag IDs to filter by
-            filter_mode: 'AND' for questions with all tags, 'OR' for any tag (default: 'OR')
+            filter_mode: 'AND' for questions with all tags, 'OR' for
+                any tag (default: 'OR')
 
         Returns:
             Filtered queryset with tag filters applied
@@ -101,7 +103,7 @@ class QuestionQueryBuilder:
 
     @staticmethod
     def apply_difficulty_filter(queryset: QuerySet,
-                                 difficulty: Optional[str]) -> QuerySet:
+                                difficulty: Optional[str]) -> QuerySet:
         """
         Apply difficulty filter if provided.
 
@@ -148,18 +150,19 @@ class QuestionQueryBuilder:
 
     @classmethod
     def build_filtered_queryset(cls,
-                                 user: User,
-                                 question_bank_id: Optional[int] = None,
-                                 tag_ids: Optional[List[int]] = None,
-                                 filter_mode: str = 'OR',
-                                 difficulty: Optional[str] = None,
-                                 search: Optional[str] = None,
-                                 exclude_untagged: bool = False) -> QuerySet:
+                                user: User,
+                                question_bank_id: Optional[int] = None,
+                                tag_ids: Optional[List[int]] = None,
+                                filter_mode: str = 'OR',
+                                difficulty: Optional[str] = None,
+                                search: Optional[str] = None,
+                                exclude_untagged: bool = False) -> QuerySet:
         """
         Build a complete filtered queryset with all common filters.
 
-        This method provides a convenient way to apply multiple filters in a single call,
-        ensuring consistent query building across different views.
+        This method provides a convenient way to apply multiple filters
+        in a single call, ensuring consistent query building across
+        different views.
 
         Args:
             user: User to filter questions by (required)
@@ -168,7 +171,8 @@ class QuestionQueryBuilder:
             filter_mode: 'AND' or 'OR' for tag filtering (default: 'OR')
             difficulty: Optional difficulty level ('easy', 'medium', or 'hard')
             search: Optional search term for question text
-            exclude_untagged: Whether to exclude questions without tags (default: False)
+            exclude_untagged: Whether to exclude questions without tags
+                (default: False)
 
         Returns:
             Filtered and distinct Question queryset
@@ -197,7 +201,11 @@ class QuestionQueryBuilder:
 @login_required
 @admin_or_interviewer_required
 def question_banks_view(request):
-    """Render the question banks management page (Interviewers and Admins only)"""
+    """
+    Render the question banks management page.
+
+    (Interviewers and Admins only)
+    """
     return render(request, 'question_banks.html')
 
 
@@ -387,7 +395,8 @@ class TagViewSet(viewsets.ModelViewSet):
             )
 
         primary_tag = get_object_or_404(Tag, id=primary_tag_id)
-        tags_to_merge = Tag.objects.filter(id__in=tag_ids).exclude(id=primary_tag_id)
+        tags_to_merge = Tag.objects.filter(
+            id__in=tag_ids).exclude(id=primary_tag_id)
 
         # Move all questions from merged tags to primary tag
         for tag in tags_to_merge:
@@ -458,7 +467,8 @@ class SaveAsTemplateView(APIView):
             "medium_percentage": 50,
             "hard_percentage": 20,
             "question_bank_id": 1,  # Optional
-            "questions": [...]  # Optional: assembled questions to save as section
+            "questions": [...]  # Optional: assembled questions to
+                                # save as section
         }
         """
         # Parse parameters from request
@@ -523,10 +533,10 @@ class SaveAsTemplateView(APIView):
         }
 
     def _validate_template_data(self,
-                                 name: Optional[str],
-                                 easy_pct: int,
-                                 medium_pct: int,
-                                 hard_pct: int) -> Optional[Response]:
+                                name: Optional[str],
+                                easy_pct: int,
+                                medium_pct: int,
+                                hard_pct: int) -> Optional[Response]:
         """
         Validate template name and difficulty percentages.
 
@@ -548,13 +558,16 @@ class SaveAsTemplateView(APIView):
         total = easy_pct + medium_pct + hard_pct
         if total != 100:
             return Response(
-                {'error': f'Difficulty percentages must total 100% (currently {total}%)'},
+                {'error': (
+                    f'Difficulty percentages must total 100% '
+                    f'(currently {total}%)')},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         return None
 
-    def _create_sections_from_questions(self, questions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _create_sections_from_questions(
+            self, questions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
         Create interview template sections from provided questions.
 
@@ -565,10 +578,9 @@ class SaveAsTemplateView(APIView):
             questions: List of question dictionaries
 
         Returns:
-            List of section dictionaries with UUID, title, content, order, and weight
+            List of section dictionaries with UUID, title, content,
+            order, and weight
         """
-        import uuid
-
         sections = []
         if not questions:
             return sections
@@ -589,10 +601,10 @@ class SaveAsTemplateView(APIView):
         return sections
 
     def _create_section_from_question(self,
-                                       question: Dict[str, Any],
-                                       index: int,
-                                       base_weight: int,
-                                       extra_weight: int) -> Dict[str, Any]:
+                                      question: Dict[str, Any],
+                                      index: int,
+                                      base_weight: int,
+                                      extra_weight: int) -> Dict[str, Any]:
         """
         Create a single section from a question dict.
 
@@ -600,7 +612,8 @@ class SaveAsTemplateView(APIView):
             question: Question dictionary with text, difficulty, and tags
             index: Zero-based index for ordering
             base_weight: Base weight value for this question
-            extra_weight: Additional weight (for first question to handle remainders)
+            extra_weight: Additional weight (for first question to
+                handle remainders)
 
         Returns:
             Section dictionary with id, title, content, order, and weight
@@ -616,7 +629,9 @@ class SaveAsTemplateView(APIView):
         )
 
         # Truncate question text for title (max 50 chars)
-        title = question['text'][:50] + '...' if len(question['text']) > 50 else question['text']
+        title = (question['text'][:50] + '...'
+                 if len(question['text']) > 50
+                 else question['text'])
 
         return {
             'id': str(uuid.uuid4()),
@@ -626,15 +641,16 @@ class SaveAsTemplateView(APIView):
             'weight': base_weight + extra_weight
         }
 
-    def _create_template_instance(self,
-                                   user: User,
-                                   name: str,
-                                   description: str,
-                                   question_count: int,
-                                   easy_pct: int,
-                                   medium_pct: int,
-                                   hard_pct: int,
-                                   sections: List[Dict[str, Any]]) -> InterviewTemplate:
+    def _create_template_instance(
+            self,
+            user: User,
+            name: str,
+            description: str,
+            question_count: int,
+            easy_pct: int,
+            medium_pct: int,
+            hard_pct: int,
+            sections: List[Dict[str, Any]]) -> InterviewTemplate:
         """
         Create and return a new InterviewTemplate instance.
 
@@ -664,10 +680,10 @@ class SaveAsTemplateView(APIView):
         )
 
     def _associate_tags_and_bank(self,
-                                  template: InterviewTemplate,
-                                  tag_ids: List[int],
-                                  question_bank_id: Optional[int],
-                                  user: User) -> None:
+                                 template: InterviewTemplate,
+                                 tag_ids: List[int],
+                                 question_bank_id: Optional[int],
+                                 user: User) -> None:
         """
         Associate tags and question bank with the template.
 
@@ -692,7 +708,8 @@ class SaveAsTemplateView(APIView):
             except QuestionBank.DoesNotExist:
                 pass  # Skip if question bank not found
 
-    def _build_template_response(self, template: InterviewTemplate) -> Response:
+    def _build_template_response(
+            self, template: InterviewTemplate) -> Response:
         """
         Build the success response for template creation.
 
@@ -788,7 +805,11 @@ class AutoAssembleInterviewView(APIView):
         }
 
     def _load_template_settings(self, request, params):
-        """Load settings from template if template_id provided. Returns error Response or None."""
+        """
+        Load settings from template if template_id provided.
+
+        Returns error Response or None.
+        """
         if not params['template_id']:
             return None
 
@@ -800,12 +821,14 @@ class AutoAssembleInterviewView(APIView):
 
             if not template.use_auto_assembly:
                 return Response(
-                    {'error': 'Template does not have auto-assembly enabled'},
+                    {'error':
+                     'Template does not have auto-assembly enabled'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
             # Update params with template settings
-            params['tag_ids'] = list(template.tags.values_list('id', flat=True))
+            params['tag_ids'] = list(
+                template.tags.values_list('id', flat=True))
             params['question_count'] = template.question_count
             params['difficulty_dist'] = {
                 'easy': template.easy_percentage,
@@ -821,7 +844,11 @@ class AutoAssembleInterviewView(APIView):
             )
 
     def _build_question_queryset(self, user, params):
-        """Build and return filtered question queryset using QuestionQueryBuilder."""
+        """
+        Build and return filtered question queryset.
+
+        Uses QuestionQueryBuilder.
+        """
         return QuestionQueryBuilder.build_filtered_queryset(
             user=user,
             question_bank_id=params['question_bank_id'],
@@ -833,9 +860,13 @@ class AutoAssembleInterviewView(APIView):
         )
 
     def _calculate_difficulty_counts(self, question_count, difficulty_dist):
-        """Calculate how many questions needed for each difficulty level."""
-        easy_count = int(question_count * difficulty_dist.get('easy', 0) / 100)
-        medium_count = int(question_count * difficulty_dist.get('medium', 0) / 100)
+        """
+        Calculate how many questions needed for each difficulty level.
+        """
+        easy_count = int(
+            question_count * difficulty_dist.get('easy', 0) / 100)
+        medium_count = int(
+            question_count * difficulty_dist.get('medium', 0) / 100)
         hard_count = question_count - easy_count - medium_count
 
         return {
@@ -844,7 +875,8 @@ class AutoAssembleInterviewView(APIView):
             'hard': hard_count
         }
 
-    def _validate_question_availability(self, questions_query, question_count, difficulty_counts):
+    def _validate_question_availability(
+            self, questions_query, question_count, difficulty_counts):
         """
         Validate sufficient questions are available.
         Returns error Response if validation fails, None if valid.
@@ -860,15 +892,23 @@ class AutoAssembleInterviewView(APIView):
         # Check total availability
         if total_available < question_count:
             return Response({
-                'error': f'Not enough questions available. Requested: {question_count}, Available: {total_available}',
+                'error': (
+                    f'Not enough questions available. Requested: '
+                    f'{question_count}, Available: {total_available}'
+                ),
                 'available_count': total_available,
                 'requested_count': question_count,
-                'breakdown': self._build_breakdown(difficulty_counts, available),
-                'message': 'Please reduce the number of questions or adjust the difficulty distribution.'
+                'breakdown': self._build_breakdown(
+                    difficulty_counts, available),
+                'message': (
+                    'Please reduce the number of questions or adjust the '
+                    'difficulty distribution.'
+                )
             }, status=status.HTTP_400_BAD_REQUEST)
 
         # Check per-difficulty availability
-        if any(available[d] < difficulty_counts[d] for d in ['easy', 'medium', 'hard']):
+        if any(available[d] < difficulty_counts[d]
+               for d in ['easy', 'medium', 'hard']):
             insufficient = [
                 f"{d} (need {difficulty_counts[d]}, have {available[d]})"
                 for d in ['easy', 'medium', 'hard']
@@ -876,9 +916,16 @@ class AutoAssembleInterviewView(APIView):
             ]
 
             return Response({
-                'error': f'Not enough questions for difficulty levels: {", ".join(insufficient)}',
-                'breakdown': self._build_breakdown(difficulty_counts, available),
-                'message': 'Please adjust the difficulty distribution or add more questions to your question bank.'
+                'error': (
+                    f'Not enough questions for difficulty levels: '
+                    f'{", ".join(insufficient)}'
+                ),
+                'breakdown': self._build_breakdown(
+                    difficulty_counts, available),
+                'message': (
+                    'Please adjust the difficulty distribution or add more '
+                    'questions to your question bank.'
+                )
             }, status=status.HTTP_400_BAD_REQUEST)
 
         return None
@@ -893,8 +940,11 @@ class AutoAssembleInterviewView(APIView):
             for difficulty in ['easy', 'medium', 'hard']
         }
 
-    def _select_questions(self, questions_query, difficulty_counts, randomize):
-        """Select questions based on difficulty distribution and randomization."""
+    def _select_questions(
+            self, questions_query, difficulty_counts, randomize):
+        """
+        Select questions based on difficulty distribution and randomization.
+        """
         selected_questions = []
 
         for difficulty in ['easy', 'medium', 'hard']:
@@ -902,13 +952,16 @@ class AutoAssembleInterviewView(APIView):
             available = list(questions_query.filter(difficulty=difficulty))
 
             if randomize:
-                selected_questions.extend(random.sample(available, count))
+                # Use secrets.SystemRandom for cryptographically secure sampling
+                secure_random = secrets.SystemRandom()
+                selected_questions.extend(secure_random.sample(available, count))
             else:
                 selected_questions.extend(available[:count])
 
         return selected_questions
 
-    def _select_questions_disregard_difficulty(self, questions_query, question_count, randomize):
+    def _select_questions_disregard_difficulty(
+            self, questions_query, question_count, randomize):
         """
         Select questions without considering difficulty distribution.
         Used when disregard_difficulty flag is set to True.
@@ -916,7 +969,9 @@ class AutoAssembleInterviewView(APIView):
         available = list(questions_query)
 
         if randomize:
-            return random.sample(available, question_count)
+            # Use secrets.SystemRandom for cryptographically secure sampling
+            secure_random = secrets.SystemRandom()
+            return secure_random.sample(available, question_count)
         else:
             return available[:question_count]
 
@@ -924,12 +979,19 @@ class AutoAssembleInterviewView(APIView):
         """Build the final response with interview data."""
         return Response({
             'title': title,
-            'questions': QuestionSerializer(selected_questions, many=True).data,
+            'questions': QuestionSerializer(
+                selected_questions, many=True).data,
             'total_questions': len(selected_questions),
             'difficulty_breakdown': {
-                'easy': len([q for q in selected_questions if q.difficulty == 'easy']),
-                'medium': len([q for q in selected_questions if q.difficulty == 'medium']),
-                'hard': len([q for q in selected_questions if q.difficulty == 'hard']),
+                'easy': len(
+                    [q for q in selected_questions
+                     if q.difficulty == 'easy']),
+                'medium': len(
+                    [q for q in selected_questions
+                     if q.difficulty == 'medium']),
+                'hard': len(
+                    [q for q in selected_questions
+                     if q.difficulty == 'hard']),
             },
             'tag_breakdown': self._get_tag_breakdown(selected_questions)
         })

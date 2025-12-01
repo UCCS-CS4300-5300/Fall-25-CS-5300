@@ -7,7 +7,8 @@ from django.utils import timezone
 from datetime import timedelta
 
 # Form field constants
-TITLE_MAX_LENGTH_SHORT = 32
+TITLE_MAX_LENGTH_SHORT = 48
+TITLE_MAX_LENGTH_JOB = 100
 TITLE_MAX_LENGTH = 255
 TEXTAREA_ROWS_DEFAULT = 15
 TEXTAREA_ROWS_SMALL = 4
@@ -36,30 +37,50 @@ class DocumentEditForm(forms.ModelForm):
         model = UploadedResume
         fields = ['title', 'content']
         widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control', 'maxlength': str(TITLE_MAX_LENGTH_SHORT)}),
-            'content': forms.Textarea(attrs={'class': 'form-control',
-                                             'rows': TEXTAREA_ROWS_DEFAULT}),
+            'title': forms.TextInput(attrs={
+                'class': 'form-control',
+                'maxlength': str(TITLE_MAX_LENGTH_SHORT)
+            }),
+            'content': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': TEXTAREA_ROWS_DEFAULT
+            }),
         }
 
 
 class JobPostingEditForm(forms.ModelForm):
-    title = forms.CharField(required=True, max_length=TITLE_MAX_LENGTH_SHORT)
-    content = forms.CharField(required=True, widget=forms.Textarea(attrs={'class': 'form-control', 'rows': TEXTAREA_ROWS_DEFAULT}))
+    title = forms.CharField(
+        required=True, max_length=TITLE_MAX_LENGTH_JOB
+    )
+    content = forms.CharField(
+        required=True,
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': TEXTAREA_ROWS_DEFAULT
+        })
+    )
 
     class Meta:
         model = UploadedJobListing
         fields = ['title', 'content']
         widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control', 'maxlength': str(TITLE_MAX_LENGTH_SHORT)}),
+            'title': forms.TextInput(attrs={
+                'class': 'form-control',
+                'maxlength': str(TITLE_MAX_LENGTH_JOB)
+            }),
         }
 
 
 class CreateChatForm(ModelForm):
-    difficulty = IntegerField(initial=DIFFICULTY_INITIAL, min_value=DIFFICULTY_MIN, max_value=DIFFICULTY_MAX)
+    difficulty = IntegerField(
+        initial=DIFFICULTY_INITIAL,
+        min_value=DIFFICULTY_MIN,
+        max_value=DIFFICULTY_MAX
+    )
     title = forms.CharField(required=False, initial="Interview Chat")
 
     listing_choice = ModelChoiceField(
-                            queryset=UploadedJobListing.objects.none())
+        queryset=UploadedJobListing.objects.none())
     resume_choice = ModelChoiceField(queryset=UploadedResume.objects.none(),
                                      required=False)
 
@@ -85,7 +106,11 @@ class CreateChatForm(ModelForm):
 
 
 class EditChatForm(ModelForm):
-    difficulty = IntegerField(min_value=DIFFICULTY_MIN, max_value=DIFFICULTY_MAX, required=False)
+    difficulty = IntegerField(
+        min_value=DIFFICULTY_MIN,
+        max_value=DIFFICULTY_MAX,
+        required=False
+    )
     title = forms.CharField(required=False)
 
     class Meta:
@@ -100,7 +125,7 @@ class InterviewTemplateForm(ModelForm):
     """
     name = forms.CharField(
         required=True,
-        max_length=TITLE_MAX_LENGTH,
+        max_length=TITLE_MAX_LENGTH_SHORT,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
             'placeholder': 'e.g., Technical Interview, Behavioral Interview'
@@ -123,7 +148,9 @@ class InterviewTemplateForm(ModelForm):
             'class': 'form-check-input'
         }),
         label='Enable Auto-Assembly',
-        help_text='Automatically generate interview questions from question banks'
+        help_text=(
+            'Automatically generate interview questions from question banks'
+        )
     )
 
     question_banks = forms.ModelMultipleChoiceField(
@@ -210,13 +237,16 @@ class InterviewTemplateForm(ModelForm):
 
         if user is not None:
             # Filter question banks to show only those owned by the user
-            self.fields['question_banks'].queryset = QuestionBank.objects.filter(owner=user)
+            self.fields['question_banks'].queryset = (
+                QuestionBank.objects.filter(owner=user)
+            )
 
     def clean(self):
         cleaned_data = super().clean()
         use_auto_assembly = cleaned_data.get('use_auto_assembly')
 
-        # Validate difficulty percentages sum to 100 if auto-assembly is enabled
+        # Validate difficulty percentages sum to 100
+        # if auto-assembly is enabled
         if use_auto_assembly:
             easy = cleaned_data.get('easy_percentage', 0) or 0
             medium = cleaned_data.get('medium_percentage', 0) or 0
@@ -224,7 +254,8 @@ class InterviewTemplateForm(ModelForm):
 
             if easy + medium + hard != 100:
                 raise forms.ValidationError(
-                    'Difficulty percentages must sum to 100% when auto-assembly is enabled'
+                    'Difficulty percentages must sum to 100% '
+                    'when auto-assembly is enabled'
                 )
 
         return cleaned_data
@@ -237,7 +268,9 @@ class UploadFileForm(ModelForm):
         model = UploadedResume
         fields = ["file", "title"]
         widgets = {
-            'title': forms.TextInput(attrs={'maxlength': str(TITLE_MAX_LENGTH_SHORT)}),
+            'title': forms.TextInput(attrs={
+                'maxlength': str(TITLE_MAX_LENGTH_SHORT)
+            }),
         }
 
     def clean_file(self):
@@ -249,7 +282,8 @@ class UploadFileForm(ModelForm):
 class InvitationCreationForm(ModelForm):
     """
     Form for creating interview invitations.
-    Allows interviewers to invite candidates to take interviews based on templates.
+    Allows interviewers to invite candidates to take interviews
+    based on templates.
 
     Related to Issue #5 (Create Interview Invitation).
     """
@@ -278,7 +312,9 @@ class InvitationCreationForm(ModelForm):
             'class': 'form-control',
             'type': 'date'
         }),
-        help_text='Date when the interview can be taken (in your local timezone)'
+        help_text=(
+            'Date when the interview can be taken (in your local timezone)'
+        )
     )
 
     scheduled_time = forms.TimeField(
@@ -287,7 +323,9 @@ class InvitationCreationForm(ModelForm):
             'class': 'form-control',
             'type': 'time'
         }),
-        help_text='Time when the interview can be taken (in your local timezone)'
+        help_text=(
+            'Time when the interview can be taken (in your local timezone)'
+        )
     )
 
     # Hidden field to capture user's timezone offset
@@ -318,8 +356,9 @@ class InvitationCreationForm(ModelForm):
 
     class Meta:
         model = InvitedInterview
-        # Note: scheduled_date and scheduled_time are form-only fields, not model fields
-        # The model has 'scheduled_time' as a DateTimeField, which the view sets manually
+        # Note: scheduled_date and scheduled_time are form-only fields,
+        # not model fields. The model has 'scheduled_time' as a
+        # DateTimeField, which the view sets manually
         fields = ['template', 'candidate_email', 'duration_minutes']
 
     def __init__(self, *args, **kwargs):
@@ -337,12 +376,15 @@ class InvitationCreationForm(ModelForm):
             self.fields['template'].queryset = \
                 InterviewTemplate.objects.filter(
                     id__in=[t.id for t in complete_templates]
-                )
+            )
 
-        # Pre-select template if template_id provided (from template detail page)
+        # Pre-select template if template_id provided
+        # (from template detail page)
         if template_id is not None:
             try:
-                template = InterviewTemplate.objects.get(id=template_id, user=user)
+                template = InterviewTemplate.objects.get(
+                    id=template_id, user=user
+                )
                 # Only set initial if template is complete
                 if template.is_complete():
                     self.fields['template'].initial = template
@@ -374,14 +416,17 @@ class InvitationCreationForm(ModelForm):
             # Create naive datetime from user input
             naive_datetime = datetime.combine(scheduled_date, scheduled_time)
 
-            # If we have timezone offset from JavaScript, use it to convert to UTC
+            # If we have timezone offset from JavaScript,
+            # use it to convert to UTC
             if timezone_offset is not None:
                 # timezone_offset from getTimezoneOffset() is in minutes
-                # IMPORTANT: getTimezoneOffset() returns POSITIVE for timezones
-                # behind UTC (e.g., EST returns +300, not -300)
+                # IMPORTANT: getTimezoneOffset() returns POSITIVE for
+                # timezones behind UTC (e.g., EST returns +300, not -300)
                 # It represents "minutes to ADD to local time to get UTC"
                 # So we ADD the offset to convert local time to UTC
-                utc_datetime = naive_datetime + timedelta(minutes=timezone_offset)
+                utc_datetime = (
+                    naive_datetime + timedelta(minutes=timezone_offset)
+                )
                 scheduled_datetime = timezone.make_aware(utc_datetime)
             else:
                 # Fallback: treat as UTC if no timezone info provided
@@ -397,13 +442,15 @@ class InvitationCreationForm(ModelForm):
                 diff_minutes = (scheduled_datetime - now).total_seconds() / 60
                 if diff_minutes < 0:
                     raise forms.ValidationError(
-                        f'Scheduled time is in the past ({abs(int(diff_minutes))} '
-                        f'minutes ago). Please select a future time.'
+                        f'Scheduled time is in the past '
+                        f'({abs(int(diff_minutes))} minutes ago). '
+                        f'Please select a future time.'
                     )
                 else:
                     raise forms.ValidationError(
-                        f'Scheduled time must be at least 2 minutes in the future. '
-                        f'Selected time is only {int(diff_minutes)} minute(s) away.'
+                        f'Scheduled time must be at least 2 minutes '
+                        f'in the future. Selected time is only '
+                        f'{int(diff_minutes)} minute(s) away.'
                     )
 
             # Store combined datetime for easy access

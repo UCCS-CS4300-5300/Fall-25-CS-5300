@@ -6,11 +6,10 @@ from django.urls import reverse
 from django.contrib.auth.models import User
 from active_interview_app.models import (
     UploadedResume,
-    UploadedJobListing,
-    Chat
+    UploadedJobListing
 )
-from django.core.files.uploadedfile import SimpleUploadedFile
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
+from .test_credentials import TEST_PASSWORD
 
 
 class IndexViewTest(TestCase):
@@ -49,7 +48,7 @@ class LoggedInViewTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.client = Client()
 
@@ -61,7 +60,7 @@ class LoggedInViewTest(TestCase):
 
     def test_loggedin_view_authenticated(self):
         """Test loggedin view when authenticated"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         response = self.client.get(reverse('loggedin'))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'loggedinindex.html')
@@ -73,7 +72,7 @@ class ProfileViewTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.client = Client()
 
@@ -85,14 +84,14 @@ class ProfileViewTest(TestCase):
 
     def test_profile_view_authenticated(self):
         """Test profile view when authenticated"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         response = self.client.get(reverse('profile'))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'profile.html')
 
     def test_profile_view_shows_user_resumes(self):
         """Test profile view shows user's resumes"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
         resume = UploadedResume.objects.create(
             user=self.user,
@@ -106,7 +105,7 @@ class ProfileViewTest(TestCase):
 
     def test_profile_view_shows_user_job_listings(self):
         """Test profile view shows user's job listings"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
         job_listing = UploadedJobListing.objects.create(
             user=self.user,
@@ -119,6 +118,100 @@ class ProfileViewTest(TestCase):
         self.assertIn('job_listings', response.context)
         self.assertIn(job_listing, response.context['job_listings'])
 
+    def test_profile_view_shows_spending_data(self):
+        """Test profile view shows monthly spending data (Issue #15.10)"""
+        from decimal import Decimal
+        from active_interview_app.spending_tracker_models import (
+            MonthlySpending, MonthlySpendingCap
+        )
+
+        self.client.login(username='testuser', password=TEST_PASSWORD)
+
+        # Create spending cap
+        cap = MonthlySpendingCap.objects.create(
+            cap_amount_usd=Decimal('200.00'),
+            is_active=True
+        )
+
+        # Create spending record
+        spending = MonthlySpending.get_current_month()
+        spending.llm_cost_usd = Decimal('50.00')
+        spending.total_cost_usd = Decimal('50.00')
+        spending.llm_requests = 10
+        spending.total_requests = 10
+        spending.save()
+
+        response = self.client.get(reverse('profile'))
+
+        # Check spending_data is in context
+        self.assertIn('spending_data', response.context)
+        spending_data = response.context['spending_data']
+
+        # Verify spending data content
+        self.assertIsNotNone(spending_data)
+        self.assertEqual(spending_data['total_cost'], Decimal('50.00'))
+        self.assertEqual(spending_data['llm_requests'], 10)
+        self.assertTrue(spending_data['cap_status']['has_cap'])
+        self.assertEqual(spending_data['cap_status']['cap_amount'], 200.00)
+
+        # Check that spending data is displayed in the response
+        self.assertContains(response, 'Monthly API Spending')
+        self.assertContains(response, '$50.00')
+        self.assertContains(response, '$200.00')
+
+    def test_spending_resets_monthly(self):
+        """Test that spending resets automatically when a new month starts (Issue #15.10)"""
+        from decimal import Decimal
+        from active_interview_app.spending_tracker_models import MonthlySpending
+        from datetime import datetime
+        from unittest.mock import patch
+
+        self.client.login(username='testuser', password=TEST_PASSWORD)
+
+        # Create spending for November 2025
+        nov_spending = MonthlySpending.objects.create(
+            year=2025,
+            month=11,
+            total_cost_usd=Decimal('150.00'),
+            llm_cost_usd=Decimal('150.00'),
+            llm_requests=100,
+            total_requests=100,
+            premium_cost_usd=Decimal('150.00'),
+            premium_requests=100
+        )
+
+        # Mock current date to be November 2025
+        with patch('django.utils.timezone.now') as mock_now:
+            mock_now.return_value = datetime(2025, 11, 15, 12, 0, 0)
+
+            # Get current month spending (should be November with $150)
+            current = MonthlySpending.get_current_month()
+            self.assertEqual(current.year, 2025)
+            self.assertEqual(current.month, 11)
+            self.assertEqual(current.total_cost_usd, Decimal('150.00'))
+            self.assertEqual(current.total_requests, 100)
+
+        # Mock current date to be December 2025 (new month)
+        with patch('django.utils.timezone.now') as mock_now:
+            mock_now.return_value = datetime(2025, 12, 1, 0, 0, 0)
+
+            # Get current month spending (should be December with $0)
+            current = MonthlySpending.get_current_month()
+            self.assertEqual(current.year, 2025)
+            self.assertEqual(current.month, 12)
+            # New month should start at zero
+            self.assertEqual(current.total_cost_usd, Decimal('0.0000'))
+            self.assertEqual(current.total_requests, 0)
+            self.assertEqual(current.premium_requests, 0)
+
+        # Verify November data is still preserved
+        nov_data = MonthlySpending.objects.get(year=2025, month=11)
+        self.assertEqual(nov_data.total_cost_usd, Decimal('150.00'))
+        self.assertEqual(nov_data.total_requests, 100)
+
+        # Verify we now have 2 separate month records
+        self.assertEqual(MonthlySpending.objects.count(), 2)
+
 
 class ResumeDetailViewTest(TestCase):
     """Test cases for resume detail view"""
@@ -126,7 +219,7 @@ class ResumeDetailViewTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.resume = UploadedResume.objects.create(
             user=self.user,
@@ -145,7 +238,7 @@ class ResumeDetailViewTest(TestCase):
 
     def test_resume_detail_authenticated(self):
         """Test resume detail view when authenticated"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         response = self.client.get(
             reverse('resume_detail', args=[self.resume.id])
         )
@@ -155,7 +248,7 @@ class ResumeDetailViewTest(TestCase):
 
     def test_resume_detail_nonexistent_resume(self):
         """Test resume detail view with nonexistent resume"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         response = self.client.get(reverse('resume_detail', args=[99999]))
         self.assertEqual(response.status_code, 404)
 
@@ -166,7 +259,7 @@ class DeleteResumeViewTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.resume = UploadedResume.objects.create(
             user=self.user,
@@ -183,11 +276,12 @@ class DeleteResumeViewTest(TestCase):
         # Should redirect to login
         self.assertEqual(response.status_code, 302)
         # Resume should still exist
-        self.assertTrue(UploadedResume.objects.filter(id=self.resume.id).exists())
+        self.assertTrue(UploadedResume.objects.filter(
+            id=self.resume.id).exists())
 
     def test_delete_resume_post(self):
         """Test deleting resume with POST request"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         resume_id = self.resume.id
 
         response = self.client.post(reverse('delete_resume', args=[resume_id]))
@@ -199,7 +293,7 @@ class DeleteResumeViewTest(TestCase):
 
     def test_delete_resume_get(self):
         """Test GET request to delete resume redirects"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         resume_id = self.resume.id
 
         response = self.client.get(reverse('delete_resume', args=[resume_id]))
@@ -211,11 +305,11 @@ class DeleteResumeViewTest(TestCase):
 
     def test_delete_resume_different_user(self):
         """Test user cannot delete another user's resume"""
-        other_user = User.objects.create_user(
+        User.objects.create_user(
             username='otheruser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
-        self.client.login(username='otheruser', password='testpass123')
+        self.client.login(username='otheruser', password=TEST_PASSWORD)
 
         response = self.client.post(
             reverse('delete_resume', args=[self.resume.id])
@@ -224,7 +318,8 @@ class DeleteResumeViewTest(TestCase):
         # Should return 404
         self.assertEqual(response.status_code, 404)
         # Resume should still exist
-        self.assertTrue(UploadedResume.objects.filter(id=self.resume.id).exists())
+        self.assertTrue(UploadedResume.objects.filter(
+            id=self.resume.id).exists())
 
 
 class JobPostingDetailViewTest(TestCase):
@@ -233,7 +328,7 @@ class JobPostingDetailViewTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.job_listing = UploadedJobListing.objects.create(
             user=self.user,
@@ -253,7 +348,7 @@ class JobPostingDetailViewTest(TestCase):
 
     def test_job_posting_detail_authenticated(self):
         """Test job posting detail view when authenticated"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         response = self.client.get(
             reverse('job_posting_detail', args=[self.job_listing.id])
         )
@@ -263,7 +358,7 @@ class JobPostingDetailViewTest(TestCase):
 
     def test_job_posting_detail_nonexistent_job(self):
         """Test job posting detail view with nonexistent job"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         response = self.client.get(
             reverse('job_posting_detail', args=[99999])
         )
@@ -276,7 +371,7 @@ class DeleteJobViewTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.job_listing = UploadedJobListing.objects.create(
             user=self.user,
@@ -300,7 +395,7 @@ class DeleteJobViewTest(TestCase):
 
     def test_delete_job_post(self):
         """Test deleting job with POST request"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         job_id = self.job_listing.id
 
         response = self.client.post(reverse('delete_job', args=[job_id]))
@@ -312,11 +407,11 @@ class DeleteJobViewTest(TestCase):
 
     def test_delete_job_different_user(self):
         """Test user cannot delete another user's job"""
-        other_user = User.objects.create_user(
+        User.objects.create_user(
             username='otheruser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
-        self.client.login(username='otheruser', password='testpass123')
+        self.client.login(username='otheruser', password=TEST_PASSWORD)
 
         response = self.client.post(
             reverse('delete_job', args=[self.job_listing.id])
@@ -336,7 +431,7 @@ class EditResumeViewTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.resume = UploadedResume.objects.create(
             user=self.user,
@@ -347,7 +442,7 @@ class EditResumeViewTest(TestCase):
 
     def test_edit_resume_get(self):
         """Test GET request to edit resume view"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         response = self.client.get(
             reverse('edit_resume', args=[self.resume.id])
         )
@@ -358,7 +453,7 @@ class EditResumeViewTest(TestCase):
 
     def test_edit_resume_post_valid(self):
         """Test POST request to edit resume with valid data"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         data = {
             'title': 'Updated Title',
             'content': 'Updated content'
@@ -381,7 +476,7 @@ class EditResumeViewTest(TestCase):
 
     def test_edit_resume_nonexistent(self):
         """Test editing nonexistent resume returns 404"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         response = self.client.get(reverse('edit_resume', args=[99999]))
         self.assertEqual(response.status_code, 404)
 
@@ -392,7 +487,7 @@ class EditJobPostingViewTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.job_listing = UploadedJobListing.objects.create(
             user=self.user,
@@ -412,7 +507,7 @@ class EditJobPostingViewTest(TestCase):
 
     def test_edit_job_posting_get(self):
         """Test GET request to edit job posting view"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         response = self.client.get(
             reverse('edit_job_posting', args=[self.job_listing.id])
         )
@@ -423,7 +518,7 @@ class EditJobPostingViewTest(TestCase):
 
     def test_edit_job_posting_post_valid(self):
         """Test POST request to edit job posting with valid data"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         data = {
             'title': 'Updated Job',
             'content': 'Updated job content'
@@ -446,11 +541,11 @@ class EditJobPostingViewTest(TestCase):
 
     def test_edit_job_posting_different_user(self):
         """Test user cannot edit another user's job posting"""
-        other_user = User.objects.create_user(
+        User.objects.create_user(
             username='otheruser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
-        self.client.login(username='otheruser', password='testpass123')
+        self.client.login(username='otheruser', password=TEST_PASSWORD)
 
         response = self.client.get(
             reverse('edit_job_posting', args=[self.job_listing.id])
@@ -466,14 +561,14 @@ class DocumentListViewTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.client = Client()
 
     def test_document_list_view_get(self):
         """Test GET request to document list view"""
         # Document list requires login
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         response = self.client.get(reverse('document-list'))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'documents/document-list.html')
@@ -485,7 +580,7 @@ class OpenAIClientTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.client = Client()
 
@@ -506,8 +601,8 @@ class OpenAIClientTest(TestCase):
     @patch('active_interview_app.openai_utils.settings')
     @patch('active_interview_app.openai_utils.OpenAI')
     def test_get_openai_client_raises_error_without_key(self,
-                                                         mock_openai,
-                                                         mock_settings):
+                                                        mock_openai,
+                                                        mock_settings):
         """Test get_openai_client raises error when API key is not set"""
         from active_interview_app.openai_utils import get_openai_client
         import active_interview_app.openai_utils as openai_utils
@@ -520,7 +615,7 @@ class OpenAIClientTest(TestCase):
         with self.assertRaises(ValueError) as context:
             get_openai_client()
 
-        self.assertIn("OPENAI_API_KEY is not set", str(context.exception))
+        self.assertIn("No OpenAI API key available", str(context.exception))
 
     def test_ai_unavailable_json(self):
         """Test _ai_unavailable_json returns proper JSON response"""

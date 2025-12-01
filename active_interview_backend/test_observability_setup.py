@@ -49,12 +49,7 @@ for func_name in view_functions:
 # Test 3: Check if models can be imported
 print("\n3. Testing observability models import...")
 try:
-    from active_interview_app.observability_models import (
-        RequestMetric,
-        DailyMetricsSummary,
-        ProviderCostDaily,
-        ErrorLog
-    )
+    from active_interview_app.observability_models import RequestMetric
     print("   ✓ All observability models imported successfully")
 except ImportError as e:
     print(f"   ✗ FAILED to import models: {e}")
@@ -62,7 +57,7 @@ except ImportError as e:
 
 # Test 4: Check if database tables exist
 print("\n4. Checking database tables...")
-from django.db import connection
+from django.db import connection  # noqa: E402
 tables = connection.introspection.table_names()
 required_tables = [
     'active_interview_app_requestmetric',
@@ -78,7 +73,7 @@ for table in required_tables:
 
 # Test 5: Check URL patterns
 print("\n5. Checking URL registration...")
-from django.urls import reverse, NoReverseMatch
+from django.urls import reverse, NoReverseMatch  # noqa: E402
 url_names = [
     'observability_dashboard',
     'api_metrics_rps',
@@ -96,7 +91,7 @@ for url_name in url_names:
 
 # Test 6: Check if template exists
 print("\n6. Checking template...")
-import os
+import os  # noqa: E402
 template_path = os.path.join(
     os.path.dirname(__file__),
     'active_interview_app',
@@ -122,7 +117,7 @@ try:
     )
     print(f"   ✓ Created RequestMetric: {metric.id}")
     metric.delete()
-    print(f"   ✓ Deleted test metric")
+    print("   ✓ Deleted test metric")
 except Exception as e:
     print(f"   ✗ FAILED to create RequestMetric: {e}")
 

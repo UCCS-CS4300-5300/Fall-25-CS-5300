@@ -8,7 +8,6 @@ import time
 import traceback
 import logging
 from django.utils import timezone
-from django.db import transaction
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +75,7 @@ class MetricsMiddleware:
             response_time_ms: Response time in milliseconds
             exception: Exception object if one occurred
         """
-        from .observability_models import RequestMetric, ErrorLog
+        from .observability_models import RequestMetric
 
         # Determine status code
         if response:

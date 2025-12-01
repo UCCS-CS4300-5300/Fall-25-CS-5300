@@ -14,7 +14,8 @@ from typing import Dict, Any
 
 # Import the OpenAI client utilities from openai_utils
 # This ensures consistent error handling and configuration
-from .openai_utils import get_openai_client, ai_available, MAX_TOKENS
+# Updated for Issue #14: Multi-tier model selection with automatic fallback
+from .openai_utils import get_openai_client, get_client_and_model, ai_available, MAX_TOKENS
 
 # Import seniority constants from models
 from .models import (
@@ -151,10 +152,10 @@ def parse_job_listing_with_ai(job_description: str) -> Dict[str, Any]:
     """).strip()
 
     try:
-        # Call OpenAI API (same pattern as resume_parser.py)
-        client = get_openai_client()
+        # Call OpenAI API with automatic tier selection (Issue #14)
+        client, model, tier_info = get_client_and_model()
         response = client.chat.completions.create(
-            model="gpt-4o",
+            model=model,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
