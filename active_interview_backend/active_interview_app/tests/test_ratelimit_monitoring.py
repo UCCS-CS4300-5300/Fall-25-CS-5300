@@ -14,7 +14,7 @@ import json
 from datetime import timedelta
 from unittest.mock import patch, MagicMock, Mock
 
-from django.test import TestCase, RequestFactory, Client
+from django.test import TestCase, RequestFactory, Client, override_settings
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.urls import reverse
@@ -426,6 +426,7 @@ class RateLimitMiddlewareTest(TestCase):
         self.assertTrue(RateLimitViolation.objects.exists())
 
 
+@override_settings(ROOT_URLCONF='active_interview_app.urls', TESTING=True)
 class RateLimitDashboardViewTest(TestCase):
     """Tests for rate limit dashboard view."""
 
@@ -478,6 +479,7 @@ class RateLimitDashboardViewTest(TestCase):
         self.assertGreater(stats['total'], 0)
 
 
+@override_settings(ROOT_URLCONF='active_interview_app.urls', TESTING=True)
 class ExportViolationsViewTest(TestCase):
     """Tests for violation export functionality."""
 
@@ -557,6 +559,7 @@ class ExportViolationsViewTest(TestCase):
         self.assertNotIn('10.0.0.1', content)
 
 
+@override_settings(ROOT_URLCONF='active_interview_app.urls', TESTING=True)
 class ViolationDetailViewTest(TestCase):
     """Tests for violation detail view."""
 
@@ -610,6 +613,7 @@ class ViolationDetailViewTest(TestCase):
         self.assertIn('related_violations', response.context)
 
 
+@override_settings(ROOT_URLCONF='active_interview_app.urls', TESTING=True)
 class ViolationAnalyticsViewTest(TestCase):
     """Tests for violation analytics view."""
 

@@ -7,6 +7,7 @@ operation type (read vs write).
 
 from django_ratelimit.decorators import ratelimit
 from ..ratelimit_config import get_rate_for_user, ratelimit_key
+from ..decorators.ratelimit_decorators import ratelimit_lenient, ratelimit_strict, ratelimit_default
 
 
 class RateLimitMixin:
@@ -23,8 +24,11 @@ class RateLimitMixin:
         """Override to use rate limiting instead of DRF throttles."""
         return []
 
-    def dispatch(self, request, *args, **kwargs):
-        """Apply rate limiting before dispatching to action."""
+    def initial(self, request, *args, **kwargs):
+        """Apply rate limiting before processing the request."""
+        # Call parent initial first
+        super().initial(request, *args, **kwargs)
+
         # Determine rate limit group based on action
         action = getattr(self, 'action', None)
 
@@ -44,10 +48,10 @@ class RateLimitMixin:
             method=ratelimit.ALL,
             block=True
         )
-        def rate_limited_dispatch(req):
-            return super(RateLimitMixin, self).dispatch(req, *args, **kwargs)
+        def check_rate_limit(req):
+            pass  # Just check the rate limit
 
-        return rate_limited_dispatch(request)
+        check_rate_limit(request)
 
 
 class StrictRateLimitMixin:
@@ -62,8 +66,11 @@ class StrictRateLimitMixin:
         """Override to use rate limiting instead of DRF throttles."""
         return []
 
-    def dispatch(self, request, *args, **kwargs):
-        """Apply strict rate limiting before dispatching to action."""
+    def initial(self, request, *args, **kwargs):
+        """Apply strict rate limiting before processing the request."""
+        # Call parent initial first
+        super().initial(request, *args, **kwargs)
+
         rate = get_rate_for_user('strict', request)
 
         @ratelimit(
@@ -72,10 +79,10 @@ class StrictRateLimitMixin:
             method=ratelimit.ALL,
             block=True
         )
-        def rate_limited_dispatch(req):
-            return super(StrictRateLimitMixin, self).dispatch(req, *args, **kwargs)
+        def check_rate_limit(req):
+            pass  # Just check the rate limit
 
-        return rate_limited_dispatch(request)
+        check_rate_limit(request)
 
 
 class LenientRateLimitMixin:
@@ -90,8 +97,11 @@ class LenientRateLimitMixin:
         """Override to use rate limiting instead of DRF throttles."""
         return []
 
-    def dispatch(self, request, *args, **kwargs):
-        """Apply lenient rate limiting before dispatching to action."""
+    def initial(self, request, *args, **kwargs):
+        """Apply lenient rate limiting before processing the request."""
+        # Call parent initial first
+        super().initial(request, *args, **kwargs)
+
         rate = get_rate_for_user('lenient', request)
 
         @ratelimit(
@@ -100,7 +110,7 @@ class LenientRateLimitMixin:
             method=ratelimit.ALL,
             block=True
         )
-        def rate_limited_dispatch(req):
-            return super(LenientRateLimitMixin, self).dispatch(req, *args, **kwargs)
+        def check_rate_limit(req):
+            pass  # Just check the rate limit
 
-        return rate_limited_dispatch(request)
+        check_rate_limit(request)
