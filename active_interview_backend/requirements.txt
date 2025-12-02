@@ -47,11 +47,7 @@ pydantic==2.10.6
 pydantic_core==2.27.2
 pyflakes==3.3.2
 PyMuPDF==1.26.6
-<<<<<<< HEAD
-pymupdf4llm==0.0.20
-=======
 pymupdf4llm==0.2.5
->>>>>>> 77b9956e3e28a0a22192b6f6954f2f7f47af2000
 PySocks==1.7.1
 python-docx==1.1.2
 python-dotenv==1.0.1
