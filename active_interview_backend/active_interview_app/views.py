@@ -776,6 +776,7 @@ class KeyQuestionsView(LoginRequiredMixin, UserPassesTestMixin, View):
         context = {}
         context['chat'] = chat
         context['question'] = question
+        context['question_id'] = question_id
         context['owner_chats'] = owner_chats
 
         return render(request, 'key-questions.html', context)
@@ -2095,10 +2096,16 @@ class ExportReportView(LoginRequiredMixin, UserPassesTestMixin, View):
             except InvitedInterview.DoesNotExist:
                 pass
 
+        # Get user's chats for sidebar
+        owner_chats = Chat.objects.filter(owner=request.user).order_by(
+            '-modified_date'
+        )
+
         context = {
             'chat': chat,
             'report': report,
             'invitation': invitation,
+            'owner_chats': owner_chats,
         }
         return render(request, 'reports/export-report.html', context)
 

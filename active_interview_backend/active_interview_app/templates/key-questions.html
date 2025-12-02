@@ -16,7 +16,7 @@
           </a>
         </li> {% endcomment %}
         {% for key_question in chat.key_questions %}
-          <li class="page-item"><a class="page-link {% if question.id == key_question.id %}active{% endif %}" href="{% url "key-questions" chat_id=chat.id question_id=key_question.id %}">{{ key_question.id|add:"1" }}</a></li>
+          <li class="page-item"><a class="page-link {% if forloop.counter0 == question_id %}active{% endif %}" href="{% url "key-questions" chat_id=chat.id question_id=forloop.counter0 %}">{{ forloop.counter }}</a></li>
         {% endfor %}
         {% comment %} <li class="page-item">
           <a class="page-link" href="#" aria-label="Next">
@@ -267,8 +267,8 @@
   // Initialize connection handler for this key question
   // Use chat_id + question_id for unique storage keys
   const connectionHandler = new ConnectionHandler({
-    chatId: '{{ chat.id }}_{{ question.id }}',
-    heartbeatUrl: '{% url "key-questions" chat_id=chat.id question_id=question.id %}',
+    chatId: '{{ chat.id }}_{{ question_id }}',
+    heartbeatUrl: '{% url "key-questions" chat_id=chat.id question_id=question_id %}',
     onConnectionChange: function(isOnline) {
       console.log(`Connection status changed: ${isOnline ? 'online' : 'offline'}`);
     }
@@ -566,7 +566,7 @@
 
         // POST the user message to the view
         $.ajax({
-          url: `{% url "key-questions" chat_id=chat.id question_id=question.id %}`,
+          url: `{% url "key-questions" chat_id=chat.id question_id=question_id %}`,
           type: 'POST',
           data: {
             'message': userInput,
@@ -644,7 +644,7 @@
   function syncKeyQuestionAnswer(messageText) {
     return new Promise((resolve, reject) => {
       $.ajax({
-        url: '{% url "key-questions" chat_id=chat.id question_id=question.id %}',
+        url: '{% url "key-questions" chat_id=chat.id question_id=question_id %}',
         type: 'POST',
         data: {
           'message': messageText,
