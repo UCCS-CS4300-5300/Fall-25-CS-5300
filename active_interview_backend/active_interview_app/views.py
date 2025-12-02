@@ -1990,6 +1990,68 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
         return qa_pairs
 
 
+class FinalizeInterviewView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """
+    View to finalize an interview and generate its ExportableReport.
+
+    This view is called when a user is ready to finalize their interview.
+    Once finalized:
+    - An ExportableReport is generated using AI analysis (ONCE)
+    - The chat is marked as finalized (is_finalized=True)
+    - For invited interviews, the invitation status is updated to COMPLETED
+    - The report cannot be regenerated (immutable)
+
+    Related to: Report Generation Refactor (Phase 3)
+    """
+
+    def test_func(self):
+        """Verify that the user owns the chat"""
+        chat = get_object_or_404(Chat, id=self.kwargs['chat_id'])
+        return self.request.user == chat.owner
+
+    def post(self, request, chat_id):
+        """Finalize the interview and generate the report"""
+        chat = get_object_or_404(Chat, id=chat_id)
+
+        # Check if already finalized
+        if chat.is_finalized:
+            messages.info(request, 'This interview has already been finalized.')
+            return redirect('export_report', chat_id=chat_id)
+
+        # Check if report already exists (defensive - shouldn't happen)
+        existing_report = ExportableReport.objects.filter(chat=chat).first()
+        if existing_report:
+            messages.info(request, 'A report already exists for this interview.')
+            return redirect('export_report', chat_id=chat_id)
+
+        # Generate report using shared utility (makes 4 AI calls)
+        from .report_utils import generate_and_save_report
+        report = generate_and_save_report(chat)
+
+        # Mark chat as finalized
+        chat.is_finalized = True
+        chat.finalized_at = timezone.now()
+        chat.save()
+
+        # For invited interviews: Update invitation status and send notification
+        if chat.interview_type == Chat.INVITED:
+            try:
+                invitation = InvitedInterview.objects.get(chat=chat)
+                if invitation.status != InvitedInterview.COMPLETED:
+                    invitation.status = InvitedInterview.COMPLETED
+                    invitation.completed_at = timezone.now()
+                    invitation.save()
+
+                    # Send completion notification to interviewer
+                    from .invitation_utils import send_completion_notification_email
+                    send_completion_notification_email(invitation)
+            except InvitedInterview.DoesNotExist:
+                pass
+
+        messages.success(request, 'Interview finalized and report generated successfully!')
+        return redirect('export_report', chat_id=chat_id)
+
+
 class ExportReportView(LoginRequiredMixin, UserPassesTestMixin, View):
     """
     View to display and allow exporting of a generated report.
