@@ -232,6 +232,10 @@ class RateLimitResponseTest(RateLimitTestCase):
 
     def test_http_429_response(self):
         """Test that rate limit exceeded returns HTTP 429."""
+        # Clear the rate limit cache before testing
+        from django.core.cache import cache
+        cache.clear()
+
         url = '/test/default/'
 
         # Exceed the rate limit

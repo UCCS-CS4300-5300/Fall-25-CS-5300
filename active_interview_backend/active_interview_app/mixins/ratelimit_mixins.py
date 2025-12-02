@@ -26,9 +26,6 @@ class RateLimitMixin:
 
     def initial(self, request, *args, **kwargs):
         """Apply rate limiting before processing the request."""
-        # Call parent initial first
-        super().initial(request, *args, **kwargs)
-
         # Determine rate limit group based on action
         action = getattr(self, 'action', None)
 
@@ -39,7 +36,7 @@ class RateLimitMixin:
         else:
             group = 'default'
 
-        # Apply rate limit using decorator
+        # Apply rate limit using decorator BEFORE calling parent initial
         rate = get_rate_for_user(group, request)
 
         @ratelimit(
@@ -52,6 +49,9 @@ class RateLimitMixin:
             pass  # Just check the rate limit
 
         check_rate_limit(request)
+
+        # Call parent initial after rate limiting
+        super().initial(request, *args, **kwargs)
 
 
 class StrictRateLimitMixin:
@@ -68,9 +68,7 @@ class StrictRateLimitMixin:
 
     def initial(self, request, *args, **kwargs):
         """Apply strict rate limiting before processing the request."""
-        # Call parent initial first
-        super().initial(request, *args, **kwargs)
-
+        # Apply rate limiting BEFORE calling parent initial
         rate = get_rate_for_user('strict', request)
 
         @ratelimit(
@@ -83,6 +81,9 @@ class StrictRateLimitMixin:
             pass  # Just check the rate limit
 
         check_rate_limit(request)
+
+        # Call parent initial after rate limiting
+        super().initial(request, *args, **kwargs)
 
 
 class LenientRateLimitMixin:
@@ -99,9 +100,7 @@ class LenientRateLimitMixin:
 
     def initial(self, request, *args, **kwargs):
         """Apply lenient rate limiting before processing the request."""
-        # Call parent initial first
-        super().initial(request, *args, **kwargs)
-
+        # Apply rate limiting BEFORE calling parent initial
         rate = get_rate_for_user('lenient', request)
 
         @ratelimit(
@@ -114,3 +113,6 @@ class LenientRateLimitMixin:
             pass  # Just check the rate limit
 
         check_rate_limit(request)
+
+        # Call parent initial after rate limiting
+        super().initial(request, *args, **kwargs)

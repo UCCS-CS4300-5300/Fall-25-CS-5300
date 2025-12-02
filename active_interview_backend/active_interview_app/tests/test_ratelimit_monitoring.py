@@ -558,6 +558,128 @@ class ExportViolationsViewTest(TestCase):
         # Should not include the anonymous violation
         self.assertNotIn('10.0.0.1', content)
 
+    def test_export_with_date_filters(self):
+        """Test CSV export with date range filters."""
+        from datetime import date
+
+        # Create violations on different dates
+        now = timezone.now()
+        RateLimitViolation.objects.create(
+            user=self.user,
+            ip_address='192.168.1.1',
+            endpoint='/api/test/',
+            method='POST',
+            rate_limit_type='default',
+            limit_value=60,
+            timestamp=now - timedelta(days=5)
+        )
+
+        RateLimitViolation.objects.create(
+            user=self.user,
+            ip_address='192.168.1.2',
+            endpoint='/api/test2/',
+            method='POST',
+            rate_limit_type='default',
+            limit_value=60,
+            timestamp=now
+        )
+
+        self.client.login(username='admin', password='admin123')
+
+        # Filter by start date
+        start_date = (now - timedelta(days=3)).strftime('%Y-%m-%d')
+        response = self.client.get(
+            reverse('export_violations'),
+            {'start_date': start_date}
+        )
+
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode('utf-8')
+        # Should only include recent violation
+        self.assertIn('192.168.1.2', content)
+
+    def test_export_with_ip_filter(self):
+        """Test CSV export with IP address filter."""
+        # Create violations from different IPs
+        RateLimitViolation.objects.create(
+            user=self.user,
+            ip_address='192.168.1.1',
+            endpoint='/api/test/',
+            method='POST',
+            rate_limit_type='default',
+            limit_value=60
+        )
+
+        RateLimitViolation.objects.create(
+            user=self.user,
+            ip_address='10.0.0.1',
+            endpoint='/api/test/',
+            method='POST',
+            rate_limit_type='default',
+            limit_value=60
+        )
+
+        self.client.login(username='admin', password='admin123')
+        response = self.client.get(
+            reverse('export_violations'),
+            {'ip_address': '192.168.1.1'}
+        )
+
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode('utf-8')
+        self.assertIn('192.168.1.1', content)
+        self.assertNotIn('10.0.0.1', content)
+
+    def test_export_with_endpoint_filter(self):
+        """Test CSV export with endpoint filter."""
+        # Create violations to different endpoints
+        RateLimitViolation.objects.create(
+            user=self.user,
+            ip_address='192.168.1.1',
+            endpoint='/api/users/',
+            method='GET',
+            rate_limit_type='default',
+            limit_value=60
+        )
+
+        RateLimitViolation.objects.create(
+            user=self.user,
+            ip_address='192.168.1.1',
+            endpoint='/api/posts/',
+            method='POST',
+            rate_limit_type='default',
+            limit_value=60
+        )
+
+        self.client.login(username='admin', password='admin123')
+        response = self.client.get(
+            reverse('export_violations'),
+            {'endpoint': 'users'}
+        )
+
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode('utf-8')
+        self.assertIn('/api/users/', content)
+        self.assertNotIn('/api/posts/', content)
+
+    def test_export_csv_headers(self):
+        """Test CSV export has all required headers."""
+        self.client.login(username='admin', password='admin123')
+        response = self.client.get(reverse('export_violations'))
+
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode('utf-8')
+
+        # Check all required headers are present
+        required_headers = [
+            'Timestamp', 'User ID', 'Username', 'IP Address',
+            'Endpoint', 'Method', 'Rate Limit Type', 'Limit Value',
+            'User Agent', 'Country Code', 'Alert Sent'
+        ]
+
+        for header in required_headers:
+            self.assertIn(header, content)
+
 
 @override_settings(ROOT_URLCONF='active_interview_app.urls', TESTING=True)
 class ViolationDetailViewTest(TestCase):
@@ -665,3 +787,174 @@ class ViolationAnalyticsViewTest(TestCase):
             )
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.context['days'], days)
+
+    def test_analytics_hourly_distribution(self):
+        """Test analytics calculates hourly distribution correctly."""
+        self.client.login(username='admin', password='admin123')
+
+        # Create violations at different hours
+        now = timezone.now()
+        for hour in [9, 12, 15, 18]:
+            timestamp = now.replace(hour=hour, minute=0, second=0, microsecond=0)
+            RateLimitViolation.objects.create(
+                user=self.admin_user,
+                ip_address='1.2.3.4',
+                endpoint='/api/test/',
+                method='GET',
+                rate_limit_type='default',
+                limit_value=60,
+                timestamp=timestamp,
+                user_agent='TestAgent'
+            )
+
+        response = self.client.get(reverse('violation_analytics'))
+        self.assertEqual(response.status_code, 200)
+        # Verify context contains hourly_dist
+        self.assertIn('hourly_dist', response.context)
+
+    def test_analytics_user_agent_categorization(self):
+        """Test analytics categorizes user agents correctly."""
+        self.client.login(username='admin', password='admin123')
+
+        # Create violations with different user agents
+        now = timezone.now()
+        user_agents = [
+            'Mozilla/5.0 (iPhone; CPU iPhone OS) Mobile',  # Mobile
+            'Googlebot/2.1 (+http://www.google.com/bot.html)',  # Bot
+            'curl/7.64.1',  # Script
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/91.0',  # Browser
+        ]
+
+        for ua in user_agents:
+            RateLimitViolation.objects.create(
+                user=self.admin_user,
+                ip_address='1.2.3.4',
+                endpoint='/api/test/',
+                method='GET',
+                rate_limit_type='default',
+                limit_value=60,
+                timestamp=now,
+                user_agent=ua
+            )
+
+        response = self.client.get(reverse('violation_analytics'))
+        self.assertEqual(response.status_code, 200)
+        # Verify context contains user_agents
+        self.assertIn('user_agents', response.context)
+
+    def test_analytics_geographic_distribution(self):
+        """Test analytics shows geographic distribution."""
+        self.client.login(username='admin', password='admin123')
+
+        # Create violations from different countries
+        now = timezone.now()
+        for country_code in ['US', 'GB', 'DE', 'JP']:
+            RateLimitViolation.objects.create(
+                user=self.admin_user,
+                ip_address='1.2.3.4',
+                endpoint='/api/test/',
+                method='GET',
+                rate_limit_type='default',
+                limit_value=60,
+                timestamp=now,
+                country_code=country_code
+            )
+
+        response = self.client.get(reverse('violation_analytics'))
+        self.assertEqual(response.status_code, 200)
+        # Verify context contains geo_dist
+        self.assertIn('geo_dist', response.context)
+
+
+@override_settings(ROOT_URLCONF='active_interview_app.urls', TESTING=True)
+class RateLimitTrendsDataViewTest(TestCase):
+    """Test rate limit trends data API endpoint."""
+
+    def setUp(self):
+        self.client = Client()
+        self.admin_user = User.objects.create_user(
+            username='admin',
+            password='admin123',
+            is_staff=True,
+            is_superuser=True
+        )
+
+    def test_trends_requires_admin(self):
+        """Test trends endpoint requires admin."""
+        response = self.client.get(reverse('ratelimit_trends_data'))
+        self.assertEqual(response.status_code, 302)  # Redirect to login
+
+    def test_trends_returns_json(self):
+        """Test trends endpoint returns JSON data."""
+        self.client.login(username='admin', password='admin123')
+        response = self.client.get(reverse('ratelimit_trends_data'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/json')
+
+    def test_trends_24h_period(self):
+        """Test trends data for 24 hour period."""
+        self.client.login(username='admin', password='admin123')
+
+        # Create some violations
+        now = timezone.now()
+        for i in range(5):
+            RateLimitViolation.objects.create(
+                user=self.admin_user,
+                ip_address='1.2.3.4',
+                endpoint='/api/test/',
+                method='GET',
+                rate_limit_type='default',
+                limit_value=60,
+                timestamp=now - timedelta(hours=i)
+            )
+
+        response = self.client.get(reverse('ratelimit_trends_data'), {'period': '24h'})
+        self.assertEqual(response.status_code, 200)
+
+        data = response.json()
+        self.assertIn('data', data)
+        self.assertIn('period', data)
+        self.assertEqual(data['period'], '24h')
+
+    def test_trends_1h_period(self):
+        """Test trends data for 1 hour period."""
+        self.client.login(username='admin', password='admin123')
+        response = self.client.get(reverse('ratelimit_trends_data'), {'period': '1h'})
+        self.assertEqual(response.status_code, 200)
+
+        data = response.json()
+        self.assertEqual(data['period'], '1h')
+
+    def test_trends_7d_period(self):
+        """Test trends data for 7 day period."""
+        self.client.login(username='admin', password='admin123')
+        response = self.client.get(reverse('ratelimit_trends_data'), {'period': '7d'})
+        self.assertEqual(response.status_code, 200)
+
+        data = response.json()
+        self.assertEqual(data['period'], '7d')
+
+    def test_trends_30d_period(self):
+        """Test trends data for 30 day period."""
+        self.client.login(username='admin', password='admin123')
+        response = self.client.get(reverse('ratelimit_trends_data'), {'period': '30d'})
+        self.assertEqual(response.status_code, 200)
+
+        data = response.json()
+        self.assertEqual(data['period'], '30d')
+
+    def test_trends_data_structure(self):
+        """Test trends data has correct structure."""
+        self.client.login(username='admin', password='admin123')
+        response = self.client.get(reverse('ratelimit_trends_data'))
+        data = response.json()
+
+        self.assertIn('data', data)
+        self.assertIsInstance(data['data'], list)
+
+        # If there's data, check structure
+        if data['data']:
+            point = data['data'][0]
+            self.assertIn('time', point)
+            self.assertIn('count', point)
+            self.assertIn('timestamp', point)

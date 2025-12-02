@@ -116,14 +116,44 @@ def ratelimit_api(group='default'):
                 ...
     """
     def decorator(func):
+        # Create a simple wrapper function for rate limiting
+        def rate_func(g, r):
+            # g is group (from ratelimit), r is request
+            return get_rate_for_user(group, r)
+
         @wraps(func)
-        @ratelimit(
-            key=ratelimit_key,
-            rate=lambda g, request: get_rate_for_user(group, request),
-            method=ratelimit.ALL,
-            block=True
-        )
-        def wrapper(self, request, *args, **kwargs):
-            return func(self, request, *args, **kwargs)
+        def wrapper(*args, **kwargs):
+            # Handle both class methods (self, request) and functions (request)
+            # For class methods: args = (self, request, ...)
+            # For functions: args = (request, ...)
+            if len(args) >= 2 and hasattr(args[0], '__class__'):
+                # Class method: self is args[0], request is args[1]
+                request = args[1]
+
+                # Apply rate limiting with a helper function
+                @ratelimit(
+                    key=ratelimit_key,
+                    rate=rate_func,
+                    method=ratelimit.ALL,
+                    block=True
+                )
+                def check_limit(req):
+                    pass
+
+                check_limit(request)
+                return func(*args, **kwargs)
+            else:
+                # Regular function: request is args[0]
+                @ratelimit(
+                    key=ratelimit_key,
+                    rate=rate_func,
+                    method=ratelimit.ALL,
+                    block=True
+                )
+                def inner(*inner_args, **inner_kwargs):
+                    return func(*inner_args, **inner_kwargs)
+
+                return inner(*args, **kwargs)
+
         return wrapper
     return decorator

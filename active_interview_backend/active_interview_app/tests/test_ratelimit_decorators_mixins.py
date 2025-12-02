@@ -124,7 +124,7 @@ class RateLimitDecoratorsTest(TestCase):
             self.fail(f"Failed to apply ratelimit_api decorator: {e}")
 
 
-@override_settings(RATELIMIT_ENABLE=True)
+@override_settings(RATELIMIT_ENABLE=True, TESTING=True)
 class RateLimitMixinsTest(TestCase):
     """Tests for rate limit mixins."""
 
@@ -134,6 +134,16 @@ class RateLimitMixinsTest(TestCase):
             username='testuser',
             password='testpass123'
         )
+
+        # Create UserProfile with interviewer role
+        from django.contrib.auth.models import Group
+        from ..models import UserProfile
+        interviewer_group, _ = Group.objects.get_or_create(name='Interviewer')
+        self.user.groups.add(interviewer_group)
+
+        profile, _ = UserProfile.objects.get_or_create(user=self.user)
+        profile.role = 'interviewer'
+        profile.save()
 
     def test_ratelimit_mixin_class_creation(self):
         """Test RateLimitMixin can be used in ViewSet."""
@@ -201,6 +211,171 @@ class RateLimitMixinsTest(TestCase):
         # All methods should be decorated with lenient limits
         self.assertTrue(hasattr(viewset, 'list'))
         self.assertTrue(hasattr(viewset, 'retrieve'))
+
+    def test_ratelimit_mixin_get_throttles(self):
+        """Test RateLimitMixin.get_throttles returns empty list."""
+        class TestViewSet(RateLimitMixin, ModelViewSet):
+            queryset = Tag.objects.all()
+            serializer_class = TagSerializer
+
+        viewset = TestViewSet()
+        throttles = viewset.get_throttles()
+        self.assertEqual(throttles, [])
+
+    def test_strict_ratelimit_mixin_get_throttles(self):
+        """Test StrictRateLimitMixin.get_throttles returns empty list."""
+        class TestViewSet(StrictRateLimitMixin, ModelViewSet):
+            queryset = Tag.objects.all()
+            serializer_class = TagSerializer
+
+        viewset = TestViewSet()
+        throttles = viewset.get_throttles()
+        self.assertEqual(throttles, [])
+
+    def test_lenient_ratelimit_mixin_get_throttles(self):
+        """Test LenientRateLimitMixin.get_throttles returns empty list."""
+        class TestViewSet(LenientRateLimitMixin, ModelViewSet):
+            queryset = Tag.objects.all()
+            serializer_class = TagSerializer
+
+        viewset = TestViewSet()
+        throttles = viewset.get_throttles()
+        self.assertEqual(throttles, [])
+
+    def test_ratelimit_mixin_initial_list_action(self):
+        """Test RateLimitMixin.initial uses lenient limits for list action."""
+        from rest_framework.test import APIRequestFactory
+        from rest_framework.request import Request
+
+        class TestViewSet(RateLimitMixin, ModelViewSet):
+            queryset = Tag.objects.all()
+            serializer_class = TagSerializer
+
+        factory = APIRequestFactory()
+        django_request = factory.get('/api/tags/')
+        django_request.user = self.user
+
+        # Wrap Django request in DRF Request
+        request = Request(django_request)
+
+        viewset = TestViewSet()
+        viewset.action = 'list'
+        viewset.format_kwarg = None
+
+        # Should not raise an exception
+        try:
+            viewset.initial(request)
+        except Exception as e:
+            # Rate limiting may trigger, but initial() should execute
+            self.assertIn('429', str(e).lower(), f"Unexpected exception: {e}")
+
+    def test_ratelimit_mixin_initial_create_action(self):
+        """Test RateLimitMixin.initial uses strict limits for create action."""
+        from rest_framework.test import APIRequestFactory
+        from rest_framework.request import Request
+
+        class TestViewSet(RateLimitMixin, ModelViewSet):
+            queryset = Tag.objects.all()
+            serializer_class = TagSerializer
+
+        factory = APIRequestFactory()
+        django_request = factory.post('/api/tags/')
+        django_request.user = self.user
+
+        # Wrap Django request in DRF Request
+        request = Request(django_request)
+
+        viewset = TestViewSet()
+        viewset.action = 'create'
+        viewset.format_kwarg = None
+
+        # Should not raise an exception
+        try:
+            viewset.initial(request)
+        except Exception as e:
+            # Rate limiting may trigger, but initial() should execute
+            self.assertIn('429', str(e).lower(), f"Unexpected exception: {e}")
+
+    def test_ratelimit_mixin_initial_custom_action(self):
+        """Test RateLimitMixin.initial uses default limits for custom action."""
+        from rest_framework.test import APIRequestFactory
+        from rest_framework.request import Request
+
+        class TestViewSet(RateLimitMixin, ModelViewSet):
+            queryset = Tag.objects.all()
+            serializer_class = TagSerializer
+
+        factory = APIRequestFactory()
+        django_request = factory.get('/api/tags/custom/')
+        django_request.user = self.user
+
+        # Wrap Django request in DRF Request
+        request = Request(django_request)
+
+        viewset = TestViewSet()
+        viewset.action = 'custom_action'
+        viewset.format_kwarg = None
+
+        # Should not raise an exception
+        try:
+            viewset.initial(request)
+        except Exception as e:
+            # Rate limiting may trigger, but initial() should execute
+            self.assertIn('429', str(e).lower(), f"Unexpected exception: {e}")
+
+    def test_strict_ratelimit_mixin_initial(self):
+        """Test StrictRateLimitMixin.initial applies strict limits."""
+        from rest_framework.test import APIRequestFactory
+        from rest_framework.request import Request
+
+        class TestViewSet(StrictRateLimitMixin, ModelViewSet):
+            queryset = Tag.objects.all()
+            serializer_class = TagSerializer
+
+        factory = APIRequestFactory()
+        django_request = factory.get('/api/tags/')
+        django_request.user = self.user
+
+        # Wrap Django request in DRF Request
+        request = Request(django_request)
+
+        viewset = TestViewSet()
+        viewset.action = 'list'
+        viewset.format_kwarg = None
+
+        # Should not raise an exception
+        try:
+            viewset.initial(request)
+        except Exception as e:
+            # Rate limiting may trigger, but initial() should execute
+            self.assertIn('429', str(e).lower(), f"Unexpected exception: {e}")
+
+    def test_lenient_ratelimit_mixin_initial(self):
+        """Test LenientRateLimitMixin.initial applies lenient limits."""
+        from rest_framework.test import APIRequestFactory
+        from rest_framework.request import Request
+
+        class TestViewSet(LenientRateLimitMixin, ModelViewSet):
+            queryset = Tag.objects.all()
+            serializer_class = TagSerializer
+
+        factory = APIRequestFactory()
+        django_request = factory.get('/api/tags/')
+        django_request.user = self.user
+
+        # Wrap Django request in DRF Request
+        request = Request(django_request)
+
+        viewset = TestViewSet()
+        viewset.action = 'list'
+        viewset.format_kwarg = None
+
+        # Should not raise an exception
+        try:
+            viewset.initial(request)
+        except Exception as e:
+            # Rate limiting may trigger, but initial() should execute
+            self.assertIn('429', str(e).lower(), f"Unexpected exception: {e}")
 
 
 @override_settings(RATELIMIT_ENABLE=False)

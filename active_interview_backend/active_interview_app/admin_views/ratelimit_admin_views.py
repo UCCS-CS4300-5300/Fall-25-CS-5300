@@ -190,9 +190,17 @@ def export_violations(request):
     end_date = request.GET.get('end_date')
 
     if start_date:
-        queryset = queryset.filter(timestamp__gte=start_date)
+        from datetime import datetime
+        # Convert string date to timezone-aware datetime
+        start_dt = timezone.make_aware(datetime.strptime(start_date, '%Y-%m-%d'))
+        queryset = queryset.filter(timestamp__gte=start_dt)
     if end_date:
-        queryset = queryset.filter(timestamp__lte=end_date + ' 23:59:59')
+        from datetime import datetime
+        # Convert string date to timezone-aware datetime (end of day)
+        end_dt = timezone.make_aware(
+            datetime.strptime(end_date + ' 23:59:59', '%Y-%m-%d %H:%M:%S')
+        )
+        queryset = queryset.filter(timestamp__lte=end_dt)
 
     # Other filters
     user_id = request.GET.get('user_id')

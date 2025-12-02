@@ -662,7 +662,8 @@ class PerformanceMonitorMiddlewareTests(TestCase):
         request = self.factory.get('/api/slow/')
 
         # Capture log output
-        with self.assertLogs('active_interview_app.middleware', level='WARNING') as log:
+        # Note: The middleware.py file is loaded as 'observability_middleware' by the package __init__.py
+        with self.assertLogs('observability_middleware', level='WARNING') as log:
             response = middleware(request)
             self.assertEqual(response.status_code, 200)
 
