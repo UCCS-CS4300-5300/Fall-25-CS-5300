@@ -1,5 +1,5 @@
 """
-Tests for Interview Workflow Phases 6-8
+Tests for Interview Workflow Phases 6-8 and Coverage Boost
 
 This test file covers:
 - Phase 6-7: Graceful ending with T-5 minute warning and auto-finalization
@@ -7,6 +7,11 @@ This test file covers:
 - Phase 8: Auto-finalization when all questions answered (practice interviews)
 - FinalizeInterviewView
 - Report generation workflow
+- Exception handling in graceful ending (lines 613-619)
+- _extract_rationales_from_chat method (lines 1863-1952)
+- ChatCreate exception paths (lines 182-188, 193-198)
+- UploadFileView GET for interviewers (lines 1349-1353)
+- InvitedInterview.DoesNotExist exception paths
 
 Related Issues: #137 (Interview Categorization), Interview Workflow Phases
 """
@@ -471,3 +476,357 @@ class FinalizeInterviewViewTests(TestCase):
         self.assertTrue(
             any('already been finalized' in str(m) for m in messages)
         )
+
+
+class GracefulEndingExceptionTests(TestCase):
+    """Test exception handling in graceful ending (lines 613-619)"""
+
+    def setUp(self):
+        self.client = Client()
+
+        # Create candidate
+        self.candidate = User.objects.create_user(
+            username='candidate@test.com',
+            email='candidate@test.com',
+            password=TEST_PASSWORD
+        )
+        self.candidate.profile.role = 'candidate'
+        self.candidate.profile.save()
+
+        # Create invited interview chat WITHOUT an InvitedInterview record
+        # This will trigger the InvitedInterview.DoesNotExist exception
+        self.chat = Chat.objects.create(
+            owner=self.candidate,
+            title='Invited Interview',
+            type='GEN',
+            interview_type=Chat.INVITED,
+            difficulty=5,
+            messages=[
+                {"role": "system", "content": "Test"},
+                {"role": "assistant", "content": "Hello"}
+            ],
+            started_at=timezone.now() - timedelta(minutes=56),
+            scheduled_end_at=timezone.now() + timedelta(minutes=4)  # Less than 5 mins
+        )
+
+    @patch('active_interview_app.views.ai_available')
+    @patch('active_interview_app.views.get_client_and_model')
+    @patch('active_interview_app.views.record_openai_usage')
+    def test_graceful_ending_without_invitation_record(
+        self, mock_usage, mock_client, mock_ai
+    ):
+        """Test graceful ending when InvitedInterview.DoesNotExist (line 613-614)"""
+        mock_ai.return_value = True
+
+        # Mock AI client for report generation
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock(message=MagicMock(content="85"))]
+        mock_response.usage = MagicMock(
+            prompt_tokens=100,
+            completion_tokens=50,
+            total_tokens=150
+        )
+        mock_client.return_value = (MagicMock(
+            chat=MagicMock(
+                completions=MagicMock(
+                    create=MagicMock(return_value=mock_response)
+                )
+            )
+        ), 'gpt-4', {'name': 'Premium', 'model': 'gpt-4'})
+
+        self.client.login(username='candidate@test.com', password=TEST_PASSWORD)
+
+        response = self.client.post(
+            reverse('chat-view', kwargs={'chat_id': self.chat.id}),
+            data=json.dumps({'message': 'My answer'}),
+            content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+
+        # Should still get graceful ending message
+        message_text = data.get('content', '')
+        self.assertIn('interview time window is ending', message_text.lower())
+
+        # Verify auto-finalization happened despite missing invitation
+        self.chat.refresh_from_db()
+        self.assertTrue(self.chat.is_finalized)
+
+        # Verify report was still generated
+        self.assertTrue(ExportableReport.objects.filter(chat=self.chat).exists())
+
+    @patch('active_interview_app.views.ai_available')
+    @patch('active_interview_app.report_utils.generate_and_save_report')
+    def test_graceful_ending_report_generation_fails(
+        self, mock_generate_report, mock_ai
+    ):
+        """Test graceful ending when report generation fails (lines 615-619)"""
+        mock_ai.return_value = True
+
+        # Mock report generation to raise an exception
+        mock_generate_report.side_effect = Exception("Report generation failed")
+
+        self.client.login(username='candidate@test.com', password=TEST_PASSWORD)
+
+        response = self.client.post(
+            reverse('chat-view', kwargs={'chat_id': self.chat.id}),
+            data=json.dumps({'message': 'My answer'}),
+            content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        # Verify chat is still marked as finalized even though report generation failed
+        self.chat.refresh_from_db()
+        self.assertTrue(self.chat.is_finalized)
+        self.assertIsNotNone(self.chat.finalized_at)
+
+
+class ExtractRationalesTests(TestCase):
+    """Test _extract_rationales_from_chat method via FinalizeInterviewView (lines 1863-1952)"""
+
+    def setUp(self):
+        self.client = Client()
+
+        # Create user
+        self.user = User.objects.create_user(
+            username='user@test.com',
+            email='user@test.com',
+            password=TEST_PASSWORD
+        )
+
+        # Create chat
+        self.chat = Chat.objects.create(
+            owner=self.user,
+            title='Test Interview',
+            type='GEN',
+            interview_type=Chat.PRACTICE,
+            difficulty=5,
+            messages=[
+                {"role": "system", "content": "Test"},
+                {"role": "assistant", "content": "Question?"},
+                {"role": "user", "content": "Answer"}
+            ]
+        )
+
+    @patch('active_interview_app.views.ai_available')
+    @patch('active_interview_app.views.get_client_and_model')
+    @patch('active_interview_app.views.record_openai_usage')
+    def test_extract_rationales_via_finalize(
+        self, mock_usage, mock_client, mock_ai
+    ):
+        """Test rationales extraction via FinalizeInterviewView"""
+        mock_ai.return_value = True
+
+        # Mock AI response with properly formatted rationales
+        rationale_response = MagicMock()
+        rationale_response.choices = [MagicMock(message=MagicMock(content="""
+Professionalism: The candidate demonstrated excellent professionalism.
+
+Subject Knowledge: Strong understanding of the subject matter.
+
+Clarity: Responses were clear and well-articulated.
+
+Overall: Excellent performance overall.
+        """))]
+        rationale_response.usage = MagicMock(
+            prompt_tokens=100,
+            completion_tokens=50,
+            total_tokens=150
+        )
+
+        # Mock other AI responses for the full report generation
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock(message=MagicMock(content="85\n80\n90\n85"))]
+        mock_response.usage = MagicMock(
+            prompt_tokens=100,
+            completion_tokens=50,
+            total_tokens=150
+        )
+
+        # Return different responses based on call order
+        mock_client_instance = MagicMock()
+        mock_client_instance.chat.completions.create.side_effect = [
+            mock_response,  # scores
+            mock_response,  # feedback
+            rationale_response,  # rationales
+        ]
+        mock_client.return_value = (
+            mock_client_instance,
+            'gpt-4',
+            {'name': 'Premium', 'model': 'gpt-4'}
+        )
+
+        self.client.login(username='user@test.com', password=TEST_PASSWORD)
+
+        response = self.client.post(
+            reverse('finalize_interview', kwargs={'chat_id': self.chat.id})
+        )
+
+        # Should succeed
+        self.assertEqual(response.status_code, 302)
+
+        # Check report has rationales
+        report = ExportableReport.objects.get(chat=self.chat)
+        self.assertIsNotNone(report.professionalism_rationale)
+        self.assertIsNotNone(report.subject_knowledge_rationale)
+        self.assertIsNotNone(report.clarity_rationale)
+        self.assertIsNotNone(report.overall_rationale)
+
+
+class FinalizeInvitedInterviewWithoutInvitationTests(TestCase):
+    """Test FinalizeInterviewView with invited chat but no InvitedInterview record"""
+
+    def setUp(self):
+        self.client = Client()
+
+        self.candidate = User.objects.create_user(
+            username='candidate@test.com',
+            email='candidate@test.com',
+            password=TEST_PASSWORD
+        )
+
+        # Create INVITED chat WITHOUT InvitedInterview record
+        self.chat = Chat.objects.create(
+            owner=self.candidate,
+            title='Invited Interview',
+            type='GEN',
+            interview_type=Chat.INVITED,
+            difficulty=5,
+            messages=[
+                {"role": "system", "content": "Test"},
+                {"role": "assistant", "content": "Question?"},
+                {"role": "user", "content": "Answer"}
+            ]
+        )
+
+    @patch('active_interview_app.views.ai_available')
+    @patch('active_interview_app.views.get_client_and_model')
+    @patch('active_interview_app.views.record_openai_usage')
+    def test_finalize_invited_missing_invitation(
+        self, mock_usage, mock_client, mock_ai
+    ):
+        """Test finalize when InvitedInterview doesn't exist"""
+        mock_ai.return_value = True
+
+        # Mock AI responses
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock(message=MagicMock(content="85"))]
+        mock_response.usage = MagicMock(
+            prompt_tokens=100,
+            completion_tokens=50,
+            total_tokens=150
+        )
+        mock_client.return_value = (MagicMock(
+            chat=MagicMock(
+                completions=MagicMock(
+                    create=MagicMock(return_value=mock_response)
+                )
+            )
+        ), 'gpt-4', {'name': 'Premium', 'model': 'gpt-4'})
+
+        self.client.login(username='candidate@test.com', password=TEST_PASSWORD)
+
+        response = self.client.post(
+            reverse('finalize_interview', kwargs={'chat_id': self.chat.id})
+        )
+
+        # Should still succeed despite missing InvitedInterview
+        self.assertEqual(response.status_code, 302)
+
+        # Verify report was created
+        self.assertTrue(ExportableReport.objects.filter(chat=self.chat).exists())
+
+        # Verify chat is finalized
+        self.chat.refresh_from_db()
+        self.assertTrue(self.chat.is_finalized)
+
+
+class ChatCreateExceptionTests(TestCase):
+    """Test exception paths in ChatCreate view"""
+
+    def setUp(self):
+        self.client = Client()
+
+        self.user = User.objects.create_user(
+            username='user@test.com',
+            email='user@test.com',
+            password=TEST_PASSWORD
+        )
+        self.user.profile.role = 'candidate'
+        self.user.profile.save()
+
+    def test_chat_create_with_invalid_job_id(self):
+        """Test ChatCreate GET with invalid job_id (lines 182-188)"""
+        self.client.login(username='user@test.com', password=TEST_PASSWORD)
+
+        # Request with non-existent job_id
+        response = self.client.get(reverse('chat-create'), {'job_id': 99999})
+
+        # Should still render successfully, just ignoring invalid job_id
+        self.assertEqual(response.status_code, 200)
+
+        # Form should not have listing_choice pre-selected
+        form = response.context['form']
+        self.assertNotIn('listing_choice', form.initial)
+
+    def test_chat_create_with_invalid_template_id(self):
+        """Test ChatCreate GET with invalid template_id (lines 193-198)"""
+        self.client.login(username='user@test.com', password=TEST_PASSWORD)
+
+        # Request with non-existent template_id
+        response = self.client.get(reverse('chat-create'), {'template_id': 99999})
+
+        # Should still render successfully
+        self.assertEqual(response.status_code, 200)
+
+        # Suggested template should be None
+        self.assertIsNone(response.context.get('suggested_template'))
+
+    def test_chat_create_with_both_invalid_params(self):
+        """Test ChatCreate GET with both invalid job_id and template_id"""
+        self.client.login(username='user@test.com', password=TEST_PASSWORD)
+
+        response = self.client.get(
+            reverse('chat-create'),
+            {'job_id': 99999, 'template_id': 88888}
+        )
+
+        # Should still render successfully
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.context.get('suggested_template'))
+
+
+class UploadFileViewTests(TestCase):
+    """Test GET path in UploadFileView for interviewers"""
+
+    def setUp(self):
+        self.client = Client()
+
+        self.user = User.objects.create_user(
+            username='user@test.com',
+            email='user@test.com',
+            password=TEST_PASSWORD
+        )
+
+    def test_upload_file_view_get_for_interviewer(self):
+        """Test UploadFileView GET for interviewer shows templates (lines 1349-1353)"""
+        # Make user an interviewer
+        self.user.profile.role = 'interviewer'
+        self.user.profile.save()
+
+        # Create a template
+        template = InterviewTemplate.objects.create(
+            name='Test Template',
+            description='Test',
+            user=self.user
+        )
+
+        self.client.login(username='user@test.com', password=TEST_PASSWORD)
+
+        response = self.client.get(reverse('document-list'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('templates', response.context)
+        self.assertIn(template, response.context['templates'])
