@@ -37,19 +37,10 @@ iterations:
     regression_failures: 0
     execution_time: 0.0
 
-  - number: 4
-    timestamp: "2025-11-12T23:10:34.226Z"
-    total_tests: 20
-    passed: 20
-    failed: 0
-    errors: 0
-    new_test_failures: 0
-    regression_failures: 0
-    execution_time: 0.0
 
 summary:
-  total_iterations: 4
-  iterations_to_success: 4
+  total_iterations: 3
+  iterations_to_success: 3
   first_run_failure_rate: 10.0
   final_status: "success"
   total_time_minutes: 0
@@ -130,14 +121,16 @@ Traceback (most recent call las
 Found 20 test(s).
 System check identified no issues (0 silenced).
 My detailed answer
-Excellent answer!
+Excellent answer!
+
 Creating test database for alias 'default'...
 ....................
 ----------------------------------------------------------------------
 Ran 20 tests in 16.580s
 
 OK
-Destroying test database for alias 'default'...
+Destroying test database for alias 'default'...
+
 ```
 </details>
 
@@ -157,14 +150,16 @@ Destroying test database for alias 'default'...
 Found 20 test(s).
 System check identified no issues (0 silenced).
 My detailed answer
-Excellent answer!
+Excellent answer!
+
 Creating test database for alias 'default'...
 ....................
 ----------------------------------------------------------------------
 Ran 20 tests in 20.587s
 
 OK
-Destroying test database for alias 'default'...
+Destroying test database for alias 'default'...
+
 ```
 </details>
 
