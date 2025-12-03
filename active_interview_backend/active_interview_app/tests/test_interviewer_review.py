@@ -510,9 +510,13 @@ class CandidateViewFeedbackTests(TestCase):
             chat=self.chat
         )
 
+        # Create report so export_report view works
+        from active_interview_app.models import ExportableReport
+        ExportableReport.objects.create(chat=self.chat, overall_score=85)
+
         self.client.login(username='candidate@test.com',
                           password=TEST_PASSWORD)
-        self.url = reverse('chat-results', kwargs={'chat_id': self.chat.id})
+        self.url = reverse('export_report', kwargs={'chat_id': self.chat.id})
 
     def test_pending_review_shows_waiting_message(self):
         """Test that pending review shows appropriate message"""
@@ -546,7 +550,11 @@ class CandidateViewFeedbackTests(TestCase):
             interview_type=Chat.PRACTICE
         )
 
-        url = reverse('chat-results', kwargs={'chat_id': practice_chat.id})
+        # Create report for practice interview
+        from active_interview_app.models import ExportableReport
+        ExportableReport.objects.create(chat=practice_chat, overall_score=80)
+
+        url = reverse('export_report', kwargs={'chat_id': practice_chat.id})
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200)
