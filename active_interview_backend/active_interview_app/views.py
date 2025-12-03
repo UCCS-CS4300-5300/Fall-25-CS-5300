@@ -647,15 +647,61 @@ class ChatView(LoginRequiredMixin, UserPassesTestMixin, View):
             chat.save()
 
             # Phase 8: Check if all questions answered and auto-finalize
-            # NOTE: Only applies to practice interviews with key_questions
-            # Invited interviews use time-based finalization (T-5, hard cutoff, abandonment)
-            if chat.interview_type == Chat.PRACTICE and chat.all_questions_answered() and not chat.is_finalized:
-                # For practice interviews: just signal completion, let user finalize manually
-                return JsonResponse({
-                    'message': ai_message,
-                    'all_questions_answered': True,
-                    'show_completion_message': True
-                })
+            if chat.all_questions_answered() and not chat.is_finalized:
+                # Auto-finalize the interview
+                from .report_utils import generate_and_save_report
+
+                if chat.interview_type == Chat.INVITED:
+                    # For invited interviews: auto-finalize with report and notification
+                    try:
+                        # Generate report (no rushed qualifier - they completed all questions)
+                        report = generate_and_save_report(chat, include_rushed_qualifier=False)
+
+                        # Mark chat as finalized
+                        chat.is_finalized = True
+                        chat.finalized_at = timezone.now()
+                        chat.save()
+
+                        # Update invitation status and send notification
+                        try:
+                            invitation = InvitedInterview.objects.get(chat=chat)
+                            if invitation.status != InvitedInterview.COMPLETED:
+                                invitation.status = InvitedInterview.COMPLETED
+                                invitation.completed_at = timezone.now()
+                                invitation.save()
+
+                                # Send completion notification to interviewer
+                                from .invitation_utils import send_completion_notification_email
+                                send_completion_notification_email(invitation)
+                        except InvitedInterview.DoesNotExist:
+                            pass
+
+                        # Return with completion flag
+                        return JsonResponse({
+                            'message': ai_message,
+                            'all_questions_answered': True,
+                            'interview_completed': True,
+                            'redirect_to_report': True
+                        })
+                    except Exception as e:
+                        # If report generation fails, still mark as completed but continue normally
+                        chat.is_finalized = True
+                        chat.finalized_at = timezone.now()
+                        chat.save()
+
+                        return JsonResponse({
+                            'message': ai_message,
+                            'all_questions_answered': True,
+                            'error': 'Report generation failed, but interview marked as complete'
+                        })
+
+                elif chat.interview_type == Chat.PRACTICE:
+                    # For practice interviews: just signal completion, let user finalize manually
+                    return JsonResponse({
+                        'message': ai_message,
+                        'all_questions_answered': True,
+                        'show_completion_message': True
+                    })
 
             return JsonResponse({'message': ai_message})
         except Exception as e:
@@ -3251,6 +3297,56 @@ def start_invited_interview(request, invitation_id):
             "content": ai_message
         }
     )
+
+    # Generate key questions for tracking completion
+    if ai_available():
+        try:
+            # Build prompt to extract key questions from template
+            key_questions_prompt = textwrap.dedent("""\
+                Based on the following interview template, generate a list of key questions
+                that should be asked during this interview.
+
+                Template: {template_name}
+                {template_description}
+
+                Sections:
+                {sections_content}
+
+                Generate {question_count} key questions that cover all sections proportionally
+                based on their weight. Return ONLY a JSON array of question strings.
+
+                Example format: ["Question 1?", "Question 2?", "Question 3?"]
+            """).format(
+                template_name=template.name,
+                template_description=template.description if template.description else "",
+                sections_content=sections_content if sections_content else "(No sections)",
+                question_count=max(5, len(sections)) if sections else 5
+            )
+
+            # Auto-select model tier based on spending cap
+            client, model, tier_info = get_client_and_model()
+            response = client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": key_questions_prompt}],
+                max_tokens=MAX_TOKENS
+            )
+            record_openai_usage(request.user, 'generate_key_questions', response)
+            ai_response = response.choices[0].message.content
+
+            # Extract JSON array from response
+            match = re.search(r"(\[[\s\S]+\])", ai_response)
+            if match:
+                chat.key_questions = json.loads(match.group(0).strip())
+            else:
+                # Fallback: use section count as question count
+                chat.key_questions = [f"Question {i+1}" for i in range(len(sections))] if sections else []
+        except Exception as e:
+            print(f"Failed to generate key questions: {e}")
+            # Fallback: estimate based on sections
+            chat.key_questions = [f"Question {i+1}" for i in range(len(sections))] if sections else []
+    else:
+        # AI not available, use placeholder questions
+        chat.key_questions = [f"Question {i+1}" for i in range(len(sections))] if sections else []
 
     chat.save()
 

@@ -450,6 +450,90 @@
               return;
             }
 
+            // Handle all questions answered - invited interview (auto-finalized)
+            if (response.redirect_to_report && response.interview_completed) {
+              const sanitizedAiResponse = DOMPurify.sanitize(response.message.replace(/(?:\r\n|\r|\n)/g, '<br>'));
+
+              // Delete loading bubble
+              $('#loading-bubble').remove();
+
+              // Show final AI response
+              $('#chat-messages').append(
+                `<div class="col bot-text-container">
+                  <div class="card bot-text-bubble">
+                    <div class="card-body">
+                      <p class="card-text">${sanitizedAiResponse}</p>
+                    </div>
+                  </div>
+                </div>`);
+
+              // Show completion message with special styling
+              $('#chat-messages').append(
+                `<div class="col bot-text-container">
+                  <div class="card bot-text-bubble" style="background-color: var(--success); color: white;">
+                    <div class="card-body">
+                      <p class="card-text"><i class="bi bi-check-circle-fill"></i> <strong>Congratulations!</strong> You've completed the interview. Your responses have been saved and the interviewer has been notified. Redirecting to your results...</p>
+                    </div>
+                  </div>
+                </div>`);
+
+              updateScroll();
+
+              // Disable input
+              document.getElementById('user-input').disabled = true;
+              document.getElementById('user-input').placeholder = 'Interview completed';
+              document.querySelector('.button-chat-send[onclick="sendMessage()"]').disabled = true;
+
+              // Redirect to report
+              setTimeout(() => {
+                window.location.href = '{% url "export_report" chat_id=chat.id %}';
+              }, 3000);
+
+              return;
+            }
+
+            // Handle all questions answered - practice interview (manual finalize)
+            if (response.all_questions_answered && response.show_completion_message) {
+              const sanitizedAiResponse = DOMPurify.sanitize(response.message.replace(/(?:\r\n|\r|\n)/g, '<br>'));
+
+              // Delete loading bubble
+              $('#loading-bubble').remove();
+
+              // Show final AI response
+              $('#chat-messages').append(
+                `<div class="col bot-text-container">
+                  <div class="card bot-text-bubble">
+                    <div class="card-body">
+                      <p class="card-text">${sanitizedAiResponse}</p>
+                    </div>
+                  </div>
+                </div>`);
+
+              // Show completion message with special styling
+              $('#chat-messages').append(
+                `<div class="col bot-text-container">
+                  <div class="card bot-text-bubble" style="background-color: var(--success); color: white;">
+                    <div class="card-body">
+                      <p class="card-text"><i class="bi bi-check-circle-fill"></i> <strong>Congratulations!</strong> You've answered all the interview questions. You can now finalize your interview to see your results.</p>
+                    </div>
+                  </div>
+                </div>`);
+
+              updateScroll();
+
+              // Disable input
+              document.getElementById('user-input').disabled = true;
+              document.getElementById('user-input').placeholder = 'All questions answered - Ready to finalize';
+              document.querySelector('.button-chat-send[onclick="sendMessage()"]').disabled = true;
+
+              // Show finalize button or redirect after delay
+              setTimeout(() => {
+                window.location.href = '{% url "finalize_interview" chat_id=chat.id %}';
+              }, 3000);
+
+              return;
+            }
+
             // Normal message handling
             const sanitizedAiResponse = DOMPurify.sanitize(response.message.replace(/(?:\r\n|\r|\n)/g, '<br>'));
 

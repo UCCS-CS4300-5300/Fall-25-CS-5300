@@ -283,6 +283,242 @@ class AutoFinalizationTests(TestCase):
         self.assertTrue(data.get('all_questions_answered', False))
         self.assertTrue(data.get('show_completion_message', False))
 
+    @patch('active_interview_app.views.ai_available')
+    @patch('active_interview_app.views.get_client_and_model')
+    @patch('active_interview_app.views.record_openai_usage')
+    @patch('active_interview_app.report_utils.generate_and_save_report')
+    @patch('active_interview_app.invitation_utils.send_completion_notification_email')
+    def test_invited_interview_auto_finalize_on_completion(
+        self, mock_email, mock_report, mock_usage, mock_client, mock_ai
+    ):
+        """Test that invited interviews auto-finalize when all questions answered"""
+        mock_ai.return_value = True
+
+        # Create interviewer
+        interviewer = User.objects.create_user(
+            username='interviewer@test.com',
+            email='interviewer@test.com',
+            password=TEST_PASSWORD
+        )
+        interviewer.profile.role = 'interviewer'
+        interviewer.profile.save()
+
+        # Create template
+        template = InterviewTemplate.objects.create(
+            user=interviewer,
+            name='Test Template',
+            description='Test',
+            sections=[
+                {'title': 'Technical', 'content': 'Tech questions', 'weight': 100, 'order': 1}
+            ]
+        )
+
+        # Create invited interview with chat
+        now = timezone.now()
+        chat = Chat.objects.create(
+            owner=self.candidate,
+            title='Invited Interview',
+            type='GEN',
+            interview_type=Chat.INVITED,
+            started_at=now,
+            scheduled_end_at=now + timedelta(hours=1),
+            messages=[
+                {"role": "system", "content": "Test"},
+                {"role": "assistant", "content": "Question 1?"},
+                {"role": "user", "content": "Answer 1"},
+                {"role": "assistant", "content": "Question 2?"}
+            ],
+            key_questions=["Question 1?", "Question 2?"]
+        )
+
+        invitation = InvitedInterview.objects.create(
+            template=template,
+            interviewer=interviewer,
+            candidate_email=self.candidate.email,
+            scheduled_time=now,
+            duration_minutes=60,
+            chat=chat,
+            status=InvitedInterview.PENDING
+        )
+
+        # Mock AI response
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock(message=MagicMock(content="Thank you!"))]
+        mock_response.usage = MagicMock(
+            prompt_tokens=100, completion_tokens=50, total_tokens=150
+        )
+        mock_client.return_value = (
+            MagicMock(chat=MagicMock(completions=MagicMock(create=MagicMock(return_value=mock_response)))),
+            'gpt-4',
+            {'name': 'Premium', 'model': 'gpt-4'}
+        )
+
+        # Mock report generation
+        mock_report.return_value = ExportableReport.objects.create(
+            chat=chat,
+            overall_score=85
+        )
+
+        self.client.login(username='candidate@test.com', password=TEST_PASSWORD)
+
+        # Send final answer
+        response = self.client.post(
+            reverse('chat-view', kwargs={'chat_id': chat.id}),
+            data=json.dumps({'message': 'Final answer'}),
+            content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+
+        # Should have auto-finalized
+        self.assertTrue(data.get('all_questions_answered', False))
+        self.assertTrue(data.get('interview_completed', False))
+        self.assertTrue(data.get('redirect_to_report', False))
+
+        # Verify chat was finalized
+        chat.refresh_from_db()
+        self.assertTrue(chat.is_finalized)
+        self.assertIsNotNone(chat.finalized_at)
+
+        # Verify invitation status updated
+        invitation.refresh_from_db()
+        self.assertEqual(invitation.status, InvitedInterview.COMPLETED)
+        self.assertIsNotNone(invitation.completed_at)
+
+        # Verify notification email sent
+        mock_email.assert_called_once_with(invitation)
+
+        # Verify report was generated without rushed qualifier
+        mock_report.assert_called_once_with(chat, include_rushed_qualifier=False)
+
+
+class InvitedInterviewKeyQuestionsTests(TestCase):
+    """Test that key questions are generated for invited interviews"""
+
+    def setUp(self):
+        self.client = Client()
+
+        # Create interviewer
+        self.interviewer = User.objects.create_user(
+            username='interviewer@test.com',
+            email='interviewer@test.com',
+            password=TEST_PASSWORD
+        )
+        self.interviewer.profile.role = 'interviewer'
+        self.interviewer.profile.save()
+
+        # Create candidate
+        self.candidate = User.objects.create_user(
+            username='candidate@test.com',
+            email='candidate@test.com',
+            password=TEST_PASSWORD
+        )
+        self.candidate.profile.role = 'candidate'
+        self.candidate.profile.save()
+
+        # Create template with sections
+        self.template = InterviewTemplate.objects.create(
+            user=self.interviewer,
+            name='Technical Interview',
+            description='Testing technical skills',
+            sections=[
+                {'title': 'Algorithms', 'content': 'Algorithm questions', 'weight': 50, 'order': 1},
+                {'title': 'System Design', 'content': 'Design questions', 'weight': 50, 'order': 2}
+            ]
+        )
+
+        # Create invitation
+        self.invitation = InvitedInterview.objects.create(
+            template=self.template,
+            interviewer=self.interviewer,
+            candidate_email=self.candidate.email,
+            scheduled_time=timezone.now(),
+            duration_minutes=60
+        )
+
+    @patch('active_interview_app.views.ai_available')
+    @patch('active_interview_app.views.get_client_and_model')
+    @patch('active_interview_app.views.record_openai_usage')
+    def test_key_questions_generated_on_start(
+        self, mock_usage, mock_client, mock_ai
+    ):
+        """Test that key questions are generated when invited interview starts"""
+        mock_ai.return_value = True
+
+        # Mock AI responses - one for greeting, one for key questions
+        greeting_response = MagicMock()
+        greeting_response.choices = [MagicMock(message=MagicMock(
+            content="Hello! Let's begin the interview."
+        ))]
+        greeting_response.usage = MagicMock(
+            prompt_tokens=100, completion_tokens=50, total_tokens=150
+        )
+
+        key_questions_response = MagicMock()
+        key_questions_response.choices = [MagicMock(message=MagicMock(
+            content='["What is your experience with algorithms?", "Describe a complex system you designed."]'
+        ))]
+        key_questions_response.usage = MagicMock(
+            prompt_tokens=100, completion_tokens=50, total_tokens=150
+        )
+
+        # Mock client will be called twice - once for greeting, once for key questions
+        mock_completion = MagicMock()
+        mock_completion.create.side_effect = [greeting_response, key_questions_response]
+
+        mock_client.return_value = (
+            MagicMock(chat=MagicMock(completions=mock_completion)),
+            'gpt-4',
+            {'name': 'Premium', 'model': 'gpt-4'}
+        )
+
+        self.client.login(username='candidate@test.com', password=TEST_PASSWORD)
+
+        # Start the interview
+        response = self.client.post(
+            reverse('start_invited_interview', kwargs={'invitation_id': self.invitation.id})
+        )
+
+        # Should redirect to chat view
+        self.assertEqual(response.status_code, 302)
+
+        # Refresh invitation to get chat
+        self.invitation.refresh_from_db()
+        self.assertIsNotNone(self.invitation.chat)
+
+        # Verify key questions were generated
+        chat = self.invitation.chat
+        self.assertIsNotNone(chat.key_questions)
+        self.assertGreater(len(chat.key_questions), 0)
+
+        # Should have at least 2 questions (one per section)
+        self.assertGreaterEqual(len(chat.key_questions), 2)
+
+    @patch('active_interview_app.views.ai_available')
+    def test_key_questions_fallback_when_ai_unavailable(self, mock_ai):
+        """Test that placeholder key questions are created when AI unavailable"""
+        mock_ai.return_value = False
+
+        self.client.login(username='candidate@test.com', password=TEST_PASSWORD)
+
+        # Start the interview
+        response = self.client.post(
+            reverse('start_invited_interview', kwargs={'invitation_id': self.invitation.id})
+        )
+
+        # Should still redirect successfully
+        self.assertEqual(response.status_code, 302)
+
+        # Refresh invitation to get chat
+        self.invitation.refresh_from_db()
+        self.assertIsNotNone(self.invitation.chat)
+
+        # Verify placeholder key questions were created
+        chat = self.invitation.chat
+        self.assertIsNotNone(chat.key_questions)
+        self.assertEqual(len(chat.key_questions), 2)  # One per section
+
 
 class FinalizeInterviewViewTests(TestCase):
     """Test FinalizeInterviewView functionality"""
