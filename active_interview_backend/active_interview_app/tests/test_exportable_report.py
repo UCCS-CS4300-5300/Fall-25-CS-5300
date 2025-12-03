@@ -128,37 +128,6 @@ class ExportableReportViewTest(TestCase):
             type='GEN'
         )
 
-    def test_generate_report_requires_login(self):
-        """Test that generating a report requires login"""
-        url = reverse('generate_report', kwargs={'chat_id': self.chat.id})
-        response = self.client.post(url)
-        self.assertEqual(response.status_code, 302)  # Redirect to login
-
-    def test_generate_report_view(self):
-        """Test generating a report via the GenerateReportView"""
-        from unittest.mock import patch
-
-        self.client.login(username='testuser', password=TEST_PASSWORD)
-        url = reverse('generate_report', kwargs={'chat_id': self.chat.id})
-
-        # Mock the AI functions to avoid external API calls in tests
-        with patch('active_interview_app.views.ai_available', return_value=False):
-            self.client.post(url, follow=True)
-        # Check that report was created
-        self.assertTrue(ExportableReport.objects.filter(
-            chat=self.chat).exists())
-        report = ExportableReport.objects.get(chat=self.chat)
-
-        # Check that statistics were calculated
-        self.assertEqual(report.total_questions_asked, 2)
-        self.assertEqual(report.total_responses_given, 1)
-
-        # When AI is unavailable, scores should default to 0
-        self.assertEqual(report.professionalism_score, 0)
-        self.assertEqual(report.subject_knowledge_score, 0)
-        self.assertEqual(report.clarity_score, 0)
-        self.assertEqual(report.overall_score, 0)
-
     def test_export_report_view_requires_login(self):
         """Test that viewing the export report requires login"""
         ExportableReport.objects.create(
@@ -898,22 +867,6 @@ class SectionScoresWithRationalesTest(TestCase):
         self.assertContains(response, '30%')  # Professionalism weight
         self.assertContains(response, '40%')  # Subject Knowledge weight
 
-    def test_generate_report_button_exists(self):
-        """Test that the generate detailed report button exists on results page"""
-        self.client.login(username='testuser', password=TEST_PASSWORD)
-        url = reverse('chat-results', kwargs={'chat_id': self.chat.id})
-        response = self.client.get(url)
-
-        self.assertEqual(response.status_code, 200)
-
-        # Check for the generate report button (updated for Issue #130 spinner)
-        self.assertContains(response, 'Generate Detailed Report')
-        self.assertContains(response, 'generate_report')
-        # Check for loading spinner elements added in Issue #130
-        self.assertContains(response, 'id="generateReportBtn"')
-        self.assertContains(response, 'id="reportSpinner"')
-        self.assertContains(response, 'loading-spinner-button')
-
     def test_pdf_export_includes_rationales(self):
         """Test that PDF export includes section rationales"""
         self.client.login(username='testuser', password=TEST_PASSWORD)
@@ -981,18 +934,12 @@ class IntegratedUserStoriesTest(TestCase):
 
         self.client.login(username='candidate', password=TEST_PASSWORD)
 
-        # Step 1: View quick results page
-        results_url = reverse('chat-results', kwargs={'chat_id': self.chat.id})
-        results_response = self.client.get(results_url)
-        self.assertEqual(results_response.status_code, 200)
-
-        # Step 2: Generate detailed report (triggers score computation)
-        generate_url = reverse('generate_report', kwargs={
-                               'chat_id': self.chat.id})
+        # Step 1: Finalize interview (triggers report generation)
+        finalize_url = reverse('finalize_interview', kwargs={'chat_id': self.chat.id})
 
         # Mock the AI calls to avoid external API dependency
-        with patch('active_interview_app.views.ai_available', return_value=True):
-            with patch('active_interview_app.views.get_client_and_model') as mock_get_client:
+        with patch('active_interview_app.report_utils.ai_available', return_value=True):
+            with patch('active_interview_app.report_utils.get_openai_client') as mock_get_client:
                 # Create mock client
                 mock_client = MagicMock()
 
@@ -1013,15 +960,15 @@ Clarity: Communicated clearly and effectively.
 Overall: Strong overall performance with good balance across all areas.
 """)
 
-                # Set up get_client_and_model to return (client, model, tier_info)
-                mock_get_client.return_value = (mock_client, 'gpt-4o', {})
+                # Set up get_openai_client to return client
+                mock_get_client.return_value = mock_client
 
                 # Set up the side effects for the three API calls
                 mock_client.chat.completions.create.side_effect = [
                     mock_scores, mock_feedback, mock_rationales]
 
-                generate_response = self.client.post(generate_url, follow=True)
-                self.assertEqual(generate_response.status_code, 200)
+                finalize_response = self.client.post(finalize_url, follow=True)
+                self.assertEqual(finalize_response.status_code, 200)
 
         # Verify report was created
         self.assertTrue(ExportableReport.objects.filter(
