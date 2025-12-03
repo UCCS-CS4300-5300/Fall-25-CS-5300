@@ -264,6 +264,24 @@ class Chat(models.Model):
         help_text='Scheduled time when interview should end'
     )
 
+    # Finalization tracking (Report Generation Refactor)
+    is_finalized = models.BooleanField(
+        default=False,
+        help_text='Whether the interview has been finalized and report generated'
+    )
+    finalized_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='When the interview was finalized'
+    )
+
+    # Graceful ending tracking for invited interviews
+    last_question_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='When the last question was asked (for graceful ending calculation)'
+    )
+
     # create object itself, not the field
     # all templates for documents in /documents/
     # thing that returns all user files is at views
@@ -289,6 +307,27 @@ class Chat(models.Model):
             if now < self.scheduled_end_at:
                 return self.scheduled_end_at - now
         return None
+
+    def all_questions_answered(self):
+        """
+        Check if all key questions have been answered by the candidate.
+
+        Logic:
+        - Count user messages in self.messages (excluding first system message)
+        - Compare to len(self.key_questions)
+        - Return True if user has answered all questions
+
+        Related to Phase 8: Auto-finalize on Last Question Answered
+        """
+        if not self.key_questions:
+            # No key questions generated yet
+            return False
+
+        # Count user messages (role == "user")
+        user_message_count = sum(1 for msg in self.messages if msg.get('role') == 'user')
+
+        # User should have answered all key questions
+        return user_message_count >= len(self.key_questions)
 
     def __str__(self):
         return self.title
@@ -620,6 +659,11 @@ class InvitedInterview(models.Model):
         null=True,
         blank=True,
         help_text='When the candidate completed the interview'
+    )
+    last_activity_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='Last time candidate interacted with interview (for abandonment detection)'
     )
 
     class Meta:

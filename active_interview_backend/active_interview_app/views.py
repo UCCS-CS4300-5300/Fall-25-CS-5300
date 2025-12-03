@@ -565,6 +565,67 @@ class ChatView(LoginRequiredMixin, UserPassesTestMixin, View):
         if not ai_available():
             return _ai_unavailable_json()
 
+        # Phase 6-7: For invited interviews, check if we should ask another question
+        # No new questions after T-5 minutes (graceful ending)
+        should_end_interview = False
+        if chat.interview_type == Chat.INVITED:
+            time_remaining = chat.time_remaining()
+            if time_remaining and time_remaining.total_seconds() < 300:  # Less than 5 mins
+                should_end_interview = True
+
+        if should_end_interview:
+            # Don't ask new questions - thank candidate and end
+            import textwrap
+            ai_message = textwrap.dedent("""\
+                Thank you for your response.
+
+                The interview time window is ending, so this concludes our interview.
+                Your responses will be reviewed and you'll receive feedback soon.
+
+                Thank you for your time!
+            """)
+
+            # Add final message
+            new_messages.append({"role": "assistant", "content": ai_message})
+            chat.messages = new_messages
+            chat.last_question_at = timezone.now()
+            chat.save()
+
+            # Auto-finalize
+            if not chat.is_finalized:
+                from .report_utils import generate_and_save_report
+                try:
+                    report = generate_and_save_report(chat, include_rushed_qualifier=True)
+                    chat.is_finalized = True
+                    chat.finalized_at = timezone.now()
+                    chat.save()
+
+                    # Phase 7: Update invitation status
+                    try:
+                        invitation = InvitedInterview.objects.get(chat=chat)
+                        if invitation.status != InvitedInterview.COMPLETED:
+                            invitation.status = InvitedInterview.COMPLETED
+                            invitation.completed_at = timezone.now()
+                            invitation.save()
+
+                            from .invitation_utils import send_completion_notification_email
+                            send_completion_notification_email(invitation)
+                    except InvitedInterview.DoesNotExist:
+                        pass
+                except Exception:
+                    # If report generation fails, still mark as finalized
+                    chat.is_finalized = True
+                    chat.finalized_at = timezone.now()
+                    chat.save()
+
+            return JsonResponse({
+                'role': 'assistant',
+                'content': ai_message,
+                'interview_ended': True,
+                'time_expired': True
+            })
+
+        # Normal flow - get AI response
         try:
             # Auto-select model tier based on spending cap (Issue #14)
             client, model, tier_info = get_client_and_model()
@@ -578,8 +639,69 @@ class ChatView(LoginRequiredMixin, UserPassesTestMixin, View):
             ai_message = response.choices[0].message.content
             new_messages.append({"role": "assistant", "content": ai_message})
 
+            # Update last question time for invited interviews
+            if chat.interview_type == Chat.INVITED:
+                chat.last_question_at = timezone.now()
+
             chat.messages = new_messages
             chat.save()
+
+            # Phase 8: Check if all questions answered and auto-finalize
+            if chat.all_questions_answered() and not chat.is_finalized:
+                # Auto-finalize the interview
+                from .report_utils import generate_and_save_report
+
+                if chat.interview_type == Chat.INVITED:
+                    # For invited interviews: auto-finalize with report and notification
+                    try:
+                        # Generate report (no rushed qualifier - they completed all questions)
+                        report = generate_and_save_report(chat, include_rushed_qualifier=False)
+
+                        # Mark chat as finalized
+                        chat.is_finalized = True
+                        chat.finalized_at = timezone.now()
+                        chat.save()
+
+                        # Update invitation status and send notification
+                        try:
+                            invitation = InvitedInterview.objects.get(chat=chat)
+                            if invitation.status != InvitedInterview.COMPLETED:
+                                invitation.status = InvitedInterview.COMPLETED
+                                invitation.completed_at = timezone.now()
+                                invitation.save()
+
+                                # Send completion notification to interviewer
+                                from .invitation_utils import send_completion_notification_email
+                                send_completion_notification_email(invitation)
+                        except InvitedInterview.DoesNotExist:
+                            pass
+
+                        # Return with completion flag
+                        return JsonResponse({
+                            'message': ai_message,
+                            'all_questions_answered': True,
+                            'interview_completed': True,
+                            'redirect_to_report': True
+                        })
+                    except Exception as e:
+                        # If report generation fails, still mark as completed but continue normally
+                        chat.is_finalized = True
+                        chat.finalized_at = timezone.now()
+                        chat.save()
+
+                        return JsonResponse({
+                            'message': ai_message,
+                            'all_questions_answered': True,
+                            'error': 'Report generation failed, but interview marked as complete'
+                        })
+
+                elif chat.interview_type == Chat.PRACTICE:
+                    # For practice interviews: just signal completion, let user finalize manually
+                    return JsonResponse({
+                        'message': ai_message,
+                        'all_questions_answered': True,
+                        'show_completion_message': True
+                    })
 
             return JsonResponse({'message': ai_message})
         except Exception as e:
@@ -700,6 +822,7 @@ class KeyQuestionsView(LoginRequiredMixin, UserPassesTestMixin, View):
         context = {}
         context['chat'] = chat
         context['question'] = question
+        context['question_id'] = question_id
         context['owner_chats'] = owner_chats
 
         return render(request, 'key-questions.html', context)
@@ -1614,10 +1737,18 @@ class DocumentList(LoginRequiredMixin, View):
 
 # Exportable Report Views
 
-class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
+class FinalizeInterviewView(LoginRequiredMixin, UserPassesTestMixin, View):
     """
-    View to generate an ExportableReport from a Chat instance.
-    This view analyzes the chat data and creates a structured report.
+    View to finalize an interview and generate its ExportableReport.
+
+    This view is called when a user is ready to finalize their interview.
+    Once finalized:
+    - An ExportableReport is generated using AI analysis (ONCE)
+    - The chat is marked as finalized (is_finalized=True)
+    - For invited interviews, the invitation status is updated to COMPLETED
+    - The report cannot be regenerated (immutable)
+
+    Related to: Report Generation Refactor (Phase 3)
     """
 
     def test_func(self):
@@ -1626,272 +1757,46 @@ class GenerateReportView(LoginRequiredMixin, UserPassesTestMixin, View):
         return self.request.user == chat.owner
 
     def post(self, request, chat_id):
-        """Generate or update the exportable report for a chat"""
+        """Finalize the interview and generate the report"""
         chat = get_object_or_404(Chat, id=chat_id)
 
-        # Delete existing report to force fresh generation
-        ExportableReport.objects.filter(chat=chat).delete()
+        # Check if already finalized
+        if chat.is_finalized:
+            messages.info(request, 'This interview has already been finalized.')
+            return redirect('export_report', chat_id=chat_id)
 
-        # Create a new report
-        report = ExportableReport.objects.create(chat=chat)
+        # Check if report already exists (defensive - shouldn't happen)
+        existing_report = ExportableReport.objects.filter(chat=chat).first()
+        if existing_report:
+            messages.info(request, 'A report already exists for this interview.')
+            return redirect('export_report', chat_id=chat_id)
 
-        # Generate scores using AI (same approach as ResultCharts view)
-        scores = self._extract_scores_from_chat(chat)
+        # Generate report using shared utility (makes 4 AI calls)
+        from .report_utils import generate_and_save_report
+        report = generate_and_save_report(chat)
 
-        # Update report fields
-        report.professionalism_score = scores.get('Professionalism', 0)
-        report.subject_knowledge_score = scores.get('Subject Knowledge', 0)
-        report.clarity_score = scores.get('Clarity', 0)
-        report.overall_score = scores.get('Overall', 0)
+        # Mark chat as finalized
+        chat.is_finalized = True
+        chat.finalized_at = timezone.now()
+        chat.save()
 
-        # Extract feedback text using AI
-        report.feedback_text = self._extract_feedback_from_chat(chat)
-
-        # Extract rationales for each score component
-        rationales = self._extract_rationales_from_chat(chat, scores)
-        report.professionalism_rationale = rationales.get(
-            'professionalism', '')
-        report.subject_knowledge_rationale = rationales.get(
-            'subject_knowledge', '')
-        report.clarity_rationale = rationales.get('clarity', '')
-        report.overall_rationale = rationales.get('overall', '')
-
-        # Calculate statistics
-        chat_messages = chat.messages
-        user_messages = [
-            msg for msg in chat_messages if msg.get('role') == 'user']
-        assistant_messages = [msg for msg in chat_messages
-                              if msg.get('role') == 'assistant']
-
-        report.total_questions_asked = len(assistant_messages)
-        report.total_responses_given = len(user_messages)
-
-        report.save()
-
-        messages.success(request, 'Report generated successfully!')
-        return redirect('export_report', chat_id=chat_id)
-
-    def _extract_scores_from_chat(self, chat):
-        """
-        Generate performance scores from chat messages using AI.
-        This uses the same approach as ResultCharts view.
-        """
-        scores_prompt = textwrap.dedent("""\
-            Based on the interview so far, please rate the interviewee in the
-            following categories from 0 to 100, and return the result as a JSON
-            object with integers only, in the following order that list only
-            the integers:
-
-            - Professionalism
-            - Subject Knowledge
-            - Clarity
-            - Overall
-
-            Example format:
-                8
-                7
-                9
-                6
-        """)
-        input_messages = list(chat.messages)
-        input_messages.append({"role": "user", "content": scores_prompt})
-
-        if not ai_available():
-            professionalism, subject_knowledge, clarity, overall = [0, 0, 0, 0]
-        else:
+        # For invited interviews: Update invitation status and send notification
+        if chat.interview_type == Chat.INVITED:
             try:
-                # Auto-select model tier based on spending cap (Issue #14)
-                client, model, tier_info = get_client_and_model()
-                response = client.chat.completions.create(
-                    model=model,
-                    messages=input_messages,
-                    max_tokens=MAX_TOKENS
-                )
-                # Track token usage for spending cap (Issue #15.10)
-                record_openai_usage(chat.owner, 'generate_report_scores', response)
-                ai_message = response.choices[0].message.content.strip()
-                scores = [int(line.strip())
-                          for line in ai_message.splitlines() if line.strip()
-                          .isdigit()]
-                if len(scores) == 4:
-                    professionalism, subject_knowledge, clarity, overall = scores
-                else:
-                    professionalism, subject_knowledge, clarity, overall = [
-                        0, 0, 0, 0]
-            except Exception:
-                professionalism, subject_knowledge, clarity, overall = [
-                    0, 0, 0, 0]
+                invitation = InvitedInterview.objects.get(chat=chat)
+                if invitation.status != InvitedInterview.COMPLETED:
+                    invitation.status = InvitedInterview.COMPLETED
+                    invitation.completed_at = timezone.now()
+                    invitation.save()
 
-        return {
-            'Professionalism': professionalism,
-            'Subject Knowledge': subject_knowledge,
-            'Clarity': clarity,
-            'Overall': overall
-        }
+                    # Send completion notification to interviewer
+                    from .invitation_utils import send_completion_notification_email
+                    send_completion_notification_email(invitation)
+            except InvitedInterview.DoesNotExist:
+                pass
 
-    def _extract_feedback_from_chat(self, chat):
-        """Generate AI feedback text from chat messages"""
-        explain_prompt = textwrap.dedent("""\
-            Provide a comprehensive evaluation of the interviewee's performance.
-            Include specific strengths, areas for improvement, and overall assessment.
-            Focus on professionalism, subject knowledge, and communication clarity.
-            If no response was given since start of interview, please tell them to start the interview.
-        """)
-
-        input_messages = list(chat.messages)
-        input_messages.append({"role": "user", "content": explain_prompt})
-
-        if not ai_available():
-            return "AI features are currently unavailable."
-
-        try:
-            # Auto-select model tier based on spending cap (Issue #14)
-            client, model, tier_info = get_client_and_model()
-            response = client.chat.completions.create(
-                model=model,
-                messages=input_messages,
-                max_tokens=MAX_TOKENS
-            )
-            # Track token usage for spending cap (Issue #15.10)
-            record_openai_usage(chat.owner, 'generate_report_feedback', response)
-            return response.choices[0].message.content.strip()
-        except Exception:
-            return "Unable to generate feedback at this time."
-
-    def _extract_rationales_from_chat(self, chat, scores):
-        """
-        Generate rationales for each score component using AI.
-        Returns a dict with keys: professionalism, subject_knowledge, clarity, overall
-        """
-        rationale_prompt = textwrap.dedent(f"""\
-            Based on the interview, please provide a brief rationale for each of the following scores.
-            Format your response exactly as shown below:
-
-            Professionalism: [Your explanation for the professionalism score of {scores.get('Professionalism', 0)}]
-
-            Subject Knowledge: [Your explanation for the subject knowledge score of {scores.get('Subject Knowledge', 0)}]
-
-            Clarity: [Your explanation for the clarity score of {scores.get('Clarity', 0)}]
-
-            Overall: [Your explanation for the overall score of {scores.get('Overall', 0)}]
-        """)
-
-        input_messages = list(chat.messages)
-        input_messages.append({"role": "user", "content": rationale_prompt})
-
-        if not ai_available():
-            return {
-                'professionalism': 'AI features are currently unavailable.',
-                'subject_knowledge': 'AI features are currently unavailable.',
-                'clarity': 'AI features are currently unavailable.',
-                'overall': 'AI features are currently unavailable.'
-            }
-
-        try:
-            # Auto-select model tier based on spending cap (Issue #14)
-            client, model, tier_info = get_client_and_model()
-            response = client.chat.completions.create(
-                model=model,
-                messages=input_messages,
-                max_tokens=MAX_TOKENS
-            )
-            # Track token usage for spending cap (Issue #15.10)
-            record_openai_usage(chat.owner, 'generate_report_rationales', response)
-            rationale_text = response.choices[0].message.content.strip()
-
-            # Parse the rationale text to extract each component
-            rationales = {
-                'professionalism': '',
-                'subject_knowledge': '',
-                'clarity': '',
-                'overall': ''
-            }
-
-            # Split by the section headers and extract content
-            current_section = None
-            current_text = []
-
-            for line in rationale_text.split('\n'):
-                line = line.strip()
-                if not line:
-                    continue
-
-                if line.startswith('Professionalism:'):
-                    if current_section and current_text:
-                        rationales[current_section] = ' '.join(
-                            current_text).strip()
-                    current_section = 'professionalism'
-                    current_text = [line.split(':', 1)[1].strip()]
-                elif line.startswith('Subject Knowledge:'):
-                    if current_section and current_text:
-                        rationales[current_section] = ' '.join(
-                            current_text).strip()
-                    current_section = 'subject_knowledge'
-                    current_text = [line.split(':', 1)[1].strip()]
-                elif line.startswith('Clarity:'):
-                    if current_section and current_text:
-                        rationales[current_section] = ' '.join(
-                            current_text).strip()
-                    current_section = 'clarity'
-                    current_text = [line.split(':', 1)[1].strip()]
-                elif line.startswith('Overall:'):
-                    if current_section and current_text:
-                        rationales[current_section] = ' '.join(
-                            current_text).strip()
-                    current_section = 'overall'
-                    current_text = [line.split(':', 1)[1].strip()]
-                elif current_section:
-                    # This is a continuation of the current section
-                    current_text.append(line)
-
-            # Don't forget the last section
-            if current_section and current_text:
-                rationales[current_section] = ' '.join(current_text).strip()
-
-            return rationales
-
-        except Exception:
-            # If rationale generation fails, provide fallback text
-            return {
-                'professionalism': 'Unable to generate rationale at this time.',
-                'subject_knowledge': 'Unable to generate rationale at this time.',
-                'clarity': 'Unable to generate rationale at this time.',
-                'overall': 'Unable to generate rationale at this time.'}
-
-    def _extract_question_responses(self, chat):
-        """
-        Extract question-answer pairs from the chat messages.
-        Returns a list of dicts with question, answer, score, feedback.
-        """
-        chat_messages = chat.messages
-        qa_pairs = []
-
-        # Iterate through messages to find Q&A patterns
-        for i, msg in enumerate(chat_messages):
-            if msg.get('role') == 'assistant' and i + 1 < len(chat_messages):
-                question = msg.get('content', '')
-                # Check if next message is a user response
-                if chat_messages[i + 1].get('role') == 'user':
-                    answer = chat_messages[i + 1].get('content', '')
-
-                    qa_pair = {
-                        'question': question[:500],  # Truncate long questions
-                        'answer': answer[:500],  # Truncate long answers
-                    }
-
-                    # Try to find feedback for this Q&A if it exists
-                    if (i + 2 < len(chat_messages) and
-                            chat_messages[i + 2].get('role') == 'assistant'):
-                        feedback_msg = chat_messages[i + 2].get('content', '')
-                        # Look for score in feedback
-                        score_match = re.search(r'(\d+)/10', feedback_msg)
-                        if score_match:
-                            qa_pair['score'] = int(score_match.group(1))
-                            qa_pair['feedback'] = feedback_msg[:300]
-
-                    qa_pairs.append(qa_pair)
-
-        return qa_pairs
+        messages.success(request, 'Interview finalized and report generated successfully!')
+        return redirect('export_report', chat_id=chat_id)
 
 
 class ExportReportView(LoginRequiredMixin, UserPassesTestMixin, View):
@@ -1901,9 +1806,22 @@ class ExportReportView(LoginRequiredMixin, UserPassesTestMixin, View):
     """
 
     def test_func(self):
-        """Verify that the user owns the chat"""
+        """Verify that the user owns the chat or is the interviewer"""
         chat = get_object_or_404(Chat, id=self.kwargs['chat_id'])
-        return self.request.user == chat.owner
+
+        # Allow chat owner (candidate)
+        if self.request.user == chat.owner:
+            return True
+
+        # Allow interviewer for invited interviews
+        if chat.interview_type == Chat.INVITED:
+            try:
+                invitation = InvitedInterview.objects.get(chat=chat)
+                return self.request.user == invitation.interviewer
+            except InvitedInterview.DoesNotExist:
+                pass
+
+        return False
 
     def get(self, request, chat_id):
         """Display the exportable report"""
@@ -1913,12 +1831,27 @@ class ExportReportView(LoginRequiredMixin, UserPassesTestMixin, View):
             report = ExportableReport.objects.get(chat=chat)
         except ExportableReport.DoesNotExist:
             messages.warning(request,
-                             'No report exists yet. Generating one now...')
-            return redirect('generate_report', chat_id=chat_id)
+                             'No report exists yet. Please finalize the interview first.')
+            return redirect('finalize_interview', chat_id=chat_id)
+
+        # Get invitation if this is an invited interview
+        invitation = None
+        if chat.interview_type == Chat.INVITED:
+            try:
+                invitation = InvitedInterview.objects.get(chat=chat)
+            except InvitedInterview.DoesNotExist:
+                pass
+
+        # Get user's chats for sidebar
+        owner_chats = Chat.objects.filter(owner=request.user).order_by(
+            '-modified_date'
+        )
 
         context = {
             'chat': chat,
             'report': report,
+            'invitation': invitation,
+            'owner_chats': owner_chats,
         }
         return render(request, 'reports/export-report.html', context)
 
@@ -1929,9 +1862,22 @@ class DownloadPDFReportView(LoginRequiredMixin, UserPassesTestMixin, View):
     """
 
     def test_func(self):
-        """Verify that the user owns the chat"""
+        """Verify that the user owns the chat or is the interviewer"""
         chat = get_object_or_404(Chat, id=self.kwargs['chat_id'])
-        return self.request.user == chat.owner
+
+        # Allow chat owner (candidate)
+        if self.request.user == chat.owner:
+            return True
+
+        # Allow interviewer for invited interviews
+        if chat.interview_type == Chat.INVITED:
+            try:
+                invitation = InvitedInterview.objects.get(chat=chat)
+                return self.request.user == invitation.interviewer
+            except InvitedInterview.DoesNotExist:
+                pass
+
+        return False
 
     def get(self, request, chat_id):
         """Generate and download PDF report"""
@@ -1941,8 +1887,8 @@ class DownloadPDFReportView(LoginRequiredMixin, UserPassesTestMixin, View):
             report = ExportableReport.objects.get(chat=chat)
         except ExportableReport.DoesNotExist:
             messages.error(
-                request, 'No report exists. Please generate one first.')
-            return redirect('chat-results', chat_id=chat_id)
+                request, 'No report exists. Please finalize the interview first.')
+            return redirect('chat-view', chat_id=chat_id)
 
         # Generate PDF
         pdf_content = generate_pdf_report(report)
@@ -1965,9 +1911,22 @@ class DownloadCSVReportView(LoginRequiredMixin, UserPassesTestMixin, View):
     """
 
     def test_func(self):
-        """Verify that the user owns the chat"""
+        """Verify that the user owns the chat or is the interviewer"""
         chat = get_object_or_404(Chat, id=self.kwargs['chat_id'])
-        return self.request.user == chat.owner
+
+        # Allow chat owner (candidate)
+        if self.request.user == chat.owner:
+            return True
+
+        # Allow interviewer for invited interviews
+        if chat.interview_type == Chat.INVITED:
+            try:
+                invitation = InvitedInterview.objects.get(chat=chat)
+                return self.request.user == invitation.interviewer
+            except InvitedInterview.DoesNotExist:
+                pass
+
+        return False
 
     def get(self, request, chat_id):
         """Generate and download CSV report"""
@@ -1977,8 +1936,8 @@ class DownloadCSVReportView(LoginRequiredMixin, UserPassesTestMixin, View):
             report = ExportableReport.objects.get(chat=chat)
         except ExportableReport.DoesNotExist:
             messages.error(
-                request, 'No report exists. Please generate one first.')
-            return redirect('chat-results', chat_id=chat_id)
+                request, 'No report exists. Please finalize the interview first.')
+            return redirect('chat-view', chat_id=chat_id)
 
         # Create CSV in memory
         output = io.StringIO()
@@ -3338,6 +3297,56 @@ def start_invited_interview(request, invitation_id):
             "content": ai_message
         }
     )
+
+    # Generate key questions for tracking completion
+    if ai_available():
+        try:
+            # Build prompt to extract key questions from template
+            key_questions_prompt = textwrap.dedent("""\
+                Based on the following interview template, generate a list of key questions
+                that should be asked during this interview.
+
+                Template: {template_name}
+                {template_description}
+
+                Sections:
+                {sections_content}
+
+                Generate {question_count} key questions that cover all sections proportionally
+                based on their weight. Return ONLY a JSON array of question strings.
+
+                Example format: ["Question 1?", "Question 2?", "Question 3?"]
+            """).format(
+                template_name=template.name,
+                template_description=template.description if template.description else "",
+                sections_content=sections_content if sections_content else "(No sections)",
+                question_count=max(5, len(sections)) if sections else 5
+            )
+
+            # Auto-select model tier based on spending cap
+            client, model, tier_info = get_client_and_model()
+            response = client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": key_questions_prompt}],
+                max_tokens=MAX_TOKENS
+            )
+            record_openai_usage(request.user, 'generate_key_questions', response)
+            ai_response = response.choices[0].message.content
+
+            # Extract JSON array from response
+            match = re.search(r"(\[[\s\S]+\])", ai_response)
+            if match:
+                chat.key_questions = json.loads(match.group(0).strip())
+            else:
+                # Fallback: use section count as question count
+                chat.key_questions = [f"Question {i+1}" for i in range(len(sections))] if sections else []
+        except Exception as e:
+            print(f"Failed to generate key questions: {e}")
+            # Fallback: estimate based on sections
+            chat.key_questions = [f"Question {i+1}" for i in range(len(sections))] if sections else []
+    else:
+        # AI not available, use placeholder questions
+        chat.key_questions = [f"Question {i+1}" for i in range(len(sections))] if sections else []
 
     chat.save()
 

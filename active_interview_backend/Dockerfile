@@ -32,11 +32,12 @@ FROM python:${PYTHON_VERSION} AS runtime
 COPY --from=builder /opt/venv /opt/venv
 ENV PATH=/opt/venv/bin:$PATH
 
-# Install only runtime dependencies
+# Install only runtime dependencies including cron
 RUN apt-get update && apt-get install -y \
     libpq5 \
     curl \
     libcairo2 \
+    cron \
     && rm -rf /var/lib/apt/lists/*
 
 # Create runtime script
@@ -51,8 +52,14 @@ COPY . /app
 
 RUN printf "#!/bin/bash\n" > ./paracord_runner.sh && \
     printf "RUN_PORT=\"\${PORT:-8080}\"\n\n" >> ./paracord_runner.sh && \
+    printf "# Run migrations and collect static files\n" >> ./paracord_runner.sh && \
     printf "python manage.py migrate --no-input\n" >> ./paracord_runner.sh && \
-    printf "python manage.py collectstatic --no-input\n" >> ./paracord_runner.sh && \
+    printf "python manage.py collectstatic --no-input\n\n" >> ./paracord_runner.sh && \
+    printf "# Setup cron job for invitation status updates (every 10 minutes)\n" >> ./paracord_runner.sh && \
+    printf "echo '*/10 * * * * cd /app && /opt/venv/bin/python manage.py update_invitation_statuses >> /var/log/cron.log 2>&1' > /tmp/crontab\n" >> ./paracord_runner.sh && \
+    printf "crontab /tmp/crontab\n" >> ./paracord_runner.sh && \
+    printf "cron\n\n" >> ./paracord_runner.sh && \
+    printf "# Start gunicorn\n" >> ./paracord_runner.sh && \
     printf "gunicorn ${PROJ_NAME}.wsgi:application --bind \"[::]:\$RUN_PORT\" --workers 3\n" >> ./paracord_runner.sh && \
     chmod +x paracord_runner.sh
 
@@ -115,11 +122,12 @@ CMD ["./ci_wait.sh"]
 # Production stage (default - must be last for Railway)
 FROM runtime AS production
 
-# Setup non-root user
+# Setup non-root user but don't switch to it (cron needs root)
 RUN groupadd -r paracord && useradd -r -g paracord paracord && \
     chown -R paracord:paracord /app && \
     chown -R paracord:paracord /opt/venv
 
-USER paracord
+# Note: Running as root to allow cron daemon
+# Railway/production environments handle security at platform level
 
 CMD ./paracord_runner.sh

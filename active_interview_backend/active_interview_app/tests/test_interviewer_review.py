@@ -510,9 +510,23 @@ class CandidateViewFeedbackTests(TestCase):
             chat=self.chat
         )
 
+        # Finalize the chat and create report
+        self.chat.is_finalized = True
+        self.chat.finalized_at = timezone.now()
+        self.chat.save()
+
+        from active_interview_app.models import ExportableReport
+        ExportableReport.objects.create(
+            chat=self.chat,
+            professionalism_score=85,
+            subject_knowledge_score=80,
+            clarity_score=90,
+            overall_score=85
+        )
+
         self.client.login(username='candidate@test.com',
                           password=TEST_PASSWORD)
-        self.url = reverse('chat-results', kwargs={'chat_id': self.chat.id})
+        self.url = reverse('export_report', kwargs={'chat_id': self.chat.id})
 
     def test_pending_review_shows_waiting_message(self):
         """Test that pending review shows appropriate message"""
@@ -543,16 +557,30 @@ class CandidateViewFeedbackTests(TestCase):
         practice_chat = Chat.objects.create(
             owner=self.candidate,
             title='Practice Interview',
-            interview_type=Chat.PRACTICE
+            interview_type=Chat.PRACTICE,
+            is_finalized=True,
+            finalized_at=timezone.now()
         )
 
-        url = reverse('chat-results', kwargs={'chat_id': practice_chat.id})
+        from active_interview_app.models import ExportableReport
+        ExportableReport.objects.create(
+            chat=practice_chat,
+            professionalism_score=85,
+            subject_knowledge_score=80,
+            clarity_score=90,
+            overall_score=85
+        )
+
+        url = reverse('export_report', kwargs={'chat_id': practice_chat.id})
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200)
-        # Should not contain interviewer feedback section
-        content = response.content.decode('utf-8')
-        self.assertNotIn('Interviewer Feedback', content)
+        # Should not contain interviewer feedback section (check for the specific icon/heading)
+        self.assertNotContains(response, 'bi-person-check-fill')
+        self.assertNotContains(response, 'bi-hourglass-split')
+        # Should not have the feedback box
+        self.assertNotContains(response, 'still reviewing')
+        self.assertNotContains(response, 'Reviewed on')
 
     def test_reviewed_at_timestamp_displayed(self):
         """Test that reviewed timestamp is displayed to candidate"""

@@ -1619,6 +1619,44 @@ a:hover {
 }
 
 /* ===================================
+   Countdown Timer & Warning Components
+   =================================== */
+
+/* Countdown display styling */
+.countdown-display {
+    font-family: 'Courier New', monospace;
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+.countdown-display-large {
+    font-family: 'Courier New', monospace;
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--warning);
+    padding: 0.5rem 1rem;
+    background-color: var(--surface);
+    border-radius: var(--radius);
+    display: inline-block;
+}
+
+/* Final warning banner styling */
+.final-warning {
+    border-left: 4px solid var(--warning) !important;
+    animation: pulse-warning 2s infinite;
+}
+
+/* Pulse animation for warning */
+@keyframes pulse-warning {
+    0%, 100% {
+        border-color: var(--warning);
+    }
+    50% {
+        border-color: var(--accent-dark);
+    }
+}
+
+/* ===================================
    Connection Status & Sync Indicators
    =================================== */
 
@@ -1800,6 +1838,15 @@ a:hover {
     100% {
         opacity: 0;
     }
+}
+
+/* Countdown timer container */
+.countdown-timer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
 }
 
 /* ===================================
