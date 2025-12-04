@@ -30,6 +30,7 @@ from .serializers import (
 )
 from .permissions import IsAdminOrInterviewer
 from .decorators import admin_or_interviewer_required
+from .mixins import RateLimitMixin
 
 
 class QuestionQueryBuilder:
@@ -209,11 +210,12 @@ def question_banks_view(request):
     return render(request, 'question_banks.html')
 
 
-class QuestionBankViewSet(viewsets.ModelViewSet):
+class QuestionBankViewSet(RateLimitMixin, viewsets.ModelViewSet):
     """
     ViewSet for QuestionBank CRUD operations.
     Implements Issue #38: Question Bank Creation
     Restricted to Interviewers and Admins only.
+    Rate limited: Lenient for reads, Strict for writes.
     """
     permission_classes = [IsAdminOrInterviewer]
     serializer_class = QuestionBankSerializer
@@ -232,11 +234,12 @@ class QuestionBankViewSet(viewsets.ModelViewSet):
         serializer.save(owner=self.request.user)
 
 
-class QuestionViewSet(viewsets.ModelViewSet):
+class QuestionViewSet(RateLimitMixin, viewsets.ModelViewSet):
     """
     ViewSet for Question CRUD operations and tagging.
     Implements Issue #39: Basic Question Tagging
     Restricted to Interviewers and Admins only.
+    Rate limited: Lenient for reads, Strict for writes.
     """
     permission_classes = [IsAdminOrInterviewer]
     serializer_class = QuestionSerializer
@@ -325,11 +328,12 @@ class QuestionViewSet(viewsets.ModelViewSet):
         })
 
 
-class TagViewSet(viewsets.ModelViewSet):
+class TagViewSet(RateLimitMixin, viewsets.ModelViewSet):
     """
     ViewSet for Tag management.
     Implements Issue #40: Tag Management
     Restricted to Interviewers and Admins only.
+    Rate limited: Lenient for reads, Strict for writes.
     """
     permission_classes = [IsAdminOrInterviewer]
     serializer_class = TagSerializer
@@ -428,11 +432,12 @@ class TagViewSet(viewsets.ModelViewSet):
         return Response(stats)
 
 
-class InterviewTemplateViewSet(viewsets.ModelViewSet):
+class InterviewTemplateViewSet(RateLimitMixin, viewsets.ModelViewSet):
     """
     ViewSet for Interview Template management.
     Allows saving and reusing interview assembly configurations.
     Restricted to Interviewers and Admins only.
+    Rate limited: Lenient for reads, Strict for writes.
     """
     permission_classes = [IsAdminOrInterviewer]
     serializer_class = InterviewTemplateSerializer

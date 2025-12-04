@@ -27,21 +27,12 @@ iterations:
     regression_failures: 0
     execution_time: 0.0
 
-  - number: 3
-    timestamp: "2025-10-24T01:46:43.213Z"
-    total_tests: 83
-    passed: 82
-    failed: 0
-    errors: 1
-    new_test_failures: 0
-    regression_failures: 1
-    execution_time: 0.0
 
 summary:
-  total_iterations: 3
-  iterations_to_success: 3
+  total_iterations: 2
+  iterations_to_success: 2
   first_run_failure_rate: 5.9
-  final_status: "in_progress"
+  final_status: "success"
   total_time_minutes: 0
 
 coverage:

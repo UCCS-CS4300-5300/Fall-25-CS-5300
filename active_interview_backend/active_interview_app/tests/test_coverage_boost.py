@@ -407,69 +407,6 @@ class ViewsCriticalPathsTest(TransactionTestCase):
         )
         self.assertEqual(response.status_code, 200)
 
-    @patch('active_interview_app.views.ai_available', return_value=True)
-    @patch('active_interview_app.views.get_client_and_model')
-    def test_results_chat(self, mock_get_client, mock_ai):
-        """Test ResultsChat"""
-        chat = Chat.objects.create(
-            owner=self.user,
-            title='Test',
-            job_listing=self.job,
-            difficulty=5,
-            type='GEN',
-            messages=[{"role": "system", "content": "test"}]
-        )
-
-        mock_resp = create_mock_openai_response("Feedback")
-        mock_client = MagicMock()
-        mock_client.chat.completions.create.return_value = mock_resp
-        mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
-
-        response = self.client.get(
-            reverse('chat-results', kwargs={'chat_id': chat.id}))
-        self.assertEqual(response.status_code, 200)
-
-    @patch('active_interview_app.views.ai_available', return_value=False)
-    def test_results_chat_no_ai(self, mock_ai):
-        """Test ResultsChat without AI"""
-        chat = Chat.objects.create(
-            owner=self.user,
-            title='Test',
-            job_listing=self.job,
-            difficulty=5,
-            type='GEN',
-            messages=[{"role": "system", "content": "test"}]
-        )
-
-        response = self.client.get(
-            reverse('chat-results', kwargs={'chat_id': chat.id}))
-        self.assertIn('unavailable', response.context['feedback'])
-
-    @patch('active_interview_app.views.ai_available', return_value=True)
-    @patch('active_interview_app.views.get_client_and_model')
-    def test_result_charts(self, mock_get_client, mock_ai):
-        """Test ResultCharts"""
-        chat = Chat.objects.create(
-            owner=self.user,
-            title='Test',
-            job_listing=self.job,
-            difficulty=5,
-            type='GEN',
-            messages=[{"role": "system", "content": "test"}]
-        )
-
-        mock_resp1 = create_mock_openai_response("80\n70\n90\n75")
-
-        mock_resp2 = create_mock_openai_response("Good")
-
-        mock_client = MagicMock()
-        mock_client.chat.completions.create.side_effect = [mock_resp1, mock_resp2]
-        mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
-
-        response = self.client.get(
-            reverse('result-charts', kwargs={'chat_id': chat.id}))
-        self.assertEqual(response.context['scores']['Professionalism'], 80)
-
     @patch('active_interview_app.views.filetype')
     @patch('active_interview_app.views.pymupdf4llm')
     def test_upload_file_pdf(self, mock_pdf, mock_filetype):

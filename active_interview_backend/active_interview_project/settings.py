@@ -105,6 +105,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',  # Required for allauth
     'active_interview_app.middleware.MetricsMiddleware',  # Issues #14, #15 - Observability metrics collection
+    'active_interview_app.middleware.RateLimitMiddleware',  # Rate limiting for API abuse prevention
 ]
 
 ROOT_URLCONF = 'active_interview_project.urls'
@@ -295,3 +296,28 @@ else:
     # Development: Use console backend (prints emails to console)
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
     DEFAULT_FROM_EMAIL = 'noreply@activeinterviewservice.app'
+
+# ============================================================================
+# RATE LIMITING CONFIGURATION
+# ============================================================================
+# Rate limiting settings to prevent API abuse and excessive usage
+# Uses django-ratelimit package
+
+# Enable rate limiting
+RATELIMIT_ENABLE = True
+
+# Use cache backend for rate limiting (more efficient than database)
+RATELIMIT_USE_CACHE = 'default'
+
+# Rate limit view decorator - called when limit is exceeded
+RATELIMIT_VIEW = 'active_interview_app.views.ratelimit_error_view'
+
+# Default rate limits (defined in ratelimit_config.py)
+# - Authenticated users: 60 requests/minute
+# - Anonymous users: 30 requests/minute
+# - Strict limits for resource-intensive operations: 20/10 per minute
+# - Lenient limits for read-only operations: 120/60 per minute
+
+# Rate limit violation monitoring and alerting
+RATELIMIT_ALERT_THRESHOLD = 10  # Number of violations to trigger alert
+RATELIMIT_ALERT_WINDOW = 5      # Time window in minutes for threshold check

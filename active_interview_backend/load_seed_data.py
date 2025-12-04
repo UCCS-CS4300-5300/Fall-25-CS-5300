@@ -155,6 +155,11 @@ def main():
         action='store_true',
         help='Reset database before loading fixtures'
     )
+    parser.add_argument(
+        '--yes', '-y',
+        action='store_true',
+        help='Auto-accept confirmation prompts'
+    )
 
     args = parser.parse_args()
 
@@ -162,15 +167,18 @@ def main():
 
     # Reset database if requested
     if args.reset:
-        confirm = input(
-            style.WARNING(
-                "WARNING: This will DELETE all existing data. "
-                "Continue? (yes/no): "
+        if not args.yes:
+            confirm = input(
+                style.WARNING(
+                    "WARNING: This will DELETE all existing data. "
+                    "Continue? (yes/no): "
+                )
             )
-        )
-        if confirm.lower() != 'yes':
-            print(style.ERROR("Aborted."))
-            return
+            if confirm.lower() != 'yes':
+                print(style.ERROR("Aborted."))
+                return
+        else:
+            print(style.WARNING("Auto-accepting reset (--yes flag provided)"))
         reset_database()
 
     # Load fixtures
