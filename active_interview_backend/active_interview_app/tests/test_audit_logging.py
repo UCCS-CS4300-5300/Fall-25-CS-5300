@@ -278,6 +278,51 @@ class AuditUtilsTests(TestCase):
         self.assertEqual(log.resource_id, '123')
         self.assertEqual(log.extra_data['chat_title'], 'Test Interview')
 
+    def test_create_audit_log_truncates_long_user_agent(self):
+        """Test that user agent is truncated if longer than 255 chars."""
+        from active_interview_app.middleware import _thread_locals
+
+        # Create a very long user agent (> 255 chars)
+        long_user_agent = 'A' * 300
+
+        factory = RequestFactory()
+        request = factory.get('/', HTTP_USER_AGENT=long_user_agent)
+        _thread_locals.request = request
+
+        try:
+            log = create_audit_log(
+                user=self.user,
+                action_type='LOGIN',
+                description='Test with long user agent'
+            )
+
+            # Should be truncated to 255 chars
+            self.assertIsNotNone(log)
+            self.assertEqual(len(log.user_agent), 255)
+            self.assertEqual(log.user_agent, 'A' * 255)
+        finally:
+            if hasattr(_thread_locals, 'request'):
+                del _thread_locals.request
+
+    def test_create_audit_log_handles_database_error(self):
+        """Test that database errors are caught and logged."""
+        from unittest.mock import patch
+
+        # Mock AuditLog.objects.create to raise an exception
+        with patch('active_interview_app.audit_utils.AuditLog.objects.create') as mock_create:
+            mock_create.side_effect = Exception('Database error')
+
+            # Should return None instead of raising exception
+            log = create_audit_log(
+                user=self.user,
+                action_type='LOGIN',
+                description='Test error handling'
+            )
+
+            self.assertIsNone(log)
+            # Verify create was called (before it raised exception)
+            self.assertTrue(mock_create.called)
+
 
 class AuthenticationLoggingTests(TestCase):
     """Test authentication event logging via signals."""
