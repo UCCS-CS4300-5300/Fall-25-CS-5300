@@ -67,6 +67,9 @@ from rest_framework.views import APIView
 # Updated for Issue #14: Multi-tier model selection with automatic fallback
 from .openai_utils import get_openai_client, get_client_and_model, ai_available, MAX_TOKENS
 
+# Import rate limiting decorators
+from .decorators import ratelimit_api, ratelimit_default, ratelimit_strict
+
 # Import token tracking (Issue #15.10)
 from .token_tracking import record_openai_usage
 
@@ -1474,6 +1477,7 @@ def delete_job(request, job_id):
 
 class UploadedJobListingView(APIView):
 
+    @ratelimit_api('strict')
     def post(self, request):
         # Get the text from the request
         text = request.POST.get("paste-text", '').strip()
@@ -1525,11 +1529,13 @@ class UploadedJobListingView(APIView):
 class UploadedResumeView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @ratelimit_api('lenient')
     def get(self, request):
         files = UploadedResume.objects.filter(user=request.user)
         serializer = UploadedResumeSerializer(files, many=True)
         return Response(serializer.data)
 
+    @ratelimit_api('strict')
     def post(self, request):
         serializer = UploadedResumeSerializer(data=request.data)
         if serializer.is_valid():
@@ -1541,12 +1547,14 @@ class UploadedResumeView(APIView):
 class JobListingList(APIView):
     permission_classes = [IsAuthenticated]
 
+    @ratelimit_api('lenient')
     def get(self, request):
         # List all pasted text entries for the authenticated user
         texts = UploadedJobListing.objects.filter(user=request.user)
         serializer = UploadedJobListingSerializer(texts, many=True)
         return Response(serializer.data)
 
+    @ratelimit_api('strict')
     def post(self, request):
         # Create a new pasted text entry
         serializer = UploadedJobListingSerializer(data=request.data)
@@ -1648,6 +1656,7 @@ class JobListingAnalyzeView(APIView):
     """
     permission_classes = [IsAuthenticated]
 
+    @ratelimit_api('strict')
     def post(self, request):
         # Validate input
         title = request.data.get('title', '').strip()

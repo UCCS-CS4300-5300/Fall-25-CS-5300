@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Violation Detail - Active Interview{% endblock title %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>
+                    <i class="fas fa-exclamation-triangle"></i> Violation Detail
+                </h1>
+                <a href="{% url 'ratelimit_dashboard' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Violation Details -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Violation Information</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tbody>
+                            <tr>
+                                <th scope="row">Timestamp</th>
+                                <td>{{ violation.timestamp|date:"Y-m-d H:i:s" }}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Rate Limit Type</th>
+                                <td><span class="badge bg-primary">{{ violation.rate_limit_type }}</span></td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Limit Value</th>
+                                <td>{{ violation.limit_value }} requests/minute</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Endpoint</th>
+                                <td><code>{{ violation.endpoint }}</code></td>
+                            </tr>
+                            <tr>
+                                <th scope="row">HTTP Method</th>
+                                <td><span class="badge bg-secondary">{{ violation.method }}</span></td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Alert Sent</th>
+                                <td>
+                                    {% if violation.alert_sent %}
+                                        <span class="badge bg-success">Yes</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">No</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">User/Client Information</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tbody>
+                            <tr>
+                                <th scope="row">User</th>
+                                <td>
+                                    {% if violation.user %}
+                                        {{ violation.user.username }} (ID: {{ violation.user.id }})
+                                    {% else %}
+                                        <span class="text-muted">Anonymous</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">IP Address</th>
+                                <td><code>{{ violation.ip_address }}</code></td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Country</th>
+                                <td>
+                                    {% if violation.country_code %}
+                                        {{ violation.country_code }}
+                                    {% else %}
+                                        <span class="text-muted">Unknown</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">User Agent</th>
+                                <td>
+                                    <small>{{ violation.user_agent|truncatewords:20 }}</small>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Violations -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        Related Violations (Last 24 Hours)
+                        {% if violation.user %}
+                            - Same User
+                        {% else %}
+                            - Same IP Address
+                        {% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if related_violations %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Endpoint</th>
+                                    <th>Method</th>
+                                    <th>Type</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for rel_violation in related_violations %}
+                                <tr>
+                                    <td>{{ rel_violation.timestamp|date:"Y-m-d H:i:s" }}</td>
+                                    <td><code>{{ rel_violation.endpoint }}</code></td>
+                                    <td><span class="badge bg-secondary">{{ rel_violation.method }}</span></td>
+                                    <td>{{ rel_violation.rate_limit_type }}</td>
+                                    <td>
+                                        <a href="{% url 'violation_detail' rel_violation.id %}" class="btn btn-sm btn-outline-primary">
+                                            View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No related violations found</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Full User Agent -->
+    {% if violation.user_agent %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Full User Agent String</h5>
+                </div>
+                <div class="card-body">
+                    <pre class="mb-0"><code>{{ violation.user_agent }}</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <a href="{% url 'ratelimit_dashboard' %}" class="btn btn-primary">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+            <a href="{% url 'admin:active_interview_app_ratelimitviolation_change' violation.id %}" class="btn btn-secondary">
+                <i class="fas fa-edit"></i> View in Admin
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    .card-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+    }
+    code {
+        font-size: 0.875rem;
+    }
+    pre {
+        background-color: #f8f9fa;
+        padding: 1rem;
+        border-radius: 0.25rem;
+        word-wrap: break-word;
+        white-space: pre-wrap;
+    }
+</style>
+{% endblock content %}

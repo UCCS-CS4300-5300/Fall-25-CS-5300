@@ -7,6 +7,13 @@ from rest_framework import routers
 from . import views
 from . import question_bank_views
 from . import observability_views
+from .admin_views import (
+    ratelimit_dashboard,
+    ratelimit_trends_data,
+    export_violations,
+    violation_detail,
+    ViolationAnalyticsView
+)
 
 
 # Create router and register views
@@ -211,6 +218,18 @@ urlpatterns = [
     path('observability/api/spending/update-cap/',
          observability_views.api_update_spending_cap,
          name='api_update_spending_cap'),
+
+    # Rate Limit Monitoring URLs (Issues #10, #15)
+    path('admin/ratelimit/dashboard/',
+         ratelimit_dashboard, name='ratelimit_dashboard'),
+    path('admin/ratelimit/trends-data/',
+         ratelimit_trends_data, name='ratelimit_trends_data'),
+    path('admin/ratelimit/export/',
+         export_violations, name='export_violations'),
+    path('admin/ratelimit/violation/<int:violation_id>/',
+         violation_detail, name='violation_detail'),
+    path('admin/ratelimit/analytics/',
+         ViolationAnalyticsView.as_view(), name='violation_analytics'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
