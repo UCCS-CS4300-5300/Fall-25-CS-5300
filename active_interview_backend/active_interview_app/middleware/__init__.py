@@ -24,8 +24,18 @@ _spec.loader.exec_module(_observability_module)
 MetricsMiddleware = _observability_module.MetricsMiddleware
 PerformanceMonitorMiddleware = _observability_module.PerformanceMonitorMiddleware
 
+# Re-export audit logging middleware and helper functions
+AuditLogMiddleware = _observability_module.AuditLogMiddleware
+get_current_request = _observability_module.get_current_request
+get_current_ip = _observability_module.get_current_ip
+get_user_agent = _observability_module.get_user_agent
+
 __all__ = [
     'RateLimitMiddleware',
     'MetricsMiddleware',
-    'PerformanceMonitorMiddleware'
+    'PerformanceMonitorMiddleware',
+    'AuditLogMiddleware',
+    'get_current_request',
+    'get_current_ip',
+    'get_user_agent',
 ]
