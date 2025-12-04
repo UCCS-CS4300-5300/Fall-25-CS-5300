@@ -627,11 +627,26 @@ class ChatView(LoginRequiredMixin, UserPassesTestMixin, View):
             # Auto-finalize
             if not chat.is_finalized:
                 from .report_utils import generate_and_save_report
+                from .audit_utils import create_audit_log
                 try:
                     report = generate_and_save_report(chat, include_rushed_qualifier=True)
                     chat.is_finalized = True
                     chat.finalized_at = timezone.now()
                     chat.save()
+
+                    # Audit log: Interview finalized
+                    create_audit_log(
+                        user=request.user,
+                        action_type='INTERVIEW_FINALIZED',
+                        resource_type='Chat',
+                        resource_id=str(chat.id),
+                        description=f"Interview '{chat.title}' auto-finalized due to time window ending",
+                        extra_data={
+                            'interview_type': chat.interview_type,
+                            'auto_finalized': True,
+                            'reason': 'time_window_ended'
+                        }
+                    )
 
                     # Phase 7: Update invitation status
                     try:
@@ -1303,6 +1318,20 @@ def resume_detail(request, resume_id):
 def delete_resume(request, resume_id):
     resume = get_object_or_404(UploadedResume, id=resume_id, user=request.user)
     if request.method == "POST":
+        # Audit log: Resume deletion
+        from .audit_utils import create_audit_log
+        create_audit_log(
+            user=request.user,
+            action_type='RESUME_DELETED',
+            resource_type='UploadedResume',
+            resource_id=str(resume.id),
+            description=f"Resume '{resume.title}' deleted by user",
+            extra_data={
+                'original_filename': resume.original_filename,
+                'filesize': resume.filesize,
+                'uploaded_at': resume.uploaded_at.isoformat() if resume.uploaded_at else None
+            }
+        )
         resume.delete()
         return redirect('profile')
     return redirect('profile')
@@ -1941,6 +1970,21 @@ class DownloadPDFReportView(LoginRequiredMixin, UserPassesTestMixin, View):
         report.pdf_generated = True
         report.save()
 
+        # Audit log: Report exported
+        from .audit_utils import create_audit_log
+        create_audit_log(
+            user=request.user,
+            action_type='REPORT_EXPORTED',
+            resource_type='ExportableReport',
+            resource_id=str(report.id),
+            description=f"PDF report exported for interview '{chat.title}'",
+            extra_data={
+                'chat_id': str(chat.id),
+                'export_format': 'PDF',
+                'filename': filename
+            }
+        )
+
         return response
 
 
@@ -2086,6 +2130,21 @@ class DownloadCSVReportView(LoginRequiredMixin, UserPassesTestMixin, View):
         filename = f"interview_report_{slugify(chat.title)}_{report.generated_at.strftime('%Y%m%d')}.csv"
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
 
+        # Audit log: Report exported
+        from .audit_utils import create_audit_log
+        create_audit_log(
+            user=request.user,
+            action_type='REPORT_EXPORTED',
+            resource_type='ExportableReport',
+            resource_id=str(report.id),
+            description=f"CSV report exported for interview '{chat.title}'",
+            extra_data={
+                'chat_id': str(chat.id),
+                'export_format': 'CSV',
+                'filename': filename
+            }
+        )
+
         return response
 
 
@@ -2171,6 +2230,9 @@ def review_role_request(request, request_id):
     admin_notes = request.POST.get('admin_notes', '')
 
     if action == 'approve':
+        # Capture old role before change
+        old_role = role_request.current_role
+
         # Update user's role
         role_request.user.profile.role = role_request.requested_role
         role_request.user.profile.save()
@@ -2180,6 +2242,25 @@ def review_role_request(request, request_id):
             request,
             f'Approved: {role_request.user.username} is now '
             f'{role_request.requested_role}'
+        )
+
+        # Audit log: Role changed
+        from .audit_utils import create_audit_log
+        create_audit_log(
+            user=request.user,
+            action_type='ROLE_CHANGED',
+            resource_type='UserProfile',
+            resource_id=str(role_request.user.profile.id),
+            description=f"User '{role_request.user.username}' role changed from '{old_role}' to '{role_request.requested_role}'",
+            extra_data={
+                'target_user_id': role_request.user.id,
+                'target_username': role_request.user.username,
+                'old_role': old_role,
+                'new_role': role_request.requested_role,
+                'request_id': role_request.id,
+                'reviewed_by': request.user.username,
+                'admin_notes': admin_notes
+            }
         )
 
     elif action == 'reject':
