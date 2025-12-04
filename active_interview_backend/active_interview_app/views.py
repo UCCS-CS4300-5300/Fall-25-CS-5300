@@ -3398,3 +3398,4 @@ def start_invited_interview(request, invitation_id):
 
     messages.success(request, 'Interview started! Good luck!')
     return redirect('chat-view', chat_id=chat.id)
+22
