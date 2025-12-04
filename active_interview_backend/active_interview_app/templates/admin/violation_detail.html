@@ -183,7 +183,7 @@
             <a href="{% url 'ratelimit_dashboard' %}" class="btn btn-primary">
                 <i class="fas fa-arrow-left"></i> Back to Dashboard
             </a>
-            <a href="/admin/active_interview_app/ratelimitviolation/{{ violation.id }}/change/" class="btn btn-secondary">
+            <a href="{% url 'admin:active_interview_app_ratelimitviolation_change' violation.id %}" class="btn btn-secondary">
                 <i class="fas fa-edit"></i> View in Admin
             </a>
         </div>
