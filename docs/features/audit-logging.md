@@ -1,8 +1,10 @@
 # Audit Logging
 
 **Issues:** #66, #67, #68
-**Status:** ✅ Phase 1 & 2 Complete (Infrastructure + Admin Viewer)
-**Phase 3:** Extended Event Coverage (Planned)
+**Status:** ✅ Phase 1, 2 & 3 Complete
+- Phase 1: Core Infrastructure ✅
+- Phase 2: Admin Viewer ✅
+- Phase 3: Extended Event Coverage ✅
 
 ## Overview
 
@@ -30,6 +32,15 @@ The Audit Logging system provides immutable, comprehensive logging of user and a
 - **Pagination:** Automatic pagination for large log volumes
 - **Immutability Enforced:** No add/edit/delete permissions via admin interface
 - **29 Tests:** All passing with comprehensive coverage
+
+### Phase 3: Extended Event Coverage ✅ Complete
+
+- **Interview Finalization Logging:** Auto-finalized interviews tracked with reason
+- **Report Export Tracking:** PDF and CSV downloads logged for audit trail
+- **Resume Deletion Logging:** Privacy/compliance tracking for file deletions
+- **Role Change Logging:** Security audit trail for RBAC modifications
+- **Rate Limit Violation Logging:** Security monitoring for abuse detection
+- **37 Tests:** All passing (6 new tests for extended events)
 
 ## Data Model
 
@@ -72,15 +83,26 @@ Located: `active_interview_app/models.py`
 - `ADMIN_UPDATE` - Admin updated an object
 - `ADMIN_DELETE` - Admin deleted an object
 
-**Future Action Types (Phase 3):**
+**Interview Events (Phase 3 - ✅ Implemented):**
+- `INTERVIEW_FINALIZED` - Interview auto-finalized (time window ended)
+
+**Report Events (Phase 3 - ✅ Implemented):**
+- `REPORT_EXPORTED` - Interview report exported (PDF/CSV)
+
+**Resume Events (Phase 3 - ✅ Implemented):**
+- `RESUME_DELETED` - Resume file deleted by user
+
+**User Management Events (Phase 3 - ✅ Implemented):**
+- `ROLE_CHANGED` - User role changed by admin
+
+**Security Events (Phase 3 - ✅ Implemented):**
+- `RATE_LIMIT_VIOLATION` - Rate limit exceeded
+
+**Future Action Types (Phase 4 - Planned):**
 - `USER_CREATED` - New user registration
 - `PROFILE_UPDATED` - User profile modification
 - `INTERVIEW_CREATED` - New interview session started
-- `INTERVIEW_COMPLETED` - Interview finalized
 - `RESUME_UPLOADED` - Resume file uploaded
-- `RESUME_DELETED` - Resume deleted
-- `REPORT_GENERATED` - Interview report generated
-- `ROLE_CHANGED` - User role modified (RBAC)
 - `DATA_EXPORTED` - User data export requested (GDPR)
 
 ## Architecture

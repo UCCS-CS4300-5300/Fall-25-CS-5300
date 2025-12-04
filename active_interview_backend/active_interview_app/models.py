@@ -1004,6 +1004,13 @@ class AuditLog(models.Model):
     ADMIN_UPDATE = 'ADMIN_UPDATE'
     ADMIN_DELETE = 'ADMIN_DELETE'
 
+    # Extended action types (Phase 3)
+    INTERVIEW_FINALIZED = 'INTERVIEW_FINALIZED'
+    REPORT_EXPORTED = 'REPORT_EXPORTED'
+    RESUME_DELETED = 'RESUME_DELETED'
+    ROLE_CHANGED = 'ROLE_CHANGED'
+    RATE_LIMIT_VIOLATION = 'RATE_LIMIT_VIOLATION'
+
     ACTION_TYPES = [
         # Authentication events
         (LOGIN, 'User Login'),
@@ -1014,6 +1021,21 @@ class AuditLog(models.Model):
         (ADMIN_CREATE, 'Admin Created Object'),
         (ADMIN_UPDATE, 'Admin Updated Object'),
         (ADMIN_DELETE, 'Admin Deleted Object'),
+
+        # Interview events
+        (INTERVIEW_FINALIZED, 'Interview Finalized'),
+
+        # Report events
+        (REPORT_EXPORTED, 'Report Exported'),
+
+        # Resume events
+        (RESUME_DELETED, 'Resume Deleted'),
+
+        # User management events
+        (ROLE_CHANGED, 'User Role Changed'),
+
+        # Security events
+        (RATE_LIMIT_VIOLATION, 'Rate Limit Violation'),
     ]
 
     # Core fields

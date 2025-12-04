@@ -29,6 +29,7 @@ AuditLogMiddleware = _observability_module.AuditLogMiddleware
 get_current_request = _observability_module.get_current_request
 get_current_ip = _observability_module.get_current_ip
 get_user_agent = _observability_module.get_user_agent
+_thread_locals = _observability_module._thread_locals
 
 __all__ = [
     'RateLimitMiddleware',
@@ -38,4 +39,5 @@ __all__ = [
     'get_current_request',
     'get_current_ip',
     'get_user_agent',
+    '_thread_locals',
 ]

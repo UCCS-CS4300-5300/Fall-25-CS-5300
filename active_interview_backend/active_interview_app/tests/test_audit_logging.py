@@ -727,3 +727,145 @@ class AuditLogAdminTests(TestCase):
             '/admin/active_interview_app/auditlog/?action_type=LOGIN'
         )
         self.assertEqual(response.status_code, 200)
+
+
+class ExtendedAuditLogTests(TestCase):
+    """Test extended audit log event types (Phase 3)."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='testpass123'
+        )
+        self.factory = RequestFactory()
+
+    def test_interview_finalized_action_type(self):
+        """Test INTERVIEW_FINALIZED action type is available."""
+        log = create_audit_log(
+            user=self.user,
+            action_type='INTERVIEW_FINALIZED',
+            resource_type='Chat',
+            resource_id='123',
+            description='Interview finalized',
+            extra_data={
+                'interview_type': 'INVITED',
+                'auto_finalized': True,
+                'reason': 'time_window_ended'
+            }
+        )
+
+        self.assertIsNotNone(log)
+        self.assertEqual(log.action_type, 'INTERVIEW_FINALIZED')
+        self.assertEqual(log.resource_type, 'Chat')
+        self.assertEqual(log.resource_id, '123')
+        self.assertTrue(log.extra_data['auto_finalized'])
+
+    def test_report_exported_action_type(self):
+        """Test REPORT_EXPORTED action type is available."""
+        log = create_audit_log(
+            user=self.user,
+            action_type='REPORT_EXPORTED',
+            resource_type='ExportableReport',
+            resource_id='456',
+            description='PDF report exported',
+            extra_data={
+                'chat_id': '123',
+                'export_format': 'PDF',
+                'filename': 'report.pdf'
+            }
+        )
+
+        self.assertIsNotNone(log)
+        self.assertEqual(log.action_type, 'REPORT_EXPORTED')
+        self.assertEqual(log.resource_type, 'ExportableReport')
+        self.assertEqual(log.extra_data['export_format'], 'PDF')
+
+    def test_resume_deleted_action_type(self):
+        """Test RESUME_DELETED action type is available."""
+        log = create_audit_log(
+            user=self.user,
+            action_type='RESUME_DELETED',
+            resource_type='UploadedResume',
+            resource_id='789',
+            description='Resume deleted',
+            extra_data={
+                'original_filename': 'resume.pdf',
+                'filesize': 102400
+            }
+        )
+
+        self.assertIsNotNone(log)
+        self.assertEqual(log.action_type, 'RESUME_DELETED')
+        self.assertEqual(log.resource_type, 'UploadedResume')
+        self.assertEqual(log.extra_data['original_filename'], 'resume.pdf')
+
+    def test_role_changed_action_type(self):
+        """Test ROLE_CHANGED action type is available."""
+        log = create_audit_log(
+            user=self.user,
+            action_type='ROLE_CHANGED',
+            resource_type='UserProfile',
+            resource_id='100',
+            description='User role changed',
+            extra_data={
+                'target_user_id': 42,
+                'target_username': 'candidate1',
+                'old_role': 'candidate',
+                'new_role': 'interviewer',
+                'reviewed_by': 'admin'
+            }
+        )
+
+        self.assertIsNotNone(log)
+        self.assertEqual(log.action_type, 'ROLE_CHANGED')
+        self.assertEqual(log.resource_type, 'UserProfile')
+        self.assertEqual(log.extra_data['old_role'], 'candidate')
+        self.assertEqual(log.extra_data['new_role'], 'interviewer')
+
+    def test_rate_limit_violation_action_type(self):
+        """Test RATE_LIMIT_VIOLATION action type is available."""
+        log = create_audit_log(
+            user=None,  # Can be anonymous
+            action_type='RATE_LIMIT_VIOLATION',
+            resource_type='RateLimitViolation',
+            resource_id='555',
+            description='Rate limit exceeded',
+            extra_data={
+                'endpoint': '/api/chat/send/',
+                'method': 'POST',
+                'rate_limit_type': 'strict',
+                'limit_value': 10,
+                'ip_address': '203.0.113.50'
+            }
+        )
+
+        self.assertIsNotNone(log)
+        self.assertEqual(log.action_type, 'RATE_LIMIT_VIOLATION')
+        self.assertIsNone(log.user)  # Can be anonymous
+        self.assertEqual(log.extra_data['rate_limit_type'], 'strict')
+
+    def test_all_extended_action_types_in_choices(self):
+        """Test that all extended action types are in ACTION_TYPES choices."""
+        action_types = dict(AuditLog.ACTION_TYPES)
+
+        # Phase 1 action types
+        self.assertIn('LOGIN', action_types)
+        self.assertIn('LOGOUT', action_types)
+        self.assertIn('LOGIN_FAILED', action_types)
+        self.assertIn('ADMIN_CREATE', action_types)
+        self.assertIn('ADMIN_UPDATE', action_types)
+        self.assertIn('ADMIN_DELETE', action_types)
+
+        # Phase 3 extended action types
+        self.assertIn('INTERVIEW_FINALIZED', action_types)
+        self.assertIn('REPORT_EXPORTED', action_types)
+        self.assertIn('RESUME_DELETED', action_types)
+        self.assertIn('ROLE_CHANGED', action_types)
+        self.assertIn('RATE_LIMIT_VIOLATION', action_types)
+
+        # Verify human-readable names
+        self.assertEqual(action_types['INTERVIEW_FINALIZED'], 'Interview Finalized')
+        self.assertEqual(action_types['REPORT_EXPORTED'], 'Report Exported')
+        self.assertEqual(action_types['RESUME_DELETED'], 'Resume Deleted')
+        self.assertEqual(action_types['ROLE_CHANGED'], 'User Role Changed')
+        self.assertEqual(action_types['RATE_LIMIT_VIOLATION'], 'Rate Limit Violation')
