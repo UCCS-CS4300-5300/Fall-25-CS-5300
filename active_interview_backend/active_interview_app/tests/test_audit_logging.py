@@ -503,3 +503,182 @@ class AuditLogIntegrationTests(TestCase):
         self.assertEqual(logs[0].description, 'Third')
         self.assertEqual(logs[1].description, 'Second')
         self.assertEqual(logs[2].description, 'First')
+
+
+class AuditLogAdminTests(TestCase):
+    """Test the Django admin interface for audit logs."""
+
+    def setUp(self):
+        self.superuser = User.objects.create_superuser(
+            username='admin',
+            email='admin@test.com',
+            password='adminpass123'
+        )
+        self.regular_user = User.objects.create_user(
+            username='regular',
+            password='userpass123'
+        )
+        self.client = Client()
+
+    def test_audit_log_admin_registered(self):
+        """Test that AuditLog model is registered in admin."""
+        from django.contrib import admin
+        from active_interview_app.models import AuditLog
+
+        self.assertTrue(admin.site.is_registered(AuditLog))
+
+    def test_superuser_can_view_audit_logs(self):
+        """Test that superuser can access audit log admin."""
+        self.client.login(username='admin', password='adminpass123')
+
+        # Create some audit logs
+        create_audit_log(
+            user=self.superuser,
+            action_type='LOGIN',
+            description='Test login'
+        )
+
+        response = self.client.get('/admin/active_interview_app/auditlog/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_audit_log_admin_read_only(self):
+        """Test that audit logs cannot be added/edited/deleted via admin."""
+        from django.contrib import admin
+        from active_interview_app.models import AuditLog
+        from django.test import RequestFactory
+
+        factory = RequestFactory()
+        request = factory.get('/admin/')
+        request.user = self.superuser
+
+        admin_class = admin.site._registry[AuditLog]
+
+        # Test permissions
+        self.assertFalse(admin_class.has_add_permission(request))
+        self.assertFalse(admin_class.has_change_permission(request))
+        self.assertFalse(admin_class.has_delete_permission(request))
+
+    def test_export_as_csv(self):
+        """Test CSV export functionality."""
+        self.client.login(username='admin', password='adminpass123')
+
+        # Create audit logs
+        log1 = create_audit_log(
+            user=self.superuser,
+            action_type='LOGIN',
+            description='First login',
+            extra_data={'ip': '192.168.1.1'}
+        )
+        log2 = create_audit_log(
+            user=self.regular_user,
+            action_type='LOGOUT',
+            description='User logged out',
+            extra_data={'ip': '192.168.1.2'}
+        )
+
+        # Export via admin action
+        response = self.client.post(
+            '/admin/active_interview_app/auditlog/',
+            {
+                'action': 'export_as_csv',
+                '_selected_action': [log1.id, log2.id]
+            },
+            follow=True
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'text/csv')
+        self.assertIn('attachment', response['Content-Disposition'])
+        self.assertIn('audit_logs_', response['Content-Disposition'])
+
+        # Check CSV content
+        content = response.content.decode('utf-8')
+        self.assertIn('Timestamp', content)
+        self.assertIn('User', content)
+        self.assertIn('Action Type', content)
+        self.assertIn('admin', content)
+        self.assertIn('regular', content)
+
+    def test_export_as_json(self):
+        """Test JSON export functionality."""
+        self.client.login(username='admin', password='adminpass123')
+
+        # Create audit log
+        log = create_audit_log(
+            user=self.superuser,
+            action_type='ADMIN_CREATE',
+            resource_type='User',
+            resource_id='123',
+            description='Created user via admin',
+            extra_data={'username': 'newuser'}
+        )
+
+        # Export via admin action
+        response = self.client.post(
+            '/admin/active_interview_app/auditlog/',
+            {
+                'action': 'export_as_json',
+                '_selected_action': [log.id]
+            },
+            follow=True
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/json')
+        self.assertIn('attachment', response['Content-Disposition'])
+
+        # Check JSON content
+        import json
+        data = json.loads(response.content.decode('utf-8'))
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]['action_type'], 'ADMIN_CREATE')
+        self.assertEqual(data[0]['resource_type'], 'User')
+        self.assertEqual(data[0]['extra_data']['username'], 'newuser')
+
+    def test_audit_log_admin_search(self):
+        """Test search functionality in admin."""
+        self.client.login(username='admin', password='adminpass123')
+
+        # Create audit logs with distinct data
+        create_audit_log(
+            user=self.superuser,
+            action_type='LOGIN',
+            description='Admin login from office',
+            extra_data={'location': 'office'}
+        )
+        create_audit_log(
+            user=self.regular_user,
+            action_type='LOGIN',
+            description='Regular user login',
+            extra_data={'location': 'home'}
+        )
+
+        # Search by username
+        response = self.client.get(
+            '/admin/active_interview_app/auditlog/?q=admin'
+        )
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode('utf-8')
+        self.assertIn('admin', content.lower())
+
+    def test_audit_log_admin_filter(self):
+        """Test filtering functionality in admin."""
+        self.client.login(username='admin', password='adminpass123')
+
+        # Create different types of logs
+        create_audit_log(
+            user=self.superuser,
+            action_type='LOGIN',
+            description='Login event'
+        )
+        create_audit_log(
+            user=self.superuser,
+            action_type='ADMIN_CREATE',
+            description='Admin create event'
+        )
+
+        # Filter by action type
+        response = self.client.get(
+            '/admin/active_interview_app/auditlog/?action_type=LOGIN'
+        )
+        self.assertEqual(response.status_code, 200)
