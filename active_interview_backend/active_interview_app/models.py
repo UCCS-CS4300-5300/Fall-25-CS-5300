@@ -988,6 +988,129 @@ class DeletionRequest(models.Model):
         )
 
 
+class AuditLog(models.Model):
+    """
+    Immutable audit log for security and compliance tracking.
+    Records user and admin actions with full context (who/what/when/where).
+
+    Related to Issues #66, #67, #68 (Audit Logging).
+    """
+
+    # Action type constants (initial set for Phase 1)
+    LOGIN = 'LOGIN'
+    LOGOUT = 'LOGOUT'
+    LOGIN_FAILED = 'LOGIN_FAILED'
+    ADMIN_CREATE = 'ADMIN_CREATE'
+    ADMIN_UPDATE = 'ADMIN_UPDATE'
+    ADMIN_DELETE = 'ADMIN_DELETE'
+
+    ACTION_TYPES = [
+        # Authentication events
+        (LOGIN, 'User Login'),
+        (LOGOUT, 'User Logout'),
+        (LOGIN_FAILED, 'Failed Login Attempt'),
+
+        # Admin actions
+        (ADMIN_CREATE, 'Admin Created Object'),
+        (ADMIN_UPDATE, 'Admin Updated Object'),
+        (ADMIN_DELETE, 'Admin Deleted Object'),
+    ]
+
+    # Core fields
+    timestamp = models.DateTimeField(
+        auto_now_add=True,
+        db_index=True,
+        help_text='When the action occurred'
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='audit_logs',
+        help_text='User who performed the action (null for anonymous)'
+    )
+
+    # Action details
+    action_type = models.CharField(
+        max_length=50,
+        choices=ACTION_TYPES,
+        db_index=True,
+        help_text='Type of action performed'
+    )
+    resource_type = models.CharField(
+        max_length=100,
+        blank=True,
+        db_index=True,
+        help_text='Type of resource affected (e.g., "User", "Chat")'
+    )
+    resource_id = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text='ID of the affected resource'
+    )
+    description = models.TextField(
+        help_text='Human-readable description of the action'
+    )
+
+    # Request context
+    ip_address = models.GenericIPAddressField(
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text='IP address of the request'
+    )
+    user_agent = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text='Browser/client user agent string'
+    )
+
+    # Additional metadata
+    extra_data = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text='Additional action-specific metadata'
+    )
+
+    class Meta:
+        ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['timestamp', 'user']),
+            models.Index(fields=['action_type', '-timestamp']),
+            models.Index(fields=['ip_address', '-timestamp']),
+        ]
+        verbose_name = 'Audit Log'
+        verbose_name_plural = 'Audit Logs'
+
+    def __str__(self):
+        user_str = self.user.username if self.user else 'Anonymous'
+        return (
+            f"[{self.timestamp.strftime('%Y-%m-%d %H:%M:%S')}] "
+            f"{user_str}: {self.get_action_type_display()}"
+        )
+
+    def save(self, *args, **kwargs):
+        """
+        Enforce immutability: only allow creation, not updates.
+        """
+        if self.pk is not None:
+            raise ValueError(
+                "AuditLog entries are immutable and cannot be updated"
+            )
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        """
+        Prevent deletion of audit logs for compliance.
+        Only superusers should be able to delete via admin if absolutely
+        necessary.
+        """
+        raise ValueError(
+            "AuditLog entries cannot be deleted for compliance reasons"
+        )
+
+
 class Tag(models.Model):
     """
     Tags for categorizing questions (e.g., #python, #sql, #behavioral).

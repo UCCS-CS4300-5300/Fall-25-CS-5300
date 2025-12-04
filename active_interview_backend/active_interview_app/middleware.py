@@ -1,15 +1,67 @@
 """
-Middleware for observability and metrics collection.
-Tracks requests, responses, latency, and errors.
+Middleware for observability, metrics collection, and audit logging.
+Tracks requests, responses, latency, errors, and audit events.
 
-Related to Issues #14, #15 (Observability Dashboard).
+Related to Issues #14, #15 (Observability Dashboard) and #66, #67, #68 (Audit Logging).
 """
 import time
 import traceback
 import logging
+import threading
 from django.utils import timezone
 
 logger = logging.getLogger(__name__)
+
+# Thread-local storage for request context (audit logging)
+_thread_locals = threading.local()
+
+
+def get_current_request():
+    """
+    Retrieve the current request from thread-local storage.
+
+    Returns:
+        HttpRequest or None: The current request if available
+    """
+    return getattr(_thread_locals, 'request', None)
+
+
+def get_current_ip():
+    """
+    Extract IP address from the current request.
+    Handles proxy headers (X-Forwarded-For) for Railway deployment.
+
+    Returns:
+        str or None: IP address of the client
+    """
+    request = get_current_request()
+    if not request:
+        return None
+
+    # Handle Railway/proxy forwarded IPs
+    # X-Forwarded-For format: "client, proxy1, proxy2"
+    # We want the original client IP (first in the list)
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        # Get first IP in the chain (original client)
+        return x_forwarded_for.split(',')[0].strip()
+
+    # Fallback to REMOTE_ADDR for direct connections
+    return request.META.get('REMOTE_ADDR')
+
+
+def get_user_agent():
+    """
+    Extract user agent string from the current request.
+
+    Returns:
+        str: User agent string (empty if not available)
+    """
+    request = get_current_request()
+    if not request:
+        return ''
+
+    return request.META.get('HTTP_USER_AGENT', '')
 
 
 class MetricsMiddleware:
@@ -193,5 +245,37 @@ class PerformanceMonitorMiddleware:
                 f"Slow request detected: {request.method} {request.path} "
                 f"took {response_time_ms:.2f}ms"
             )
+
+        return response
+
+
+class AuditLogMiddleware:
+    """
+    Middleware that stores the current request in thread-local storage.
+
+    This allows audit logging utilities and signal handlers to access
+    request context (IP address, user agent) without explicitly passing
+    the request object.
+
+    IMPORTANT: Must be placed high in MIDDLEWARE list to ensure it runs
+    before views and other middleware that may trigger audit logging.
+
+    Related to Issues #66, #67, #68 (Audit Logging).
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        # Store request in thread-local storage
+        _thread_locals.request = request
+
+        try:
+            response = self.get_response(request)
+        finally:
+            # Clean up thread-local storage after request completes
+            # This prevents memory leaks and cross-request contamination
+            if hasattr(_thread_locals, 'request'):
+                del _thread_locals.request
 
         return response
