@@ -55,6 +55,23 @@ class RateLimitMiddleware:
                 user_agent=user_agent
             )
 
+            # Audit log: Rate limit violation
+            from ..audit_utils import create_audit_log
+            create_audit_log(
+                user=request.user if request.user.is_authenticated else None,
+                action_type='RATE_LIMIT_VIOLATION',
+                resource_type='RateLimitViolation',
+                resource_id=str(violation.id),
+                description=f"Rate limit exceeded for {request.method} {request.path}",
+                extra_data={
+                    'endpoint': request.path,
+                    'method': request.method,
+                    'rate_limit_type': rate_limit_type,
+                    'limit_value': limit_value,
+                    'ip_address': ip_address
+                }
+            )
+
             # Check if alert threshold exceeded
             self._check_and_send_alert()
 
