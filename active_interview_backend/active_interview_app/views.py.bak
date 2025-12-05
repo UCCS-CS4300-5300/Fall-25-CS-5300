@@ -672,68 +672,68 @@ class ChatView(LoginRequiredMixin, UserPassesTestMixin, View):
 
                 # Phase 8: Check if all questions answered and auto-finalize
                 if chat.all_questions_answered() and not chat.is_finalized:
-                    # Auto-finalize the interview
-                    from .report_utils import generate_and_save_report
+                # Auto-finalize the interview
+                from .report_utils import generate_and_save_report
 
-                    if chat.interview_type == Chat.INVITED:
-                        # For invited interviews: auto-finalize with report and notification
+                if chat.interview_type == Chat.INVITED:
+                    # For invited interviews: auto-finalize with report and notification
+                    try:
+                        # Generate report (no rushed qualifier - they completed all questions)
+                        report = generate_and_save_report(chat, include_rushed_qualifier=False)
+
+                        # Mark chat as finalized
+                        chat.is_finalized = True
+                        chat.finalized_at = timezone.now()
+                        chat.save()
+
+                        # Update invitation status and send notification
                         try:
-                            # Generate report (no rushed qualifier - they completed all questions)
-                            report = generate_and_save_report(chat, include_rushed_qualifier=False)
+                            invitation = InvitedInterview.objects.get(chat=chat)
+                            if invitation.status != InvitedInterview.COMPLETED:
+                                invitation.status = InvitedInterview.COMPLETED
+                                invitation.completed_at = timezone.now()
+                                invitation.save()
 
-                            # Mark chat as finalized
-                            chat.is_finalized = True
-                            chat.finalized_at = timezone.now()
-                            chat.save()
+                                # Send completion notification to interviewer
+                                from .invitation_utils import send_completion_notification_email
+                                send_completion_notification_email(invitation)
+                        except InvitedInterview.DoesNotExist:
+                            pass
 
-                            # Update invitation status and send notification
-                            try:
-                                invitation = InvitedInterview.objects.get(chat=chat)
-                                if invitation.status != InvitedInterview.COMPLETED:
-                                    invitation.status = InvitedInterview.COMPLETED
-                                    invitation.completed_at = timezone.now()
-                                    invitation.save()
-
-                                    # Send completion notification to interviewer
-                                    from .invitation_utils import send_completion_notification_email
-                                    send_completion_notification_email(invitation)
-                            except InvitedInterview.DoesNotExist:
-                                pass
-
-                            # Return with completion flag
-                            return JsonResponse({
-                                'message': ai_message,
-                                'all_questions_answered': True,
-                                'interview_completed': True,
-                                'redirect_to_report': True
-                            })
-                        except Exception as e:
-                            # If report generation fails, still mark as completed but continue normally
-                            chat.is_finalized = True
-                            chat.finalized_at = timezone.now()
-                            chat.save()
-
-                            return JsonResponse({
-                                'message': ai_message,
-                                'all_questions_answered': True,
-                                'error': 'Report generation failed, but interview marked as complete'
-                            })
-
-                    elif chat.interview_type == Chat.PRACTICE:
-                        # For practice interviews: just signal completion, let user finalize manually
+                        # Return with completion flag
                         return JsonResponse({
                             'message': ai_message,
                             'all_questions_answered': True,
-                            'show_completion_message': True
+                            'interview_completed': True,
+                            'redirect_to_report': True
+                        })
+                    except Exception as e:
+                        # If report generation fails, still mark as completed but continue normally
+                        chat.is_finalized = True
+                        chat.finalized_at = timezone.now()
+                        chat.save()
+
+                        return JsonResponse({
+                            'message': ai_message,
+                            'all_questions_answered': True,
+                            'error': 'Report generation failed, but interview marked as complete'
                         })
 
-                return JsonResponse({'message': ai_message})
-            except Exception as e:
-                # Handle AI service exceptions gracefully
-                return JsonResponse({
-                    'error': 'AI service unavailable',
-                    'message': str(e)
-                }, status=503)
+                elif chat.interview_type == Chat.PRACTICE:
+                    # For practice interviews: just signal completion, let user finalize manually
+                    return JsonResponse({
+                        'message': ai_message,
+                        'all_questions_answered': True,
+                        'show_completion_message': True
+                    })
+
+            return JsonResponse({'message': ai_message})
+        except Exception as e:
+            # Handle AI service exceptions gracefully
+            return JsonResponse({
+                'error': 'AI service unavailable',
+                'message': str(e)
+            }, status=503)
 
 
 class EditChat(LoginRequiredMixin, UserPassesTestMixin, View):

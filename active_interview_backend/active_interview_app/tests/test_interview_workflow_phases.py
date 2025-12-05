@@ -119,8 +119,7 @@ class GracefulEndingTests(TestCase):
 
         response = self.client.post(
             reverse('chat-view', kwargs={'chat_id': self.chat.id}),
-            data=json.dumps({'message': 'My answer'}),
-            content_type='application/json'
+            data={'message': 'My answer'}
         )
 
         self.assertEqual(response.status_code, 200)
@@ -181,8 +180,7 @@ class GracefulEndingTests(TestCase):
 
         response = self.client.post(
             reverse('chat-view', kwargs={'chat_id': self.chat.id}),
-            data=json.dumps({'message': 'My answer'}),
-            content_type='application/json'
+            data={'message': 'My answer'}
         )
 
         self.assertEqual(response.status_code, 200)
@@ -272,8 +270,7 @@ class AutoFinalizationTests(TestCase):
 
         response = self.client.post(
             reverse('chat-view', kwargs={'chat_id': self.chat.id}),
-            data=json.dumps({'message': 'Final answer'}),
-            content_type='application/json'
+            data={'message': 'Final answer'}
         )
 
         self.assertEqual(response.status_code, 200)
@@ -774,8 +771,7 @@ class GracefulEndingExceptionTests(TestCase):
 
         response = self.client.post(
             reverse('chat-view', kwargs={'chat_id': self.chat.id}),
-            data=json.dumps({'message': 'My answer'}),
-            content_type='application/json'
+            data={'message': 'My answer'}
         )
 
         self.assertEqual(response.status_code, 200)
@@ -807,8 +803,7 @@ class GracefulEndingExceptionTests(TestCase):
 
         response = self.client.post(
             reverse('chat-view', kwargs={'chat_id': self.chat.id}),
-            data=json.dumps({'message': 'My answer'}),
-            content_type='application/json'
+            data={'message': 'My answer'}
         )
 
         self.assertEqual(response.status_code, 200)
