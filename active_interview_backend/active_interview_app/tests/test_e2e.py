@@ -1,15 +1,35 @@
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
+from unittest import skipIf
 # from django.test import LiveServerTestCase
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+import platform
 
 
-# === Helper Fucntions ===
+# === Helper Functions ===
+def is_chrome_available():
+    """Check if Chrome/Chromium driver is available"""
+    try:
+        # Try to create a Chrome driver
+        options = Options()
+        options.add_argument("--headless")
+        options.add_argument("--no-sandbox")
+        driver = webdriver.Chrome(options=options)
+        driver.quit()
+        return True
+    except Exception:
+        return False
+
+
+# Check once at module load time
+CHROME_AVAILABLE = is_chrome_available()
+
+
 # Make a context-dependent driver for the environment
 def getEnvDriver():
     # if testing in production container environment:
@@ -91,6 +111,7 @@ def loginSim():
 
 
 class TestDriver(StaticLiveServerTestCase):
+    @skipIf(not CHROME_AVAILABLE, "Chrome driver not available")
     def test_e2e_driver(self):
         # Init chrome driver
         driver = getEnvDriver()
@@ -98,6 +119,7 @@ class TestDriver(StaticLiveServerTestCase):
         # Stop chrome driver
         driver.quit()
 
+    @skipIf(not CHROME_AVAILABLE, "Chrome driver not available")
     def test_e2e_auth(self):
         # Init chrome driver
         driver = getEnvDriver()
