@@ -92,6 +92,10 @@ class APIViewRateLimitTest(RateLimitTestCase):
 
     def test_lenient_rate_limit_authenticated(self):
         """Test lenient rate limiting for authenticated users (120/min)."""
+        # Clear the rate limit cache before testing
+        from django.core.cache import cache
+        cache.clear()
+
         url = '/test/lenient/'  # Using test URL with lenient rate limiting
 
         # Make requests up to the limit (120)
