@@ -65,7 +65,7 @@ from rest_framework.views import APIView
 
 # Import OpenAI utilities (moved to separate module to prevent circular imports)
 # Updated for Issue #14: Multi-tier model selection with automatic fallback
-from .openai_utils import get_client_and_model, ai_available, MAX_TOKENS
+from .openai_utils import get_openai_client, get_client_and_model, ai_available, MAX_TOKENS  # noqa: F401
 
 # Import rate limiting decorators
 from .decorators import ratelimit_api
