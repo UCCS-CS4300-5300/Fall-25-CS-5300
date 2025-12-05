@@ -8,15 +8,10 @@ from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.utils import timezone
-from unittest.mock import patch, MagicMock
-from datetime import timedelta
 
 from active_interview_app.models import (
-    Chat,
     UploadedResume,
     UploadedJobListing,
-    ExportableReport,
     AuditLog
 )
 from .test_credentials import TEST_PASSWORD
@@ -66,7 +61,6 @@ class ViewsAuditIntegrationTest(TestCase):
         self.assertEqual(audit_log.resource_id, str(resume.id))
         self.assertIn('Test Resume', audit_log.description)
 
-
     def test_delete_job_without_audit(self):
         """Test that job deletion works (no audit logging implemented yet)."""
         # Create job listing
@@ -110,4 +104,3 @@ class ViewsAuditIntegrationTest(TestCase):
         from active_interview_app.models import RoleChangeRequest
         requests = RoleChangeRequest.objects.filter(user=self.user)
         self.assertTrue(requests.exists())
-

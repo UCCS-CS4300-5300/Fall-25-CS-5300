@@ -65,10 +65,10 @@ from rest_framework.views import APIView
 
 # Import OpenAI utilities (moved to separate module to prevent circular imports)
 # Updated for Issue #14: Multi-tier model selection with automatic fallback
-from .openai_utils import get_openai_client, get_client_and_model, ai_available, MAX_TOKENS
+from .openai_utils import get_client_and_model, ai_available, MAX_TOKENS
 
 # Import rate limiting decorators
-from .decorators import ratelimit_api, ratelimit_default, ratelimit_strict
+from .decorators import ratelimit_api
 
 # Import token tracking (Issue #15.10)
 from .token_tracking import record_openai_usage
@@ -603,7 +603,7 @@ class ChatView(LoginRequiredMixin, UserPassesTestMixin, View):
                 from .report_utils import generate_and_save_report
                 from .audit_utils import create_audit_log
                 try:
-                    report = generate_and_save_report(chat, include_rushed_qualifier=True)
+                    generate_and_save_report(chat, include_rushed_qualifier=True)
                     chat.is_finalized = True
                     chat.finalized_at = timezone.now()
                     chat.save()
@@ -679,7 +679,7 @@ class ChatView(LoginRequiredMixin, UserPassesTestMixin, View):
                         # For invited interviews: auto-finalize with report and notification
                         try:
                             # Generate report (no rushed qualifier - they completed all questions)
-                            report = generate_and_save_report(chat, include_rushed_qualifier=False)
+                            generate_and_save_report(chat, include_rushed_qualifier=False)
 
                             # Mark chat as finalized
                             chat.is_finalized = True
@@ -707,7 +707,7 @@ class ChatView(LoginRequiredMixin, UserPassesTestMixin, View):
                                 'interview_completed': True,
                                 'redirect_to_report': True
                             })
-                        except Exception as e:
+                        except Exception:
                             # If report generation fails, still mark as completed but continue normally
                             chat.is_finalized = True
                             chat.finalized_at = timezone.now()
@@ -1817,7 +1817,7 @@ class FinalizeInterviewView(LoginRequiredMixin, UserPassesTestMixin, View):
 
         # Generate report using shared utility (makes 4 AI calls)
         from .report_utils import generate_and_save_report
-        report = generate_and_save_report(chat)
+        generate_and_save_report(chat)
 
         # Mark chat as finalized
         chat.is_finalized = True
@@ -3455,4 +3455,3 @@ def start_invited_interview(request, invitation_id):
 
     messages.success(request, 'Interview started! Good luck!')
     return redirect('chat-view', chat_id=chat.id)
-22

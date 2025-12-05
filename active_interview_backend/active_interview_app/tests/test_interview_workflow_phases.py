@@ -25,7 +25,7 @@ from unittest.mock import patch, MagicMock
 import json
 
 from active_interview_app.models import (
-    UserProfile, Chat, InvitedInterview, InterviewTemplate,
+    Chat, InvitedInterview, InterviewTemplate,
     ExportableReport
 )
 from .test_credentials import TEST_PASSWORD
@@ -548,7 +548,7 @@ class FinalizeInterviewViewTests(TestCase):
 
     def test_unauthorized_access_redirects(self):
         """Test that non-owners cannot finalize interviews"""
-        other_user = User.objects.create_user(
+        _other_user = User.objects.create_user(  # noqa: F841
             username='other@test.com',
             email='other@test.com',
             password=TEST_PASSWORD
