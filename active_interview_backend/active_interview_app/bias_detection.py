@@ -42,9 +42,15 @@ class BiasDetectionService:
     - Stores analysis results for auditing
     """
 
-    # Cache key for bias term library
+    # Cache configuration
     CACHE_KEY_BIAS_TERMS = 'bias_detection:active_terms'
     CACHE_TIMEOUT = 3600  # 1 hour
+
+    # Bias score calculation weights
+    # These constants define how different factors contribute to the overall bias score
+    SCORE_WEIGHT_UNIQUE_TERMS = 0.2  # Each unique bias term found
+    SCORE_WEIGHT_SEVERITY = 0.1       # Weighted severity of all matches
+    SCORE_WEIGHT_DENSITY = 0.05       # Density of bias terms (matches per 100 words)
 
     def __init__(self):
         """Initialize the bias detection service."""
@@ -256,9 +262,9 @@ class BiasDetectionService:
         # - Higher severity = higher score
         # - Higher density = higher score
         score = min(1.0, (
-            (len(flagged_terms) * 0.2) +  # Each unique term adds 0.2
-            (severity_sum * 0.1) +          # Severity contribution
-            (density * 0.05)                # Density contribution
+            (len(flagged_terms) * self.SCORE_WEIGHT_UNIQUE_TERMS) +
+            (severity_sum * self.SCORE_WEIGHT_SEVERITY) +
+            (density * self.SCORE_WEIGHT_DENSITY)
         ))
 
         return round(score, 3)

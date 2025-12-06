@@ -2985,6 +2985,29 @@ def invitation_dashboard(request):
     return render(request, 'invitations/invitation_dashboard.html', context)
 
 
+def _build_review_error_context(invitation, chat, bias_service, feedback, analysis):
+    """
+    Helper function to build context for returning to review form with errors.
+
+    Args:
+        invitation: InvitedInterview object
+        chat: Chat object
+        bias_service: BiasDetectionService instance
+        feedback: User's feedback text
+        analysis: Bias analysis result dict
+
+    Returns:
+        Context dictionary for template rendering
+    """
+    return {
+        'invitation': invitation,
+        'chat': chat,
+        'bias_terms_json': json.dumps(_serialize_bias_terms(bias_service)),
+        'initial_feedback': feedback,
+        'initial_analysis': analysis,
+    }
+
+
 @login_required
 @admin_or_interviewer_required
 def invitation_review(request, invitation_id):
@@ -3038,13 +3061,9 @@ def invitation_review(request, invitation_id):
                     'Please revise the highlighted terms.'
                 )
                 # Return to form with analysis
-                context = {
-                    'invitation': invitation,
-                    'chat': chat,
-                    'bias_terms_json': json.dumps(_serialize_bias_terms(bias_service)),
-                    'initial_feedback': feedback,
-                    'initial_analysis': bias_analysis,
-                }
+                context = _build_review_error_context(
+                    invitation, chat, bias_service, feedback, bias_analysis
+                )
                 return render(request, 'invitations/invitation_review.html', context)
 
             # Block "Mark as Reviewed" if there are ANY bias flags (warnings or blocking)
@@ -3054,13 +3073,9 @@ def invitation_review(request, invitation_id):
                     'Cannot notify candidate with biased feedback. '
                     'Please resolve all flagged terms before marking as reviewed.'
                 )
-                context = {
-                    'invitation': invitation,
-                    'chat': chat,
-                    'bias_terms_json': json.dumps(_serialize_bias_terms(bias_service)),
-                    'initial_feedback': feedback,
-                    'initial_analysis': bias_analysis,
-                }
+                context = _build_review_error_context(
+                    invitation, chat, bias_service, feedback, bias_analysis
+                )
                 return render(request, 'invitations/invitation_review.html', context)
 
         # Save feedback
