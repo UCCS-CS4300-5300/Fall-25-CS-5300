@@ -328,12 +328,18 @@ class RateLimitUserTypeTest(RateLimitTestCase):
 
         url = '/test/default/'
 
-        # Make requests as anonymous user
-        self.make_requests(url, 31, authenticated=False)
+        # Make requests as anonymous user (limit is 30)
+        responses = self.make_requests(url, 30, authenticated=False)
 
-        # Should be rate limited
+        # All 30 requests should succeed
+        for response in responses:
+            self.assertEqual(response.status_code, 200,
+                           "Request should succeed within limit")
+
+        # 31st request should be rate limited
         response = self.anonymous_client.get(url)
-        self.assertEqual(response.status_code, 429)
+        self.assertEqual(response.status_code, 429,
+                        "31st request should be rate limited")
 
     def test_user_id_based_limiting_authenticated(self):
         """Test that authenticated users are limited by user ID."""
@@ -343,12 +349,21 @@ class RateLimitUserTypeTest(RateLimitTestCase):
 
         url = '/test/default/'
 
-        # Make requests as authenticated user
-        self.make_requests(url, 61, authenticated=True)
+        # Explicitly log in to ensure authentication persists
+        self.client.force_login(self.user)
 
-        # Should be rate limited
+        # Make requests as authenticated user (limit is 60)
+        responses = self.make_requests(url, 60, authenticated=True)
+
+        # All 60 requests should succeed
+        for response in responses:
+            self.assertEqual(response.status_code, 200,
+                           "Request should succeed within limit")
+
+        # 61st request should be rate limited
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 429)
+        self.assertEqual(response.status_code, 429,
+                        "61st request should be rate limited")
 
 
 @override_settings(
