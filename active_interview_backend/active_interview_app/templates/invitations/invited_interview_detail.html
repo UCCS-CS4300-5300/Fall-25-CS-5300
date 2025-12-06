@@ -78,30 +78,56 @@
         </div>
       </div>
 
-      <!-- Status: Already Completed -->
-      {% if invitation.chat and invitation.status == 'COMPLETED' %}
+      <!-- Status: Interview Reviewed -->
+      {% if invitation.chat and invitation.status == 'reviewed' %}
         <div class="alert alert-success" role="alert">
           <h4 class="alert-heading"><i class="bi bi-check-circle-fill"></i> Interview Completed!</h4>
           <p>You completed this interview on <span data-utc-time="{{ invitation.completed_at|date:'c' }}">{{ invitation.completed_at|date:"F j, Y \a\t g:i A" }} UTC</span>.</p>
           <hr>
           <p class="mb-0">
-            {% if invitation.interviewer_review_status == 'REVIEW_COMPLETE' %}
-              The interviewer has reviewed your interview and provided feedback.
-              <a href="{% url 'chat-results' chat_id=invitation.chat.id %}" class="alert-link">View your results and feedback</a>
+            {% if invitation.interviewer_review_status == 'completed' %}
+              <strong>✓ Interviewer Review Complete</strong>
+              <br>The interviewer has reviewed your interview and provided feedback.
+              <a href="{% url 'export_report' chat_id=invitation.chat.id %}" class="alert-link">View your full report with feedback</a>
             {% else %}
-              The interviewer has not yet completed their review. You'll receive an email notification when feedback is available.
+              <strong>⏳ Pending Interviewer Review</strong>
+              <br>The interviewer has not yet completed their review. You'll receive an email notification when feedback is available.
             {% endif %}
           </p>
         </div>
 
+        {% if invitation.interviewer_review_status == 'completed' and invitation.interviewer_feedback %}
+        <!-- Interviewer Feedback Section -->
+        <div class="card shadow-sm mb-4" style="background-color: var(--surface); border: 2px solid var(--success);">
+          <div class="card-body">
+            <h5 class="card-title" style="color: var(--success);">
+              <i class="bi bi-person-check-fill"></i> Interviewer Feedback
+            </h5>
+            <p class="card-text" style="white-space: pre-wrap; color: var(--text-primary);">{{ invitation.interviewer_feedback }}</p>
+            {% if invitation.reviewed_at %}
+            <hr>
+            <p class="text-muted small mb-0">
+              <i class="bi bi-clock"></i> Reviewed on {{ invitation.reviewed_at|date:"F j, Y \a\t g:i A" }}
+            </p>
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+
         <div class="text-center mt-4">
-          <a href="{% url 'chat-results' chat_id=invitation.chat.id %}" class="btn btn-primary btn-lg">
-            <i class="bi bi-bar-chart-fill"></i> View Results
-          </a>
+          {% if invitation.interviewer_review_status == 'completed' %}
+            <a href="{% url 'export_report' chat_id=invitation.chat.id %}" class="btn btn-primary btn-lg">
+              <i class="bi bi-file-earmark-text-fill"></i> View Full Report
+            </a>
+          {% else %}
+            <span class="btn btn-secondary btn-lg disabled">
+              <i class="bi bi-hourglass-split"></i> Pending Interviewer Review
+            </span>
+          {% endif %}
         </div>
 
       <!-- Status: Interview Started (In Progress) -->
-      {% elif invitation.chat %}
+      {% elif invitation.chat and not invitation.chat.is_finalized %}
         <div class="alert alert-info" role="alert">
           <h4 class="alert-heading"><i class="bi bi-play-circle-fill"></i> Interview In Progress</h4>
           <p class="mb-0">You started this interview on <span data-utc-time="{{ invitation.chat.date_created|date:'c' }}">{{ invitation.chat.date_created|date:"F j, Y \a\t g:i A" }} UTC</span>.</p>
@@ -110,6 +136,25 @@
         <div class="text-center mt-4">
           <a href="{% url 'chat-view' chat_id=invitation.chat.id %}" class="btn btn-primary btn-lg">
             <i class="bi bi-arrow-right-circle-fill"></i> Continue Interview
+          </a>
+        </div>
+
+      <!-- Status: Interview Completed, Pending Review -->
+      {% elif invitation.chat and invitation.chat.is_finalized and invitation.status != 'reviewed' %}
+        <div class="alert alert-warning" role="alert">
+          <h4 class="alert-heading"><i class="bi bi-check-circle-fill"></i> Interview Completed - Under Review</h4>
+          <p>You completed this interview on <span data-utc-time="{{ invitation.completed_at|date:'c' }}">{{ invitation.completed_at|date:"F j, Y \a\t g:i A" }} UTC</span>.</p>
+          <hr>
+          <p class="mb-0">
+            <strong>⏳ Pending Interviewer Review</strong>
+            <br>The interviewer is reviewing your interview. You'll receive an email notification when feedback is available.
+            <br>You can view the AI-generated report while you wait.
+          </p>
+        </div>
+
+        <div class="text-center mt-4">
+          <a href="{% url 'export_report' chat_id=invitation.chat.id %}" class="btn btn-primary btn-lg">
+            <i class="bi bi-file-earmark-text-fill"></i> View AI Report
           </a>
         </div>
 

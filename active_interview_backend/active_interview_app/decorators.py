@@ -6,9 +6,12 @@ defined in the UserProfile model.
 
 Related to Issue #69 - RBAC implementation.
 """
+import logging
 from functools import wraps
 from django.http import JsonResponse, HttpResponseRedirect
 from django.urls import reverse
+
+logger = logging.getLogger(__name__)
 
 
 def role_required(*allowed_roles):
@@ -135,9 +138,11 @@ def owner_or_privileged_required(get_owner_func):
                 owner = get_owner_func(request, *args, **kwargs)
                 if request.user == owner:
                     return view_func(request, *args, **kwargs)
-            except Exception:
-                # If we can't determine ownership, deny access
-                pass
+            except Exception as e:
+                # If we can't determine ownership, log error and deny access
+                logger.warning(
+                    f"Failed to determine resource ownership: {e}"
+                )
 
             # Deny access
             return JsonResponse({'error': 'Forbidden'}, status=403)

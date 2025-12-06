@@ -13,6 +13,8 @@ from active_interview_app.models import (
 )
 from unittest.mock import patch, Mock
 import json
+from .test_credentials import TEST_PASSWORD
+from .test_utils import create_mock_openai_response
 
 
 class AboutUsViewTest(TestCase):
@@ -35,7 +37,7 @@ class RestartChatViewTest(TestCase):
 
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.job_listing = UploadedJobListing.objects.create(
             user=self.user,
@@ -54,7 +56,7 @@ class RestartChatViewTest(TestCase):
             job_listing=self.job_listing
         )
         self.client = Client()
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
     def test_restart_chat_post(self):
         """Test restarting a chat"""
@@ -76,9 +78,9 @@ class RestartChatViewTest(TestCase):
         """Test user can only restart their own chats"""
         User.objects.create_user(
             username='otheruser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
-        self.client.login(username='otheruser', password='testpass123')
+        self.client.login(username='otheruser', password=TEST_PASSWORD)
 
         response = self.client.post(
             reverse('chat-restart', args=[self.chat.id]),
@@ -97,7 +99,7 @@ class KeyQuestionsViewTest(TestCase):
 
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.job_listing = UploadedJobListing.objects.create(
             user=self.user,
@@ -125,7 +127,7 @@ class KeyQuestionsViewTest(TestCase):
             ]
         )
         self.client = Client()
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
     def test_key_questions_get(self):
         """Test GET request to key questions view"""
@@ -139,7 +141,7 @@ class KeyQuestionsViewTest(TestCase):
         self.assertEqual(
             response.context['question']['content'], "What is Python?")
 
-    @patch('active_interview_app.views.get_openai_client')
+    @patch('active_interview_app.views.get_client_and_model')
     @patch('active_interview_app.views.ai_available')
     def test_key_questions_post_with_resume(
             self, mockai_available, mock_get_client):
@@ -148,14 +150,9 @@ class KeyQuestionsViewTest(TestCase):
 
         # Mock OpenAI response
         mock_client = Mock()
-        mock_response = Mock()
-        mock_choice = Mock()
-        mock_message = Mock()
-        mock_message.content = "Great answer! 8/10"
-        mock_choice.message = mock_message
-        mock_response.choices = [mock_choice]
+        mock_response = create_mock_openai_response("Great answer! 8/10")
         mock_client.chat.completions.create.return_value = mock_response
-        mock_get_client.return_value = mock_client
+        mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
         data = {'message': 'Python is a programming language'}
 
@@ -184,7 +181,7 @@ class KeyQuestionsViewTest(TestCase):
         response_data = json.loads(response.content)
         self.assertIn('error', response_data)
 
-    @patch('active_interview_app.views.get_openai_client')
+    @patch('active_interview_app.views.get_client_and_model')
     @patch('active_interview_app.views.ai_available')
     def test_key_questions_post_without_resume(
             self, mockai_available, mock_get_client):
@@ -210,14 +207,9 @@ class KeyQuestionsViewTest(TestCase):
 
         # Mock OpenAI response
         mock_client = Mock()
-        mock_response = Mock()
-        mock_choice = Mock()
-        mock_message = Mock()
-        mock_message.content = "Good answer! 7/10"
-        mock_choice.message = mock_message
-        mock_response.choices = [mock_choice]
+        mock_response = create_mock_openai_response("Good answer! 7/10")
         mock_client.chat.completions.create.return_value = mock_response
-        mock_get_client.return_value = mock_client
+        mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
         data = {'message': 'Python is a programming language'}
 
@@ -241,7 +233,7 @@ class EditChatViewTest(TestCase):
 
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.job_listing = UploadedJobListing.objects.create(
             user=self.user,
@@ -259,7 +251,7 @@ class EditChatViewTest(TestCase):
             job_listing=self.job_listing
         )
         self.client = Client()
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
     def test_edit_chat_updates_difficulty_in_messages(self):
         """Test that difficulty update also updates messages"""
@@ -296,7 +288,7 @@ class ChatViewPostTest(TestCase):
 
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.job_listing = UploadedJobListing.objects.create(
             user=self.user,
@@ -312,9 +304,9 @@ class ChatViewPostTest(TestCase):
             job_listing=self.job_listing
         )
         self.client = Client()
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
-    @patch('active_interview_app.views.get_openai_client')
+    @patch('active_interview_app.views.get_client_and_model')
     @patch('active_interview_app.views.ai_available')
     def test_chat_view_post(self, mockai_available, mock_get_client):
         """Test posting a message to chat"""
@@ -322,14 +314,9 @@ class ChatViewPostTest(TestCase):
 
         # Mock OpenAI response
         mock_client = Mock()
-        mock_response = Mock()
-        mock_choice = Mock()
-        mock_message = Mock()
-        mock_message.content = "AI response"
-        mock_choice.message = mock_message
-        mock_response.choices = [mock_choice]
+        mock_response = create_mock_openai_response("AI response")
         mock_client.chat.completions.create.return_value = mock_response
-        mock_get_client.return_value = mock_client
+        mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
         data = {'message': 'User message'}
 
@@ -359,7 +346,7 @@ class CreateChatViewComprehensiveTest(TestCase):
 
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.job_listing = UploadedJobListing.objects.create(
             user=self.user,
@@ -373,9 +360,9 @@ class CreateChatViewComprehensiveTest(TestCase):
             title='Resume Title'
         )
         self.client = Client()
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
-    @patch('active_interview_app.views.get_openai_client')
+    @patch('active_interview_app.views.get_client_and_model')
     @patch('active_interview_app.views.ai_available')
     def test_create_chat_with_resume_all_types(
             self, mockai_available, mock_get_client):
@@ -390,23 +377,11 @@ class CreateChatViewComprehensiveTest(TestCase):
                 Chat.SKILLS,
                 Chat.PERSONALITY,
                 Chat.FINAL_SCREENING]:
-            mock_response1 = Mock()
-            mock_choice1 = Mock()
-            mock_message1 = Mock()
-            mock_message1.content = "Greeting message"
-            mock_choice1.message = mock_message1
-            mock_response1.choices = [mock_choice1]
+            mock_response1 = create_mock_openai_response("Greeting message")
+            mock_response2 = create_mock_openai_response('[{"id": 0, "title": "Q1", "duration": 60, "content": "Question 1"}]')
 
-            mock_response2 = Mock()
-            mock_choice2 = Mock()
-            mock_message2 = Mock()
-            mock_message2.content = '[{"id": 0, "title": "Q1", "duration": 60, "content": "Question 1"}]'
-            mock_choice2.message = mock_message2
-            mock_response2.choices = [mock_choice2]
-
-            mock_client.chat.completions.create.side_effect = [
-                mock_response1, mock_response2]
-            mock_get_client.return_value = mock_client
+            mock_client.chat.completions.create.side_effect = [mock_response1, mock_response2]
+            mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
             data = {
                 'create': 'true',
@@ -425,7 +400,7 @@ class CreateChatViewComprehensiveTest(TestCase):
             self.assertEqual(chat.type, interview_type)
             self.assertEqual(len(chat.key_questions), 1)
 
-    @patch('active_interview_app.views.get_openai_client')
+    @patch('active_interview_app.views.get_client_and_model')
     @patch('active_interview_app.views.ai_available')
     def test_create_chat_key_questions_no_json_match(
             self, mockai_available, mock_get_client):
@@ -434,24 +409,11 @@ class CreateChatViewComprehensiveTest(TestCase):
 
         # Mock OpenAI responses
         mock_client = Mock()
-        mock_response1 = Mock()
-        mock_choice1 = Mock()
-        mock_message1 = Mock()
-        mock_message1.content = "Greeting"
-        mock_choice1.message = mock_message1
-        mock_response1.choices = [mock_choice1]
+        mock_response1 = create_mock_openai_response("Greeting")
+        mock_response2 = create_mock_openai_response("This is not valid JSON")
 
-        # Second response without valid JSON
-        mock_response2 = Mock()
-        mock_choice2 = Mock()
-        mock_message2 = Mock()
-        mock_message2.content = "This is not valid JSON"
-        mock_choice2.message = mock_message2
-        mock_response2.choices = [mock_choice2]
-
-        mock_client.chat.completions.create.side_effect = [
-            mock_response1, mock_response2]
-        mock_get_client.return_value = mock_client
+        mock_client.chat.completions.create.side_effect = [mock_response1, mock_response2]
+        mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
         data = {
             'create': 'true',
@@ -478,10 +440,10 @@ class UploadFileViewComprehensiveTest(TestCase):
 
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.client = Client()
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
     @patch('active_interview_app.views.filetype')
     @patch('active_interview_app.views.pymupdf4llm')
@@ -540,8 +502,8 @@ class DocumentListViewTest(TestCase):
         Group.objects.get_or_create(name='average_role')
 
         self.user = User.objects.create_user(
-            username='testuser', password='testpass123')
-        self.client.login(username='testuser', password='testpass123')
+            username='testuser', password=TEST_PASSWORD)
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
     def test_document_list_get(self):
         """Test GET request to document list"""
@@ -560,7 +522,7 @@ class ResultsChatViewComprehensiveTest(TestCase):
 
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.job_listing = UploadedJobListing.objects.create(
             user=self.user,
@@ -581,7 +543,7 @@ class AllInterviewTypesTest(TestCase):
 
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.job_listing = UploadedJobListing.objects.create(
             user=self.user,

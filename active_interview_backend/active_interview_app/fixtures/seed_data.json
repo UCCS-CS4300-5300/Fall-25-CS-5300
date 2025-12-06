@@ -206,11 +206,36 @@
       }
     ],
     "key_questions": [
-      "Tell me about a challenging technical problem you solved",
-      "Explain select_related vs prefetch_related in Django",
-      "What's the difference between PUT and PATCH?",
-      "How do you approach testing Django applications?",
-      "Explain git merge vs git rebase"
+      {
+        "id": 0,
+        "title": "Technical Problem Solving",
+        "duration": 120,
+        "content": "Tell me about a challenging technical problem you solved at TechCorp. Walk me through your approach and the outcome."
+      },
+      {
+        "id": 1,
+        "title": "Django ORM Knowledge",
+        "duration": 90,
+        "content": "Explain the difference between select_related and prefetch_related in Django. When would you use each?"
+      },
+      {
+        "id": 2,
+        "title": "REST API Concepts",
+        "duration": 60,
+        "content": "What's the difference between PUT and PATCH HTTP methods? Provide examples of when to use each."
+      },
+      {
+        "id": 3,
+        "title": "Testing Best Practices",
+        "duration": 90,
+        "content": "How do you approach writing tests for Django applications? What testing strategies do you follow?"
+      },
+      {
+        "id": 4,
+        "title": "Version Control",
+        "duration": 60,
+        "content": "Explain the difference between git merge and git rebase. When would you use one over the other?"
+      }
     ],
     "job_listing": 1,
     "resume": 1,
@@ -218,6 +243,8 @@
     "interview_type": "PRACTICE",
     "started_at": null,
     "scheduled_end_at": null,
+    "is_finalized": true,
+    "finalized_at": "2024-02-01T11:30:00Z",
     "modified_date": "2024-02-01T11:30:00Z"
   }
 },

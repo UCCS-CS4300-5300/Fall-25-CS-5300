@@ -266,6 +266,24 @@ class Chat(models.Model):
         help_text='Scheduled time when interview should end'
     )
 
+    # Finalization tracking (Report Generation Refactor)
+    is_finalized = models.BooleanField(
+        default=False,
+        help_text='Whether the interview has been finalized and report generated'
+    )
+    finalized_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='When the interview was finalized'
+    )
+
+    # Graceful ending tracking for invited interviews
+    last_question_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='When the last question was asked (for graceful ending calculation)'
+    )
+
     # create object itself, not the field
     # all templates for documents in /documents/
     # thing that returns all user files is at views
@@ -291,6 +309,27 @@ class Chat(models.Model):
             if now < self.scheduled_end_at:
                 return self.scheduled_end_at - now
         return None
+
+    def all_questions_answered(self):
+        """
+        Check if all key questions have been answered by the candidate.
+
+        Logic:
+        - Count user messages in self.messages (excluding first system message)
+        - Compare to len(self.key_questions)
+        - Return True if user has answered all questions
+
+        Related to Phase 8: Auto-finalize on Last Question Answered
+        """
+        if not self.key_questions:
+            # No key questions generated yet
+            return False
+
+        # Count user messages (role == "user")
+        user_message_count = sum(1 for msg in self.messages if msg.get('role') == 'user')
+
+        # User should have answered all key questions
+        return user_message_count >= len(self.key_questions)
 
     def __str__(self):
         return self.title
@@ -623,6 +662,11 @@ class InvitedInterview(models.Model):
         blank=True,
         help_text='When the candidate completed the interview'
     )
+    last_activity_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='Last time candidate interacted with interview (for abandonment detection)'
+    )
 
     class Meta:
         ordering = ['-created_at']
@@ -946,6 +990,151 @@ class DeletionRequest(models.Model):
         )
 
 
+class AuditLog(models.Model):
+    """
+    Immutable audit log for security and compliance tracking.
+    Records user and admin actions with full context (who/what/when/where).
+
+    Related to Issues #66, #67, #68 (Audit Logging).
+    """
+
+    # Action type constants (initial set for Phase 1)
+    LOGIN = 'LOGIN'
+    LOGOUT = 'LOGOUT'
+    LOGIN_FAILED = 'LOGIN_FAILED'
+    ADMIN_CREATE = 'ADMIN_CREATE'
+    ADMIN_UPDATE = 'ADMIN_UPDATE'
+    ADMIN_DELETE = 'ADMIN_DELETE'
+
+    # Extended action types (Phase 3)
+    INTERVIEW_FINALIZED = 'INTERVIEW_FINALIZED'
+    REPORT_EXPORTED = 'REPORT_EXPORTED'
+    RESUME_DELETED = 'RESUME_DELETED'
+    ROLE_CHANGED = 'ROLE_CHANGED'
+    RATE_LIMIT_VIOLATION = 'RATE_LIMIT_VIOLATION'
+
+    ACTION_TYPES = [
+        # Authentication events
+        (LOGIN, 'User Login'),
+        (LOGOUT, 'User Logout'),
+        (LOGIN_FAILED, 'Failed Login Attempt'),
+
+        # Admin actions
+        (ADMIN_CREATE, 'Admin Created Object'),
+        (ADMIN_UPDATE, 'Admin Updated Object'),
+        (ADMIN_DELETE, 'Admin Deleted Object'),
+
+        # Interview events
+        (INTERVIEW_FINALIZED, 'Interview Finalized'),
+
+        # Report events
+        (REPORT_EXPORTED, 'Report Exported'),
+
+        # Resume events
+        (RESUME_DELETED, 'Resume Deleted'),
+
+        # User management events
+        (ROLE_CHANGED, 'User Role Changed'),
+
+        # Security events
+        (RATE_LIMIT_VIOLATION, 'Rate Limit Violation'),
+    ]
+
+    # Core fields
+    timestamp = models.DateTimeField(
+        auto_now_add=True,
+        db_index=True,
+        help_text='When the action occurred'
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='audit_logs',
+        help_text='User who performed the action (null for anonymous)'
+    )
+
+    # Action details
+    action_type = models.CharField(
+        max_length=50,
+        choices=ACTION_TYPES,
+        db_index=True,
+        help_text='Type of action performed'
+    )
+    resource_type = models.CharField(
+        max_length=100,
+        blank=True,
+        db_index=True,
+        help_text='Type of resource affected (e.g., "User", "Chat")'
+    )
+    resource_id = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text='ID of the affected resource'
+    )
+    description = models.TextField(
+        help_text='Human-readable description of the action'
+    )
+
+    # Request context
+    ip_address = models.GenericIPAddressField(
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text='IP address of the request'
+    )
+    user_agent = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text='Browser/client user agent string'
+    )
+
+    # Additional metadata
+    extra_data = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text='Additional action-specific metadata'
+    )
+
+    class Meta:
+        ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['timestamp', 'user']),
+            models.Index(fields=['action_type', '-timestamp']),
+            models.Index(fields=['ip_address', '-timestamp']),
+        ]
+        verbose_name = 'Audit Log'
+        verbose_name_plural = 'Audit Logs'
+
+    def __str__(self):
+        user_str = self.user.username if self.user else 'Anonymous'
+        return (
+            f"[{self.timestamp.strftime('%Y-%m-%d %H:%M:%S')}] "
+            f"{user_str}: {self.get_action_type_display()}"
+        )
+
+    def save(self, *args, **kwargs):
+        """
+        Enforce immutability: only allow creation, not updates.
+        """
+        if self.pk is not None:
+            raise ValueError(
+                "AuditLog entries are immutable and cannot be updated"
+            )
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        """
+        Prevent deletion of audit logs for compliance.
+        Only superusers should be able to delete via admin if absolutely
+        necessary.
+        """
+        raise ValueError(
+            "AuditLog entries cannot be deleted for compliance reasons"
+        )
+
+
 class Tag(models.Model):
     """
     Tags for categorizing questions (e.g., #python, #sql, #behavioral).
@@ -1259,4 +1448,190 @@ from .observability_models import (  # noqa: E402, F401
     DailyMetricsSummary,
     ProviderCostDaily,
     ErrorLog
+)
+
+# Import spending tracker models (Issues #10, #11, #12)
+from .spending_tracker_models import (  # noqa: E402, F401
+    MonthlySpendingCap,
+    MonthlySpending
+)
+
+class RateLimitViolation(models.Model):
+    """
+    Model to log rate limit violations for monitoring and abuse detection.
+
+    Tracks all instances where users exceed rate limits, including:
+    - Timestamp of violation
+    - User (if authenticated) or IP address
+    - Endpoint that was accessed
+    - Rate limit that was exceeded
+
+    Used for admin monitoring, abuse detection, and analytics.
+    """
+
+    # Violation details
+    timestamp = models.DateTimeField(
+        auto_now_add=True,
+        db_index=True,
+        help_text='When the violation occurred'
+    )
+
+    # User information (nullable for anonymous users)
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='rate_limit_violations',
+        help_text='User who violated rate limit (null for anonymous)'
+    )
+
+    # IP address (always recorded)
+    ip_address = models.GenericIPAddressField(
+        db_index=True,
+        help_text='IP address of the request'
+    )
+
+    # Request details
+    endpoint = models.CharField(
+        max_length=255,
+        db_index=True,
+        help_text='URL path that was accessed'
+    )
+
+    method = models.CharField(
+        max_length=10,
+        help_text='HTTP method (GET, POST, etc.)'
+    )
+
+    # Rate limit details
+    rate_limit_type = models.CharField(
+        max_length=20,
+        choices=[
+            ('default', 'Default'),
+            ('strict', 'Strict'),
+            ('lenient', 'Lenient'),
+        ],
+        help_text='Type of rate limit that was exceeded'
+    )
+
+    limit_value = models.IntegerField(
+        help_text='Rate limit value (requests per minute)'
+    )
+
+    # User agent for device tracking
+    user_agent = models.TextField(
+        blank=True,
+        help_text='User agent string from request'
+    )
+
+    # Geographic information (optional, can be populated by GeoIP)
+    country_code = models.CharField(
+        max_length=2,
+        blank=True,
+        help_text='Country code from IP (if available)'
+    )
+
+    # Alert tracking
+    alert_sent = models.BooleanField(
+        default=False,
+        help_text='Whether an alert was sent for this violation'
+    )
+
+    class Meta:
+        ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['-timestamp', 'user']),
+            models.Index(fields=['-timestamp', 'ip_address']),
+            models.Index(fields=['endpoint', '-timestamp']),
+        ]
+        verbose_name = 'Rate Limit Violation'
+        verbose_name_plural = 'Rate Limit Violations'
+
+    def __str__(self):
+        user_str = f"User {self.user.username}" if self.user else f"IP {self.ip_address}"
+        return f"{user_str} - {self.endpoint} at {self.timestamp}"
+
+    @property
+    def is_authenticated_user(self):
+        """Check if violation was by an authenticated user."""
+        return self.user is not None
+
+    @classmethod
+    def get_recent_violations(cls, minutes=5):
+        """Get violations from the last N minutes."""
+        from datetime import timedelta
+        cutoff = timezone.now() - timedelta(minutes=minutes)
+        return cls.objects.filter(timestamp__gte=cutoff)
+
+    @classmethod
+    def get_top_violators(cls, limit=10, days=7):
+        """
+        Get top violators in the last N days.
+
+        Returns list of tuples: (identifier, count)
+        where identifier is username or IP address.
+        """
+        from datetime import timedelta
+        from django.db.models import Count
+
+        cutoff = timezone.now() - timedelta(days=days)
+        violations = cls.objects.filter(timestamp__gte=cutoff)
+
+        # Group by user
+        user_violations = violations.filter(user__isnull=False).values(
+            'user__username'
+        ).annotate(
+            count=Count('id')
+        ).order_by('-count')[:limit]
+
+        # Group by IP for anonymous
+        ip_violations = violations.filter(user__isnull=True).values(
+            'ip_address'
+        ).annotate(
+            count=Count('id')
+        ).order_by('-count')[:limit]
+
+        # Combine and sort
+        results = []
+        for v in user_violations:
+            results.append((v['user__username'], v['count'], 'user'))
+        for v in ip_violations:
+            results.append((v['ip_address'], v['count'], 'ip'))
+
+        return sorted(results, key=lambda x: x[1], reverse=True)[:limit]
+
+    @classmethod
+    def check_threshold_exceeded(cls, minutes=5, threshold=10):
+        """
+        Check if violation threshold has been exceeded.
+
+        Args:
+            minutes: Time window to check
+            threshold: Number of violations to trigger alert
+
+        Returns:
+            tuple: (exceeded, count, violators)
+        """
+        recent = cls.get_recent_violations(minutes)
+        count = recent.count()
+        exceeded = count >= threshold
+
+        if exceeded:
+            # Get unique violators
+            violators = set()
+            for v in recent:
+                if v.user:
+                    violators.add(f"User: {v.user.username}")
+                else:
+                    violators.add(f"IP: {v.ip_address}")
+
+        return (exceeded, count, list(violators) if exceeded else [])
+
+
+# Import API key rotation models (Issues #10, #13)
+from .api_key_rotation_models import (  # noqa: E402, F401
+    APIKeyPool,
+    KeyRotationSchedule,
+    KeyRotationLog
 )

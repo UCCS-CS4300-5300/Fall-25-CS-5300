@@ -278,6 +278,12 @@ function setupEventListeners() {
 
     // Copy URL button
     document.getElementById('btnCopyUrl').addEventListener('click', copyShareUrl);
+
+    // Configure Cap button (Issue #12)
+    document.getElementById('btnConfigureCap').addEventListener('click', showConfigureCapModal);
+
+    // Save Cap button
+    document.getElementById('btnSaveCap').addEventListener('click', saveSpendingCap);
 }
 
 /**
@@ -289,7 +295,8 @@ async function loadAllMetrics() {
             loadRPSMetrics(),
             loadLatencyMetrics(),
             loadErrorMetrics(),
-            loadCostMetrics()
+            loadCostMetrics(),
+            loadSpendingData()  // Issue #11: Monthly Spending Tracker
         ]);
 
         updateLastUpdatedTime();
@@ -469,4 +476,207 @@ function formatTimestamp(timestamp) {
 function updateLastUpdatedTime() {
     const now = new Date();
     document.getElementById('lastUpdated').textContent = now.toLocaleTimeString();
+}
+
+/**
+ * Load monthly spending data (Issue #11: Track Monthly Spending)
+ */
+async function loadSpendingData() {
+    try {
+        const response = await fetch('/admin/observability/api/spending/current/');
+        if (!response.ok) {
+            throw new Error('Failed to fetch spending data');
+        }
+        const data = await response.json();
+
+        // Update month display
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const monthLabel = `${monthNames[data.month - 1]} ${data.year}`;
+        document.getElementById('spendingMonth').textContent = monthLabel;
+
+        // Update cost breakdown
+        document.getElementById('llmCost').textContent = data.llm_cost.toFixed(2);
+        document.getElementById('llmRequests').textContent = data.llm_requests.toLocaleString();
+        document.getElementById('ttsCost').textContent = data.tts_cost.toFixed(2);
+        document.getElementById('ttsRequests').textContent = data.tts_requests.toLocaleString();
+        document.getElementById('otherCost').textContent = data.other_cost.toFixed(2);
+        document.getElementById('totalCost').textContent = data.total_cost.toFixed(2);
+        document.getElementById('totalRequests').textContent = data.total_requests.toLocaleString();
+
+        // Update spending progress bar and cap info
+        const capStatus = data.cap_status;
+        if (capStatus.has_cap) {
+            const percentage = Math.min(capStatus.percentage, 100);
+            const progressBar = document.getElementById('spendingProgress');
+
+            // Update progress bar
+            progressBar.style.width = percentage + '%';
+            progressBar.setAttribute('aria-valuenow', percentage);
+            document.getElementById('spendingPercentage').textContent = percentage.toFixed(1) + '%';
+
+            // Set progress bar color based on alert level
+            progressBar.className = 'progress-bar';
+            if (capStatus.alert_level === 'danger' || capStatus.is_over_cap) {
+                progressBar.classList.add('bg-danger');
+            } else if (capStatus.alert_level === 'critical') {
+                progressBar.classList.add('bg-warning');
+            } else if (capStatus.alert_level === 'warning') {
+                progressBar.classList.add('bg-warning');
+            } else if (capStatus.alert_level === 'caution') {
+                progressBar.classList.add('bg-info');
+            } else {
+                progressBar.classList.add('bg-success');
+            }
+
+            // Update cap and remaining amounts
+            document.getElementById('spendingCurrent').textContent = capStatus.spent.toFixed(2);
+            document.getElementById('spendingCap').textContent = capStatus.cap_amount.toFixed(2);
+            document.getElementById('spendingRemaining').textContent = capStatus.remaining.toFixed(2);
+
+            // Add warning message if over cap
+            if (capStatus.is_over_cap) {
+                progressBar.style.width = '100%';
+                document.getElementById('spendingPercentage').textContent = 'OVER CAP (' + capStatus.percentage.toFixed(1) + '%)';
+            }
+        } else {
+            // No cap set
+            document.getElementById('spendingCurrent').textContent = data.total_cost.toFixed(2);
+            document.getElementById('spendingCap').textContent = 'Not Set';
+            document.getElementById('spendingRemaining').textContent = 'N/A';
+            document.getElementById('spendingProgress').style.width = '0%';
+            document.getElementById('spendingPercentage').textContent = 'No cap configured';
+        }
+
+        // Update last updated time for spending
+        const lastUpdated = new Date(data.last_updated);
+        document.getElementById('spendingLastUpdated').textContent = lastUpdated.toLocaleString();
+
+    } catch (error) {
+        console.error('Error loading spending data:', error);
+        // Don't show alert for spending data failures - just log it
+        document.getElementById('spendingMonth').textContent = 'Error';
+        document.getElementById('spendingCurrent').textContent = '--';
+    }
+}
+
+/**
+ * Show Configure Spending Cap Modal (Issue #12)
+ */
+function showConfigureCapModal() {
+    // Clear previous messages
+    document.getElementById('capErrorMessage').classList.add('d-none');
+    document.getElementById('capSuccessMessage').classList.add('d-none');
+
+    // Populate current cap information
+    const currentCap = document.getElementById('spendingCap').textContent;
+    const currentSpending = document.getElementById('spendingCurrent').textContent;
+    const currentStatus = document.getElementById('spendingProgress').classList.contains('bg-danger') ? 'Over Cap' :
+                         document.getElementById('spendingProgress').classList.contains('bg-warning') ? 'Warning' :
+                         document.getElementById('spendingProgress').classList.contains('bg-success') ? 'OK' : 'Unknown';
+
+    document.getElementById('currentCapAmount').textContent = currentCap;
+    document.getElementById('currentSpending').textContent = currentSpending;
+    document.getElementById('currentStatus').textContent = currentStatus;
+
+    // Set placeholder to current cap if exists
+    if (currentCap !== '--' && currentCap !== 'Not Set') {
+        document.getElementById('capAmountInput').value = currentCap;
+    }
+
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('configureCapModal'));
+    modal.show();
+}
+
+/**
+ * Save Spending Cap (Issue #12)
+ */
+async function saveSpendingCap() {
+    const capAmountInput = document.getElementById('capAmountInput');
+    const errorDiv = document.getElementById('capErrorMessage');
+    const successDiv = document.getElementById('capSuccessMessage');
+    const saveBtn = document.getElementById('btnSaveCap');
+
+    // Clear previous messages
+    errorDiv.classList.add('d-none');
+    successDiv.classList.add('d-none');
+
+    // Validate input
+    const capAmount = parseFloat(capAmountInput.value);
+
+    if (isNaN(capAmount) || capAmount <= 0) {
+        errorDiv.textContent = 'Please enter a valid positive number';
+        errorDiv.classList.remove('d-none');
+        return;
+    }
+
+    // Disable save button while processing
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+    try {
+        // Get CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+                         getCookie('csrftoken');
+
+        // Make API request
+        const response = await fetch('/admin/observability/api/spending/update-cap/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                cap_amount: capAmount
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Show success message
+            successDiv.textContent = data.message;
+            successDiv.classList.remove('d-none');
+
+            // Refresh spending data
+            await loadSpendingData();
+
+            // Close modal after 2 seconds
+            setTimeout(() => {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('configureCapModal'));
+                modal.hide();
+            }, 2000);
+        } else {
+            // Show error message
+            errorDiv.textContent = data.error || 'Failed to update spending cap';
+            errorDiv.classList.remove('d-none');
+        }
+    } catch (error) {
+        console.error('Error saving spending cap:', error);
+        errorDiv.textContent = 'An error occurred while saving the cap. Please try again.';
+        errorDiv.classList.remove('d-none');
+    } finally {
+        // Re-enable save button
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Cap';
+    }
+}
+
+/**
+ * Get CSRF token from cookie
+ */
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
 }

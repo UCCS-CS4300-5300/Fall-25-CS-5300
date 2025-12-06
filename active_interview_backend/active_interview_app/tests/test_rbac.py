@@ -14,6 +14,7 @@ from django.contrib.auth.models import User
 from django.http import JsonResponse
 from active_interview_app.models import UserProfile
 from active_interview_app.decorators import check_user_permission
+from .test_credentials import TEST_PASSWORD
 
 
 class UserProfileModelTest(TestCase):
@@ -46,7 +47,7 @@ class UserProfileModelTest(TestCase):
         # Create admin user
         admin_user = User.objects.create_user(
             username='admin_user',
-            password='pass123'
+            password=TEST_PASSWORD
         )
         admin_user.profile.role = UserProfile.ADMIN
         admin_user.profile.save()
@@ -54,7 +55,7 @@ class UserProfileModelTest(TestCase):
         # Create interviewer user
         interviewer_user = User.objects.create_user(
             username='interviewer_user',
-            password='pass123'
+            password=TEST_PASSWORD
         )
         interviewer_user.profile.role = UserProfile.INTERVIEWER
         interviewer_user.profile.save()
@@ -62,7 +63,7 @@ class UserProfileModelTest(TestCase):
         # Create candidate user
         candidate_user = User.objects.create_user(
             username='candidate_user',
-            password='pass123'
+            password=TEST_PASSWORD
         )
         candidate_user.profile.role = UserProfile.CANDIDATE
         candidate_user.profile.save()
@@ -80,7 +81,7 @@ class UserProfileModelTest(TestCase):
         """Test UserProfile __str__ method"""
         user = User.objects.create_user(
             username='testuser',
-            password='pass123'
+            password=TEST_PASSWORD
         )
         expected = f"{user.username} - candidate (local)"
         self.assertEqual(str(user.profile), expected)
@@ -89,7 +90,7 @@ class UserProfileModelTest(TestCase):
         """Test that auth_provider defaults to 'local'"""
         user = User.objects.create_user(
             username='testuser',
-            password='pass123'
+            password=TEST_PASSWORD
         )
         self.assertEqual(user.profile.auth_provider, 'local')
 
@@ -126,7 +127,7 @@ class UserProfileViewTest(TestCase):
         # Create candidate 1
         self.candidate1 = User.objects.create_user(
             username='candidate1',
-            password='pass123',
+            password=TEST_PASSWORD,
             first_name='John',
             last_name='Doe',
             email='john@example.com'
@@ -135,7 +136,7 @@ class UserProfileViewTest(TestCase):
         # Create candidate 2
         self.candidate2 = User.objects.create_user(
             username='candidate2',
-            password='pass123',
+            password=TEST_PASSWORD,
             first_name='Jane',
             last_name='Smith',
             email='jane@example.com'
@@ -201,19 +202,19 @@ class RBACDecoratorTest(TestCase):
     def setUp(self):
         """Set up test users"""
         self.admin = User.objects.create_user(
-            username='admin', password='pass'
+            username='admin', password=TEST_PASSWORD
         )
         self.admin.profile.role = UserProfile.ADMIN
         self.admin.profile.save()
 
         self.interviewer = User.objects.create_user(
-            username='interviewer', password='pass'
+            username='interviewer', password=TEST_PASSWORD
         )
         self.interviewer.profile.role = UserProfile.INTERVIEWER
         self.interviewer.profile.save()
 
         self.candidate = User.objects.create_user(
-            username='candidate', password='pass'
+            username='candidate', password=TEST_PASSWORD
         )
 
     def test_check_user_permission_admin_access(self):
@@ -285,7 +286,7 @@ class RBACDecoratorTest(TestCase):
 
         # Create user and mock profile to raise AttributeError
         user_no_profile = User.objects.create_user(
-            username='noprofile', password='pass'
+            username='noprofile', password=TEST_PASSWORD
         )
 
         # Mock the profile property to raise AttributeError
@@ -355,7 +356,7 @@ class RBACDecoratorTest(TestCase):
 
         # Create user and mock profile to raise AttributeError
         user_no_profile = User.objects.create_user(
-            username='noprofile2', password='pass'
+            username='noprofile2', password=TEST_PASSWORD
         )
 
         # Mock the profile property to raise AttributeError
@@ -489,7 +490,7 @@ class RBACDecoratorTest(TestCase):
 
         # Create user and mock profile to raise AttributeError
         user_no_profile = User.objects.create_user(
-            username='noprofile3', password='pass'
+            username='noprofile3', password=TEST_PASSWORD
         )
 
         # Mock the profile property to raise AttributeError
@@ -863,7 +864,7 @@ class CandidateSearchTest(TestCase):
         # Create candidate users
         self.candidate1 = User.objects.create_user(
             username='john_doe',
-            password='pass123',
+            password=TEST_PASSWORD,
             email='john@example.com',
             first_name='John',
             last_name='Doe'
@@ -873,7 +874,7 @@ class CandidateSearchTest(TestCase):
 
         self.candidate2 = User.objects.create_user(
             username='jane_smith',
-            password='pass123',
+            password=TEST_PASSWORD,
             email='jane@example.com',
             first_name='Jane',
             last_name='Smith'
@@ -883,7 +884,7 @@ class CandidateSearchTest(TestCase):
 
         self.candidate3 = User.objects.create_user(
             username='bob_johnson',
-            password='pass123',
+            password=TEST_PASSWORD,
             email='bob@example.com'
         )
         self.candidate3.profile.role = UserProfile.CANDIDATE
@@ -971,7 +972,7 @@ class CandidateSearchTest(TestCase):
         # Create an admin with 'john' in username
         User.objects.create_user(
             username='john_admin',
-            password='pass123'
+            password=TEST_PASSWORD
         ).profile.role = UserProfile.ADMIN
 
         self.client.force_login(self.admin)

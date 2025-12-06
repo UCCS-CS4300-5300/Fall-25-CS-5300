@@ -141,7 +141,7 @@ jobs:
       with:
         sarif_file: bandit-results.sarif
         category: bandit
-        wait-for-processing: true
+        wait-for-processing: false
 
     - name: Generate Human-Readable Reports
       id: bandit_analysis

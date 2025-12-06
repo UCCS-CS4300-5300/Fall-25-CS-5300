@@ -8,7 +8,7 @@ Includes:
 - Auto-Interview Assembly (Issue #42)
 """
 
-import random
+import secrets
 from typing import Optional, List, Dict, Any
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -30,6 +30,7 @@ from .serializers import (
 )
 from .permissions import IsAdminOrInterviewer
 from .decorators import admin_or_interviewer_required
+from .mixins import RateLimitMixin
 
 
 class QuestionQueryBuilder:
@@ -209,11 +210,12 @@ def question_banks_view(request):
     return render(request, 'question_banks.html')
 
 
-class QuestionBankViewSet(viewsets.ModelViewSet):
+class QuestionBankViewSet(RateLimitMixin, viewsets.ModelViewSet):
     """
     ViewSet for QuestionBank CRUD operations.
     Implements Issue #38: Question Bank Creation
     Restricted to Interviewers and Admins only.
+    Rate limited: Lenient for reads, Strict for writes.
     """
     permission_classes = [IsAdminOrInterviewer]
     serializer_class = QuestionBankSerializer
@@ -232,11 +234,12 @@ class QuestionBankViewSet(viewsets.ModelViewSet):
         serializer.save(owner=self.request.user)
 
 
-class QuestionViewSet(viewsets.ModelViewSet):
+class QuestionViewSet(RateLimitMixin, viewsets.ModelViewSet):
     """
     ViewSet for Question CRUD operations and tagging.
     Implements Issue #39: Basic Question Tagging
     Restricted to Interviewers and Admins only.
+    Rate limited: Lenient for reads, Strict for writes.
     """
     permission_classes = [IsAdminOrInterviewer]
     serializer_class = QuestionSerializer
@@ -325,11 +328,12 @@ class QuestionViewSet(viewsets.ModelViewSet):
         })
 
 
-class TagViewSet(viewsets.ModelViewSet):
+class TagViewSet(RateLimitMixin, viewsets.ModelViewSet):
     """
     ViewSet for Tag management.
     Implements Issue #40: Tag Management
     Restricted to Interviewers and Admins only.
+    Rate limited: Lenient for reads, Strict for writes.
     """
     permission_classes = [IsAdminOrInterviewer]
     serializer_class = TagSerializer
@@ -428,11 +432,12 @@ class TagViewSet(viewsets.ModelViewSet):
         return Response(stats)
 
 
-class InterviewTemplateViewSet(viewsets.ModelViewSet):
+class InterviewTemplateViewSet(RateLimitMixin, viewsets.ModelViewSet):
     """
     ViewSet for Interview Template management.
     Allows saving and reusing interview assembly configurations.
     Restricted to Interviewers and Admins only.
+    Rate limited: Lenient for reads, Strict for writes.
     """
     permission_classes = [IsAdminOrInterviewer]
     serializer_class = InterviewTemplateSerializer
@@ -952,7 +957,9 @@ class AutoAssembleInterviewView(APIView):
             available = list(questions_query.filter(difficulty=difficulty))
 
             if randomize:
-                selected_questions.extend(random.sample(available, count))
+                # Use secrets.SystemRandom for cryptographically secure sampling
+                secure_random = secrets.SystemRandom()
+                selected_questions.extend(secure_random.sample(available, count))
             else:
                 selected_questions.extend(available[:count])
 
@@ -967,7 +974,9 @@ class AutoAssembleInterviewView(APIView):
         available = list(questions_query)
 
         if randomize:
-            return random.sample(available, question_count)
+            # Use secrets.SystemRandom for cryptographically secure sampling
+            secure_random = secrets.SystemRandom()
+            return secure_random.sample(available, question_count)
         else:
             return available[:question_count]
 

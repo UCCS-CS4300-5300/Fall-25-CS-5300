@@ -40,10 +40,10 @@
       </button>
 
       <!-- Back Button (no spinner needed) -->
-      <a href="{% url 'chat-results' chat.id %}"
+      <a href="{% url 'chat-view' chat_id=chat.id %}"
          class="btn btn-secondary"
          style="padding: 1rem 2rem; font-size: 1rem;">
-        Back to Results
+        Back to Interview
       </a>
     </div>
 
@@ -225,6 +225,37 @@
     </div>
     {% endif %}
 
+    <!-- Interviewer Feedback (for invited interviews) -->
+    {% if invitation %}
+      {% if invitation.interviewer_feedback %}
+        <div class="box box-section" style="border: 2px solid var(--success);">
+          <h2 style="color: var(--success);">
+            <i class="bi bi-person-check-fill"></i> Interviewer Feedback
+          </h2>
+          <div class="box box-info" style="background: var(--surface); border-color: var(--success);">
+            <p style="white-space: pre-wrap; line-height: 1.6; color: var(--text-primary); margin-bottom: 1rem;">{{ invitation.interviewer_feedback }}</p>
+            {% if invitation.reviewed_at %}
+            <hr style="border-color: var(--border);">
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">
+              <i class="bi bi-clock"></i> Reviewed on {{ invitation.reviewed_at|date:"F j, Y \a\t g:i A" }} by {{ invitation.interviewer.get_full_name|default:invitation.interviewer.username }}
+            </p>
+            {% endif %}
+          </div>
+        </div>
+      {% elif invitation.interviewer_review_status == 'pending' %}
+        <div class="box box-section" style="border: 2px solid var(--info);">
+          <h2 style="color: var(--info);">
+            <i class="bi bi-hourglass-split"></i> Interviewer Feedback
+          </h2>
+          <div class="box box-info" style="background: var(--surface); border-color: var(--info);">
+            <p style="color: var(--text-secondary); margin: 0;">
+              The interviewer is still reviewing your interview. Feedback will be available soon.
+            </p>
+          </div>
+        </div>
+      {% endif %}
+    {% endif %}
+
     <!-- Recommended Exercises -->
     <div class="box box-section">
       <h2>Recommended Exercises</h2>
@@ -270,8 +301,8 @@
       <a href="{% url 'download_csv_report' chat.id %}" id="download_csv_report_bottom" class="btn btn-success" style="padding: 1rem 2rem; font-size: 1rem;">
         Download as CSV
       </a>
-      <a href="{% url 'chat-results' chat.id %}" class="btn btn-secondary" style="padding: 1rem 2rem; font-size: 1rem;">
-        Back to Results
+      <a href="{% url 'chat-view' chat_id=chat.id %}" class="btn btn-secondary" style="padding: 1rem 2rem; font-size: 1rem;">
+        Back to Interview
       </a>
     </div>
   </div>

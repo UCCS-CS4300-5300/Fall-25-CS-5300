@@ -394,12 +394,11 @@ class InvitationCreationForm(ModelForm):
     def clean_scheduled_date(self):
         """Validate that scheduled date is not in the past."""
         scheduled_date = self.cleaned_data.get('scheduled_date')
-        if scheduled_date:
-            today = timezone.now().date()
-            if scheduled_date < today:
-                raise forms.ValidationError(
-                    'Scheduled date cannot be in the past.'
-                )
+        # Note: We don't validate here because the date alone isn't enough.
+        # The full datetime validation happens in clean() method which
+        # checks if the combined date+time is at least 2 minutes in the future.
+        # Validating just the date here can cause timezone issues where
+        # today's date appears invalid even though the time might be valid.
         return scheduled_date
 
     def clean(self):
@@ -424,10 +423,12 @@ class InvitationCreationForm(ModelForm):
                 # timezones behind UTC (e.g., EST returns +300, not -300)
                 # It represents "minutes to ADD to local time to get UTC"
                 # So we ADD the offset to convert local time to UTC
+                from datetime import timezone as dt_timezone
                 utc_datetime = (
                     naive_datetime + timedelta(minutes=timezone_offset)
                 )
-                scheduled_datetime = timezone.make_aware(utc_datetime)
+                # Make aware in UTC timezone explicitly
+                scheduled_datetime = utc_datetime.replace(tzinfo=dt_timezone.utc)
             else:
                 # Fallback: treat as UTC if no timezone info provided
                 scheduled_datetime = timezone.make_aware(naive_datetime)

@@ -1,9 +1,12 @@
 """
 Custom adapters for django-allauth to handle Google OAuth authentication.
 """
+import logging
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from django.contrib.auth.models import Group
 from .models import UserProfile
+
+logger = logging.getLogger(__name__)
 
 
 class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
@@ -38,9 +41,11 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
                 if existing_user:
                     # Connect the social account to the existing user
                     sociallogin.connect(request, existing_user)
-        except Exception:
-            # If anything goes wrong, let allauth handle it normally
-            pass
+        except Exception as e:
+            # If anything goes wrong, log it and let allauth handle it normally
+            logger.warning(
+                f"Failed to connect social account to existing user: {e}"
+            )
 
     def save_user(self, request, sociallogin, form=None):
         """

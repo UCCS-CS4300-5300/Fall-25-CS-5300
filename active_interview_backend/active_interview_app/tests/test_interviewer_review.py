@@ -22,6 +22,7 @@ from active_interview_app.models import (
     UserProfile, Chat, InterviewTemplate, InvitedInterview,
     BiasTermLibrary, BiasAnalysisResult
 )
+from .test_credentials import TEST_PASSWORD
 
 User = get_user_model()
 
@@ -36,7 +37,7 @@ class InvitationReviewViewAccessTests(TestCase):
         self.interviewer = User.objects.create_user(
             username='interviewer@test.com',
             email='interviewer@test.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.interviewer_profile = UserProfile.objects.get(
             user=self.interviewer)
@@ -47,7 +48,7 @@ class InvitationReviewViewAccessTests(TestCase):
         self.other_interviewer = User.objects.create_user(
             username='other@test.com',
             email='other@test.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         other_profile = UserProfile.objects.get(user=self.other_interviewer)
         other_profile.role = 'interviewer'
@@ -57,7 +58,7 @@ class InvitationReviewViewAccessTests(TestCase):
         self.candidate = User.objects.create_user(
             username='candidate@test.com',
             email='candidate@test.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
         # Create template
@@ -100,7 +101,7 @@ class InvitationReviewViewAccessTests(TestCase):
     def test_only_interviewer_can_access(self):
         """Test that only the invitation creator can access review"""
         self.client.login(username='candidate@test.com',
-                          password='testpass123')
+                          password=TEST_PASSWORD)
         url = reverse('invitation_review', kwargs={
                       'invitation_id': self.invitation.id})
         response = self.client.get(url)
@@ -110,7 +111,7 @@ class InvitationReviewViewAccessTests(TestCase):
 
     def test_other_interviewer_cannot_access(self):
         """Test that different interviewer cannot access another's review"""
-        self.client.login(username='other@test.com', password='testpass123')
+        self.client.login(username='other@test.com', password=TEST_PASSWORD)
         url = reverse('invitation_review', kwargs={
                       'invitation_id': self.invitation.id})
         response = self.client.get(url)
@@ -121,7 +122,7 @@ class InvitationReviewViewAccessTests(TestCase):
     def test_invitation_creator_can_access(self):
         """Test that invitation creator can access review page"""
         self.client.login(username='interviewer@test.com',
-                          password='testpass123')
+                          password=TEST_PASSWORD)
         url = reverse('invitation_review', kwargs={
                       'invitation_id': self.invitation.id})
         response = self.client.get(url)
@@ -142,7 +143,7 @@ class InvitationReviewViewAccessTests(TestCase):
         )
 
         self.client.login(username='interviewer@test.com',
-                          password='testpass123')
+                          password=TEST_PASSWORD)
         url = reverse('invitation_review', kwargs={
                       'invitation_id': invitation_no_chat.id})
         response = self.client.get(url)
@@ -162,7 +163,7 @@ class FeedbackSubmissionTests(TestCase):
         self.interviewer = User.objects.create_user(
             username='interviewer@test.com',
             email='interviewer@test.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         interviewer_profile = UserProfile.objects.get(user=self.interviewer)
         interviewer_profile.role = 'interviewer'
@@ -172,7 +173,7 @@ class FeedbackSubmissionTests(TestCase):
         self.candidate = User.objects.create_user(
             username='candidate@test.com',
             email='candidate@test.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
         # Create template
@@ -202,7 +203,7 @@ class FeedbackSubmissionTests(TestCase):
         self.invitation.save()
 
         self.client.login(username='interviewer@test.com',
-                          password='testpass123')
+                          password=TEST_PASSWORD)
         self.url = reverse('invitation_review', kwargs={
                            'invitation_id': self.invitation.id})
 
@@ -273,7 +274,7 @@ class MarkAsReviewedTests(TestCase):
         self.interviewer = User.objects.create_user(
             username='interviewer@test.com',
             email='interviewer@test.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         interviewer_profile = UserProfile.objects.get(user=self.interviewer)
         interviewer_profile.role = 'interviewer'
@@ -283,7 +284,7 @@ class MarkAsReviewedTests(TestCase):
         self.candidate = User.objects.create_user(
             username='candidate@test.com',
             email='candidate@test.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
         # Create template
@@ -313,7 +314,7 @@ class MarkAsReviewedTests(TestCase):
         self.invitation.save()
 
         self.client.login(username='interviewer@test.com',
-                          password='testpass123')
+                          password=TEST_PASSWORD)
         self.url = reverse('invitation_review', kwargs={
                            'invitation_id': self.invitation.id})
 
@@ -383,7 +384,7 @@ class ReviewViewContextTests(TestCase):
         self.interviewer = User.objects.create_user(
             username='interviewer@test.com',
             email='interviewer@test.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         interviewer_profile = UserProfile.objects.get(user=self.interviewer)
         interviewer_profile.role = 'interviewer'
@@ -393,7 +394,7 @@ class ReviewViewContextTests(TestCase):
         self.candidate = User.objects.create_user(
             username='candidate@test.com',
             email='candidate@test.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
         # Create template
@@ -429,7 +430,7 @@ class ReviewViewContextTests(TestCase):
         self.invitation.save()
 
         self.client.login(username='interviewer@test.com',
-                          password='testpass123')
+                          password=TEST_PASSWORD)
         self.url = reverse('invitation_review', kwargs={
                            'invitation_id': self.invitation.id})
 
@@ -474,14 +475,14 @@ class CandidateViewFeedbackTests(TestCase):
         self.interviewer = User.objects.create_user(
             username='interviewer@test.com',
             email='interviewer@test.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
         # Create candidate
         self.candidate = User.objects.create_user(
             username='candidate@test.com',
             email='candidate@test.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
         # Create template
@@ -510,9 +511,23 @@ class CandidateViewFeedbackTests(TestCase):
             chat=self.chat
         )
 
+        # Finalize the chat and create report
+        self.chat.is_finalized = True
+        self.chat.finalized_at = timezone.now()
+        self.chat.save()
+
+        from active_interview_app.models import ExportableReport
+        ExportableReport.objects.create(
+            chat=self.chat,
+            professionalism_score=85,
+            subject_knowledge_score=80,
+            clarity_score=90,
+            overall_score=85
+        )
+
         self.client.login(username='candidate@test.com',
-                          password='testpass123')
-        self.url = reverse('chat-results', kwargs={'chat_id': self.chat.id})
+                          password=TEST_PASSWORD)
+        self.url = reverse('export_report', kwargs={'chat_id': self.chat.id})
 
     def test_pending_review_shows_waiting_message(self):
         """Test that pending review shows appropriate message"""
@@ -543,16 +558,30 @@ class CandidateViewFeedbackTests(TestCase):
         practice_chat = Chat.objects.create(
             owner=self.candidate,
             title='Practice Interview',
-            interview_type=Chat.PRACTICE
+            interview_type=Chat.PRACTICE,
+            is_finalized=True,
+            finalized_at=timezone.now()
         )
 
-        url = reverse('chat-results', kwargs={'chat_id': practice_chat.id})
+        from active_interview_app.models import ExportableReport
+        ExportableReport.objects.create(
+            chat=practice_chat,
+            professionalism_score=85,
+            subject_knowledge_score=80,
+            clarity_score=90,
+            overall_score=85
+        )
+
+        url = reverse('export_report', kwargs={'chat_id': practice_chat.id})
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200)
-        # Should not contain interviewer feedback section
-        content = response.content.decode('utf-8')
-        self.assertNotIn('Interviewer Feedback', content)
+        # Should not contain interviewer feedback section (check for the specific icon/heading)
+        self.assertNotContains(response, 'bi-person-check-fill')
+        self.assertNotContains(response, 'bi-hourglass-split')
+        # Should not have the feedback box
+        self.assertNotContains(response, 'still reviewing')
+        self.assertNotContains(response, 'Reviewed on')
 
     def test_reviewed_at_timestamp_displayed(self):
         """Test that reviewed timestamp is displayed to candidate"""
@@ -578,7 +607,7 @@ class DashboardReviewButtonTests(TestCase):
         self.interviewer = User.objects.create_user(
             username='interviewer@test.com',
             email='interviewer@test.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         interviewer_profile = UserProfile.objects.get(user=self.interviewer)
         interviewer_profile.role = 'interviewer'
@@ -588,7 +617,7 @@ class DashboardReviewButtonTests(TestCase):
         self.candidate = User.objects.create_user(
             username='candidate@test.com',
             email='candidate@test.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
         # Create template
@@ -598,7 +627,7 @@ class DashboardReviewButtonTests(TestCase):
         )
 
         self.client.login(username='interviewer@test.com',
-                          password='testpass123')
+                          password=TEST_PASSWORD)
         self.dashboard_url = reverse('invitation_dashboard')
 
     def test_pending_invitation_no_review_button(self):

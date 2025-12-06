@@ -2,35 +2,37 @@ from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth.models import User
 from active_interview_app.models import InterviewTemplate, UserProfile
+from .test_credentials import TEST_PASSWORD
 
 # from django.core import mail
 
 
 class LoginTest(TestCase):
-    def testregister(self):
-        register = User.objects.create_user(username='craig', password='1')
+    def test_register(self):
+        register = User.objects.create_user(username='craig', password=TEST_PASSWORD)
         self.assertTrue(register is not None)
 
-    def testlogin(self):
-        User.objects.create_user(username='craig', password='1')
-        login = self.client.login(username='craig', password='1')
+    def test_login(self):
+        User.objects.create_user(username='craig', password=TEST_PASSWORD)
+        login = self.client.login(username='craig', password=TEST_PASSWORD)
 
         self.assertTrue(login)
 
-    def testlogout(self):
-        User.objects.create_user(username='craig', password='1')
-        self.client.login(username='craig', password='1')
+    def test_logout(self):
+        User.objects.create_user(username='craig', password=TEST_PASSWORD)
+        self.client.login(username='craig', password=TEST_PASSWORD)
         logout = self.client.logout()
         self.assertTrue(logout is None)
 
-    def testfaillogin(self):
-        User.objects.create_user(username='craig', password='1')
-        login = self.client.login(username='craig', password='2')
+    def test_fail_login(self):
+        User.objects.create_user(username='craig', password=TEST_PASSWORD)
+        # Try to login with WRONG password - should fail
+        login = self.client.login(username='craig', password='wrong_password')
         self.assertFalse(login)
 
 
 class TestFeaturesPage(TestCase):
-    def testGETFeaturesPage(self):
+    def test_get_features_page(self):
         # Call the view with a response
         response = self.client.get(reverse('features'))
 
@@ -52,7 +54,7 @@ class InterviewTemplateSectionTests(TestCase):
         # Create interviewer user
         self.user = User.objects.create_user(
             username='interviewer1',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.user.profile.role = UserProfile.INTERVIEWER
         self.user.profile.save()
@@ -65,7 +67,7 @@ class InterviewTemplateSectionTests(TestCase):
         )
 
         # Login
-        self.client.login(username='interviewer1', password='testpass123')
+        self.client.login(username='interviewer1', password=TEST_PASSWORD)
 
     def test_add_section_with_weight(self):
         """Test adding a section with a weight value"""
@@ -250,13 +252,13 @@ class InterviewTemplateSectionTests(TestCase):
         # Create candidate user
         candidate = User.objects.create_user(
             username='candidate1',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         candidate.profile.role = UserProfile.CANDIDATE
         candidate.profile.save()
 
         # Login as candidate
-        self.client.login(username='candidate1', password='testpass123')
+        self.client.login(username='candidate1', password=TEST_PASSWORD)
 
         # Try to add section
         response = self.client.post(
@@ -424,7 +426,7 @@ class InterviewTemplateModelTests(TestCase):
         """Set up test user and template"""
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.template = InterviewTemplate.objects.create(
             name='Test Template',

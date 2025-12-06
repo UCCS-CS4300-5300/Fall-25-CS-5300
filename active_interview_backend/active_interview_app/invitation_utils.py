@@ -12,6 +12,7 @@ from django.utils.html import strip_tags
 from django.utils import timezone
 from icalendar import Calendar, Event
 from datetime import timedelta
+from urllib.parse import urlencode
 import logging
 
 logger = logging.getLogger(__name__)
@@ -195,6 +196,59 @@ def send_review_notification_email(invited_interview):
     except Exception as e:
         logger.error(f"Failed to send review notification: {e}")
         return False
+
+
+def get_google_calendar_url(invited_interview):
+    """
+    Generate a Google Calendar "Add to Calendar" URL for the interview.
+
+    Args:
+        invited_interview: InvitedInterview instance
+
+    Returns:
+        str: Google Calendar URL
+
+    Related to Issue #7 (Google Calendar Integration - Phase 9).
+
+    Google Calendar URL format:
+    https://calendar.google.com/calendar/render?action=TEMPLATE&text=...&dates=...&details=...&location=...
+    """
+    # Event title
+    title = f'Interview: {invited_interview.template.name}'
+
+    # Event description
+    description = (
+        f"Interview invitation for {invited_interview.candidate_email}\\n\\n"
+        f"Template: {invited_interview.template.name}\\n"
+        f"Duration: {invited_interview.duration_minutes} minutes\\n\\n"
+        f"Join Link: {invited_interview.get_join_url()}\\n\\n"
+        f"The candidate can start the interview at the scheduled time and complete it within the duration window."
+    )
+
+    # Start time in Google Calendar format: YYYYMMDDTHHmmssZ
+    start_time = invited_interview.scheduled_time.strftime('%Y%m%dT%H%M%SZ')
+
+    # End time (scheduled_time + duration)
+    end_time = invited_interview.scheduled_time + timedelta(minutes=invited_interview.duration_minutes)
+    end_time_str = end_time.strftime('%Y%m%dT%H%M%SZ')
+
+    # Location (virtual - join link)
+    location = invited_interview.get_join_url()
+
+    # Build URL parameters
+    params = {
+        'action': 'TEMPLATE',
+        'text': title,
+        'dates': f'{start_time}/{end_time_str}',
+        'details': description,
+        'location': location,
+    }
+
+    # Generate URL
+    base_url = 'https://calendar.google.com/calendar/render'
+    url = f'{base_url}?{urlencode(params)}'
+
+    return url
 
 
 def generate_calendar_invite(invited_interview):

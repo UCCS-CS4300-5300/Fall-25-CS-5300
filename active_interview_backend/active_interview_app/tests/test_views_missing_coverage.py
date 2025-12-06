@@ -18,6 +18,7 @@ from active_interview_app.views import (
     ai_available,
     _ai_unavailable_json
 )
+from .test_credentials import TEST_PASSWORD
 
 
 class OpenAIClientTest(TestCase):
@@ -34,7 +35,7 @@ class OpenAIClientTest(TestCase):
         with self.assertRaises(ValueError) as context:
             get_openai_client()
 
-        self.assertIn("OPENAI_API_KEY is not set", str(context.exception))
+        self.assertIn("No OpenAI API key available", str(context.exception))
 
     @patch('active_interview_app.openai_utils.OpenAI')
     @patch('active_interview_app.openai_utils.settings')
@@ -53,10 +54,12 @@ class OpenAIClientTest(TestCase):
         self.assertIn("Failed to initialize OpenAI client",
                       str(context.exception))
 
-    @patch('active_interview_app.views.get_openai_client')
-    def testai_available_returns_true(self, mock_get_client):
+    @patch('active_interview_app.views.get_client_and_model')
+    def testai_available_returns_true(self, mock_get_client_and_model):
         """Test ai_available when client can be initialized"""
-        mock_get_client.return_value = MagicMock()
+        mock_client = MagicMock()
+        # get_client_and_model returns (client, model, tier_info)
+        mock_get_client_and_model.return_value = (mock_client, "gpt-4o", {"tier": "premium"})
 
         self.assertTrue(ai_available())
 
@@ -104,9 +107,9 @@ class FileUploadEdgeCasesTest(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
     @patch('active_interview_app.views.filetype.guess')
     def test_upload_file_invalid_filetype(self, mock_filetype):
@@ -229,9 +232,9 @@ class DocumentEditViewsTest(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
         fake_file = SimpleUploadedFile("resume.pdf", b"resume content")
         self.resume = UploadedResume.objects.create(
@@ -274,9 +277,9 @@ class JobPostingEditTest(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
         fake_file = SimpleUploadedFile("job.txt", b"job content")
         self.job = UploadedJobListing.objects.create(
@@ -319,9 +322,9 @@ class UploadedJobListingViewTest(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
     def test_upload_job_listing_view_success(self):
         """Test successful pasted text job listing creation"""
@@ -347,9 +350,9 @@ class DocumentListViewTest(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
     def test_document_list_get(self):
         """Test GET request to DocumentList"""
@@ -365,7 +368,7 @@ class JobListingAPITest(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.client.force_login(self.user)
 
@@ -404,11 +407,11 @@ class ChatViewUserPassesTestTest(TestCase):
         self.client = Client()
         self.user1 = User.objects.create_user(
             username='user1',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.user2 = User.objects.create_user(
             username='user2',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
         fake_job_file = SimpleUploadedFile("job.txt", b"job content")
@@ -432,7 +435,7 @@ class ChatViewUserPassesTestTest(TestCase):
 
     def test_chat_view_unauthorized_user(self):
         """Test that user2 cannot access user1's chat"""
-        self.client.login(username='user2', password='testpass123')
+        self.client.login(username='user2', password=TEST_PASSWORD)
 
         response = self.client.get(
             reverse('chat-view', kwargs={'chat_id': self.chat.id})
@@ -442,7 +445,7 @@ class ChatViewUserPassesTestTest(TestCase):
 
     def test_edit_chat_unauthorized_user(self):
         """Test that user2 cannot edit user1's chat"""
-        self.client.login(username='user2', password='testpass123')
+        self.client.login(username='user2', password=TEST_PASSWORD)
 
         response = self.client.get(
             reverse('chat-edit', kwargs={'chat_id': self.chat.id})
@@ -451,7 +454,7 @@ class ChatViewUserPassesTestTest(TestCase):
 
     def test_delete_chat_unauthorized_user(self):
         """Test that user2 cannot delete user1's chat"""
-        self.client.login(username='user2', password='testpass123')
+        self.client.login(username='user2', password=TEST_PASSWORD)
 
         response = self.client.post(
             reverse('chat-delete', kwargs={'chat_id': self.chat.id}),
@@ -469,9 +472,9 @@ class ProfileViewTest(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
     def test_profile_view(self):
         """Test profile page loads with user's documents"""
@@ -512,9 +515,9 @@ class DeleteResumeTest(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
         fake_file = SimpleUploadedFile("resume.pdf", b"resume content")
         self.resume = UploadedResume.objects.create(
@@ -555,9 +558,9 @@ class DeleteJobTest(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
         fake_file = SimpleUploadedFile("job.txt", b"job content")
         self.job = UploadedJobListing.objects.create(
@@ -595,9 +598,9 @@ class ResumeDetailTest(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
         fake_file = SimpleUploadedFile("resume.pdf", b"resume content")
         self.resume = UploadedResume.objects.create(
@@ -627,9 +630,9 @@ class JobPostingDetailTest(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
         fake_file = SimpleUploadedFile("job.txt", b"job content")
         self.job = UploadedJobListing.objects.create(
@@ -659,12 +662,12 @@ class LoggedInViewTest(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
     def test_loggedin_view(self):
         """Test loggedin page renders for authenticated user"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
         response = self.client.get(reverse('loggedin'))
 
         self.assertEqual(response.status_code, 200)
@@ -702,7 +705,7 @@ class UploadedResumeAPIViewTest(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         self.client.force_login(self.user)
 
@@ -741,9 +744,9 @@ class ChatListViewTest(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
         fake_job_file = SimpleUploadedFile("job.txt", b"job content")
         self.job_listing = UploadedJobListing.objects.create(
@@ -781,9 +784,9 @@ class RestartChatTest(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
         fake_job_file = SimpleUploadedFile("job.txt", b"job content")
         self.job_listing = UploadedJobListing.objects.create(
@@ -830,9 +833,9 @@ class UploadedJobListingViewPostTest(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
     def test_upload_job_listing_empty_text(self):
         """Test posting job listing with empty text"""
@@ -879,9 +882,9 @@ class DocxFileUploadTest(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(
             username='testuser',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
     @patch('active_interview_app.views.filetype.guess')
     @patch('active_interview_app.views.Document')

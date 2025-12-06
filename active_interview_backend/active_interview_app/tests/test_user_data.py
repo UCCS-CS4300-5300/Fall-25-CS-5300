@@ -28,6 +28,7 @@ from active_interview_app.user_data_utils import (
     anonymize_user_interviews,
     delete_user_account
 )
+from .test_credentials import TEST_PASSWORD
 
 
 class DataExportRequestModelTest(TestCase):
@@ -37,7 +38,7 @@ class DataExportRequestModelTest(TestCase):
         self.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
     def test_create_export_request(self):
@@ -99,7 +100,7 @@ class DeletionRequestModelTest(TestCase):
         self.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
     def test_create_deletion_request(self):
@@ -146,7 +147,7 @@ class UserDataUtilsTest(TestCase):
         self.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
-            password='testpass123',
+            password=TEST_PASSWORD,
             first_name='Test',
             last_name='User'
         )
@@ -258,9 +259,9 @@ class DataExportViewsTest(TestCase):
         self.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
     def test_user_data_settings_view(self):
         """Test accessing data settings page"""
@@ -418,9 +419,9 @@ class AccountDeletionViewsTest(TestCase):
         self.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
     def test_request_account_deletion_get(self):
         """Test GET request to account deletion page"""
@@ -493,7 +494,7 @@ class DataDeletionFunctionalityTest(TestCase):
         self.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
     @patch('active_interview_app.user_data_utils.send_deletion_confirmation_email')
@@ -583,7 +584,7 @@ class ProcessExportRequestTest(TestCase):
         self.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
     @patch('active_interview_app.user_data_utils.send_export_ready_email')
@@ -629,13 +630,13 @@ class IntegrationTest(TestCase):
         self.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
     @patch('active_interview_app.user_data_utils.send_export_ready_email')
     def test_complete_export_workflow(self, mock_email):
         """Test complete export workflow from request to download"""
-        self.client.login(username='testuser', password='testpass123')
+        self.client.login(username='testuser', password=TEST_PASSWORD)
 
         # Create some user data
         UploadedResume.objects.create(
@@ -679,7 +680,7 @@ class EmailErrorHandlingTest(TestCase):
         self.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
     @patch('active_interview_app.user_data_utils.send_mail')
@@ -755,7 +756,7 @@ class EdgeCaseTest(TestCase):
         self.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
 
     def test_export_with_no_data(self):
@@ -772,7 +773,7 @@ class EdgeCaseTest(TestCase):
         long_user = User.objects.create_user(
             username='a' * 150,  # Max length for username
             email='long@example.com',
-            password='testpass123'
+            password=TEST_PASSWORD
         )
         anonymized = generate_anonymized_id(long_user)
 

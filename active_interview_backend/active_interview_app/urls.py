@@ -7,6 +7,13 @@ from rest_framework import routers
 from . import views
 from . import question_bank_views
 from . import observability_views
+from .admin_views import (
+    ratelimit_dashboard,
+    ratelimit_trends_data,
+    export_violations,
+    violation_detail,
+    ViolationAnalyticsView
+)
 
 
 # Create router and register views
@@ -54,10 +61,6 @@ urlpatterns = [
          name='chat-delete'),
     path('chat/<int:chat_id>/restart/', views.RestartChat.as_view(),
          name='chat-restart'),
-    path('chat/<int:chat_id>/results/', views.ResultCharts.as_view(),
-         name='chat-results'),
-    path('chat/<int:chat_id>/result-charts/', views.ResultCharts.as_view(),
-         name='result-charts'),  # Alias for tests
     path('chat/<int:chat_id>/key-questions/<int:question_id>/',
          views.KeyQuestionsView.as_view(), name='key-questions'),
 
@@ -102,8 +105,8 @@ urlpatterns = [
          views.edit_job_posting, name='edit_job_posting'),
 
     # Exportable Report urls
-    path('chat/<int:chat_id>/generate-report/',
-         views.GenerateReportView.as_view(), name='generate_report'),
+    path('chat/<int:chat_id>/finalize/',
+         views.FinalizeInterviewView.as_view(), name='finalize_interview'),
     path('chat/<int:chat_id>/export-report/',
          views.ExportReportView.as_view(), name='export_report'),
     path('chat/<int:chat_id>/download-pdf/',
@@ -204,6 +207,29 @@ urlpatterns = [
          observability_views.api_metrics_costs, name='api_metrics_costs'),
     path('observability/api/export/',
          observability_views.api_export_metrics, name='api_export_metrics'),
+
+    # Spending Tracker URLs (Issues #10, #11, #12)
+    path('observability/api/spending/current/',
+         observability_views.api_spending_current_month,
+         name='api_spending_current_month'),
+    path('observability/api/spending/history/',
+         observability_views.api_spending_history,
+         name='api_spending_history'),
+    path('observability/api/spending/update-cap/',
+         observability_views.api_update_spending_cap,
+         name='api_update_spending_cap'),
+
+    # Rate Limit Monitoring URLs (Issues #10, #15)
+    path('admin/ratelimit/dashboard/',
+         ratelimit_dashboard, name='ratelimit_dashboard'),
+    path('admin/ratelimit/trends-data/',
+         ratelimit_trends_data, name='ratelimit_trends_data'),
+    path('admin/ratelimit/export/',
+         export_violations, name='export_violations'),
+    path('admin/ratelimit/violation/<int:violation_id>/',
+         violation_detail, name='violation_detail'),
+    path('admin/ratelimit/analytics/',
+         ViolationAnalyticsView.as_view(), name='violation_analytics'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

@@ -91,14 +91,14 @@ def loginSim():
 
 
 class TestDriver(StaticLiveServerTestCase):
-    def testE2EDriver(self):
+    def test_e2e_driver(self):
         # Init chrome driver
         driver = getEnvDriver()
 
         # Stop chrome driver
         driver.quit()
 
-    def testE2EAuth(self):
+    def test_e2e_auth(self):
         # Init chrome driver
         driver = getEnvDriver()
 
