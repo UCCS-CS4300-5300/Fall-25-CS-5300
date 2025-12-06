@@ -40,6 +40,7 @@ from .user_data_utils import (
     generate_anonymized_id
 )
 from .invitation_utils import send_invitation_email
+from .bias_detection import BiasDetectionService
 
 
 from django.conf import settings
@@ -2870,7 +2871,7 @@ def invitation_review(request, invitation_id):
 
     Only accessible by the interviewer who created the invitation.
 
-    Related to Issue #138 (Interviewer Review & Feedback).
+    Related to Issues #138 (Interviewer Review & Feedback), #18, #57, #58, #59 (Bias Guardrails).
     """
     # Get invitation and verify ownership
     invitation = get_object_or_404(
@@ -2887,14 +2888,64 @@ def invitation_review(request, invitation_id):
     # Get the chat/interview session
     chat = invitation.chat
 
+    # Initialize bias detection service
+    bias_service = BiasDetectionService()
+
     # Handle POST request (submitting feedback)
     if request.method == 'POST':
         feedback = request.POST.get('interviewer_feedback', '').strip()
         mark_reviewed = request.POST.get('mark_reviewed') == 'true'
 
+        # Validate feedback for bias (server-side validation)
+        bias_analysis = None
+        if feedback:
+            bias_analysis = bias_service.analyze_feedback(feedback)
+
+            # Block save if there are blocking-severity flags
+            if bias_analysis['blocking_flags'] > 0:
+                messages.error(
+                    request,
+                    'Your feedback contains bias terms that must be resolved before saving. '
+                    'Please revise the highlighted terms.'
+                )
+                # Return to form with analysis
+                context = {
+                    'invitation': invitation,
+                    'chat': chat,
+                    'bias_terms_json': json.dumps(_serialize_bias_terms(bias_service)),
+                    'initial_feedback': feedback,
+                    'initial_analysis': bias_analysis,
+                }
+                return render(request, 'invitations/invitation_review.html', context)
+
+            # Block "Mark as Reviewed" if there are ANY bias flags (warnings or blocking)
+            if mark_reviewed and bias_analysis['has_bias']:
+                messages.error(
+                    request,
+                    'Cannot notify candidate with biased feedback. '
+                    'Please resolve all flagged terms before marking as reviewed.'
+                )
+                context = {
+                    'invitation': invitation,
+                    'chat': chat,
+                    'bias_terms_json': json.dumps(_serialize_bias_terms(bias_service)),
+                    'initial_feedback': feedback,
+                    'initial_analysis': bias_analysis,
+                }
+                return render(request, 'invitations/invitation_review.html', context)
+
         # Save feedback
         if feedback:
             invitation.interviewer_feedback = feedback
+
+            # Save bias analysis result if analysis was performed
+            if bias_analysis:
+                bias_service.save_analysis_result(
+                    content_object=invitation,
+                    analysis=bias_analysis,
+                    saved_with_warnings=bias_analysis['warning_flags'] > 0,
+                    user_acknowledged=True
+                )
 
         # Mark as reviewed if requested
         if mark_reviewed:
@@ -2909,7 +2960,11 @@ def invitation_review(request, invitation_id):
             messages.success(
                 request, 'Review completed! Notification sent to candidate.')
         else:
-            messages.success(request, 'Feedback saved.')
+            # Different message for clean vs warning feedback
+            if bias_analysis and bias_analysis['severity_level'] == 'CLEAN':
+                messages.success(request, 'Clean feedback saved successfully!')
+            else:
+                messages.success(request, 'Feedback saved.')
 
         invitation.save()
         return redirect('invitation_dashboard')
@@ -2918,9 +2973,35 @@ def invitation_review(request, invitation_id):
     context = {
         'invitation': invitation,
         'chat': chat,
+        'bias_terms_json': json.dumps(_serialize_bias_terms(bias_service)),
     }
 
     return render(request, 'invitations/invitation_review.html', context)
+
+
+def _serialize_bias_terms(bias_service):
+    """
+    Serialize active bias terms to JSON for client-side detection.
+
+    Returns a list of term objects with pattern, category, severity, etc.
+    """
+    terms = bias_service.get_active_bias_terms()
+
+    serialized = []
+    for term in terms:
+        serialized.append({
+            'id': term.id,
+            'term': term.term,
+            'pattern': term.pattern,
+            'category': term.category,
+            'category_display': term.get_category_display(),
+            'severity': term.severity,
+            'severity_display': term.get_severity_display(),
+            'explanation': term.explanation,
+            'suggestions': term.neutral_alternatives,
+        })
+
+    return serialized
 
 
 # ============================================================================

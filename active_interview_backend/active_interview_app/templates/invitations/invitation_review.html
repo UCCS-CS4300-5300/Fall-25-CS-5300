@@ -1,8 +1,12 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}
     AIS - Review Interview
 {% endblock title %}
 {% block content %}
+    <!-- Bias Detection Styles -->
+    <link rel="stylesheet" href="{% static 'css/bias-detection.css' %}">
+
     <style>
     .review-page {
       max-width: 1200px;
@@ -165,6 +169,16 @@
       border-radius: var(--radius);
       font-size: 1rem;
       transition: border-color 0.2s ease;
+    }
+
+    /* Better contrast for textarea in dark mode */
+    [data-theme="dark"] .form-control {
+      background-color: #1a1a1a;
+      color: #f0f0f0;
+    }
+
+    [data-theme="dark"] .form-control::placeholder {
+      color: #888888;
     }
 
     .form-control:focus {
@@ -357,20 +371,28 @@
             </div>
             {% endif %}
 
-            <form method="post" class="feedback-form">
+            <form method="post" class="feedback-form" id="feedback-form">
                 {% csrf_token %}
                 <div class="form-group">
                     <label class="form-label" for="interviewer_feedback">
                         Your Feedback
                         {% if not invitation.interviewer_feedback %}<span style="color: var(--error);">*</span>{% endif %}
                     </label>
+
+                    <!-- Bias Detection Status Display -->
+                    {% if invitation.interviewer_review_status != 'completed' %}
+                    <div id="bias-status" class="bias-status clean" style="margin-bottom: 1rem;">
+                        <span class="bias-status-clean">✓ No bias detected - feedback is clean</span>
+                    </div>
+                    {% endif %}
+
                     <textarea
                         class="form-control"
                         id="interviewer_feedback"
                         name="interviewer_feedback"
                         placeholder="Provide your feedback on the candidate's interview performance..."
                         {% if invitation.interviewer_review_status == 'completed' %}disabled{% endif %}
-                    >{{ invitation.interviewer_feedback }}</textarea>
+                    >{% if initial_feedback %}{{ initial_feedback }}{% else %}{{ invitation.interviewer_feedback }}{% endif %}</textarea>
                 </div>
 
                 <div class="action-buttons">
@@ -378,10 +400,10 @@
                         Back to Dashboard
                     </a>
                     {% if invitation.interviewer_review_status != 'completed' %}
-                    <button type="submit" name="mark_reviewed" value="false" class="btn btn-primary">
+                    <button type="submit" name="mark_reviewed" value="false" class="btn btn-primary" id="save-feedback-btn">
                         Save Feedback
                     </button>
-                    <button type="submit" name="mark_reviewed" value="true" class="btn btn-success">
+                    <button type="submit" name="mark_reviewed" value="true" class="btn btn-success" id="review-notify-btn">
                         Mark as Reviewed & Notify Candidate
                     </button>
                     {% endif %}
@@ -389,4 +411,37 @@
             </form>
         </div>
     </div>
+
+    <!-- Bias Detection JavaScript -->
+    <script src="{% static 'js/bias-detection.js' %}"></script>
+    <script>
+        // Initialize bias detection only if form is active (not completed)
+        {% if invitation.interviewer_review_status != 'completed' %}
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load bias terms from server
+            const biasTerms = {{ bias_terms_json|safe }};
+
+            console.log('Initializing Bias Detector with', biasTerms.length, 'terms');
+
+            // Initialize BiasDetector with faster response
+            const detector = new BiasDetector(biasTerms, {
+                textareaId: 'interviewer_feedback',
+                saveButtonIds: ['save-feedback-btn'],
+                reviewButtonId: 'review-notify-btn',
+                debounceMs: 300,  // Reduced from 500ms for faster response
+                onAnalysisChange: function(analysis) {
+                    console.log('Bias analysis updated:', analysis);
+                    // Show typing indicator while analyzing
+                    const statusEl = document.getElementById('bias-status');
+                    if (statusEl && statusEl.dataset.analyzing === 'true') {
+                        statusEl.dataset.analyzing = 'false';
+                    }
+                }
+            });
+
+            // Make detector globally accessible for debugging
+            window.biasDetector = detector;
+        });
+        {% endif %}
+    </script>
 {% endblock content %}

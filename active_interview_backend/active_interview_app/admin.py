@@ -3,7 +3,8 @@ from .models import (
     Chat, UploadedJobListing, UploadedResume,
     ExportableReport, UserProfile, RoleChangeRequest,
     DataExportRequest, DeletionRequest,
-    Tag, QuestionBank, Question, InterviewTemplate, InvitedInterview
+    Tag, QuestionBank, Question, InterviewTemplate, InvitedInterview,
+    BiasTermLibrary, BiasAnalysisResult
 )
 from .token_usage_models import TokenUsage
 from .merge_stats_models import MergeTokenStats
@@ -611,3 +612,112 @@ class ErrorLogAdmin(admin.ModelAdmin):
     def error_message_preview(self, obj):
         return obj.error_message[:100] + '...' if len(obj.error_message) > 100 else obj.error_message
     error_message_preview.short_description = 'Error Message'
+
+
+# Bias Detection Admin - Issues #18, #57, #58, #59
+@admin.register(BiasTermLibrary)
+class BiasTermLibraryAdmin(admin.ModelAdmin):
+    list_display = (
+        'term',
+        'category',
+        'severity',
+        'is_active',
+        'detection_count',
+        'created_at'
+    )
+    list_filter = ('category', 'severity', 'is_active', 'created_at')
+    search_fields = ('term', 'pattern', 'explanation')
+    readonly_fields = ('created_at', 'updated_at', 'detection_count')
+    list_editable = ('is_active',)
+
+    fieldsets = (
+        ('Term Information', {
+            'fields': ('term', 'category', 'severity', 'is_active')
+        }),
+        ('Detection Pattern', {
+            'fields': ('pattern',),
+            'description': (
+                'Regular expression pattern for detecting this term. '
+                'Use \\b for word boundaries. Example: \\b(cultural fit|culture fit)\\b'
+            )
+        }),
+        ('Explanation & Alternatives', {
+            'fields': ('explanation', 'neutral_alternatives'),
+            'description': (
+                'Explanation shown in tooltips to educate users. '
+                'Neutral alternatives should be a JSON list of strings.'
+            )
+        }),
+        ('Metadata', {
+            'fields': ('created_by', 'created_at', 'updated_at', 'detection_count'),
+            'classes': ('collapse',)
+        })
+    )
+
+    def get_queryset(self, request):
+        """Optimize query with select_related"""
+        qs = super().get_queryset(request)
+        return qs.select_related('created_by')
+
+    def save_model(self, request, obj, form, change):
+        """Set created_by to current user if creating new term"""
+        if not change:  # Creating new object
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)
+
+        # Clear cache when terms are modified
+        from .bias_detection import bias_detection_service
+        bias_detection_service.clear_cache()
+
+
+@admin.register(BiasAnalysisResult)
+class BiasAnalysisResultAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'content_type',
+        'object_id',
+        'severity_level',
+        'total_flags',
+        'blocking_flags',
+        'warning_flags',
+        'bias_score',
+        'saved_with_warnings',
+        'analyzed_at'
+    )
+    list_filter = (
+        'severity_level',
+        'saved_with_warnings',
+        'user_acknowledged',
+        'analyzed_at'
+    )
+    search_fields = ('content_type__model', 'object_id', 'feedback_text_hash')
+    readonly_fields = ('analyzed_at', 'feedback_text_hash')
+    date_hierarchy = 'analyzed_at'
+    ordering = ('-analyzed_at',)
+
+    fieldsets = (
+        ('Analysis Target', {
+            'fields': ('content_type', 'object_id')
+        }),
+        ('Analysis Results', {
+            'fields': (
+                'severity_level',
+                'bias_score',
+                'total_flags',
+                'blocking_flags',
+                'warning_flags',
+                'flagged_terms'
+            )
+        }),
+        ('User Interaction', {
+            'fields': ('saved_with_warnings', 'user_acknowledged')
+        }),
+        ('Metadata', {
+            'fields': ('analyzed_at', 'feedback_text_hash'),
+            'classes': ('collapse',)
+        })
+    )
+
+    def has_add_permission(self, request):
+        """Prevent manual creation - only via bias detection service"""
+        return False
