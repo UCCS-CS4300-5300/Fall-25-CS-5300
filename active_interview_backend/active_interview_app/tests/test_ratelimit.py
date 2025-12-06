@@ -24,12 +24,22 @@ class RateLimitTestCase(TestCase):
 
     def setUp(self):
         """Set up test fixtures."""
+        # Clear cache before each test to prevent contamination from previous tests
+        from django.core.cache import cache
+        cache.clear()
+
         self.client = Client()
         self.user = User.objects.create_user(
             username='testuser',
             password=TEST_PASSWORD
         )
         self.anonymous_client = Client()
+
+    def tearDown(self):
+        """Clean up after each test."""
+        # Clear cache after each test to ensure clean state for next test
+        from django.core.cache import cache
+        cache.clear()
 
     def make_requests(self, url, count, method='get', authenticated=True, data=None):
         """
