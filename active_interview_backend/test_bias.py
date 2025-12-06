@@ -3,10 +3,10 @@
 import os
 import django
 
+from active_interview_app.bias_detection import analyze_feedback  # noqa: E402
+
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'active_interview_project.settings')
 django.setup()
-
-from active_interview_app.bias_detection import analyze_feedback
 
 # Test cases
 test_cases = [

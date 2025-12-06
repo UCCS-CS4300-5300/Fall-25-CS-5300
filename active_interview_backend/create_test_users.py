@@ -2,15 +2,14 @@
 """Create test users for local development."""
 
 import os
-import sys
 import django
+
+from django.contrib.auth.models import User  # noqa: E402
+from active_interview_app.models import UserProfile  # noqa: E402
 
 # Setup Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'active_interview_project.settings')
 django.setup()
-
-from django.contrib.auth.models import User
-from active_interview_app.models import UserProfile
 
 # Create admin user
 admin_user, created = User.objects.get_or_create(

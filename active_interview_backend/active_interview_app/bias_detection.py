@@ -21,7 +21,7 @@ Usage:
 
 import re
 import hashlib
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 from django.core.cache import cache
 from django.db import transaction
 from django.db.models import F
@@ -444,7 +444,7 @@ class BiasDetectionService:
                 'most_detected_terms': [...]
             }
         """
-        from django.db.models import Count, Avg
+        from django.db.models import Avg
 
         total_analyses = BiasAnalysisResult.objects.count()
         clean_count = BiasAnalysisResult.objects.filter(

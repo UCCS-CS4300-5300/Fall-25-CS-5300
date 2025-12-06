@@ -13,9 +13,8 @@ import time
 from django.test import TestCase, Client, override_settings
 from django.contrib.auth.models import User
 from django.urls import reverse
-from rest_framework import status
 from rest_framework.test import APIClient
-from ..models import QuestionBank, Question, Tag, UploadedJobListing, UploadedResume
+from ..models import QuestionBank, Tag
 from .test_credentials import TEST_PASSWORD
 
 
@@ -197,7 +196,7 @@ class ViewSetRateLimitTest(RateLimitTestCase):
         # This is a known issue with ViewSet permissions in tests - skip the test
         if successful_requests == 0:
             self.skipTest("ViewSet permissions failing - all requests returned 403. "
-                         "This is a test environment issue, not a rate limiting issue.")
+                          "This is a test environment issue, not a rate limiting issue.")
 
         # If we got here, verify we didn't hit rate limit during the first 120 requests
         self.assertFalse(got_429, "Rate limit triggered before 120 requests")

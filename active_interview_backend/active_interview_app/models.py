@@ -1456,6 +1456,7 @@ from .spending_tracker_models import (  # noqa: E402, F401
     MonthlySpending
 )
 
+
 class RateLimitViolation(models.Model):
     """
     Model to log rate limit violations for monitoring and abuse detection.

@@ -398,11 +398,10 @@ def api_spending_current_month(request):
     Returns:
         JSON with current month spending, cap info, and breakdown by service
     """
-    from .spending_tracker_models import MonthlySpending, MonthlySpendingCap
+    from .spending_tracker_models import MonthlySpending
 
     # Get current month's spending
     spending = MonthlySpending.get_current_month()
-    cap = MonthlySpendingCap.get_active_cap()
 
     # Get cap status
     cap_status = spending.get_cap_status()
@@ -472,8 +471,6 @@ def api_update_spending_cap(request):
     Returns:
         JSON with success status and new cap info
     """
-    from django.views.decorators.http import require_http_methods
-    from django.views.decorators.csrf import csrf_exempt
     import json
 
     if request.method != 'POST':

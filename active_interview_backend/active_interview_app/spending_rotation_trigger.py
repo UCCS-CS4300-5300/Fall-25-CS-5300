@@ -14,7 +14,6 @@ The rotation is triggered via signals when spending crosses the cap threshold.
 
 from django.utils import timezone
 from django.db import transaction
-from decimal import Decimal
 import logging
 
 logger = logging.getLogger(__name__)
@@ -143,7 +142,7 @@ def rotate_to_fallback_tier_on_cap_exceeded():
                             status=KeyRotationLog.FAILED,
                             rotation_type='cap_exceeded',
                             error_message=f'No keys available for {tier} tier',
-                            notes=f'Automatic rotation triggered by spending cap exceeded'
+                            notes='Automatic rotation triggered by spending cap exceeded'
                         )
                         continue
 
