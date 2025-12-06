@@ -14,8 +14,6 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from django.conf import settings
 from cryptography.fernet import Fernet
-import base64
-import os
 from datetime import timedelta
 
 
@@ -559,8 +557,9 @@ class KeyRotationLog(models.Model):
         )
 
     @classmethod
-    def log_rotation(cls, provider, old_key, new_key, status, rotation_type='scheduled',
-                    rotated_by=None, error_message='', notes=''):
+    def log_rotation(cls, provider, old_key, new_key, status,
+                     rotation_type='scheduled',
+                     rotated_by=None, error_message='', notes=''):
         """
         Create a rotation log entry.
 

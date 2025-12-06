@@ -7,7 +7,6 @@ from django.db import models
 from django.utils import timezone
 from django.conf import settings
 from decimal import Decimal
-from datetime import date
 
 
 class MonthlySpendingCap(models.Model):
