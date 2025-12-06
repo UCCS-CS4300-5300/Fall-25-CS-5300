@@ -10,9 +10,9 @@ from active_interview_app.models import (
     Chat
 )
 from django.core.files.uploadedfile import SimpleUploadedFile
-from unittest.mock import patch, Mock
-from unittest import skip
-import json
+from unittest.mock import patch, Mock  # noqa: F401
+
+import json  # noqa: F401
 from .test_credentials import TEST_PASSWORD
 from .test_utils import create_mock_openai_response
 

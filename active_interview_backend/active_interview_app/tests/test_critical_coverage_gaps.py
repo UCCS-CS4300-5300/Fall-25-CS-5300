@@ -6,7 +6,6 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
-from unittest.mock import patch, MagicMock
 import json
 
 from active_interview_app.models import (
@@ -16,7 +15,6 @@ from active_interview_app.models import (
 )
 from active_interview_app.merge_stats_models import MergeTokenStats
 from .test_credentials import TEST_PASSWORD
-from .test_utils import create_mock_openai_response
 
 
 # ============================================================================
@@ -241,7 +239,6 @@ class ChatViewUnauthorizedAccessTest(TestCase):
                     kwargs={'chat_id': self.chat.id, 'question_id': 0})
         )
         self.assertIn(response.status_code, [302, 403])
-
 
 
 class APIViewSerializerErrorsTest(TestCase):

@@ -2,7 +2,7 @@
 Comprehensive admin tests to increase coverage above 80%.
 Tests display methods, queryset optimizations, and admin configurations.
 """
-from django.test import TestCase, RequestFactory
+from django.test import TestCase
 from django.contrib.auth.models import User
 from django.contrib.admin.sites import AdminSite
 from datetime import datetime, timezone, timedelta
@@ -10,7 +10,7 @@ from decimal import Decimal
 
 from active_interview_app.models import (
     UserProfile, RoleChangeRequest, Tag, QuestionBank, Question,
-    InterviewTemplate, InvitedInterview, Chat, UploadedResume
+    InterviewTemplate, InvitedInterview  # noqa: F401
 )
 from active_interview_app.token_usage_models import TokenUsage
 from active_interview_app.merge_stats_models import MergeTokenStats
@@ -572,7 +572,7 @@ class MonthlySpendingAdminTest(TestCase):
 
     def test_cap_percentage_display_with_cap(self):
         """Test cap_percentage_display with active cap"""
-        cap = MonthlySpendingCap.objects.create(
+        _cap = MonthlySpendingCap.objects.create(  # noqa: F841
             cap_amount_usd=Decimal('1000.00'),
             is_active=True,
             created_by=self.user
@@ -597,7 +597,7 @@ class MonthlySpendingAdminTest(TestCase):
 
     def test_alert_status_over_cap(self):
         """Test alert_status when over cap"""
-        cap = MonthlySpendingCap.objects.create(
+        _cap = MonthlySpendingCap.objects.create(  # noqa: F841
             cap_amount_usd=Decimal('100.00'),
             is_active=True,
             created_by=self.user
@@ -659,9 +659,7 @@ class APIKeyPoolAdminTest(TestCase):
             encrypted_key=b'test_encrypted_bytes',
             key_prefix='sk-test'
         )
-        form = None
-        change = False
-        self.admin.save_model(self.request, key, form, change)
+        self.admin.save_model(self.request, key, None, False)
         # Verify added_by was set
         self.assertEqual(key.added_by, self.user)
         # Verify key was saved to database
@@ -693,8 +691,7 @@ class KeyRotationScheduleAdminTest(TestCase):
         )
         # Now test that save_model sets created_by correctly when called again
         schedule.created_by = None
-        form = None
-        change = True  # Mark as change to avoid resetting created_by
+        # Mark as change to avoid resetting created_by
 
         # For a new object (change=False), test just the field assignment
         new_schedule = KeyRotationSchedule(

@@ -10,15 +10,14 @@ Tests:
 - Analytics views
 """
 
-import json
+import json  # noqa: F401
 from datetime import timedelta
-from unittest.mock import patch, MagicMock, Mock
+from unittest.mock import patch, MagicMock, Mock  # noqa: F401
 
 from django.test import TestCase, RequestFactory, Client, override_settings
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.urls import reverse
-from django.core import mail
 
 from ..models import RateLimitViolation
 from ..middleware.ratelimit_middleware import RateLimitMiddleware
@@ -560,7 +559,6 @@ class ExportViolationsViewTest(TestCase):
 
     def test_export_with_date_filters(self):
         """Test CSV export with date range filters."""
-        from datetime import date
 
         # Create violations on different dates
         now = timezone.now()

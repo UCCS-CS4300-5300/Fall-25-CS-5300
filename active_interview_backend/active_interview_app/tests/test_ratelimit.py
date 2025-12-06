@@ -13,9 +13,8 @@ import time
 from django.test import TestCase, Client, override_settings
 from django.contrib.auth.models import User
 from django.urls import reverse
-from rest_framework import status
 from rest_framework.test import APIClient
-from ..models import QuestionBank, Question, Tag, UploadedJobListing, UploadedResume
+from ..models import QuestionBank, Tag
 from .test_credentials import TEST_PASSWORD
 
 
@@ -93,6 +92,10 @@ class APIViewRateLimitTest(RateLimitTestCase):
 
     def test_lenient_rate_limit_authenticated(self):
         """Test lenient rate limiting for authenticated users (120/min)."""
+        # Clear the rate limit cache before testing
+        from django.core.cache import cache
+        cache.clear()
+
         url = '/test/lenient/'  # Using test URL with lenient rate limiting
 
         # Make requests up to the limit (120)
@@ -186,8 +189,10 @@ class ViewSetRateLimitTest(RateLimitTestCase):
         # If we got no successful requests and all 403s, permissions are failing
         # This is a known issue with ViewSet permissions in tests - skip the test
         if successful_requests == 0:
-            self.skipTest("ViewSet permissions failing - all requests returned 403. "
-                         "This is a test environment issue, not a rate limiting issue.")
+            self.skipTest(
+                "ViewSet permissions failing - all requests returned 403. "
+                "This is a test environment issue, not a rate limiting issue."
+            )
 
         # If we got here, verify we didn't hit rate limit during the first 120 requests
         self.assertFalse(got_429, "Rate limit triggered before 120 requests")

@@ -14,7 +14,6 @@ from django.test import TestCase, RequestFactory, Client
 from django.contrib.auth.models import User
 from django.contrib.admin.models import LogEntry, ADDITION, CHANGE, DELETION
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.auth.signals import user_logged_in, user_logged_out, user_login_failed
 from active_interview_app.models import AuditLog
 from active_interview_app.middleware import (
     get_current_request,
@@ -24,7 +23,6 @@ from active_interview_app.middleware import (
     _thread_locals
 )
 from active_interview_app.audit_utils import create_audit_log
-import threading
 
 
 class AuditLogModelTests(TestCase):
@@ -157,7 +155,7 @@ class AuditLogMiddlewareTests(TestCase):
         """Test that middleware stores request in thread-local storage."""
         request = self.factory.get('/')
 
-        response = self.middleware(request)
+        _response = self.middleware(request)  # noqa: F841
 
         # Request should not be in thread-local after response
         # (middleware cleans up)
@@ -207,7 +205,7 @@ class AuditLogMiddlewareTests(TestCase):
         request = self.factory.get('/')
 
         # Middleware should store and then clean up
-        response = self.middleware(request)
+        _response = self.middleware(request)  # noqa: F841
 
         # After middleware processes request, thread-local should be clean
         self.assertIsNone(get_current_request())
@@ -537,9 +535,12 @@ class AuditLogIntegrationTests(TestCase):
         # Create multiple logs
         user = User.objects.create_user(username='test', password='test123')
 
-        log1 = create_audit_log(user=user, action_type='LOGIN', description='First')
-        log2 = create_audit_log(user=user, action_type='LOGOUT', description='Second')
-        log3 = create_audit_log(user=user, action_type='LOGIN', description='Third')
+        _log1 = create_audit_log(  # noqa: F841
+            user=user, action_type='LOGIN', description='First')
+        _log2 = create_audit_log(  # noqa: F841
+            user=user, action_type='LOGOUT', description='Second')
+        _log3 = create_audit_log(  # noqa: F841
+            user=user, action_type='LOGIN', description='Third')
 
         # Get all logs
         logs = list(AuditLog.objects.all())

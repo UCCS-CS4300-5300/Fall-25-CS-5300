@@ -16,7 +16,6 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from django.urls import reverse
 from decimal import Decimal
-from datetime import datetime, timedelta
 
 from active_interview_app.spending_tracker_models import (
     MonthlySpendingCap,
@@ -38,7 +37,7 @@ class MonthlySpendingCapModelTest(TestCase):
 
     def test_create_spending_cap(self):
         """Test creating a spending cap."""
-        cap = MonthlySpendingCap.objects.create(
+        cap = MonthlySpendingCap.objects.create(  # noqa: F841
             cap_amount_usd=Decimal('200.00'),
             is_active=True,
             created_by=self.admin_user
@@ -73,7 +72,7 @@ class MonthlySpendingCapModelTest(TestCase):
         self.assertIsNone(MonthlySpendingCap.get_active_cap())
 
         # Create active cap
-        cap = MonthlySpendingCap.objects.create(
+        cap = MonthlySpendingCap.objects.create(  # noqa: F841
             cap_amount_usd=Decimal('200.00'),
             is_active=True
         )
@@ -85,7 +84,7 @@ class MonthlySpendingCapModelTest(TestCase):
 
     def test_str_representation(self):
         """Test string representation of cap."""
-        cap = MonthlySpendingCap.objects.create(
+        cap = MonthlySpendingCap.objects.create(  # noqa: F841
             cap_amount_usd=Decimal('200.00'),
             is_active=True
         )
@@ -292,7 +291,7 @@ class SpendingTrackerSignalTest(TestCase):
     def test_token_usage_creates_spending_record(self):
         """Test that creating TokenUsage automatically updates spending."""
         # Create TokenUsage record
-        token_usage = TokenUsage.objects.create(
+        token_usage = TokenUsage.objects.create(  # noqa: F841
             user=self.user,
             git_branch='test',
             model_name='gpt-4o',
@@ -389,7 +388,7 @@ class SpendingTrackerViewTest(TestCase):
         self.client.logout()
 
         # Login as regular user
-        regular_user = User.objects.create_user(
+        _regular_user = User.objects.create_user(  # noqa: F841
             username='regular',
             password='testpass'
         )
@@ -408,7 +407,7 @@ class SpendingTrackerViewTest(TestCase):
     def test_api_update_spending_cap_replaces_old(self):
         """Test that new cap replaces old active cap."""
         # Create initial cap
-        old_cap = MonthlySpendingCap.objects.create(
+        old_cap = MonthlySpendingCap.objects.create(  # noqa: F841
             cap_amount_usd=Decimal('100.00'),
             is_active=True
         )
@@ -492,7 +491,7 @@ class SpendingTrackerViewTest(TestCase):
         self.client.logout()
 
         # Login as regular user
-        regular_user = User.objects.create_user(
+        _regular_user = User.objects.create_user(  # noqa: F841
             username='regular',
             password='testpass'
         )
@@ -521,7 +520,7 @@ class SpendingTrackerIntegrationTest(TestCase):
     def test_complete_spending_tracking_workflow(self):
         """Test complete workflow from API call to dashboard display."""
         # 1. Set spending cap
-        cap = MonthlySpendingCap.objects.create(
+        cap = MonthlySpendingCap.objects.create(  # noqa: F841
             cap_amount_usd=Decimal('200.00'),
             is_active=True,
             created_by=self.admin_user

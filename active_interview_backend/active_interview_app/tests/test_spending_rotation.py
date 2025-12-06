@@ -204,7 +204,7 @@ class SpendingTriggeredRotationTest(TestCase):
         spending.add_llm_cost(250.00)
 
         # Perform rotation
-        results = rotate_to_fallback_tier_on_cap_exceeded()
+        results = rotate_to_fallback_tier_on_cap_exceeded()  # noqa: F841
 
         # Check rotation logs were created
         logs = KeyRotationLog.objects.filter(rotation_type='cap_exceeded')
@@ -381,7 +381,7 @@ class SpendingSignalIntegrationTest(TestCase):
         # Check if rotation was triggered (if over cap)
         if spending.is_over_cap():
             # Should have rotation logs
-            logs = KeyRotationLog.objects.filter(rotation_type='cap_exceeded')
+            logs = KeyRotationLog.objects.filter(rotation_type='cap_exceeded')  # noqa: F841
             # Note: May or may not have logs depending on signal execution
             # This is an integration test to verify the flow works
 

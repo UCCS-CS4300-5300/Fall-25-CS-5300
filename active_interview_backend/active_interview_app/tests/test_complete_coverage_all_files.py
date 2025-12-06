@@ -338,12 +338,14 @@ class ViewsCompleteCoverageTest(TestCase):
         # get_client_and_model returns (client, model, tier_info)
         mock_get_client.return_value = (mock_client, 'gpt-4o', {'tier': 'premium'})
 
-        response = self.client.post(reverse('chat-create'), {
-            'create': 'true',
-            'listing_choice': self.job_listing.id,
-            'difficulty': 5,
-            'type': 'GEN'
-        })
+        _response = self.client.post(  # noqa: F841
+            reverse('chat-create'), {
+                'create': 'true',
+                'listing_choice': self.job_listing.id,
+                'difficulty': 5,
+                'type': 'GEN'
+            }
+        )
 
         # Should create chat with empty key_questions
         chat = Chat.objects.first()
@@ -447,7 +449,7 @@ class ViewsCompleteCoverageTest(TestCase):
             messages=[{"role": "system", "content": "Selected level: <<5>>"}]
         )
 
-        _response = self.client.post(  # noqa: F841
+        _response = self.client.post(  # noqa: F841  # noqa: F841
             reverse('chat-edit', kwargs={'chat_id': chat.id}),
             {
                 'update': 'true',
@@ -495,7 +497,7 @@ class ViewsCompleteCoverageTest(TestCase):
             ]
         )
 
-        _response = self.client.post(  # noqa: F841
+        _response = self.client.post(  # noqa: F841  # noqa: F841
             reverse('chat-restart', kwargs={'chat_id': chat.id}),
             {'restart': 'true'}
         )
@@ -668,7 +670,7 @@ class ViewsCompleteCoverageTest(TestCase):
         )
         resume_id = resume.id
 
-        _response = self.client.post(  # noqa: F841
+        _response = self.client.post(  # noqa: F841  # noqa: F841
             reverse('delete_resume', args=[resume_id])
         )
         self.assertFalse(UploadedResume.objects.filter(id=resume_id).exists())
@@ -814,7 +816,7 @@ class ViewsCompleteCoverageTest(TestCase):
             file=fake_file
         )
 
-        _response = self.client.post(  # noqa: F841
+        _response = self.client.post(  # noqa: F841  # noqa: F841
             reverse('edit_resume', kwargs={'resume_id': resume.id}),
             {
                 'title': 'Updated Resume',
@@ -844,7 +846,7 @@ class ViewsCompleteCoverageTest(TestCase):
 
     def test_edit_job_posting_post_valid(self):
         """Test edit_job_posting POST with valid data"""
-        _response = self.client.post(  # noqa: F841
+        _response = self.client.post(  # noqa: F841  # noqa: F841
             reverse('edit_job_posting',
                     kwargs={'job_id': self.job_listing.id}),
             {
@@ -860,7 +862,7 @@ class ViewsCompleteCoverageTest(TestCase):
         """Test delete_job POST"""
         job_id = self.job_listing.id
 
-        _response = self.client.post(  # noqa: F841
+        _response = self.client.post(  # noqa: F841  # noqa: F841
             reverse('delete_job', kwargs={'job_id': job_id})
         )
         self.assertFalse(UploadedJobListing.objects.filter(id=job_id).exists())

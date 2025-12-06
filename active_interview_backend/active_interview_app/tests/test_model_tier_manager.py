@@ -13,7 +13,7 @@ This test suite covers:
 from django.test import TestCase
 from django.contrib.auth.models import User
 from decimal import Decimal
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock  # noqa: F401
 
 from active_interview_app import model_tier_manager
 from active_interview_app.spending_tracker_models import (

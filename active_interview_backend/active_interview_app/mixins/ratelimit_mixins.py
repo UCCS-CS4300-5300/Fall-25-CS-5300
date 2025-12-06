@@ -7,7 +7,6 @@ operation type (read vs write).
 
 from django_ratelimit.decorators import ratelimit
 from ..ratelimit_config import get_rate_for_user, ratelimit_key
-from ..decorators.ratelimit_decorators import ratelimit_lenient, ratelimit_strict, ratelimit_default
 
 
 class RateLimitMixin:
