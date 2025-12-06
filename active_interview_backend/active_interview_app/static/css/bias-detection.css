@@ -1,0 +1,334 @@
+/**
+ * Bias Detection Styling
+ *
+ * Styles for client-side bias detection and highlighting.
+ * Uses CSS variables from main.css for theme compatibility.
+ *
+ * Related to Issues #18, #57, #58, #59 (Bias Guardrails)
+ */
+
+/* ========================================
+   Bias Detection Wrapper & Overlay
+   ======================================== */
+
+.bias-detection-wrapper {
+    position: relative;
+    display: block;
+}
+
+.bias-highlight-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    padding: 0.75rem; /* Match form-control padding */
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow: auto;
+    pointer-events: none; /* Allow clicks to pass through to textarea */
+    z-index: 1;
+    background: transparent;
+    color: transparent !important; /* Hide text, only show highlights */
+    border: 2px solid transparent; /* Match textarea border */
+    border-radius: var(--radius);
+}
+
+/* Ensure all text in highlight container is transparent */
+.bias-highlight-container * {
+    color: transparent !important;
+}
+
+/* Make highlights clickable */
+.bias-highlight-container mark {
+    pointer-events: auto;
+}
+
+/* Ensure textarea is on top */
+.bias-detection-wrapper textarea {
+    position: relative;
+    z-index: 2;
+    background: transparent !important;
+}
+
+/* ========================================
+   Bias Highlighting Marks
+   ======================================== */
+
+.bias-highlight {
+    border-radius: 3px;
+    padding: 2px 0;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+    position: relative;
+}
+
+/* Warning severity - yellow highlight */
+.bias-highlight.bias-warning {
+    background-color: rgba(243, 156, 18, 0.3); /* var(--warning) with opacity */
+    border-bottom: 2px solid var(--warning);
+}
+
+.bias-highlight.bias-warning:hover {
+    background-color: rgba(243, 156, 18, 0.5);
+}
+
+/* Blocking severity - red highlight */
+.bias-highlight.bias-blocking {
+    background-color: rgba(231, 76, 60, 0.3); /* var(--error) with opacity */
+    border-bottom: 2px solid var(--error);
+}
+
+.bias-highlight.bias-blocking:hover {
+    background-color: rgba(231, 76, 60, 0.5);
+}
+
+/* ========================================
+   Bias Status Display
+   ======================================== */
+
+.bias-status {
+    padding: var(--spacing-sm) var(--spacing);
+    border-radius: var(--radius-sm);
+    margin-bottom: var(--spacing);
+    font-size: 0.9rem;
+    border: 2px solid var(--border);
+}
+
+.bias-status.clean {
+    background-color: rgba(39, 174, 96, 0.1); /* var(--success) with opacity */
+    border-color: var(--success);
+    color: var(--success);
+}
+
+.bias-status.warning {
+    background-color: rgba(243, 156, 18, 0.1); /* var(--warning) with opacity */
+    border-color: var(--warning);
+    color: var(--warning);
+}
+
+.bias-status.error {
+    background-color: rgba(231, 76, 60, 0.1); /* var(--error) with opacity */
+    border-color: var(--error);
+    color: var(--error);
+}
+
+.bias-status.analyzing {
+    background-color: rgba(52, 152, 219, 0.1); /* var(--info) with opacity */
+    border-color: var(--info);
+    color: var(--info);
+}
+
+.bias-status-clean,
+.bias-status-warning,
+.bias-status-error,
+.bias-status-analyzing {
+    font-weight: 600;
+}
+
+/* Pulse animation for analyzing state */
+.bias-status-analyzing::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--info);
+    margin-right: 6px;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.3;
+    }
+}
+
+/* ========================================
+   Suggestions Modal
+   ======================================== */
+
+#bias-suggestions-modal .modal-content {
+    border: 2px solid var(--border);
+    box-shadow: var(--shadow-lg);
+    border-radius: var(--radius);
+}
+
+#bias-suggestions-modal .modal-header {
+    background-color: var(--surface);
+    border-bottom: 2px solid var(--border);
+    color: var(--text-primary);
+}
+
+#bias-suggestions-modal .modal-title {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+#bias-suggestions-modal .modal-body {
+    background-color: var(--surface);
+    color: var(--text-primary);
+}
+
+#bias-suggestions-modal .flagged-term-info {
+    background-color: var(--surface-hover);
+    padding: var(--spacing);
+    border-radius: var(--radius-sm);
+    border: 2px solid var(--border);
+    margin-bottom: var(--spacing);
+}
+
+#bias-suggestions-modal .explanation-text {
+    font-style: italic;
+    color: var(--text-secondary);
+    margin-bottom: 0;
+}
+
+#bias-suggestions-modal .badge {
+    font-size: 0.85rem;
+}
+
+/* Suggestions List */
+.suggestions-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.suggestion-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-sm) var(--spacing);
+    margin-bottom: var(--spacing-sm);
+    background-color: var(--surface-hover);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    transition: all 0.2s ease;
+}
+
+.suggestion-item:hover {
+    border-color: var(--primary);
+    box-shadow: var(--shadow-sm);
+}
+
+.suggestion-text {
+    flex: 1;
+    margin-right: var(--spacing);
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.suggestion-item .btn {
+    flex-shrink: 0;
+}
+
+/* Empty state */
+.suggestions-list li.text-muted {
+    text-align: center;
+    padding: var(--spacing-lg);
+    color: var(--text-light);
+}
+
+/* ========================================
+   Button States
+   ======================================== */
+
+.btn-disabled {
+    opacity: 0.6;
+    cursor: not-allowed !important;
+}
+
+.btn-disabled:hover {
+    opacity: 0.6;
+}
+
+/* ========================================
+   Dark Mode Overrides
+   ======================================== */
+
+[data-theme="dark"] .bias-detection-wrapper textarea {
+    background: transparent !important;
+}
+
+/* Better contrast for dark mode - add background to highlight container */
+[data-theme="dark"] .bias-highlight-container {
+    background-color: #1a1a1a;
+}
+
+/* Ensure text remains transparent in dark mode */
+[data-theme="dark"] .bias-highlight-container * {
+    color: transparent !important;
+}
+
+[data-theme="dark"] .bias-highlight.bias-warning {
+    background-color: rgba(243, 156, 18, 0.2);
+}
+
+[data-theme="dark"] .bias-highlight.bias-blocking {
+    background-color: rgba(231, 76, 60, 0.2);
+}
+
+[data-theme="dark"] .suggestion-item {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] #bias-suggestions-modal .flagged-term-info {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* ========================================
+   Responsive Design
+   ======================================== */
+
+@media (max-width: 768px) {
+    .suggestion-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .suggestion-text {
+        margin-bottom: var(--spacing-sm);
+        margin-right: 0;
+    }
+
+    .suggestion-item .btn {
+        width: 100%;
+    }
+}
+
+/* ========================================
+   Accessibility
+   ======================================== */
+
+.bias-highlight:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .bias-highlight.bias-warning {
+        background-color: rgba(243, 156, 18, 0.5);
+        border-bottom-width: 3px;
+    }
+
+    .bias-highlight.bias-blocking {
+        background-color: rgba(231, 76, 60, 0.5);
+        border-bottom-width: 3px;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .bias-highlight,
+    .suggestion-item {
+        transition: none;
+    }
+}

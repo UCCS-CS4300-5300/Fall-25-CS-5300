@@ -17,7 +17,6 @@ Usage:
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from active_interview_app.spending_tracker_models import MonthlySpending
-from datetime import datetime
 
 
 class Command(BaseCommand):

@@ -13,9 +13,8 @@ import time
 from django.test import TestCase, Client, override_settings
 from django.contrib.auth.models import User
 from django.urls import reverse
-from rest_framework import status
 from rest_framework.test import APIClient
-from ..models import QuestionBank, Question, Tag, UploadedJobListing, UploadedResume
+from ..models import QuestionBank, Tag
 from .test_credentials import TEST_PASSWORD
 
 
@@ -24,12 +23,22 @@ class RateLimitTestCase(TestCase):
 
     def setUp(self):
         """Set up test fixtures."""
+        # Clear cache before each test to prevent contamination from previous tests
+        from django.core.cache import cache
+        cache.clear()
+
         self.client = Client()
         self.user = User.objects.create_user(
             username='testuser',
             password=TEST_PASSWORD
         )
         self.anonymous_client = Client()
+
+    def tearDown(self):
+        """Clean up after each test."""
+        # Clear cache after each test to ensure clean state for next test
+        from django.core.cache import cache
+        cache.clear()
 
     def make_requests(self, url, count, method='get', authenticated=True, data=None):
         """
@@ -187,7 +196,7 @@ class ViewSetRateLimitTest(RateLimitTestCase):
         # This is a known issue with ViewSet permissions in tests - skip the test
         if successful_requests == 0:
             self.skipTest("ViewSet permissions failing - all requests returned 403. "
-                         "This is a test environment issue, not a rate limiting issue.")
+                          "This is a test environment issue, not a rate limiting issue.")
 
         # If we got here, verify we didn't hit rate limit during the first 120 requests
         self.assertFalse(got_429, "Rate limit triggered before 120 requests")
@@ -318,12 +327,18 @@ class RateLimitUserTypeTest(RateLimitTestCase):
 
         url = '/test/default/'
 
-        # Make requests as anonymous user
-        self.make_requests(url, 31, authenticated=False)
+        # Make requests as anonymous user (limit is 30)
+        responses = self.make_requests(url, 30, authenticated=False)
 
-        # Should be rate limited
+        # All 30 requests should succeed
+        for response in responses:
+            self.assertEqual(response.status_code, 200,
+                           "Request should succeed within limit")
+
+        # 31st request should be rate limited
         response = self.anonymous_client.get(url)
-        self.assertEqual(response.status_code, 429)
+        self.assertEqual(response.status_code, 429,
+                        "31st request should be rate limited")
 
     def test_user_id_based_limiting_authenticated(self):
         """Test that authenticated users are limited by user ID."""
@@ -333,12 +348,21 @@ class RateLimitUserTypeTest(RateLimitTestCase):
 
         url = '/test/default/'
 
-        # Make requests as authenticated user
-        self.make_requests(url, 61, authenticated=True)
+        # Explicitly log in to ensure authentication persists
+        self.client.force_login(self.user)
 
-        # Should be rate limited
+        # Make requests as authenticated user (limit is 60)
+        responses = self.make_requests(url, 60, authenticated=True)
+
+        # All 60 requests should succeed
+        for response in responses:
+            self.assertEqual(response.status_code, 200,
+                           "Request should succeed within limit")
+
+        # 61st request should be rate limited
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 429)
+        self.assertEqual(response.status_code, 429,
+                        "61st request should be rate limited")
 
 
 @override_settings(

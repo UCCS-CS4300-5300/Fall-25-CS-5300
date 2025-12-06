@@ -149,6 +149,18 @@ if PROD and DATABASES['default']['ENGINE'] == 'django.db.backends.postgresql':
         'sslmode': 'require',
     }
 
+# Cache configuration for rate limiting and session storage
+# Using LocMemCache for development/testing - consider Redis for production scale
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'default-cache',
+        'OPTIONS': {
+            'MAX_ENTRIES': 10000,  # Maximum number of entries in cache
+        }
+    }
+}
+
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 

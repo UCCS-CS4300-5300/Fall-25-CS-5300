@@ -250,7 +250,7 @@
                     <h5 class="mb-0">Admin Actions</h5>
                 </div>
                 <div class="card-body">
-                    <a href="/admin/active_interview_app/ratelimitviolation/" class="btn btn-primary">
+                    <a href="{% url 'admin:active_interview_app_ratelimitviolation_changelist' %}" class="btn btn-primary">
                         <i class="fas fa-database"></i> View All Violations in Admin
                     </a>
                     <a href="{% url 'export_violations' %}" class="btn btn-success">

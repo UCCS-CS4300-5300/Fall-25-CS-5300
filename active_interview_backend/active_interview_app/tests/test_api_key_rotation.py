@@ -574,8 +574,6 @@ class KeyRotationLogModelTest(TestCase):
         )
 
         # Delete the keys
-        old_key_id = self.old_key.id
-        new_key_id = self.new_key.id
         self.old_key.delete()
         self.new_key.delete()
 
@@ -700,7 +698,7 @@ class RotateAPIKeysCommandTest(TestCase):
     def test_rotate_command_not_due(self):
         """Test rotate command when rotation is not due"""
         # Create schedule with future rotation date
-        schedule = KeyRotationSchedule.objects.create(
+        KeyRotationSchedule.objects.create(
             provider='openai',
             is_enabled=True,
             rotation_frequency=KeyRotationSchedule.WEEKLY,
@@ -722,7 +720,7 @@ class RotateAPIKeysCommandTest(TestCase):
     def test_rotate_command_disabled_schedule(self):
         """Test rotate command when schedule is disabled"""
         # Create disabled schedule
-        schedule = KeyRotationSchedule.objects.create(
+        KeyRotationSchedule.objects.create(
             provider='openai',
             is_enabled=False,
             rotation_frequency=KeyRotationSchedule.WEEKLY
@@ -826,7 +824,7 @@ class OpenAIUtilsIntegrationTest(TestCase):
         key1.save()
 
         # Get client (should use key1)
-        client1 = get_openai_client()
+        get_openai_client()
         self.assertEqual(mock_openai.call_count, 1)
         mock_openai.assert_called_with(api_key='sk-key1')
 
@@ -842,7 +840,7 @@ class OpenAIUtilsIntegrationTest(TestCase):
         key2.activate()
 
         # Get client again (should refresh with key2)
-        client2 = get_openai_client()
+        get_openai_client()
         self.assertEqual(mock_openai.call_count, 2)
         mock_openai.assert_called_with(api_key='sk-key2')
 
@@ -889,8 +887,6 @@ class TestEncryptionKey:
 
     def test_get_encryption_key_returns_fernet_key(self, settings):
         """Test that get_encryption_key returns a valid Fernet key"""
-        from cryptography.fernet import Fernet
-
         # Set a valid Fernet key
         test_key = Fernet.generate_key()
         settings.API_KEY_ENCRYPTION_KEY = test_key.decode()
@@ -909,8 +905,6 @@ class TestEncryptionKey:
 
     def test_encryption_decryption_roundtrip(self, settings):
         """Test full encryption/decryption cycle"""
-        from cryptography.fernet import Fernet
-
         # Generate and set encryption key
         settings.API_KEY_ENCRYPTION_KEY = Fernet.generate_key().decode()
 

@@ -11,9 +11,8 @@ Related to: Report Generation Refactor (Phase 2)
 """
 
 import textwrap
-from django.utils import timezone
-from .models import ExportableReport, Chat
-from .openai_utils import get_openai_client, ai_available, MAX_TOKENS
+from .models import ExportableReport
+from .openai_utils import ai_available, MAX_TOKENS
 
 
 def generate_and_save_report(chat, include_rushed_qualifier=False):

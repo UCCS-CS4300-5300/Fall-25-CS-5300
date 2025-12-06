@@ -14,7 +14,7 @@ from typing import Dict, Any
 # Import the OpenAI client utilities from openai_utils
 # This ensures consistent error handling and configuration
 # Updated for Issue #14: Multi-tier model selection with automatic fallback
-from .openai_utils import get_openai_client, get_client_and_model, ai_available, MAX_TOKENS
+from .openai_utils import get_client_and_model, ai_available, MAX_TOKENS
 
 # Maximum characters for resume content before truncation
 # Keep first 10,000 characters (roughly 2,500 tokens) to prevent token

@@ -14,7 +14,7 @@ Usage:
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from datetime import timedelta
-from active_interview_app.models import InvitedInterview, Chat
+from active_interview_app.models import InvitedInterview
 
 
 class Command(BaseCommand):
@@ -183,7 +183,7 @@ class Command(BaseCommand):
         try:
             # Generate report with rushed qualifier
             from active_interview_app.report_utils import generate_and_save_report
-            report = generate_and_save_report(chat, include_rushed_qualifier=True)
+            generate_and_save_report(chat, include_rushed_qualifier=True)
 
             # Mark chat as finalized
             chat.is_finalized = True

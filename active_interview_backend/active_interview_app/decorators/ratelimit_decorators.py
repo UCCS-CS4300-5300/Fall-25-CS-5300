@@ -7,7 +7,6 @@ and operation sensitivity.
 
 from functools import wraps
 from django_ratelimit.decorators import ratelimit
-from django_ratelimit.exceptions import Ratelimited
 from ..ratelimit_config import (
     get_rate_for_user,
     ratelimit_key

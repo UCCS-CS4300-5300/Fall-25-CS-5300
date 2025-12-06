@@ -10,7 +10,7 @@ Provides:
 import csv
 from datetime import timedelta
 from django.contrib.auth.decorators import user_passes_test
-from django.db.models import Count, Q
+from django.db.models import Count
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
@@ -100,7 +100,6 @@ def ratelimit_dashboard(request):
         # Use SimpleTemplateResponse which supports context but doesn't require template files
         from django.template.response import SimpleTemplateResponse
         from django.template import engines
-        from django.template.backends.django import Template as DjangoTemplate
 
         # Create a simple in-memory template
         engine = engines['django']
