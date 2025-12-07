@@ -938,8 +938,8 @@ class IntegratedUserStoriesTest(TestCase):
         finalize_url = reverse('finalize_interview', kwargs={'chat_id': self.chat.id})
 
         # Mock the AI calls to avoid external API dependency
-        with patch('active_interview_app.report_utils.ai_available', return_value=True):
-            with patch('active_interview_app.report_utils.get_openai_client') as mock_get_client:
+        with patch('active_interview_app.openai_utils.ai_available', return_value=True):
+            with patch('active_interview_app.openai_utils.get_openai_client') as mock_get_client:
                 # Create mock client
                 mock_client = MagicMock()
 

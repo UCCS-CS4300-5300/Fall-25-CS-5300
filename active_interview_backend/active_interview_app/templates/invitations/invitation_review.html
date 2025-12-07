@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}
   AIS - Review Interview
 {% endblock title %}
@@ -165,6 +166,16 @@
       border-radius: var(--radius);
       font-size: 1rem;
       transition: border-color 0.2s ease;
+    }
+
+    /* Better contrast for textarea in dark mode */
+    [data-theme="dark"] .form-control {
+      background-color: #1a1a1a;
+      color: #f0f0f0;
+    }
+
+    [data-theme="dark"] .form-control::placeholder {
+      color: #888888;
     }
 
     .form-control:focus {

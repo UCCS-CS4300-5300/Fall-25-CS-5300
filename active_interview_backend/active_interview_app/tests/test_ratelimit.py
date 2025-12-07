@@ -10,19 +10,22 @@ Tests rate limiting on:
 """
 
 import time
-from django.test import TestCase, Client, override_settings
+from django.test import Client, override_settings
 from django.contrib.auth.models import User
 from django.urls import reverse
 from rest_framework.test import APIClient
 from ..models import QuestionBank, Tag
 from .test_credentials import TEST_PASSWORD
+from .base_test import CacheTestCase
 
 
-class RateLimitTestCase(TestCase):
+class RateLimitTestCase(CacheTestCase):
     """Base test case for rate limiting tests."""
 
     def setUp(self):
         """Set up test fixtures."""
+        super().setUp()
+
         self.client = Client()
         self.user = User.objects.create_user(
             username='testuser',
@@ -92,10 +95,6 @@ class APIViewRateLimitTest(RateLimitTestCase):
 
     def test_lenient_rate_limit_authenticated(self):
         """Test lenient rate limiting for authenticated users (120/min)."""
-        # Clear the rate limit cache before testing
-        from django.core.cache import cache
-        cache.clear()
-
         url = '/test/lenient/'  # Using test URL with lenient rate limiting
 
         # Make requests up to the limit (120)
@@ -111,10 +110,6 @@ class APIViewRateLimitTest(RateLimitTestCase):
 
     def test_default_rate_limit_anonymous(self):
         """Test default rate limiting for anonymous users (30/min)."""
-        # Clear the rate limit cache before testing
-        from django.core.cache import cache
-        cache.clear()
-
         url = '/test/default/'  # Using test URL with default rate limiting
 
         # Make requests up to the limit (30)
@@ -168,10 +163,6 @@ class ViewSetRateLimitTest(RateLimitTestCase):
 
     def test_viewset_read_lenient_limit(self):
         """Test that read operations use lenient rate limits (120/min)."""
-        # Clear the rate limit cache before testing
-        from django.core.cache import cache
-        cache.clear()
-
         url = reverse('question-bank-list')
 
         # Make 120 requests with API client
@@ -204,10 +195,6 @@ class ViewSetRateLimitTest(RateLimitTestCase):
 
     def test_viewset_write_strict_limit(self):
         """Test that write operations use strict rate limits (20/min)."""
-        # Clear the rate limit cache before testing
-        from django.core.cache import cache
-        cache.clear()
-
         url = reverse('question-bank-list')
         data = {
             'name': 'New Bank',
@@ -237,10 +224,6 @@ class RateLimitResponseTest(RateLimitTestCase):
 
     def test_http_429_response(self):
         """Test that rate limit exceeded returns HTTP 429."""
-        # Clear the rate limit cache before testing
-        from django.core.cache import cache
-        cache.clear()
-
         url = '/test/default/'
 
         # Exceed the rate limit
@@ -295,10 +278,6 @@ class RateLimitUserTypeTest(RateLimitTestCase):
 
     def test_authenticated_higher_limit(self):
         """Test that authenticated users have higher limits than anonymous."""
-        # Clear the rate limit cache before testing
-        from django.core.cache import cache
-        cache.clear()
-
         url = '/test/default/'
 
         # Authenticated user can make 60 requests
@@ -317,33 +296,40 @@ class RateLimitUserTypeTest(RateLimitTestCase):
 
     def test_ip_based_limiting_anonymous(self):
         """Test that anonymous users are limited by IP address."""
-        # Clear the rate limit cache before testing
-        from django.core.cache import cache
-        cache.clear()
-
         url = '/test/default/'
 
-        # Make requests as anonymous user
-        self.make_requests(url, 31, authenticated=False)
+        # Make requests as anonymous user (limit is 30)
+        responses = self.make_requests(url, 30, authenticated=False)
 
-        # Should be rate limited
+        # All 30 requests should succeed
+        for response in responses:
+            self.assertEqual(response.status_code, 200,
+                             "Request should succeed within limit")
+
+        # 31st request should be rate limited
         response = self.anonymous_client.get(url)
-        self.assertEqual(response.status_code, 429)
+        self.assertEqual(response.status_code, 429,
+                         "31st request should be rate limited")
 
     def test_user_id_based_limiting_authenticated(self):
         """Test that authenticated users are limited by user ID."""
-        # Clear the rate limit cache before testing
-        from django.core.cache import cache
-        cache.clear()
-
         url = '/test/default/'
 
-        # Make requests as authenticated user
-        self.make_requests(url, 61, authenticated=True)
+        # Explicitly log in to ensure authentication persists
+        self.client.force_login(self.user)
 
-        # Should be rate limited
+        # Make requests as authenticated user (limit is 60)
+        responses = self.make_requests(url, 60, authenticated=True)
+
+        # All 60 requests should succeed
+        for response in responses:
+            self.assertEqual(response.status_code, 200,
+                             "Request should succeed within limit")
+
+        # 61st request should be rate limited
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 429)
+        self.assertEqual(response.status_code, 429,
+                         "61st request should be rate limited")
 
 
 @override_settings(

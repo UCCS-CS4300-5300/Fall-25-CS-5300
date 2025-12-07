@@ -158,13 +158,14 @@ class ViewsCriticalPathsTest(TransactionTestCase):
 
     def test_get_openai_client_functions(self):
         """Test get_openai_client and related functions"""
+        from active_interview_app.openai_utils import get_openai_client
         with patch('active_interview_app.openai_utils.settings') as mock_settings:
             # Test missing API key
             mock_settings.OPENAI_API_KEY = None
             import active_interview_app.openai_utils as openai_utils
             openai_utils._openai_client = None
             with self.assertRaises(ValueError):
-                views.get_openai_client()
+                get_openai_client()
 
             # Test successful initialization
             mock_settings.OPENAI_API_KEY = 'test-key'
@@ -172,7 +173,7 @@ class ViewsCriticalPathsTest(TransactionTestCase):
                 mock_openai.return_value = MagicMock()
                 import active_interview_app.openai_utils as openai_utils
                 openai_utils._openai_client = None
-                client = views.get_openai_client()
+                client = get_openai_client()
                 self.assertIsNotNone(client)
 
             # Test initialization error
@@ -182,17 +183,18 @@ class ViewsCriticalPathsTest(TransactionTestCase):
                 import active_interview_app.openai_utils as openai_utils
                 openai_utils._openai_client = None
                 with self.assertRaises(ValueError):
-                    views.get_openai_client()
+                    get_openai_client()
 
     def testai_available_and_unavailable(self):
         """Test ai_available and _ai_unavailable_json"""
+        from active_interview_app.openai_utils import ai_available
         # Test ai_available returns True
         with patch('active_interview_app.openai_utils.get_openai_client', return_value=MagicMock()):
-            self.assertTrue(views.ai_available())
+            self.assertTrue(ai_available())
 
         # Test ai_available returns False
         with patch('active_interview_app.openai_utils.get_openai_client', side_effect=ValueError()):
-            self.assertFalse(views.ai_available())
+            self.assertFalse(ai_available())
 
         # Test _ai_unavailable_json
         response = views._ai_unavailable_json()
