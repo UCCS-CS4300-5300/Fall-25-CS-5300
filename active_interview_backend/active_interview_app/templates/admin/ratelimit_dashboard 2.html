@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Rate Limit Dashboard - Active Interview{% endblock title %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">
+                <i class="fas fa-shield-alt"></i> Rate Limit Violation Dashboard
+            </h1>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">Last Hour</h6>
+                    <h2 class="mb-0">{{ stats.last_hour }}</h2>
+                    <small class="text-muted">violations</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">Last 24 Hours</h6>
+                    <h2 class="mb-0">{{ stats.last_24h }}</h2>
+                    <small class="text-muted">violations</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">Last 7 Days</h6>
+                    <h2 class="mb-0">{{ stats.last_7d }}</h2>
+                    <small class="text-muted">violations</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">Total</h6>
+                    <h2 class="mb-0">{{ stats.total }}</h2>
+                    <small class="text-muted">violations</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auth Stats -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Authenticated vs Anonymous (Last 7 Days)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6 text-center">
+                            <h3 class="text-primary">{{ auth_stats.authenticated }}</h3>
+                            <small class="text-muted">Authenticated Users</small>
+                        </div>
+                        <div class="col-6 text-center">
+                            <h3 class="text-secondary">{{ auth_stats.anonymous }}</h3>
+                            <small class="text-muted">Anonymous Users</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Violations by Type (Last 7 Days)</h5>
+                </div>
+                <div class="card-body">
+                    {% if violations_by_type %}
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th class="text-end">Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in violations_by_type %}
+                            <tr>
+                                <td>{{ item.rate_limit_type }}</td>
+                                <td class="text-end">{{ item.count }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <p class="text-muted">No violations recorded</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Violators -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Top Violators (Last 7 Days)</h5>
+                </div>
+                <div class="card-body">
+                    {% if top_violators %}
+                    <table class="table table-sm table-hover">
+                        <thead>
+                            <tr>
+                                <th>User/IP</th>
+                                <th class="text-end">Violations</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for violator in top_violators %}
+                            <tr>
+                                <td>{{ violator.identifier }}</td>
+                                <td class="text-end">
+                                    <span class="badge bg-danger">{{ violator.count }}</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <p class="text-muted">No violations recorded</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Top Endpoints (Last 7 Days)</h5>
+                </div>
+                <div class="card-body">
+                    {% if top_endpoints %}
+                    <table class="table table-sm table-hover">
+                        <thead>
+                            <tr>
+                                <th>Endpoint</th>
+                                <th class="text-end">Violations</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for endpoint in top_endpoints %}
+                            <tr>
+                                <td><code>{{ endpoint.endpoint }}</code></td>
+                                <td class="text-end">
+                                    <span class="badge bg-warning text-dark">{{ endpoint.count }}</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <p class="text-muted">No violations recorded</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Violations -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Recent Violations (Last Hour)</h5>
+                    <div>
+                        <a href="{% url 'export_violations' %}" class="btn btn-sm btn-outline-success">
+                            <i class="fas fa-download"></i> Export CSV
+                        </a>
+                        <a href="{% url 'violation_analytics' %}" class="btn btn-sm btn-outline-info">
+                            <i class="fas fa-chart-bar"></i> Analytics
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if recent_violations %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>User/IP</th>
+                                    <th>Endpoint</th>
+                                    <th>Method</th>
+                                    <th>Type</th>
+                                    <th>Limit</th>
+                                    <th>Alert</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for violation in recent_violations %}
+                                <tr>
+                                    <td>{{ violation.timestamp|date:"Y-m-d H:i:s" }}</td>
+                                    <td>
+                                        {% if violation.user %}
+                                            {{ violation.user.username }}
+                                        {% else %}
+                                            {{ violation.ip_address }}
+                                        {% endif %}
+                                    </td>
+                                    <td><code>{{ violation.endpoint }}</code></td>
+                                    <td><span class="badge bg-secondary">{{ violation.method }}</span></td>
+                                    <td>{{ violation.rate_limit_type }}</td>
+                                    <td>{{ violation.limit_value }}/min</td>
+                                    <td>
+                                        {% if violation.alert_sent %}
+                                            <i class="fas fa-check-circle text-success"></i>
+                                        {% else %}
+                                            <i class="fas fa-times-circle text-muted"></i>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'violation_detail' violation.id %}" class="btn btn-sm btn-outline-primary">
+                                            Details
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No recent violations</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Admin Actions</h5>
+                </div>
+                <div class="card-body">
+                    <a href="{% url 'admin:active_interview_app_ratelimitviolation_changelist' %}" class="btn btn-primary">
+                        <i class="fas fa-database"></i> View All Violations in Admin
+                    </a>
+                    <a href="{% url 'export_violations' %}" class="btn btn-success">
+                        <i class="fas fa-file-csv"></i> Export Violations
+                    </a>
+                    <a href="{% url 'violation_analytics' %}" class="btn btn-info">
+                        <i class="fas fa-analytics"></i> Advanced Analytics
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    .card-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+    }
+    code {
+        font-size: 0.875rem;
+    }
+</style>
+{% endblock content %}

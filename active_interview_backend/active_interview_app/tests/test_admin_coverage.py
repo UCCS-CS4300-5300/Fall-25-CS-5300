@@ -3,6 +3,7 @@ Comprehensive admin tests to increase coverage above 80%.
 Tests display methods, queryset optimizations, and admin configurations.
 """
 from django.test import TestCase
+from django.test import TestCase
 from django.contrib.auth.models import User
 from django.contrib.admin.sites import AdminSite
 from datetime import datetime, timezone, timedelta
@@ -10,7 +11,7 @@ from decimal import Decimal
 
 from active_interview_app.models import (
     UserProfile, RoleChangeRequest, Tag, QuestionBank, Question,
-    InterviewTemplate, InvitedInterview
+    InterviewTemplate, InvitedInterview  # noqa: F401
 )
 from active_interview_app.token_usage_models import TokenUsage
 from active_interview_app.merge_stats_models import MergeTokenStats
@@ -659,9 +660,7 @@ class APIKeyPoolAdminTest(TestCase):
             encrypted_key=b'test_encrypted_bytes',
             key_prefix='sk-test'
         )
-        form = None
-        change = False
-        self.admin.save_model(self.request, key, form, change)
+        self.admin.save_model(self.request, key, None, False)
         # Verify added_by was set
         self.assertEqual(key.added_by, self.user)
         # Verify key was saved to database

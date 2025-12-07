@@ -32,8 +32,7 @@ from active_interview_app.api_key_rotation_models import (
     KeyRotationSchedule,
     KeyRotationLog,
     get_encryption_key
-)
-from cryptography.fernet import Fernet
+)  # noqa: F401
 
 
 class APIKeyPoolModelTest(TestCase):

@@ -557,7 +557,8 @@ class KeyRotationLog(models.Model):
         )
 
     @classmethod
-    def log_rotation(cls, provider, old_key, new_key, status, rotation_type='scheduled',
+    def log_rotation(cls, provider, old_key, new_key, status,
+                     rotation_type='scheduled',
                      rotated_by=None, error_message='', notes=''):
         """
         Create a rotation log entry.

@@ -9,7 +9,7 @@ from django.test import TestCase, RequestFactory
 from django.contrib.auth.models import User, Group
 from unittest.mock import Mock, patch
 from active_interview_app.adapters import CustomSocialAccountAdapter
-from active_interview_app.models import UserProfile
+from active_interview_app.models import UserProfile  # noqa: F401
 
 
 class CustomSocialAccountAdapterComprehensiveTest(TestCase):

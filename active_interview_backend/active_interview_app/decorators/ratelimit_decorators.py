@@ -28,14 +28,23 @@ def ratelimit_default(methods=None):
 
     def decorator(func):
         @wraps(func)
-        @ratelimit(
-            key=ratelimit_key,
-            rate=lambda group, request: get_rate_for_user('default', request),
-            method=methods,
-            block=True
-        )
         def wrapper(request, *args, **kwargs):
-            return func(request, *args, **kwargs)
+            # Set metadata for middleware logging BEFORE rate limit check
+            request._ratelimit_type = 'default'
+            request._ratelimit_value = 60 if request.user.is_authenticated else 30
+
+            # Apply rate limiting decorator
+            @ratelimit(
+                group='default',
+                key=ratelimit_key,
+                rate=lambda group, request: get_rate_for_user('default', request),
+                method=methods,
+                block=True
+            )
+            def inner(req, *inner_args, **inner_kwargs):
+                return func(req, *inner_args, **inner_kwargs)
+
+            return inner(request, *args, **kwargs)
         return wrapper
     return decorator
 
@@ -56,14 +65,23 @@ def ratelimit_strict(methods=None):
 
     def decorator(func):
         @wraps(func)
-        @ratelimit(
-            key=ratelimit_key,
-            rate=lambda group, request: get_rate_for_user('strict', request),
-            method=methods,
-            block=True
-        )
         def wrapper(request, *args, **kwargs):
-            return func(request, *args, **kwargs)
+            # Set metadata for middleware logging BEFORE rate limit check
+            request._ratelimit_type = 'strict'
+            request._ratelimit_value = 20 if request.user.is_authenticated else 10
+
+            # Apply rate limiting decorator
+            @ratelimit(
+                group='strict',
+                key=ratelimit_key,
+                rate=lambda group, request: get_rate_for_user('strict', request),
+                method=methods,
+                block=True
+            )
+            def inner(req, *inner_args, **inner_kwargs):
+                return func(req, *inner_args, **inner_kwargs)
+
+            return inner(request, *args, **kwargs)
         return wrapper
     return decorator
 
@@ -84,14 +102,23 @@ def ratelimit_lenient(methods=None):
 
     def decorator(func):
         @wraps(func)
-        @ratelimit(
-            key=ratelimit_key,
-            rate=lambda group, request: get_rate_for_user('lenient', request),
-            method=methods,
-            block=True
-        )
         def wrapper(request, *args, **kwargs):
-            return func(request, *args, **kwargs)
+            # Set metadata for middleware logging BEFORE rate limit check
+            request._ratelimit_type = 'lenient'
+            request._ratelimit_value = 120 if request.user.is_authenticated else 60
+
+            # Apply rate limiting decorator
+            @ratelimit(
+                group='lenient',
+                key=ratelimit_key,
+                rate=lambda group, request: get_rate_for_user('lenient', request),
+                method=methods,
+                block=True
+            )
+            def inner(req, *inner_args, **inner_kwargs):
+                return func(req, *inner_args, **inner_kwargs)
+
+            return inner(request, *args, **kwargs)
         return wrapper
     return decorator
 

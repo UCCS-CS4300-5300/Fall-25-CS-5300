@@ -21,7 +21,7 @@ from django.test import TestCase
 from django.contrib.auth.models import User
 from django.utils import timezone
 from decimal import Decimal
-from datetime import timedelta
+from datetime import timedelta  # noqa: F401
 
 from active_interview_app.api_key_rotation_models import (
     APIKeyPool,

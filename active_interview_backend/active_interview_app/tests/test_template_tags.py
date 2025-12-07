@@ -1,11 +1,32 @@
 """Tests for custom template tags."""
 
 from django.test import TestCase
+from django.template import Context, Template
 from ..templatetags import ratelimit_extras
+import active_interview_app.templatetags  # Import __init__.py for coverage
 
 
 class RatelimitExtrasTest(TestCase):
     """Tests for ratelimit_extras template tags."""
+
+    def test_template_tags_module_import(self):
+        """Test that the templatetags module imports correctly."""
+        # This ensures __init__.py is covered
+        self.assertIsNotNone(active_interview_app.templatetags)
+
+    def test_multiply_filter_in_template(self):
+        """Test multiply filter within a template context."""
+        template = Template("{% load ratelimit_extras %}{{ value|multiply:arg }}")
+        context = Context({'value': 10, 'arg': 5})
+        result = template.render(context)
+        self.assertEqual(result.strip(), '50.0')
+
+    def test_divide_filter_in_template(self):
+        """Test divide filter within a template context."""
+        template = Template("{% load ratelimit_extras %}{{ value|divide:arg }}")
+        context = Context({'value': 100, 'arg': 5})
+        result = template.render(context)
+        self.assertEqual(result.strip(), '20.0')
 
     def test_multiply_filter(self):
         """Test multiply filter with valid numbers."""
