@@ -1,6 +1,8 @@
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.conf import settings
@@ -1206,6 +1208,234 @@ class Question(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+
+
+class BiasTermLibrary(models.Model):
+    """
+    Library of bias terms for detecting discriminatory language in feedback.
+
+    Each entry represents a potentially biased term or phrase with:
+    - Pattern matching rules (regex)
+    - Category classification
+    - Explanation of why it's problematic
+    - Neutral alternative suggestions
+    - Severity level (warning vs. blocking)
+
+    Related to Issues #18, #57, #58, #59 (Bias Guardrails).
+    """
+
+    # Bias categories
+    AGE = 'age'
+    GENDER = 'gender'
+    RACE = 'race'
+    DISABILITY = 'disability'
+    APPEARANCE = 'appearance'
+    FAMILY = 'family'
+    OTHER = 'other'
+
+    CATEGORY_CHOICES = [
+        (AGE, 'Age-related'),
+        (GENDER, 'Gender-related'),
+        (RACE, 'Race/Ethnicity'),
+        (DISABILITY, 'Disability'),
+        (APPEARANCE, 'Physical Appearance'),
+        (FAMILY, 'Family Status'),
+        (OTHER, 'Other Bias'),
+    ]
+
+    # Severity levels
+    WARNING = 1  # Shows warning but allows saving
+    BLOCKING = 2  # Prevents saving until resolved
+
+    SEVERITY_CHOICES = [
+        (WARNING, 'Warning'),
+        (BLOCKING, 'Blocking'),
+    ]
+
+    # Core fields
+    term = models.CharField(
+        max_length=100,
+        help_text='The biased term or phrase (e.g., "cultural fit")'
+    )
+
+    category = models.CharField(
+        max_length=20,
+        choices=CATEGORY_CHOICES,
+        help_text='Category of bias this term represents'
+    )
+
+    pattern = models.CharField(
+        max_length=500,
+        help_text=(
+            'Regex pattern for detecting this term and its variations. '
+            'Example: \\b(cultural fit|culture fit)\\b'
+        )
+    )
+
+    explanation = models.TextField(
+        help_text=(
+            'Explanation of why this term is problematic. '
+            'Shown in tooltip to educate users.'
+        )
+    )
+
+    neutral_alternatives = models.JSONField(
+        default=list,
+        help_text=(
+            'List of neutral alternative phrasings. '
+            'Example: ["team collaboration skills", "alignment with company values"]'
+        )
+    )
+
+    severity = models.IntegerField(
+        choices=SEVERITY_CHOICES,
+        default=WARNING,
+        help_text=(
+            'Severity level: WARNING (1) shows warning but allows save, '
+            'BLOCKING (2) prevents save until resolved'
+        )
+    )
+
+    is_active = models.BooleanField(
+        default=True,
+        help_text='Whether this term is actively checked during bias detection'
+    )
+
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_bias_terms',
+        help_text='Admin who added this term'
+    )
+
+    # Usage statistics
+    detection_count = models.IntegerField(
+        default=0,
+        help_text='Number of times this term has been detected in feedback'
+    )
+
+    def __str__(self):
+        return f"{self.term} ({self.get_category_display()})"
+
+    class Meta:
+        verbose_name = 'Bias Term'
+        verbose_name_plural = 'Bias Term Library'
+        ordering = ['category', 'term']
+        indexes = [
+            models.Index(fields=['category', 'is_active']),
+            models.Index(fields=['is_active', 'severity']),
+        ]
+
+
+class BiasAnalysisResult(models.Model):
+    """
+    Stores the result of bias detection analysis for a specific feedback text.
+
+    This model captures:
+    - Which bias terms were detected
+    - Overall bias score/severity
+    - Detailed analysis results
+    - Whether the feedback was saved with warnings
+
+    Related to Issues #18, #57, #58, #59 (Bias Guardrails).
+    """
+
+    # Link to feedback source (polymorphic - can be InvitedInterview or ExportableReport)
+    # We'll use GenericForeignKey for flexibility
+    content_type = models.ForeignKey(
+        ContentType,
+        on_delete=models.CASCADE,
+        help_text='Type of model this analysis is for (InvitedInterview or ExportableReport)'
+    )
+    object_id = models.CharField(
+        max_length=255,
+        help_text='ID of the specific object (supports both integer IDs and UUIDs)'
+    )
+    content_object = GenericForeignKey('content_type', 'object_id')
+
+    # Analysis results
+    flagged_terms = models.JSONField(
+        default=list,
+        blank=True,
+        help_text=(
+            'List of detected bias terms with details. '
+            'Structure: [{"term": str, "category": str, "severity": int, '
+            '"positions": [int], "suggestions": [str]}, ...]'
+        )
+    )
+
+    bias_score = models.FloatField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0.0), MaxValueValidator(1.0)],
+        help_text='Overall bias probability score (0.0 = clean, 1.0 = highly biased)'
+    )
+
+    severity_level = models.CharField(
+        max_length=10,
+        choices=[
+            ('CLEAN', 'Clean'),
+            ('LOW', 'Low'),
+            ('MEDIUM', 'Medium'),
+            ('HIGH', 'High'),
+        ],
+        default='CLEAN',
+        help_text='Overall severity assessment'
+    )
+
+    total_flags = models.IntegerField(
+        default=0,
+        help_text='Total number of bias flags detected'
+    )
+
+    blocking_flags = models.IntegerField(
+        default=0,
+        help_text='Number of blocking-severity flags (prevent save)'
+    )
+
+    warning_flags = models.IntegerField(
+        default=0,
+        help_text='Number of warning-severity flags (allow save with acknowledgment)'
+    )
+
+    # User interaction
+    saved_with_warnings = models.BooleanField(
+        default=False,
+        help_text='Whether the user chose to save despite warnings'
+    )
+
+    user_acknowledged = models.BooleanField(
+        default=False,
+        help_text='Whether the user acknowledged the bias warnings'
+    )
+
+    # Metadata
+    analyzed_at = models.DateTimeField(auto_now_add=True)
+    feedback_text_hash = models.CharField(
+        max_length=64,
+        blank=True,
+        help_text='Hash of analyzed text (for detecting re-analysis of same content)'
+    )
+
+    def __str__(self):
+        return (
+            f"Bias Analysis: {self.severity_level} "
+            f"({self.total_flags} flags) - {self.analyzed_at}"
+        )
+
+    class Meta:
+        verbose_name = 'Bias Analysis Result'
+        verbose_name_plural = 'Bias Analysis Results'
+        ordering = ['-analyzed_at']
+        indexes = [
+            models.Index(fields=['content_type', 'object_id']),
+            models.Index(fields=['severity_level', 'analyzed_at']),
+        ]
 
 
 # Import token tracking models (must be at end to avoid circular imports)
