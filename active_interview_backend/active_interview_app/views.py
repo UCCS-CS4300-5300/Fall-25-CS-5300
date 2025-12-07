@@ -2991,24 +2991,28 @@ def invitation_dashboard(request):
     return render(request, 'invitations/invitation_dashboard.html', context)
 
 
-def _build_review_error_context(invitation, chat, bias_service, feedback, analysis):
+def _build_bias_feedback_form_context(invitation, chat, bias_service, feedback, analysis):
     """
-    Helper function to build context for returning to review form with errors.
+    Build template context for bias detection feedback form.
+
+    Prepares all necessary data for rendering the interviewer review form,
+    including bias detection results and serialized bias terms for client-side
+    real-time detection.
 
     Args:
         invitation: InvitedInterview object
         chat: Chat object
         bias_service: BiasDetectionService instance
         feedback: User's feedback text
-        analysis: Bias analysis result dict
+        analysis: Bias analysis result dict from bias_service.analyze_feedback()
 
     Returns:
-        Context dictionary for template rendering
+        Context dictionary for template rendering with bias detection data
     """
     return {
         'invitation': invitation,
         'chat': chat,
-        'bias_terms_json': json.dumps(_serialize_bias_terms(bias_service)),
+        'bias_terms_json': json.dumps(_serialize_bias_terms_for_client(bias_service)),
         'initial_feedback': feedback,
         'initial_analysis': analysis,
     }
@@ -3067,7 +3071,7 @@ def invitation_review(request, invitation_id):
                     'Please revise the highlighted terms.'
                 )
                 # Return to form with analysis
-                context = _build_review_error_context(
+                context = _build_bias_feedback_form_context(
                     invitation, chat, bias_service, feedback, bias_analysis
                 )
                 return render(request, 'invitations/invitation_review.html', context)
@@ -3079,7 +3083,7 @@ def invitation_review(request, invitation_id):
                     'Cannot notify candidate with biased feedback. '
                     'Please resolve all flagged terms before marking as reviewed.'
                 )
-                context = _build_review_error_context(
+                context = _build_bias_feedback_form_context(
                     invitation, chat, bias_service, feedback, bias_analysis
                 )
                 return render(request, 'invitations/invitation_review.html', context)
@@ -3123,17 +3127,25 @@ def invitation_review(request, invitation_id):
     context = {
         'invitation': invitation,
         'chat': chat,
-        'bias_terms_json': json.dumps(_serialize_bias_terms(bias_service)),
+        'bias_terms_json': json.dumps(_serialize_bias_terms_for_client(bias_service)),
     }
 
     return render(request, 'invitations/invitation_review.html', context)
 
 
-def _serialize_bias_terms(bias_service):
+def _serialize_bias_terms_for_client(bias_service):
     """
-    Serialize active bias terms to JSON for client-side detection.
+    Serialize active bias terms for client-side JavaScript detection.
 
-    Returns a list of term objects with pattern, category, severity, etc.
+    Converts bias term model instances to JSON-serializable dictionaries
+    for real-time bias detection in the browser. Includes regex patterns,
+    categories, severity levels, and alternative suggestions.
+
+    Args:
+        bias_service: BiasDetectionService instance
+
+    Returns:
+        List of dictionaries containing bias term data for client-side use
     """
     terms = bias_service.get_active_bias_terms()
 

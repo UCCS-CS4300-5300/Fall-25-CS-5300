@@ -3,14 +3,10 @@ Comprehensive tests for BiasDetectionService
 
 Related to Issues #18, #57, #58, #59 (Bias Guardrails).
 """
-from django.test import TestCase
 from django.contrib.auth.models import User
-from django.contrib.contenttypes.models import ContentType
-from django.core.cache import cache
 from django.utils import timezone
 from active_interview_app.models import (
     BiasTermLibrary,
-    BiasAnalysisResult,
     InvitedInterview,
     InterviewTemplate
 )
@@ -20,15 +16,15 @@ from active_interview_app.bias_detection import (
     is_feedback_clean,
     get_suggestions
 )
+from .base_test import CacheTestCase
 
 
-class BiasDetectionServiceTest(TestCase):
+class BiasDetectionServiceTest(CacheTestCase):
     """Test cases for BiasDetectionService"""
 
     def setUp(self):
         """Set up test data"""
-        # Clear cache before each test
-        cache.clear()
+        super().setUp()
 
         # Create test user
         self.user = User.objects.create_user(
@@ -72,10 +68,6 @@ class BiasDetectionServiceTest(TestCase):
 
         # Initialize service
         self.service = BiasDetectionService()
-
-    def tearDown(self):
-        """Clear cache after each test"""
-        cache.clear()
 
     # =========================================================================
     # Basic Detection Tests
@@ -269,7 +261,7 @@ class BiasDetectionServiceTest(TestCase):
         self.service.clear_cache()
 
         # Should not crash
-        result = self.service.analyze_feedback("Some feedback")
+        self.service.analyze_feedback("Some feedback")
         # Should still work for other terms
         result2 = self.service.analyze_feedback("Too old")
         self.assertTrue(result2['has_bias'])

@@ -21,6 +21,7 @@ Usage:
 
 import re
 import hashlib
+import logging
 from typing import Dict, List, Optional
 from django.core.cache import cache
 from django.db import transaction
@@ -28,6 +29,8 @@ from django.db.models import F
 from django.contrib.contenttypes.models import ContentType
 
 from .models import BiasTermLibrary, BiasAnalysisResult
+
+logger = logging.getLogger(__name__)
 
 
 class BiasDetectionService:
@@ -318,6 +321,10 @@ class BiasDetectionService:
         """
         Increment detection count for a bias term (non-blocking).
 
+        This method updates the detection count in a non-blocking way.
+        If the update fails, it logs the error but does not raise an exception
+        to prevent disrupting the bias analysis workflow.
+
         Args:
             term_id: ID of BiasTermLibrary object
         """
@@ -325,9 +332,12 @@ class BiasDetectionService:
             BiasTermLibrary.objects.filter(id=term_id).update(
                 detection_count=F('detection_count') + 1
             )
-        except Exception:
-            # Don't fail analysis if count update fails
-            pass
+        except Exception as e:
+            # Log the error but don't fail the analysis if count update fails
+            logger.warning(
+                f"Failed to increment detection count for bias term {term_id}: {e}",
+                exc_info=True
+            )
 
     @transaction.atomic
     def save_analysis_result(
