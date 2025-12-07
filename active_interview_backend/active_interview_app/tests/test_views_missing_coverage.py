@@ -13,11 +13,11 @@ from active_interview_app.models import (
     UploadedJobListing,
     Chat
 )
-from active_interview_app.views import (
+from active_interview_app.openai_utils import (
     get_openai_client,
-    ai_available,
-    _ai_unavailable_json
+    ai_available
 )
+from active_interview_app.views import _ai_unavailable_json
 from .test_credentials import TEST_PASSWORD
 
 
@@ -54,7 +54,7 @@ class OpenAIClientTest(TestCase):
         self.assertIn("Failed to initialize OpenAI client",
                       str(context.exception))
 
-    @patch('active_interview_app.views.get_client_and_model')
+    @patch('active_interview_app.openai_utils.get_client_and_model')
     def testai_available_returns_true(self, mock_get_client_and_model):
         """Test ai_available when client can be initialized"""
         mock_client = MagicMock()

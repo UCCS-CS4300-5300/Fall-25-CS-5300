@@ -504,7 +504,7 @@ class ChatViewDurationEnforcementPOSTTests(TestCase):
         # Should work (practice interviews don't expire)
         # Note: Will fail without OpenAI mock, but expiration logic happens
         # first
-        with patch('active_interview_app.views.get_openai_client') as mock_client:
+        with patch('active_interview_app.openai_utils.get_openai_client') as mock_client:
             mock_ai_client = MagicMock()
             mock_response = create_mock_openai_response("AI response")
             mock_ai_client.chat.completions.create.return_value = mock_response

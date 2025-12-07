@@ -128,7 +128,7 @@ class ProfileViewTest(TestCase):
         self.client.login(username='testuser', password=TEST_PASSWORD)
 
         # Create spending cap
-        _cap = MonthlySpendingCap.objects.create(  # noqa: F841
+        MonthlySpendingCap.objects.create(
             cap_amount_usd=Decimal('200.00'),
             is_active=True
         )
@@ -169,7 +169,7 @@ class ProfileViewTest(TestCase):
         self.client.login(username='testuser', password=TEST_PASSWORD)
 
         # Create spending for November 2025
-        _nov_spending = MonthlySpending.objects.create(  # noqa: F841
+        MonthlySpending.objects.create(
             year=2025,
             month=11,
             total_cost_usd=Decimal('150.00'),

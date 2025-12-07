@@ -19,7 +19,8 @@ from django.core import mail
 from datetime import timedelta
 
 from active_interview_app.models import (
-    UserProfile, Chat, InterviewTemplate, InvitedInterview
+    UserProfile, Chat, InterviewTemplate, InvitedInterview,
+    BiasTermLibrary, BiasAnalysisResult
 )
 from .test_credentials import TEST_PASSWORD
 
@@ -696,3 +697,298 @@ class DashboardReviewButtonTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'View Review')
+
+
+class BiasGuardrailsTests(TestCase):
+    """Test bias detection guardrails in feedback submission
+
+    Related to Issues #18, #57, #58, #59 (Bias Guardrails)
+    """
+
+    def setUp(self):
+        self.client = Client()
+
+        # Create interviewer
+        self.interviewer = User.objects.create_user(
+            username='interviewer@test.com',
+            email='interviewer@test.com',
+            password='testpass123'
+        )
+        interviewer_profile = UserProfile.objects.get(user=self.interviewer)
+        interviewer_profile.role = 'interviewer'
+        interviewer_profile.save()
+
+        # Create candidate
+        self.candidate = User.objects.create_user(
+            username='candidate@test.com',
+            email='candidate@test.com',
+            password='testpass123'
+        )
+
+        # Create template
+        self.template = InterviewTemplate.objects.create(
+            user=self.interviewer,
+            name='Technical Interview'
+        )
+
+        # Create completed invitation with chat
+        self.invitation = InvitedInterview.objects.create(
+            interviewer=self.interviewer,
+            candidate_email='candidate@test.com',
+            template=self.template,
+            scheduled_time=timezone.now() - timedelta(hours=2),
+            duration_minutes=60,
+            status=InvitedInterview.COMPLETED,
+            completed_at=timezone.now() - timedelta(hours=1)
+        )
+
+        self.chat = Chat.objects.create(
+            owner=self.candidate,
+            title='Technical Interview',
+            interview_type=Chat.INVITED,
+            scheduled_end_at=timezone.now() - timedelta(hours=1)
+        )
+        self.invitation.chat = self.chat
+        self.invitation.save()
+
+        # Create bias terms
+        self.blocking_term = BiasTermLibrary.objects.create(
+            term='pregnant',
+            category=BiasTermLibrary.FAMILY,
+            pattern=r'\b(pregnant|pregnancy)\b',
+            explanation='Discriminatory family status language',
+            neutral_alternatives=['experienced professional', 'qualified candidate'],
+            severity=BiasTermLibrary.BLOCKING,
+            is_active=True,
+            created_by=self.interviewer
+        )
+
+        self.warning_term = BiasTermLibrary.objects.create(
+            term='young',
+            category=BiasTermLibrary.AGE,
+            pattern=r'\b(young|youth(ful)?)\b',
+            explanation='Age-related bias',
+            neutral_alternatives=['early-career professional', 'recent graduate'],
+            severity=BiasTermLibrary.WARNING,
+            is_active=True,
+            created_by=self.interviewer
+        )
+
+        self.client.login(username='interviewer@test.com', password='testpass123')
+        self.url = reverse('invitation_review', kwargs={'invitation_id': self.invitation.id})
+
+    def test_blocking_term_prevents_save(self):
+        """Test that blocking-severity terms prevent feedback from being saved"""
+        feedback_with_blocking = "She is pregnant but very capable."
+
+        response = self.client.post(self.url, {
+            'interviewer_feedback': feedback_with_blocking,
+            'mark_reviewed': 'false'
+        })
+
+        # Should NOT redirect (stays on page with error)
+        self.assertEqual(response.status_code, 200)
+
+        # Feedback should NOT be saved
+        self.invitation.refresh_from_db()
+        self.assertEqual(self.invitation.interviewer_feedback, '')
+
+        # Check error message
+        messages_list = list(response.context['messages'])
+        self.assertTrue(any('bias terms that must be resolved' in str(m) for m in messages_list))
+
+    def test_warning_term_allows_save(self):
+        """Test that warning-severity terms allow saving but are flagged"""
+        feedback_with_warning = "He is young but shows potential."
+
+        response = self.client.post(self.url, {
+            'interviewer_feedback': feedback_with_warning,
+            'mark_reviewed': 'false'
+        })
+
+        # Should redirect (save succeeds)
+        self.assertEqual(response.status_code, 302)
+
+        # Feedback should be saved
+        self.invitation.refresh_from_db()
+        self.assertEqual(self.invitation.interviewer_feedback, feedback_with_warning)
+
+        # Check that bias analysis was saved
+        analysis = BiasAnalysisResult.objects.filter(
+            object_id=str(self.invitation.pk)
+        ).first()
+        self.assertIsNotNone(analysis)
+        self.assertEqual(analysis.warning_flags, 1)
+        self.assertEqual(analysis.blocking_flags, 0)
+
+    def test_clean_feedback_passes_validation(self):
+        """Test that clean feedback passes without issues"""
+        clean_feedback = "Candidate demonstrated strong technical skills and clear communication."
+
+        response = self.client.post(self.url, {
+            'interviewer_feedback': clean_feedback,
+            'mark_reviewed': 'false'
+        })
+
+        # Should redirect (save succeeds)
+        self.assertEqual(response.status_code, 302)
+
+        # Feedback should be saved
+        self.invitation.refresh_from_db()
+        self.assertEqual(self.invitation.interviewer_feedback, clean_feedback)
+
+        # Check success message
+        messages_list = list(response.wsgi_request._messages)
+        self.assertTrue(any('Clean feedback saved successfully' in str(m) for m in messages_list))
+
+    def test_mark_reviewed_blocked_with_any_bias(self):
+        """Test that marking as reviewed is blocked if ANY bias flags exist (warning or blocking)"""
+        feedback_with_warning = "He is young but talented."
+
+        response = self.client.post(self.url, {
+            'interviewer_feedback': feedback_with_warning,
+            'mark_reviewed': 'true'  # Trying to mark as reviewed
+        })
+
+        # Should NOT redirect (blocked)
+        self.assertEqual(response.status_code, 200)
+
+        # Should NOT be marked as reviewed
+        self.invitation.refresh_from_db()
+        self.assertNotEqual(self.invitation.status, InvitedInterview.REVIEWED)
+        self.assertNotEqual(self.invitation.interviewer_review_status, InvitedInterview.REVIEW_COMPLETED)
+
+        # Check error message
+        messages_list = list(response.context['messages'])
+        self.assertTrue(any('Cannot notify candidate with biased feedback' in str(m) for m in messages_list))
+
+    def test_mark_reviewed_succeeds_with_clean_feedback(self):
+        """Test that marking as reviewed succeeds with clean feedback"""
+        clean_feedback = "Excellent problem-solving abilities demonstrated."
+
+        response = self.client.post(self.url, {
+            'interviewer_feedback': clean_feedback,
+            'mark_reviewed': 'true'
+        })
+
+        # Should redirect (success)
+        self.assertEqual(response.status_code, 302)
+
+        # Should be marked as reviewed
+        self.invitation.refresh_from_db()
+        self.assertEqual(self.invitation.status, InvitedInterview.REVIEWED)
+        self.assertEqual(self.invitation.interviewer_review_status, InvitedInterview.REVIEW_COMPLETED)
+
+    def test_context_includes_bias_terms_json(self):
+        """Test that template context includes serialized bias terms"""
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('bias_terms_json', response.context)
+
+        # Should be JSON string
+        bias_terms_json = response.context['bias_terms_json']
+        self.assertIsInstance(bias_terms_json, str)
+
+        # Should contain our test terms
+        self.assertIn('pregnant', bias_terms_json)
+        self.assertIn('young', bias_terms_json)
+
+    def test_feedback_preserved_on_validation_error(self):
+        """Test that feedback text is preserved when validation fails"""
+        feedback_with_blocking = "She is pregnant but qualified."
+
+        response = self.client.post(self.url, {
+            'interviewer_feedback': feedback_with_blocking,
+            'mark_reviewed': 'false'
+        })
+
+        # Should stay on page
+        self.assertEqual(response.status_code, 200)
+
+        # Check that initial_feedback is in context
+        self.assertIn('initial_feedback', response.context)
+        self.assertEqual(response.context['initial_feedback'], feedback_with_blocking)
+
+    def test_multiple_blocking_terms_all_detected(self):
+        """Test that multiple blocking terms are all detected"""
+        from active_interview_app.bias_detection import BiasDetectionService
+
+        # Create another blocking term
+        BiasTermLibrary.objects.create(
+            term='old',
+            category=BiasTermLibrary.AGE,
+            pattern=r'\b(old|elderly)\b',
+            explanation='Age-related bias',
+            neutral_alternatives=['experienced', 'seasoned'],
+            severity=BiasTermLibrary.BLOCKING,
+            is_active=True
+        )
+
+        # Clear cache to pick up the new term
+        service = BiasDetectionService()
+        service.clear_cache()
+
+        feedback_multiple = "She is pregnant and he is old."
+
+        response = self.client.post(self.url, {
+            'interviewer_feedback': feedback_multiple,
+            'mark_reviewed': 'false'
+        })
+
+        # Should be blocked
+        self.assertEqual(response.status_code, 200)
+
+        # Feedback not saved
+        self.invitation.refresh_from_db()
+        self.assertEqual(self.invitation.interviewer_feedback, '')
+
+    def test_inactive_terms_not_detected(self):
+        """Test that inactive bias terms are not detected"""
+        from active_interview_app.bias_detection import BiasDetectionService
+
+        # Deactivate the blocking term
+        self.blocking_term.is_active = False
+        self.blocking_term.save()
+
+        # Clear cache to pick up the change
+        service = BiasDetectionService()
+        service.clear_cache()
+
+        feedback_with_inactive_term = "She is pregnant and qualified."
+
+        response = self.client.post(self.url, {
+            'interviewer_feedback': feedback_with_inactive_term,
+            'mark_reviewed': 'false'
+        })
+
+        # Should succeed (term is inactive)
+        self.assertEqual(response.status_code, 302)
+
+        # Feedback should be saved
+        self.invitation.refresh_from_db()
+        self.assertEqual(self.invitation.interviewer_feedback, feedback_with_inactive_term)
+
+    def test_bias_analysis_result_saved(self):
+        """Test that BiasAnalysisResult is created when feedback with warnings is saved"""
+        feedback_with_warning = "Candidate is young but shows promise."
+
+        response = self.client.post(self.url, {
+            'interviewer_feedback': feedback_with_warning,
+            'mark_reviewed': 'false'
+        })
+
+        self.assertEqual(response.status_code, 302)
+
+        # Check BiasAnalysisResult was created
+        analysis = BiasAnalysisResult.objects.filter(
+            object_id=str(self.invitation.pk)
+        ).first()
+
+        self.assertIsNotNone(analysis)
+        self.assertEqual(analysis.total_flags, 1)
+        self.assertEqual(analysis.warning_flags, 1)
+        self.assertEqual(analysis.blocking_flags, 0)
+        self.assertIn(analysis.severity_level, ['LOW', 'MEDIUM'])  # Can be either based on bias score
+        self.assertTrue(analysis.saved_with_warnings)
+        self.assertTrue(analysis.user_acknowledged)

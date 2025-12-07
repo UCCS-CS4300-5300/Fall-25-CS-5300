@@ -3,6 +3,7 @@ Comprehensive admin tests to increase coverage above 80%.
 Tests display methods, queryset optimizations, and admin configurations.
 """
 from django.test import TestCase
+from django.test import TestCase
 from django.contrib.auth.models import User
 from django.contrib.admin.sites import AdminSite
 from datetime import datetime, timezone, timedelta
@@ -572,7 +573,7 @@ class MonthlySpendingAdminTest(TestCase):
 
     def test_cap_percentage_display_with_cap(self):
         """Test cap_percentage_display with active cap"""
-        _cap = MonthlySpendingCap.objects.create(  # noqa: F841
+        MonthlySpendingCap.objects.create(
             cap_amount_usd=Decimal('1000.00'),
             is_active=True,
             created_by=self.user
@@ -597,7 +598,7 @@ class MonthlySpendingAdminTest(TestCase):
 
     def test_alert_status_over_cap(self):
         """Test alert_status when over cap"""
-        _cap = MonthlySpendingCap.objects.create(  # noqa: F841
+        MonthlySpendingCap.objects.create(
             cap_amount_usd=Decimal('100.00'),
             is_active=True,
             created_by=self.user
@@ -691,7 +692,6 @@ class KeyRotationScheduleAdminTest(TestCase):
         )
         # Now test that save_model sets created_by correctly when called again
         schedule.created_by = None
-        # Mark as change to avoid resetting created_by
 
         # For a new object (change=False), test just the field assignment
         new_schedule = KeyRotationSchedule(
