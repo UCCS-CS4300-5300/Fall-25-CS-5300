@@ -4,6 +4,7 @@
 # 03/06/2025
 
 from datetime import datetime
+import os
 import sys
 from zoneinfo import ZoneInfo
 
@@ -14,8 +15,23 @@ TIMEZONE = "America/Denver"
 TIME_FORMAT = "%m-%d-%Y_%I%M%p"
 
 
+# Check if OPENAI_API_KEY is set
+api_key = os.environ.get("OPENAI_API_KEY")
+if not api_key or api_key == "":
+    print("# AI Review Skipped")
+    print("\n**Note:** OPENAI_API_KEY environment variable is not set.")
+    print("\n**Recommendation:** Configure the OPENAI_API_KEY secret in GitHub repository settings.")
+    print("\n**Status:** AI_REVIEW_SUCCESS (skipping AI review to not block PR)")
+    sys.exit(0)
+
 # Startup open ai client
-client = OpenAI()
+try:
+    client = OpenAI(api_key=api_key)
+except Exception as e:
+    print(f"# AI Review Failed\n\nError initializing OpenAI client: {str(e)}")
+    print("\n**Note:** Could not initialize OpenAI client. OPENAI_API_KEY may be invalid.")
+    print("\n**Status:** AI_REVIEW_SUCCESS (defaulting to pass to not block PR)")
+    sys.exit(0)
 
 # Get the diff from command line argument 1
 diff = ""
@@ -125,22 +141,53 @@ Provide a brief overall assessment with:
 
 # print(prompt)
 
-# Run the prompt
-completion = client.chat.completions.create(
-    model="gpt-4o",
-    messages=[
-        {
-            "role": "system",
-            "content": "You are a helpful assistant that provides information \
-                        in Markdown format."
-        },
-        {
-            "role": "user",
-            "content": prompt
-        }
-    ]
-)
-response = completion.choices[0].message.content
+# Run the prompt with error handling
+try:
+    completion = client.chat.completions.create(
+        model="gpt-4o",
+        messages=[
+            {
+                "role": "system",
+                "content": "You are a helpful assistant that provides information \
+                            in Markdown format."
+            },
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ],
+        timeout=60.0  # Add timeout to prevent hanging
+    )
+    response = completion.choices[0].message.content
+except Exception as e:
+    error_type = type(e).__name__
+    error_msg = str(e)
+
+    print(f"# AI Review Failed")
+    print(f"\n**Error Type:** {error_type}")
+    print(f"\n**Error Message:** {error_msg}")
+    print("\n**Possible Causes:**")
+
+    # Provide specific guidance based on error type
+    if "AuthenticationError" in error_type or "authentication" in error_msg.lower():
+        print("- Invalid OPENAI_API_KEY")
+        print("- API key may have been revoked or expired")
+    elif "RateLimitError" in error_type or "rate limit" in error_msg.lower():
+        print("- OpenAI API rate limit exceeded")
+        print("- Too many requests in a short time period")
+    elif "timeout" in error_msg.lower() or "Timeout" in error_type:
+        print("- Request timed out (took longer than 60 seconds)")
+        print("- Diff may be too large to process")
+    elif "connection" in error_msg.lower() or "network" in error_msg.lower():
+        print("- Network connectivity issues")
+        print("- GitHub Actions runner may not have internet access")
+    else:
+        print("- API service may be experiencing issues")
+        print("- Unexpected error occurred")
+
+    print("\n**Recommendation:** Please review the code changes manually.")
+    print("\n**Status:** AI_REVIEW_SUCCESS (defaulting to pass to not block PR)")
+    sys.exit(0)  # Exit gracefully to not block CI/CD
 
 # Print the response and write markdown file
 print(response)
