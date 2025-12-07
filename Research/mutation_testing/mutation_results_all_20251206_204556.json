@@ -1,0 +1,13 @@
+{
+  "timestamp": "2025-12-06T20:39:25.829721",
+  "module": "all",
+  "summary": {
+    "killed": 0,
+    "survived": 0,
+    "timeout": 0,
+    "suspicious": 0,
+    "total": 0,
+    "mutation_score": 0.0
+  },
+  "test_effectiveness_score": 0.0
+}
