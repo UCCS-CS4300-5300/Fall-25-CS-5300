@@ -41,6 +41,23 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
                 if existing_user:
                     # Connect the social account to the existing user
                     sociallogin.connect(request, existing_user)
+
+                    # Update auth_provider for existing local users (Issue #128)
+                    try:
+                        profile = UserProfile.objects.filter(user=existing_user).first()
+                        if profile and profile.auth_provider == 'local':
+                            provider = sociallogin.account.provider
+                            profile.auth_provider = provider
+                            profile.save()
+                            logger.info(
+                                f"Updated auth_provider for existing user "
+                                f"{existing_user.username} from 'local' to '{provider}'"
+                            )
+                    except Exception as profile_error:
+                        logger.warning(
+                            f"Failed to update auth_provider for user "
+                            f"{existing_user.username}: {profile_error}"
+                        )
         except Exception as e:
             # If anything goes wrong, log it and let allauth handle it normally
             logger.warning(
