@@ -78,23 +78,24 @@ class ProfileEditGETRequestTestCase(TestCase):
         form = response.context['form']
 
         # Check initial values
+        self.assertEqual(form.initial['username'], 'testuser')
         self.assertEqual(form.initial['email'], 'test@example.com')
         self.assertEqual(form.initial['first_name'], 'John')
         self.assertEqual(form.initial['last_name'], 'Doe')
 
-    def test_username_shown_as_readonly(self):
-        """Test that username is displayed as read-only."""
+    def test_username_field_editable(self):
+        """Test that username is now an editable field."""
         self.client.login(username='testuser', password='testpass123')
         response = self.client.get(self.edit_url)
 
         self.assertEqual(response.status_code, 200)
 
-        # Username should be in context for display
-        self.assertEqual(response.context['username'], 'testuser')
-
-        # Username should NOT be in form fields
+        # Username should be in form fields
         form = response.context['form']
-        self.assertNotIn('username', form.fields)
+        self.assertIn('username', form.fields)
+
+        # Username field should have current value
+        self.assertEqual(form.initial['username'], 'testuser')
 
 
 class ProfileEditPOSTRequestTestCase(TestCase):
@@ -120,6 +121,7 @@ class ProfileEditPOSTRequestTestCase(TestCase):
         self.client.login(username='testuser', password='testpass123')
 
         response = self.client.post(self.edit_url, {
+            'username': 'testuser',
             'email': 'updated@example.com',
             'first_name': 'Updated',
             'last_name': 'User'
@@ -133,6 +135,7 @@ class ProfileEditPOSTRequestTestCase(TestCase):
         self.user.refresh_from_db()
 
         # Check data was saved
+        self.assertEqual(self.user.username, 'testuser')
         self.assertEqual(self.user.email, 'updated@example.com')
         self.assertEqual(self.user.first_name, 'Updated')
         self.assertEqual(self.user.last_name, 'User')
@@ -142,6 +145,7 @@ class ProfileEditPOSTRequestTestCase(TestCase):
         self.client.login(username='testuser', password='testpass123')
 
         response = self.client.post(self.edit_url, {
+            'username': 'testuser',
             'email': 'updated@example.com',
             'first_name': 'Updated',
             'last_name': 'User'
@@ -157,6 +161,7 @@ class ProfileEditPOSTRequestTestCase(TestCase):
         self.client.login(username='testuser', password='testpass123')
 
         response = self.client.post(self.edit_url, {
+            'username': 'testuser',
             'email': 'updated@example.com',
             'first_name': 'Updated',
             'last_name': 'User'
@@ -192,6 +197,7 @@ class ProfileEditValidationTestCase(TestCase):
 
         # Try to use user2's email
         response = self.client.post(self.edit_url, {
+            'username': 'user1',
             'email': 'user2@example.com',
             'first_name': '',
             'last_name': ''
@@ -219,6 +225,7 @@ class ProfileEditValidationTestCase(TestCase):
 
         # Submit form with same email
         response = self.client.post(self.edit_url, {
+            'username': 'user1',
             'email': 'user1@example.com',  # Same as current
             'first_name': 'Updated',
             'last_name': 'Name'
@@ -237,6 +244,7 @@ class ProfileEditValidationTestCase(TestCase):
         self.client.login(username='user1', password='testpass123')
 
         response = self.client.post(self.edit_url, {
+            'username': 'user1',
             'email': 'invalid-email-format',  # No @ symbol
             'first_name': 'Test',
             'last_name': 'User'
@@ -255,6 +263,7 @@ class ProfileEditValidationTestCase(TestCase):
         self.client.login(username='user1', password='testpass123')
 
         response = self.client.post(self.edit_url, {
+            'username': 'user1',
             'email': '',  # Blank email
             'first_name': 'Test',
             'last_name': 'User'
@@ -267,6 +276,92 @@ class ProfileEditValidationTestCase(TestCase):
         form = response.context['form']
         self.assertTrue(form.errors)
         self.assertIn('email', form.errors)
+
+    def test_username_can_be_changed(self):
+        """Test that username can be successfully changed."""
+        self.client.login(username='user1', password='testpass123')
+
+        response = self.client.post(self.edit_url, {
+            'username': 'newusername',
+            'email': 'user1@example.com',
+            'first_name': 'User',
+            'last_name': 'One'
+        })
+
+        # Should succeed (redirect)
+        self.assertEqual(response.status_code, 302)
+
+        # Check username was changed
+        self.user1.refresh_from_db()
+        self.assertEqual(self.user1.username, 'newusername')
+
+    def test_username_uniqueness_validation(self):
+        """Test that duplicate usernames are rejected."""
+        self.client.login(username='user1', password='testpass123')
+
+        # Try to use user2's username
+        response = self.client.post(self.edit_url, {
+            'username': 'user2',
+            'email': 'user1@example.com',
+            'first_name': '',
+            'last_name': ''
+        })
+
+        # Should not redirect (form has errors)
+        self.assertEqual(response.status_code, 200)
+
+        # Should show error message
+        form = response.context['form']
+        self.assertTrue(form.errors)
+        self.assertIn('username', form.errors)
+        self.assertIn(
+            'already taken',
+            form.errors['username'][0].lower()
+        )
+
+        # User1's username should NOT be changed
+        self.user1.refresh_from_db()
+        self.assertEqual(self.user1.username, 'user1')
+
+    def test_own_username_allowed(self):
+        """Test that user can keep their own username (not flagged as duplicate)."""
+        self.client.login(username='user1', password='testpass123')
+
+        # Submit form with same username
+        response = self.client.post(self.edit_url, {
+            'username': 'user1',  # Same as current
+            'email': 'user1@example.com',
+            'first_name': 'Updated',
+            'last_name': 'Name'
+        })
+
+        # Should succeed (redirect)
+        self.assertEqual(response.status_code, 302)
+
+        # Check data was saved
+        self.user1.refresh_from_db()
+        self.assertEqual(self.user1.username, 'user1')
+        self.assertEqual(self.user1.first_name, 'Updated')
+
+    def test_invalid_username_format_rejected(self):
+        """Test that invalid username format is rejected."""
+        self.client.login(username='user1', password='testpass123')
+
+        # Test with spaces (invalid for Django username)
+        response = self.client.post(self.edit_url, {
+            'username': 'user name',  # Spaces not allowed
+            'email': 'user1@example.com',
+            'first_name': 'Test',
+            'last_name': 'User'
+        })
+
+        # Should not redirect (form has errors)
+        self.assertEqual(response.status_code, 200)
+
+        # Should show error
+        form = response.context['form']
+        self.assertTrue(form.errors)
+        self.assertIn('username', form.errors)
 
 
 class ProfileEditOwnershipTestCase(TestCase):
@@ -299,6 +394,7 @@ class ProfileEditOwnershipTestCase(TestCase):
         self.client.login(username='user1', password='testpass123')
 
         response = self.client.post(self.edit_url, {
+            'username': 'user1',
             'email': 'updated@example.com',
             'first_name': 'Updated',
             'last_name': 'Name'
@@ -323,10 +419,12 @@ class ProfileEditOwnershipTestCase(TestCase):
         # The view doesn't accept user_id parameter, so this tests
         # that the implementation correctly uses request.user
         response = self.client.post(self.edit_url, {
+            'username': 'user1',
             'email': 'malicious@example.com',
             'first_name': 'Hacked',
             'last_name': 'User'
         })
+        self.assertEqual(response.status_code, 302)  # Redirects on success
 
         # Should update user1 (logged-in user), not user2
         self.user1.refresh_from_db()
@@ -362,6 +460,7 @@ class ProfileEditEdgeCasesTestCase(TestCase):
         self.client.login(username='testuser', password='testpass123')
 
         response = self.client.post(self.edit_url, {
+            'username': 'testuser',
             'email': 'test@example.com',
             'first_name': '',  # Empty
             'last_name': 'User'
@@ -380,6 +479,7 @@ class ProfileEditEdgeCasesTestCase(TestCase):
         self.client.login(username='testuser', password='testpass123')
 
         response = self.client.post(self.edit_url, {
+            'username': 'testuser',
             'email': 'test@example.com',
             'first_name': 'Test',
             'last_name': ''  # Empty
@@ -398,6 +498,7 @@ class ProfileEditEdgeCasesTestCase(TestCase):
         self.client.login(username='testuser', password='testpass123')
 
         response = self.client.post(self.edit_url, {
+            'username': 'testuser',
             'email': 'test@example.com',
             'first_name': '',
             'last_name': ''
@@ -419,6 +520,7 @@ class ProfileEditEdgeCasesTestCase(TestCase):
         long_name = 'A' * 150
 
         response = self.client.post(self.edit_url, {
+            'username': 'testuser',
             'email': 'test@example.com',
             'first_name': long_name,
             'last_name': long_name
@@ -437,6 +539,7 @@ class ProfileEditEdgeCasesTestCase(TestCase):
         self.client.login(username='testuser', password='testpass123')
 
         response = self.client.post(self.edit_url, {
+            'username': 'testuser',
             'email': 'test@example.com',
             'first_name': "O'Brien",
             'last_name': 'José-María'
@@ -455,6 +558,7 @@ class ProfileEditEdgeCasesTestCase(TestCase):
         self.client.login(username='testuser', password='testpass123')
 
         response = self.client.post(self.edit_url, {
+            'username': 'testuser',
             'email': 'test@example.com',
             'first_name': '  John  ',
             'last_name': '  Doe  '
@@ -504,6 +608,7 @@ class ProfileEditIntegrationTestCase(TestCase):
 
         # 3. Submit changes
         response = self.client.post(self.edit_url, {
+            'username': 'testuser',
             'email': 'newemail@example.com',
             'first_name': 'New',
             'last_name': 'Name'

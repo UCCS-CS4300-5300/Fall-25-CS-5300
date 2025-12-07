@@ -480,10 +480,14 @@ class UserProfileEditForm(forms.ModelForm):
     """
     Form for editing user profile information.
 
-    Issue #119: Allow users to update their profile (email, first/last name).
-    Username is read-only (not editable).
+    Issue #119: Allow users to update their profile (username, email, first/last name).
     """
 
+    username = forms.CharField(
+        max_length=150,
+        required=True,
+        help_text='Your unique username. Can contain letters, numbers, @/./+/-/_ only.'
+    )
     email = forms.EmailField(
         required=True,
         help_text='Your email address for notifications and account recovery.'
@@ -501,7 +505,7 @@ class UserProfileEditForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ['email', 'first_name', 'last_name']
+        fields = ['username', 'email', 'first_name', 'last_name']
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
@@ -512,6 +516,23 @@ class UserProfileEditForm(forms.ModelForm):
             self.fields[field_name].widget.attrs.update({
                 'class': 'form-control'
             })
+
+    def clean_username(self):
+        """
+        Validate username uniqueness.
+        Ensure no other user has this username (excluding current user).
+        """
+        username = self.cleaned_data['username']
+
+        # Check if another user has this username
+        if User.objects.exclude(pk=self.user.pk).filter(
+            username=username
+        ).exists():
+            raise forms.ValidationError(
+                'This username is already taken. Please choose another one.'
+            )
+
+        return username
 
     def clean_email(self):
         """

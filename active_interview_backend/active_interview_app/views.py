@@ -1236,8 +1236,7 @@ def edit_profile(request):
     """
     Allow users to edit their profile information.
 
-    Issue #119: Users can update their email, first name, and last name.
-    Username is read-only (displayed but not editable).
+    Issue #119: Users can update their username, email, first name, and last name.
     """
     from .forms import UserProfileEditForm
     from django.contrib import messages
@@ -1263,8 +1262,7 @@ def edit_profile(request):
         )
 
     return render(request, 'profile_edit.html', {
-        'form': form,
-        'username': request.user.username  # Display as read-only
+        'form': form
     })
 
 

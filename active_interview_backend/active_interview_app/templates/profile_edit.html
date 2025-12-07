@@ -1,9 +1,7 @@
 {% extends "base.html" %}
-
 {% block title %}
   Edit Profile - AIS
 {% endblock title %}
-
 {% block content %}
   <style>
     .edit-profile-page {
@@ -169,51 +167,40 @@
       }
     }
   </style>
-
   <div class="edit-profile-page">
     <div class="profile-edit-box">
       <h2>Edit Profile</h2>
-
-      <!-- Read-only Username Display -->
-      <div class="read-only-field">
-        <div class="read-only-label">Username (cannot be changed)</div>
-        <div class="read-only-value">{{ username }}</div>
-      </div>
-
       <!-- Profile Edit Form -->
       <form method="post">
         {% csrf_token %}
-
+        <!-- Username Field -->
+        <div class="form-group">
+          <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+          {{ form.username }}
+          {% if form.username.help_text %}<div class="help-text">{{ form.username.help_text }}</div>{% endif %}
+          {{ form.username.errors }}
+        </div>
         <!-- Email Field -->
         <div class="form-group">
           <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
           {{ form.email }}
-          {% if form.email.help_text %}
-            <div class="help-text">{{ form.email.help_text }}</div>
-          {% endif %}
+          {% if form.email.help_text %}<div class="help-text">{{ form.email.help_text }}</div>{% endif %}
           {{ form.email.errors }}
         </div>
-
         <!-- First Name Field -->
         <div class="form-group">
           <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
           {{ form.first_name }}
-          {% if form.first_name.help_text %}
-            <div class="help-text">{{ form.first_name.help_text }}</div>
-          {% endif %}
+          {% if form.first_name.help_text %}<div class="help-text">{{ form.first_name.help_text }}</div>{% endif %}
           {{ form.first_name.errors }}
         </div>
-
         <!-- Last Name Field -->
         <div class="form-group">
           <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label>
           {{ form.last_name }}
-          {% if form.last_name.help_text %}
-            <div class="help-text">{{ form.last_name.help_text }}</div>
-          {% endif %}
+          {% if form.last_name.help_text %}<div class="help-text">{{ form.last_name.help_text }}</div>{% endif %}
           {{ form.last_name.errors }}
         </div>
-
         <!-- Form Actions -->
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">Save Changes</button>
