@@ -46,6 +46,7 @@ urlpatterns = [
     path('register/', views.register, name='register_page'),
     path('testlogged/', views.loggedin, name='loggedin'),
     path('profile/', views.profile, name='profile'),
+    path('profile/edit/', views.edit_profile, name='edit_profile'),  # Issue #119
     path('results/', views.results, name='results'),
 
     # Include django.contrib.auth.urls for password reset, etc.

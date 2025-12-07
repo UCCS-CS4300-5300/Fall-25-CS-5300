@@ -428,6 +428,13 @@
           <div class="settings-info">
             <p class="help-text">Manage your account security and preferences</p>
           </div>
+          <!-- Issue #119: Edit Profile button -->
+          <div class="settings-actions">
+            <a href="{% url 'edit_profile' %}" class="btn-request-role">
+              <i class="bi bi-pencil"></i> Edit Profile
+            </a>
+            <p class="help-text">Update your email, first name, and last name.</p>
+          </div>
           <div class="settings-actions">
             <a href="{% url 'password_change' %}" class="btn-request-role">
               <i class="bi bi-key"></i> Change Password

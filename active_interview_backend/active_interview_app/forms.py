@@ -473,3 +473,59 @@ class InvitationCreationForm(ModelForm):
         if email:
             email = email.lower().strip()
         return email
+
+
+# Issue #119: Profile Update Form
+class UserProfileEditForm(forms.ModelForm):
+    """
+    Form for editing user profile information.
+
+    Issue #119: Allow users to update their profile (email, first/last name).
+    Username is read-only (not editable).
+    """
+
+    email = forms.EmailField(
+        required=True,
+        help_text='Your email address for notifications and account recovery.'
+    )
+    first_name = forms.CharField(
+        max_length=150,
+        required=False,
+        help_text='Your first name (optional).'
+    )
+    last_name = forms.CharField(
+        max_length=150,
+        required=False,
+        help_text='Your last name (optional).'
+    )
+
+    class Meta:
+        model = User
+        fields = ['email', 'first_name', 'last_name']
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+
+        # Add CSS classes for styling
+        for field_name in self.fields:
+            self.fields[field_name].widget.attrs.update({
+                'class': 'form-control'
+            })
+
+    def clean_email(self):
+        """
+        Validate email uniqueness.
+        Ensure no other user has this email (excluding current user).
+        """
+        email = self.cleaned_data['email']
+
+        # Check if another user has this email
+        if User.objects.exclude(pk=self.user.pk).filter(
+            email=email
+        ).exists():
+            raise forms.ValidationError(
+                'This email address is already registered to another account.'
+            )
+
+        return email
