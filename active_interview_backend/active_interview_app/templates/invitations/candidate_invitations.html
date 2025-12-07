@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% block title %}
-    AIS - My Invitations
+  AIS - My Invitations
 {% endblock title %}
 {% block content %}
-    <style>
+  <style>
     .dashboard-page {
       max-width: 1200px;
       margin: 2rem auto;
@@ -237,128 +237,122 @@
       font-size: 1.1rem;
       margin-bottom: 1.5rem;
     }
-    </style>
-
-    <div class="dashboard-page">
-        <div class="page-header">
-            <h1>My Interview Invitations</h1>
-            <p>View and manage interviews you've been invited to</p>
-        </div>
-
-        <div class="header-actions">
-            <div class="filter-tabs">
-                <a href="?status=all" class="filter-tab {% if status_filter == 'all' %}active{% endif %}">
-                    All
-                    <span class="badge">{{ status_counts.all }}</span>
-                </a>
-                <a href="?status=pending" class="filter-tab {% if status_filter == 'pending' %}active{% endif %}">
-                    Pending
-                    <span class="badge">{{ status_counts.pending }}</span>
-                </a>
-                <a href="?status=completed" class="filter-tab {% if status_filter == 'completed' %}active{% endif %}">
-                    Completed
-                    <span class="badge">{{ status_counts.completed }}</span>
-                </a>
-                <a href="?status=reviewed" class="filter-tab {% if status_filter == 'reviewed' %}active{% endif %}">
-                    Reviewed
-                    <span class="badge">{{ status_counts.reviewed }}</span>
-                </a>
-                <a href="?status=expired" class="filter-tab {% if status_filter == 'expired' %}active{% endif %}">
-                    Expired
-                    <span class="badge">{{ status_counts.expired }}</span>
-                </a>
-            </div>
-        </div>
-
-        {% if invitations %}
-            <div class="invitations-list">
-                {% for invitation in invitations %}
-                    <div class="invitation-card">
-                        <div class="invitation-header">
-                            <div>
-                                <h2 class="invitation-title">{{ invitation.template.name }}</h2>
-                                <p class="interviewer-name">
-                                    <i class="bi bi-person"></i>
-                                    From: {{ invitation.interviewer.get_full_name|default:invitation.interviewer.username }}
-                                </p>
-                            </div>
-                            <span class="status-badge status-{{ invitation.status }}">
-                                {{ invitation.get_status_display }}
-                            </span>
-                        </div>
-
-                        <div class="invitation-details">
-                            <div class="detail-item">
-                                <span class="detail-label">Scheduled Time</span>
-                                <span class="detail-value" data-utc-time="{{ invitation.scheduled_time|date:'c' }}">
-                                    {{ invitation.scheduled_time|date:"M d, Y \a\\t g:i A" }} UTC
-                                </span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label">Duration</span>
-                                <span class="detail-value">{{ invitation.duration_minutes }} minutes</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label">Window Closes</span>
-                                <span class="detail-value" data-utc-time="{{ invitation.get_window_end|date:'c' }}">
-                                    {{ invitation.get_window_end|date:"M d, Y \a\\t g:i A" }} UTC
-                                </span>
-                            </div>
-                            {% if invitation.chat %}
-                                <div class="detail-item">
-                                    <span class="detail-label">Started At</span>
-                                    <span class="detail-value">
-                                        {{ invitation.chat.created_at|date:"M d, Y \a\\t g:i A" }}
-                                    </span>
-                                </div>
-                            {% endif %}
-                        </div>
-
-                        {% if invitation.template.description %}
-                            <div class="detail-item">
-                                <span class="detail-label">About</span>
-                                <span class="detail-value">{{ invitation.template.description }}</span>
-                            </div>
-                        {% endif %}
-
-                        <div class="invitation-actions">
-                            <a href="{% url 'invited_interview_detail' invitation.id %}"
-                               class="btn-sm btn-view">
-                                <i class="bi bi-eye"></i> View Details
-                            </a>
-
-                            {% if invitation.status == 'pending' and invitation.can_start %}
-                                <a href="{% url 'invited_interview_detail' invitation.id %}"
-                                   class="btn-sm btn-start">
-                                    <i class="bi bi-play-circle"></i> Start Interview
-                                </a>
-                            {% endif %}
-
-                            {% if invitation.chat %}
-                                <a href="{% url 'chat-view' chat_id=invitation.chat.id %}"
-                                   class="btn-sm btn-view">
-                                    <i class="bi bi-chat-dots"></i> View Interview
-                                </a>
-                            {% endif %}
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <div class="empty-state">
-                <h3>No Invitations Found</h3>
-                {% if status_filter == 'all' %}
-                    <p>You haven't received any interview invitations yet.</p>
-                    <p>When an interviewer sends you an invitation, it will appear here.</p>
-                {% else %}
-                    <p>No {{ status_filter }} invitations found.</p>
-                    <a href="?status=all" class="btn-primary">View All Invitations</a>
-                {% endif %}
-            </div>
-        {% endif %}
+  </style>
+  <div class="dashboard-page">
+    <div class="page-header">
+      <h1>My Interview Invitations</h1>
+      <p>View and manage interviews you've been invited to</p>
     </div>
-
-    <script>
+    <div class="header-actions">
+      <div class="filter-tabs">
+        <a href="?status=all"
+           class="filter-tab {% if status_filter == 'all' %}active{% endif %}">
+          All
+          <span class="badge">{{ status_counts.all }}</span>
+        </a>
+        <a href="?status=pending"
+           class="filter-tab {% if status_filter == 'pending' %}active{% endif %}">
+          Pending
+          <span class="badge">{{ status_counts.pending }}</span>
+        </a>
+        <a href="?status=completed"
+           class="filter-tab {% if status_filter == 'completed' %}active{% endif %}">
+          Completed
+          <span class="badge">{{ status_counts.completed }}</span>
+        </a>
+        <a href="?status=reviewed"
+           class="filter-tab {% if status_filter == 'reviewed' %}active{% endif %}">
+          Reviewed
+          <span class="badge">{{ status_counts.reviewed }}</span>
+        </a>
+        <a href="?status=expired"
+           class="filter-tab {% if status_filter == 'expired' %}active{% endif %}">
+          Expired
+          <span class="badge">{{ status_counts.expired }}</span>
+        </a>
+      </div>
+    </div>
+    {% if invitations %}
+      <div class="invitations-list">
+        {% for invitation in invitations %}
+          <div class="invitation-card">
+            <div class="invitation-header">
+              <div>
+                <h2 class="invitation-title">{{ invitation.template.name }}</h2>
+                <p class="interviewer-name">
+                  <i class="bi bi-person"></i>
+                  From: {{ invitation.interviewer.get_full_name|default:invitation.interviewer.username }}
+                </p>
+              </div>
+              <span class="status-badge status-{{ invitation.status }}">{{ invitation.get_status_display }}</span>
+            </div>
+            <div class="invitation-details">
+              <div class="detail-item">
+                <span class="detail-label">Scheduled Time</span>
+                <span class="detail-value"
+                      data-utc-time="{{ invitation.scheduled_time|date:'c' }}">
+                  {{ invitation.scheduled_time|date:"M d, Y \a\\t g:i A" }} UTC
+                </span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Duration</span>
+                <span class="detail-value">{{ invitation.duration_minutes }} minutes</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Window Closes</span>
+                <span class="detail-value"
+                      data-utc-time="{{ invitation.get_window_end|date:'c' }}">
+                  {{ invitation.get_window_end|date:"M d, Y \a\\t g:i A" }} UTC
+                </span>
+              </div>
+              {% if invitation.chat %}
+                <div class="detail-item">
+                  <span class="detail-label">Started At</span>
+                  <span class="detail-value">{{ invitation.chat.created_at|date:"M d, Y \a\\t g:i A" }}</span>
+                </div>
+              {% endif %}
+            </div>
+            {% if invitation.template.description %}
+              <div class="detail-item">
+                <span class="detail-label">About</span>
+                <span class="detail-value">{{ invitation.template.description }}</span>
+              </div>
+            {% endif %}
+            <div class="invitation-actions">
+              <a href="{% url 'invited_interview_detail' invitation.id %}"
+                 class="btn-sm btn-view">
+                <i class="bi bi-eye"></i> View Details
+              </a>
+              {% if invitation.status == 'pending' and invitation.can_start %}
+                <a href="{% url 'invited_interview_detail' invitation.id %}"
+                   class="btn-sm btn-start">
+                  <i class="bi bi-play-circle"></i> Start Interview
+                </a>
+              {% endif %}
+              {% if invitation.chat %}
+                <a href="{% url 'chat-view' chat_id=invitation.chat.id %}"
+                   class="btn-sm btn-view">
+                  <i class="bi bi-chat-dots"></i> View Interview
+                </a>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <h3>No Invitations Found</h3>
+        {% if status_filter == 'all' %}
+          <p>You haven't received any interview invitations yet.</p>
+          <p>When an interviewer sends you an invitation, it will appear here.</p>
+        {% else %}
+          <p>No {{ status_filter }} invitations found.</p>
+          <a href="?status=all" class="btn-primary">View All Invitations</a>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+  <script>
     // Convert UTC times to user's local timezone
     (function() {
         const timeElements = document.querySelectorAll('[data-utc-time]');
@@ -383,5 +377,5 @@
             }
         });
     })();
-    </script>
+  </script>
 {% endblock content %}

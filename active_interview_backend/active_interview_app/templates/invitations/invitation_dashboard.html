@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% block title %}
-    AIS - Invitation Dashboard
+  AIS - Invitation Dashboard
 {% endblock title %}
 {% block content %}
-    <style>
+  <style>
     .dashboard-page {
       max-width: 1200px;
       margin: 2rem auto;
@@ -270,101 +270,104 @@
       font-size: 1.1rem;
       margin-bottom: 1.5rem;
     }
-    </style>
-
-    <div class="dashboard-page">
-        <div class="page-header">
-            <h1>Interview Invitations</h1>
-            <p>Manage and track all your interview invitations</p>
-        </div>
-
-        <div class="header-actions">
-            <div class="filter-tabs">
-                <a href="?status=all" class="filter-tab {% if status_filter == 'all' %}active{% endif %}">
-                    All
-                    <span class="badge">{{ status_counts.all }}</span>
-                </a>
-                <a href="?status=pending" class="filter-tab {% if status_filter == 'pending' %}active{% endif %}">
-                    Pending
-                    <span class="badge">{{ status_counts.pending }}</span>
-                </a>
-                <a href="?status=completed" class="filter-tab {% if status_filter == 'completed' %}active{% endif %}">
-                    Completed
-                    <span class="badge">{{ status_counts.completed }}</span>
-                </a>
-                <a href="?status=reviewed" class="filter-tab {% if status_filter == 'reviewed' %}active{% endif %}">
-                    Reviewed
-                    <span class="badge">{{ status_counts.reviewed }}</span>
-                </a>
-                <a href="?status=expired" class="filter-tab {% if status_filter == 'expired' %}active{% endif %}">
-                    Expired
-                    <span class="badge">{{ status_counts.expired }}</span>
-                </a>
-            </div>
-
-            <a href="{% url 'invitation_create' %}" class="btn-primary">+ Create New Invitation</a>
-        </div>
-
-        {% if invitations %}
-            <ul class="invitations-list">
-                {% for invitation in invitations %}
-                <li class="invitation-card">
-                    <div class="invitation-header">
-                        <div class="invitation-title">
-                            <h3>{{ invitation.template.name }}</h3>
-                            <p>{{ invitation.candidate_email }}</p>
-                        </div>
-                        <span class="status-badge status-{{ invitation.status }}">
-                            {{ invitation.get_status_display }}
-                        </span>
-                    </div>
-
-                    <div class="invitation-details">
-                        <div class="detail-item">
-                            <span class="detail-label">Scheduled</span>
-                            <span class="detail-value">{{ invitation.scheduled_time|date:"M j, Y g:i A" }}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Duration</span>
-                            <span class="detail-value">{{ invitation.duration_minutes }} minutes</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Created</span>
-                            <span class="detail-value">{{ invitation.created_at|date:"M j, Y" }}</span>
-                        </div>
-                        {% if invitation.completed_at %}
-                        <div class="detail-item">
-                            <span class="detail-label">Completed</span>
-                            <span class="detail-value">{{ invitation.completed_at|date:"M j, Y g:i A" }}</span>
-                        </div>
-                        {% endif %}
-                    </div>
-
-                    <div class="invitation-actions">
-                        <a href="{% url 'invitation_confirmation' invitation.id %}" class="btn-sm btn-view">View Details</a>
-                        {% if invitation.status == 'completed' or invitation.status == 'reviewed' %}
-                            {% if invitation.chat %}
-                                <a href="{% url 'invitation_review' invitation.id %}" class="btn-sm btn-review">
-                                    {% if invitation.interviewer_review_status == 'completed' %}View Review{% else %}Review Results{% endif %}
-                                </a>
-                            {% endif %}
-                        {% endif %}
-                    </div>
-                </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <div class="empty-state">
-                <h3>No Invitations Found</h3>
-                <p>
-                    {% if status_filter != 'all' %}
-                        No invitations with status "{{ status_filter }}".
-                    {% else %}
-                        You haven't sent any interview invitations yet.
-                    {% endif %}
-                </p>
-                <a href="{% url 'invitation_create' %}" class="btn-primary">Create Your First Invitation</a>
-            </div>
-        {% endif %}
+  </style>
+  <div class="dashboard-page">
+    <div class="page-header">
+      <h1>Interview Invitations</h1>
+      <p>Manage and track all your interview invitations</p>
     </div>
+    <div class="header-actions">
+      <div class="filter-tabs">
+        <a href="?status=all"
+           class="filter-tab {% if status_filter == 'all' %}active{% endif %}">
+          All
+          <span class="badge">{{ status_counts.all }}</span>
+        </a>
+        <a href="?status=pending"
+           class="filter-tab {% if status_filter == 'pending' %}active{% endif %}">
+          Pending
+          <span class="badge">{{ status_counts.pending }}</span>
+        </a>
+        <a href="?status=completed"
+           class="filter-tab {% if status_filter == 'completed' %}active{% endif %}">
+          Completed
+          <span class="badge">{{ status_counts.completed }}</span>
+        </a>
+        <a href="?status=reviewed"
+           class="filter-tab {% if status_filter == 'reviewed' %}active{% endif %}">
+          Reviewed
+          <span class="badge">{{ status_counts.reviewed }}</span>
+        </a>
+        <a href="?status=expired"
+           class="filter-tab {% if status_filter == 'expired' %}active{% endif %}">
+          Expired
+          <span class="badge">{{ status_counts.expired }}</span>
+        </a>
+      </div>
+      <a href="{% url 'invitation_create' %}" class="btn-primary">+ Create New Invitation</a>
+    </div>
+    {% if invitations %}
+      <ul class="invitations-list">
+        {% for invitation in invitations %}
+          <li class="invitation-card">
+            <div class="invitation-header">
+              <div class="invitation-title">
+                <h3>{{ invitation.template.name }}</h3>
+                <p>{{ invitation.candidate_email }}</p>
+              </div>
+              <span class="status-badge status-{{ invitation.status }}">{{ invitation.get_status_display }}</span>
+            </div>
+            <div class="invitation-details">
+              <div class="detail-item">
+                <span class="detail-label">Scheduled</span>
+                <span class="detail-value">{{ invitation.scheduled_time|date:"M j, Y g:i A" }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Duration</span>
+                <span class="detail-value">{{ invitation.duration_minutes }} minutes</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Created</span>
+                <span class="detail-value">{{ invitation.created_at|date:"M j, Y" }}</span>
+              </div>
+              {% if invitation.completed_at %}
+                <div class="detail-item">
+                  <span class="detail-label">Completed</span>
+                  <span class="detail-value">{{ invitation.completed_at|date:"M j, Y g:i A" }}</span>
+                </div>
+              {% endif %}
+            </div>
+            <div class="invitation-actions">
+              <a href="{% url 'invitation_confirmation' invitation.id %}"
+                 class="btn-sm btn-view">View Details</a>
+              {% if invitation.status == 'completed' or invitation.status == 'reviewed' %}
+                {% if invitation.chat %}
+                  <a href="{% url 'invitation_review' invitation.id %}"
+                     class="btn-sm btn-review">
+                    {% if invitation.interviewer_review_status == 'completed' %}
+                      View Review
+                    {% else %}
+                      Review Results
+                    {% endif %}
+                  </a>
+                {% endif %}
+              {% endif %}
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="empty-state">
+        <h3>No Invitations Found</h3>
+        <p>
+          {% if status_filter != 'all' %}
+            No invitations with status "{{ status_filter }}".
+          {% else %}
+            You haven't sent any interview invitations yet.
+          {% endif %}
+        </p>
+        <a href="{% url 'invitation_create' %}" class="btn-primary">Create Your First Invitation</a>
+      </div>
+    {% endif %}
+  </div>
 {% endblock content %}

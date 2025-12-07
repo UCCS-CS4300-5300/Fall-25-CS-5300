@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% block title %}
-    AIS - Create Invitation
+  AIS - Create Invitation
 {% endblock title %}
 {% block content %}
-    <style>
+  <style>
     .invitation-page {
       max-width: 800px;
       margin: 2rem auto;
@@ -156,96 +156,68 @@
       font-weight: 600;
       margin-bottom: 1rem;
     }
-    </style>
-
-    <div class="invitation-page">
-        <div class="page-header">
-            <h1>Create Interview Invitation</h1>
-            <p>Invite a candidate to take an interview based on your template</p>
-        </div>
-
-        {% if template %}
-        <div class="template-badge">
-            Using Template: {{ template.name }}
-        </div>
-        {% endif %}
-
-        <div class="form-section">
-            <h2>Invitation Details</h2>
-
-            <form method="post" novalidate>
-                {% csrf_token %}
-
-                <!-- Non-field errors -->
-                {% if form.non_field_errors %}
-                    <div class="alert alert-danger">
-                        {{ form.non_field_errors }}
-                    </div>
-                {% endif %}
-
-                <!-- Template Field -->
-                <div class="form-group">
-                    <label for="{{ form.template.id_for_label }}">Interview Template *</label>
-                    {{ form.template }}
-                    {% if form.template.help_text %}
-                        <div class="form-text">{{ form.template.help_text }}</div>
-                    {% endif %}
-                    {{ form.template.errors }}
-                </div>
-
-                <!-- Candidate Email Field -->
-                <div class="form-group">
-                    <label for="{{ form.candidate_email.id_for_label }}">Candidate Email *</label>
-                    {{ form.candidate_email }}
-                    {% if form.candidate_email.help_text %}
-                        <div class="form-text">{{ form.candidate_email.help_text }}</div>
-                    {% endif %}
-                    {{ form.candidate_email.errors }}
-                </div>
-
-                <!-- Scheduled Date Field -->
-                <div class="form-group">
-                    <label for="{{ form.scheduled_date.id_for_label }}">Scheduled Date *</label>
-                    {{ form.scheduled_date }}
-                    {% if form.scheduled_date.help_text %}
-                        <div class="form-text">{{ form.scheduled_date.help_text }}</div>
-                    {% endif %}
-                    {{ form.scheduled_date.errors }}
-                </div>
-
-                <!-- Scheduled Time Field -->
-                <div class="form-group">
-                    <label for="{{ form.scheduled_time.id_for_label }}">Scheduled Time *</label>
-                    {{ form.scheduled_time }}
-                    <div class="form-text">
-                        <i class="bi bi-clock"></i> <span id="current-time-display">Enter time in your local timezone</span>
-                        <br>Times must be at least 2 minutes in the future
-                    </div>
-                    {{ form.scheduled_time.errors }}
-                </div>
-
-                <!-- Hidden timezone offset field -->
-                {{ form.timezone_offset }}
-
-                <!-- Duration Field -->
-                <div class="form-group">
-                    <label for="{{ form.duration_minutes.id_for_label }}">Duration *</label>
-                    {{ form.duration_minutes }}
-                    {% if form.duration_minutes.help_text %}
-                        <div class="form-text">{{ form.duration_minutes.help_text }}</div>
-                    {% endif %}
-                    {{ form.duration_minutes.errors }}
-                </div>
-
-                <div class="button-group">
-                    <button type="submit" class="btn btn-primary">Send Invitation</button>
-                    <a href="{% url 'invitation_dashboard' %}" class="btn-secondary">Cancel</a>
-                </div>
-            </form>
-        </div>
+  </style>
+  <div class="invitation-page">
+    <div class="page-header">
+      <h1>Create Interview Invitation</h1>
+      <p>Invite a candidate to take an interview based on your template</p>
     </div>
-
-    <script>
+    {% if template %}<div class="template-badge">Using Template: {{ template.name }}</div>{% endif %}
+    <div class="form-section">
+      <h2>Invitation Details</h2>
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <!-- Non-field errors -->
+        {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+        <!-- Template Field -->
+        <div class="form-group">
+          <label for="{{ form.template.id_for_label }}">Interview Template *</label>
+          {{ form.template }}
+          {% if form.template.help_text %}<div class="form-text">{{ form.template.help_text }}</div>{% endif %}
+          {{ form.template.errors }}
+        </div>
+        <!-- Candidate Email Field -->
+        <div class="form-group">
+          <label for="{{ form.candidate_email.id_for_label }}">Candidate Email *</label>
+          {{ form.candidate_email }}
+          {% if form.candidate_email.help_text %}<div class="form-text">{{ form.candidate_email.help_text }}</div>{% endif %}
+          {{ form.candidate_email.errors }}
+        </div>
+        <!-- Scheduled Date Field -->
+        <div class="form-group">
+          <label for="{{ form.scheduled_date.id_for_label }}">Scheduled Date *</label>
+          {{ form.scheduled_date }}
+          {% if form.scheduled_date.help_text %}<div class="form-text">{{ form.scheduled_date.help_text }}</div>{% endif %}
+          {{ form.scheduled_date.errors }}
+        </div>
+        <!-- Scheduled Time Field -->
+        <div class="form-group">
+          <label for="{{ form.scheduled_time.id_for_label }}">Scheduled Time *</label>
+          {{ form.scheduled_time }}
+          <div class="form-text">
+            <i class="bi bi-clock"></i> <span id="current-time-display">Enter time in your local timezone</span>
+            <br>
+            Times must be at least 2 minutes in the future
+          </div>
+          {{ form.scheduled_time.errors }}
+        </div>
+        <!-- Hidden timezone offset field -->
+        {{ form.timezone_offset }}
+        <!-- Duration Field -->
+        <div class="form-group">
+          <label for="{{ form.duration_minutes.id_for_label }}">Duration *</label>
+          {{ form.duration_minutes }}
+          {% if form.duration_minutes.help_text %}<div class="form-text">{{ form.duration_minutes.help_text }}</div>{% endif %}
+          {{ form.duration_minutes.errors }}
+        </div>
+        <div class="button-group">
+          <button type="submit" class="btn btn-primary">Send Invitation</button>
+          <a href="{% url 'invitation_dashboard' %}" class="btn-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+  <script>
     // Timezone handling for invitation scheduling
     (function() {
         // Get user's timezone offset in minutes
@@ -319,5 +291,5 @@
             timeInput.addEventListener('change', validateSelectedTime);
         }
     })();
-    </script>
+  </script>
 {% endblock content %}

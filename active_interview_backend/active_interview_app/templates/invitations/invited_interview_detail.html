@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% load static %}
-
-{% block title %}Interview Details{% endblock title %}
-
+{% block title %}
+  Interview Details
+{% endblock title %}
 {% block content %}
-<style>
+  <style>
   /* Override Bootstrap card styles to use theme variables */
   .card {
     background-color: var(--surface) !important;
@@ -59,263 +59,304 @@
     border-color: var(--success) !important;
     color: var(--text-white) !important;
   }
-</style>
-<div class="container mt-5">
-  <div class="row justify-content-center">
-    <div class="col-md-10 col-lg-8">
-      <!-- Header Card -->
-      <div class="card shadow-sm mb-4" style="border-left: 4px solid var(--primary); background-color: var(--surface); border: 1px solid var(--border);">
-        <div class="card-body">
-          <h2 class="card-title mb-3">
-            <i class="bi bi-calendar-check"></i> {{ invitation.template.name }}
-          </h2>
-          <p class="text-muted mb-2">
-            <strong>Interviewer:</strong> {{ invitation.interviewer.get_full_name|default:invitation.interviewer.username }}
-          </p>
-          <p class="text-muted mb-0">
-            <strong>Duration:</strong> {{ invitation.duration_minutes }} minutes
-          </p>
-        </div>
-      </div>
-
-      <!-- Status: Interview Reviewed -->
-      {% if invitation.chat and invitation.status == 'reviewed' %}
-        <div class="alert alert-success" role="alert">
-          <h4 class="alert-heading"><i class="bi bi-check-circle-fill"></i> Interview Completed!</h4>
-          <p>You completed this interview on <span data-utc-time="{{ invitation.completed_at|date:'c' }}">{{ invitation.completed_at|date:"F j, Y \a\t g:i A" }} UTC</span>.</p>
-          <hr>
-          <p class="mb-0">
-            {% if invitation.interviewer_review_status == 'completed' %}
-              <strong>✓ Interviewer Review Complete</strong>
-              <br>The interviewer has reviewed your interview and provided feedback.
-              <a href="{% url 'export_report' chat_id=invitation.chat.id %}" class="alert-link">View your full report with feedback</a>
-            {% else %}
-              <strong>⏳ Pending Interviewer Review</strong>
-              <br>The interviewer has not yet completed their review. You'll receive an email notification when feedback is available.
-            {% endif %}
-          </p>
-        </div>
-
-        {% if invitation.interviewer_review_status == 'completed' and invitation.interviewer_feedback %}
-        <!-- Interviewer Feedback Section -->
-        <div class="card shadow-sm mb-4" style="background-color: var(--surface); border: 2px solid var(--success);">
+  </style>
+  <div class="container mt-5">
+    <div class="row justify-content-center">
+      <div class="col-md-10 col-lg-8">
+        <!-- Header Card -->
+        <div class="card shadow-sm mb-4"
+             style="border-left: 4px solid var(--primary);
+                    background-color: var(--surface);
+                    border: 1px solid var(--border)">
           <div class="card-body">
-            <h5 class="card-title" style="color: var(--success);">
-              <i class="bi bi-person-check-fill"></i> Interviewer Feedback
-            </h5>
-            <p class="card-text" style="white-space: pre-wrap; color: var(--text-primary);">{{ invitation.interviewer_feedback }}</p>
-            {% if invitation.reviewed_at %}
-            <hr>
-            <p class="text-muted small mb-0">
-              <i class="bi bi-clock"></i> Reviewed on {{ invitation.reviewed_at|date:"F j, Y \a\t g:i A" }}
+            <h2 class="card-title mb-3">
+              <i class="bi bi-calendar-check"></i> {{ invitation.template.name }}
+            </h2>
+            <p class="text-muted mb-2">
+              <strong>Interviewer:</strong> {{ invitation.interviewer.get_full_name|default:invitation.interviewer.username }}
             </p>
-            {% endif %}
+            <p class="text-muted mb-0">
+              <strong>Duration:</strong> {{ invitation.duration_minutes }} minutes
+            </p>
           </div>
         </div>
-        {% endif %}
-
-        <div class="text-center mt-4">
-          {% if invitation.interviewer_review_status == 'completed' %}
-            <a href="{% url 'export_report' chat_id=invitation.chat.id %}" class="btn btn-primary btn-lg">
-              <i class="bi bi-file-earmark-text-fill"></i> View Full Report
-            </a>
-          {% else %}
-            <span class="btn btn-secondary btn-lg disabled">
-              <i class="bi bi-hourglass-split"></i> Pending Interviewer Review
-            </span>
+        <!-- Status: Interview Reviewed -->
+        {% if invitation.chat and invitation.status == 'reviewed' %}
+          <div class="alert alert-success" role="alert">
+            <h4 class="alert-heading">
+              <i class="bi bi-check-circle-fill"></i> Interview Completed!
+            </h4>
+            <p>
+              You completed this interview on <span data-utc-time="{{ invitation.completed_at|date:'c' }}">{{ invitation.completed_at|date:"F j, Y \a\t g:i A" }} UTC</span>.
+            </p>
+            <hr>
+            <p class="mb-0">
+              {% if invitation.interviewer_review_status == 'completed' %}
+                <strong>✓ Interviewer Review Complete</strong>
+                <br>
+                The interviewer has reviewed your interview and provided feedback.
+                <a href="{% url 'export_report' chat_id=invitation.chat.id %}"
+                   class="alert-link">View your full report with feedback</a>
+              {% else %}
+                <strong>⏳ Pending Interviewer Review</strong>
+                <br>
+                The interviewer has not yet completed their review. You'll receive an email notification when feedback is available.
+              {% endif %}
+            </p>
+          </div>
+          {% if invitation.interviewer_review_status == 'completed' and invitation.interviewer_feedback %}
+            <!-- Interviewer Feedback Section -->
+            <div class="card shadow-sm mb-4"
+                 style="background-color: var(--surface);
+                        border: 2px solid var(--success)">
+              <div class="card-body">
+                <h5 class="card-title" style="color: var(--success);">
+                  <i class="bi bi-person-check-fill"></i> Interviewer Feedback
+                </h5>
+                <p class="card-text"
+                   style="white-space: pre-wrap;
+                          color: var(--text-primary)">{{ invitation.interviewer_feedback }}</p>
+                {% if invitation.reviewed_at %}
+                  <hr>
+                  <p class="text-muted small mb-0">
+                    <i class="bi bi-clock"></i> Reviewed on {{ invitation.reviewed_at|date:"F j, Y \a\t g:i A" }}
+                  </p>
+                {% endif %}
+              </div>
+            </div>
           {% endif %}
-        </div>
-
-      <!-- Status: Interview Started (In Progress) -->
-      {% elif invitation.chat and not invitation.chat.is_finalized %}
-        <div class="alert alert-info" role="alert">
-          <h4 class="alert-heading"><i class="bi bi-play-circle-fill"></i> Interview In Progress</h4>
-          <p class="mb-0">You started this interview on <span data-utc-time="{{ invitation.chat.date_created|date:'c' }}">{{ invitation.chat.date_created|date:"F j, Y \a\t g:i A" }} UTC</span>.</p>
-        </div>
-
-        <div class="text-center mt-4">
-          <a href="{% url 'chat-view' chat_id=invitation.chat.id %}" class="btn btn-primary btn-lg">
-            <i class="bi bi-arrow-right-circle-fill"></i> Continue Interview
-          </a>
-        </div>
-
-      <!-- Status: Interview Completed, Pending Review -->
-      {% elif invitation.chat and invitation.chat.is_finalized and invitation.status != 'reviewed' %}
-        <div class="alert alert-warning" role="alert">
-          <h4 class="alert-heading"><i class="bi bi-check-circle-fill"></i> Interview Completed - Under Review</h4>
-          <p>You completed this interview on <span data-utc-time="{{ invitation.completed_at|date:'c' }}">{{ invitation.completed_at|date:"F j, Y \a\t g:i A" }} UTC</span>.</p>
-          <hr>
-          <p class="mb-0">
-            <strong>⏳ Pending Interviewer Review</strong>
-            <br>The interviewer is reviewing your interview. You'll receive an email notification when feedback is available.
-            <br>You can view the AI-generated report while you wait.
-          </p>
-        </div>
-
-        <div class="text-center mt-4">
-          <a href="{% url 'export_report' chat_id=invitation.chat.id %}" class="btn btn-primary btn-lg">
-            <i class="bi bi-file-earmark-text-fill"></i> View AI Report
-          </a>
-        </div>
-
-      <!-- Status: Expired -->
-      {% elif is_expired %}
-        <div class="alert alert-danger" role="alert">
-          <h4 class="alert-heading"><i class="bi bi-exclamation-triangle-fill"></i> Interview Time Has Passed</h4>
-          <p>This interview was scheduled for:</p>
-          <p class="mb-2"><strong data-utc-time="{{ invitation.scheduled_time|date:'c' }}">{{ invitation.scheduled_time|date:"F j, Y \a\t g:i A" }} UTC</strong></p>
-          <p>The available time window ended at:</p>
-          <p class="mb-2"><strong data-utc-time="{{ window_end|date:'c' }}">{{ window_end|date:"F j, Y \a\t g:i A" }} UTC</strong></p>
-          <hr>
-          <p class="mb-0">Unfortunately, you can no longer take this interview. Please contact {{ invitation.interviewer.get_full_name|default:invitation.interviewer.username }} if you need to reschedule.</p>
-        </div>
-
-        <div class="text-center mt-4">
-          <a href="{% url 'index' %}" class="btn btn-secondary">
-            <i class="bi bi-house-fill"></i> Return to Home
-          </a>
-        </div>
-
-      <!-- Status: Not Yet Available -->
-      {% elif not can_start and time_until_start %}
-        <div class="alert alert-warning" role="alert">
-          <h4 class="alert-heading"><i class="bi bi-clock-fill"></i> Interview Not Yet Available</h4>
-          <p>Your interview is scheduled to begin at:</p>
-          <p class="mb-0"><strong data-utc-time="{{ invitation.scheduled_time|date:'c' }}">{{ invitation.scheduled_time|date:"F j, Y \a\t g:i A" }} UTC</strong></p>
-        </div>
-
-        <div class="card shadow-sm mb-4" style="background-color: var(--surface); border: 1px solid var(--border);">
-          <div class="card-body text-center">
-            <h5 class="card-title">Time Until Interview</h5>
-            <div class="display-6 mb-3" style="color: var(--warning);">
-              <i class="bi bi-hourglass-split"></i>
-              <span id="countdown-timer">Calculating...</span>
-            </div>
-            <p class="text-muted">Please return at the scheduled time to begin your interview.</p>
+          <div class="text-center mt-4">
+            {% if invitation.interviewer_review_status == 'completed' %}
+              <a href="{% url 'export_report' chat_id=invitation.chat.id %}"
+                 class="btn btn-primary btn-lg">
+                <i class="bi bi-file-earmark-text-fill"></i> View Full Report
+              </a>
+            {% else %}
+              <span class="btn btn-secondary btn-lg disabled">
+                <i class="bi bi-hourglass-split"></i> Pending Interviewer Review
+              </span>
+            {% endif %}
           </div>
-        </div>
-
-        <!-- Interview Window Information -->
-        <div class="card shadow-sm mb-4" style="background-color: var(--surface); border: 1px solid var(--border);">
-          <div class="card-body">
-            <h5 class="card-title"><i class="bi bi-info-circle"></i> Interview Window</h5>
-            <ul class="list-unstyled mb-0">
-              <li class="mb-2">
-                <strong>Start Time:</strong> <span data-utc-time="{{ invitation.scheduled_time|date:'c' }}">{{ invitation.scheduled_time|date:"F j, Y \a\t g:i A" }} UTC</span>
-              </li>
-              <li class="mb-2">
-                <strong>Duration:</strong> {{ invitation.duration_minutes }} minutes
-              </li>
-              <li class="mb-0">
-                <strong>Window Closes:</strong> <span data-utc-time="{{ window_end|date:'c' }}">{{ window_end|date:"F j, Y \a\t g:i A" }} UTC</span>
-              </li>
-            </ul>
+          <!-- Status: Interview Started (In Progress) -->
+        {% elif invitation.chat and not invitation.chat.is_finalized %}
+          <div class="alert alert-info" role="alert">
+            <h4 class="alert-heading">
+              <i class="bi bi-play-circle-fill"></i> Interview In Progress
+            </h4>
+            <p class="mb-0">
+              You started this interview on <span data-utc-time="{{ invitation.chat.date_created|date:'c' }}">{{ invitation.chat.date_created|date:"F j, Y \a\t g:i A" }} UTC</span>.
+            </p>
+          </div>
+          <div class="text-center mt-4">
+            <a href="{% url 'chat-view' chat_id=invitation.chat.id %}"
+               class="btn btn-primary btn-lg">
+              <i class="bi bi-arrow-right-circle-fill"></i> Continue Interview
+            </a>
+          </div>
+          <!-- Status: Interview Completed, Pending Review -->
+        {% elif invitation.chat and invitation.chat.is_finalized and invitation.status != 'reviewed' %}
+          <div class="alert alert-warning" role="alert">
+            <h4 class="alert-heading">
+              <i class="bi bi-check-circle-fill"></i> Interview Completed - Under Review
+            </h4>
+            <p>
+              You completed this interview on <span data-utc-time="{{ invitation.completed_at|date:'c' }}">{{ invitation.completed_at|date:"F j, Y \a\t g:i A" }} UTC</span>.
+            </p>
             <hr>
-            <p class="text-muted small mb-0">
-              <i class="bi bi-exclamation-circle"></i>
-              You can start the interview anytime between the start time and when the window closes.
-              Once you start, you'll have {{ invitation.duration_minutes }} minutes to complete it.
+            <p class="mb-0">
+              <strong>⏳ Pending Interviewer Review</strong>
+              <br>
+              The interviewer is reviewing your interview. You'll receive an email notification when feedback is available.
+              <br>
+              You can view the AI-generated report while you wait.
             </p>
           </div>
-        </div>
-
-        <div class="text-center mt-4">
-          <button class="btn btn-primary btn-lg" disabled>
-            <i class="bi bi-lock-fill"></i> Start Interview (Available Soon)
-          </button>
-        </div>
-
-      <!-- Status: Ready to Start -->
-      {% elif can_start %}
-        <div class="alert alert-success" role="alert">
-          <h4 class="alert-heading"><i class="bi bi-check-circle-fill"></i> Interview Ready!</h4>
-          <p class="mb-0">Your interview is ready to begin. Click the button below when you're ready to start.</p>
-        </div>
-
-        <!-- Time Remaining Card -->
-        {% if time_remaining %}
-        <div class="card shadow-sm mb-4" style="border-left: 4px solid var(--success); background-color: var(--surface); border: 1px solid var(--border);">
-          <div class="card-body text-center">
-            <h5 class="card-title">Time Remaining to Start</h5>
-            <div class="display-6 mb-2" style="color: var(--success);">
-              <i class="bi bi-hourglass-bottom"></i>
-              <span id="time-remaining-display">Calculating...</span>
+          <div class="text-center mt-4">
+            <a href="{% url 'export_report' chat_id=invitation.chat.id %}"
+               class="btn btn-primary btn-lg">
+              <i class="bi bi-file-earmark-text-fill"></i> View AI Report
+            </a>
+          </div>
+          <!-- Status: Expired -->
+        {% elif is_expired %}
+          <div class="alert alert-danger" role="alert">
+            <h4 class="alert-heading">
+              <i class="bi bi-exclamation-triangle-fill"></i> Interview Time Has Passed
+            </h4>
+            <p>This interview was scheduled for:</p>
+            <p class="mb-2">
+              <strong data-utc-time="{{ invitation.scheduled_time|date:'c' }}">{{ invitation.scheduled_time|date:"F j, Y \a\t g:i A" }} UTC</strong>
+            </p>
+            <p>The available time window ended at:</p>
+            <p class="mb-2">
+              <strong data-utc-time="{{ window_end|date:'c' }}">{{ window_end|date:"F j, Y \a\t g:i A" }} UTC</strong>
+            </p>
+            <hr>
+            <p class="mb-0">
+              Unfortunately, you can no longer take this interview. Please contact {{ invitation.interviewer.get_full_name|default:invitation.interviewer.username }} if you need to reschedule.
+            </p>
+          </div>
+          <div class="text-center mt-4">
+            <a href="{% url 'index' %}" class="btn btn-secondary">
+              <i class="bi bi-house-fill"></i> Return to Home
+            </a>
+          </div>
+          <!-- Status: Not Yet Available -->
+        {% elif not can_start and time_until_start %}
+          <div class="alert alert-warning" role="alert">
+            <h4 class="alert-heading">
+              <i class="bi bi-clock-fill"></i> Interview Not Yet Available
+            </h4>
+            <p>Your interview is scheduled to begin at:</p>
+            <p class="mb-0">
+              <strong data-utc-time="{{ invitation.scheduled_time|date:'c' }}">{{ invitation.scheduled_time|date:"F j, Y \a\t g:i A" }} UTC</strong>
+            </p>
+          </div>
+          <div class="card shadow-sm mb-4"
+               style="background-color: var(--surface);
+                      border: 1px solid var(--border)">
+            <div class="card-body text-center">
+              <h5 class="card-title">Time Until Interview</h5>
+              <div class="display-6 mb-3" style="color: var(--warning);">
+                <i class="bi bi-hourglass-split"></i>
+                <span id="countdown-timer">Calculating...</span>
+              </div>
+              <p class="text-muted">Please return at the scheduled time to begin your interview.</p>
             </div>
-            <p class="text-muted small mb-0">
-              You must start the interview before <span data-utc-time="{{ window_end|date:'c' }}">{{ window_end|date:"F j, Y \a\t g:i A" }} UTC</span>
+          </div>
+          <!-- Interview Window Information -->
+          <div class="card shadow-sm mb-4"
+               style="background-color: var(--surface);
+                      border: 1px solid var(--border)">
+            <div class="card-body">
+              <h5 class="card-title">
+                <i class="bi bi-info-circle"></i> Interview Window
+              </h5>
+              <ul class="list-unstyled mb-0">
+                <li class="mb-2">
+                  <strong>Start Time:</strong> <span data-utc-time="{{ invitation.scheduled_time|date:'c' }}">{{ invitation.scheduled_time|date:"F j, Y \a\t g:i A" }} UTC</span>
+                </li>
+                <li class="mb-2">
+                  <strong>Duration:</strong> {{ invitation.duration_minutes }} minutes
+                </li>
+                <li class="mb-0">
+                  <strong>Window Closes:</strong> <span data-utc-time="{{ window_end|date:'c' }}">{{ window_end|date:"F j, Y \a\t g:i A" }} UTC</span>
+                </li>
+              </ul>
+              <hr>
+              <p class="text-muted small mb-0">
+                <i class="bi bi-exclamation-circle"></i>
+                You can start the interview anytime between the start time and when the window closes.
+                Once you start, you'll have {{ invitation.duration_minutes }} minutes to complete it.
+              </p>
+            </div>
+          </div>
+          <div class="text-center mt-4">
+            <button class="btn btn-primary btn-lg" disabled>
+              <i class="bi bi-lock-fill"></i> Start Interview (Available Soon)
+            </button>
+          </div>
+          <!-- Status: Ready to Start -->
+        {% elif can_start %}
+          <div class="alert alert-success" role="alert">
+            <h4 class="alert-heading">
+              <i class="bi bi-check-circle-fill"></i> Interview Ready!
+            </h4>
+            <p class="mb-0">Your interview is ready to begin. Click the button below when you're ready to start.</p>
+          </div>
+          <!-- Time Remaining Card -->
+          {% if time_remaining %}
+            <div class="card shadow-sm mb-4"
+                 style="border-left: 4px solid var(--success);
+                        background-color: var(--surface);
+                        border: 1px solid var(--border)">
+              <div class="card-body text-center">
+                <h5 class="card-title">Time Remaining to Start</h5>
+                <div class="display-6 mb-2" style="color: var(--success);">
+                  <i class="bi bi-hourglass-bottom"></i>
+                  <span id="time-remaining-display">Calculating...</span>
+                </div>
+                <p class="text-muted small mb-0">
+                  You must start the interview before <span data-utc-time="{{ window_end|date:'c' }}">{{ window_end|date:"F j, Y \a\t g:i A" }} UTC</span>
+                </p>
+              </div>
+            </div>
+          {% endif %}
+          <!-- Interview Instructions -->
+          <div class="card shadow-sm mb-4"
+               style="background-color: var(--surface);
+                      border: 1px solid var(--border)">
+            <div class="card-body">
+              <h5 class="card-title">
+                <i class="bi bi-list-check"></i> Before You Begin
+              </h5>
+              <ul class="mb-0">
+                <li>Make sure you have a stable internet connection</li>
+                <li>Find a quiet place where you won't be interrupted</li>
+                <li>You will have {{ invitation.duration_minutes }} minutes to complete the interview</li>
+                <li>The interview will automatically end when time expires</li>
+                <li>Your responses will be saved automatically</li>
+              </ul>
+            </div>
+          </div>
+          <!-- Interview Window Information -->
+          <div class="card shadow-sm mb-4"
+               style="background-color: var(--surface-hover);
+                      border: 1px solid var(--border)">
+            <div class="card-body">
+              <h5 class="card-title">
+                <i class="bi bi-info-circle"></i> Interview Details
+              </h5>
+              <ul class="list-unstyled mb-0">
+                <li class="mb-2">
+                  <strong>Template:</strong> {{ invitation.template.name }}
+                </li>
+                <li class="mb-2">
+                  <strong>Scheduled Time:</strong> <span data-utc-time="{{ invitation.scheduled_time|date:'c' }}">{{ invitation.scheduled_time|date:"F j, Y \a\t g:i A" }} UTC</span>
+                </li>
+                <li class="mb-2">
+                  <strong>Duration:</strong> {{ invitation.duration_minutes }} minutes
+                </li>
+                <li class="mb-0">
+                  <strong>Window Closes:</strong> <span data-utc-time="{{ window_end|date:'c' }}">{{ window_end|date:"F j, Y \a\t g:i A" }} UTC</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <!-- Start Interview Button -->
+          <div class="text-center mt-4">
+            <form method="post"
+                  action="{% url 'start_invited_interview' invitation_id=invitation.id %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-success btn-lg">
+                <i class="bi bi-play-circle-fill"></i> Start Interview Now
+              </button>
+            </form>
+            <p class="text-muted mt-3 small">
+              Once you click "Start Interview", the timer will begin and you'll have {{ invitation.duration_minutes }} minutes to complete it.
             </p>
           </div>
-        </div>
+        {% else %}
+          <!-- Fallback: Unexpected state -->
+          <div class="alert alert-warning" role="alert">
+            <h4 class="alert-heading">
+              <i class="bi bi-exclamation-triangle"></i> Unable to Determine Status
+            </h4>
+            <p class="mb-0">
+              There was an issue determining the interview status. Please contact support or try refreshing the page.
+            </p>
+          </div>
         {% endif %}
-
-        <!-- Interview Instructions -->
-        <div class="card shadow-sm mb-4" style="background-color: var(--surface); border: 1px solid var(--border);">
-          <div class="card-body">
-            <h5 class="card-title"><i class="bi bi-list-check"></i> Before You Begin</h5>
-            <ul class="mb-0">
-              <li>Make sure you have a stable internet connection</li>
-              <li>Find a quiet place where you won't be interrupted</li>
-              <li>You will have {{ invitation.duration_minutes }} minutes to complete the interview</li>
-              <li>The interview will automatically end when time expires</li>
-              <li>Your responses will be saved automatically</li>
-            </ul>
-          </div>
+        <!-- Back Link -->
+        <div class="text-center mt-5">
+          <a href="{% url 'index' %}" class="text-muted">
+            <i class="bi bi-arrow-left"></i> Return to Home
+          </a>
         </div>
-
-        <!-- Interview Window Information -->
-        <div class="card shadow-sm mb-4" style="background-color: var(--surface-hover); border: 1px solid var(--border);">
-          <div class="card-body">
-            <h5 class="card-title"><i class="bi bi-info-circle"></i> Interview Details</h5>
-            <ul class="list-unstyled mb-0">
-              <li class="mb-2">
-                <strong>Template:</strong> {{ invitation.template.name }}
-              </li>
-              <li class="mb-2">
-                <strong>Scheduled Time:</strong> <span data-utc-time="{{ invitation.scheduled_time|date:'c' }}">{{ invitation.scheduled_time|date:"F j, Y \a\t g:i A" }} UTC</span>
-              </li>
-              <li class="mb-2">
-                <strong>Duration:</strong> {{ invitation.duration_minutes }} minutes
-              </li>
-              <li class="mb-0">
-                <strong>Window Closes:</strong> <span data-utc-time="{{ window_end|date:'c' }}">{{ window_end|date:"F j, Y \a\t g:i A" }} UTC</span>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <!-- Start Interview Button -->
-        <div class="text-center mt-4">
-          <form method="post" action="{% url 'start_invited_interview' invitation_id=invitation.id %}">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-success btn-lg">
-              <i class="bi bi-play-circle-fill"></i> Start Interview Now
-            </button>
-          </form>
-          <p class="text-muted mt-3 small">
-            Once you click "Start Interview", the timer will begin and you'll have {{ invitation.duration_minutes }} minutes to complete it.
-          </p>
-        </div>
-
-      {% else %}
-        <!-- Fallback: Unexpected state -->
-        <div class="alert alert-warning" role="alert">
-          <h4 class="alert-heading"><i class="bi bi-exclamation-triangle"></i> Unable to Determine Status</h4>
-          <p class="mb-0">There was an issue determining the interview status. Please contact support or try refreshing the page.</p>
-        </div>
-      {% endif %}
-
-      <!-- Back Link -->
-      <div class="text-center mt-5">
-        <a href="{% url 'index' %}" class="text-muted">
-          <i class="bi bi-arrow-left"></i> Return to Home
-        </a>
       </div>
-
     </div>
   </div>
-</div>
-
-<script>
+  <script>
 // Countdown timer update function
 {% if not can_start and time_until_start and not is_expired %}
 function updateCountdown() {
@@ -447,5 +488,5 @@ if (msUntilEnd > 0 && msUntilEnd < 3600000) { // If within 1 hour of expiry
     }
   });
 })();
-</script>
+  </script>
 {% endblock content %}

@@ -1,7 +1,9 @@
 {% extends "base.html" %}
-{% block title %}Edit {{ document.title }}{% endblock title %}
+{% block title %}
+  Edit {{ document.title }}
+{% endblock title %}
 {% block content %}
-<style>
+  <style>
   .container{
     color: var(--text-primary);
   }
@@ -27,7 +29,7 @@
   h2 {
     color: var(--primary);
   }
-</style>
+  </style>
   <div class="container mt-5">
     <h2>Edit Document</h2>
     <form method="post">

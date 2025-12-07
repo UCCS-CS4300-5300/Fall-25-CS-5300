@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% load static %}
-
-{% block title %}Question Banks{% endblock title %}
-
+{% block title %}
+  Question Banks
+{% endblock title %}
 {% block content %}
-<style>
+  <style>
   .question-bank-container {
     background-color: var(--background);
     color: var(--text-primary);
@@ -312,346 +312,377 @@
     border-color: var(--primary);
     color: var(--text-primary);
   }
-</style>
-
-<div class="question-bank-container container-fluid p-4">
-  <div class="row mb-4">
-    <div class="col-md-8">
-      <h2 class="question-bank-header">Question Banks</h2>
-      <p class="question-bank-subtitle">Manage your interview question banks and tags</p>
-    </div>
-    <div class="col-md-4 text-end">
-      <button class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#createBankModal">
-        <i class="bi bi-plus-circle"></i> Create Question Bank
-      </button>
-      <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#autoAssembleModal">
-        <i class="bi bi-magic"></i> Auto-Assemble Interview
-      </button>
-    </div>
-  </div>
-
-  <!-- Question Banks List -->
-  <div class="row">
-    <div class="col-12">
-      <div id="questionBanksList" class="row">
-        <!-- Question banks will be loaded here dynamically -->
-        <div class="text-center p-5">
-          <div class="spinner-border" role="status">
-            <span class="visually-hidden">Loading...</span>
-          </div>
-        </div>
+  </style>
+  <div class="question-bank-container container-fluid p-4">
+    <div class="row mb-4">
+      <div class="col-md-8">
+        <h2 class="question-bank-header">Question Banks</h2>
+        <p class="question-bank-subtitle">Manage your interview question banks and tags</p>
       </div>
-    </div>
-  </div>
-</div>
-
-<!-- Create Question Bank Modal -->
-<div class="modal fade" id="createBankModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Create Question Bank</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <form id="createBankForm">
-          <div class="mb-3">
-            <label for="bankName" class="form-label">Name</label>
-            <input type="text" class="form-control" id="bankName" required>
-          </div>
-          <div class="mb-3">
-            <label for="bankDescription" class="form-label">Description</label>
-            <textarea class="form-control" id="bankDescription" rows="3"></textarea>
-          </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-primary" onclick="createQuestionBank()">Create</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- View Question Bank Modal -->
-<div class="modal fade" id="viewBankModal" tabindex="-1">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="viewBankTitle">Question Bank</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <div id="viewBankContent">
-          <!-- Questions will be loaded here -->
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary" onclick="showAddQuestionModal()">Add Question</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Add Question Modal -->
-<div class="modal fade" id="addQuestionModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Add Question</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <form id="addQuestionForm">
-          <div class="mb-3">
-            <label for="questionText" class="form-label">Question</label>
-            <textarea class="form-control" id="questionText" rows="3" required></textarea>
-          </div>
-          <div class="mb-3">
-            <label for="questionDifficulty" class="form-label">Difficulty</label>
-            <select class="form-control" id="questionDifficulty">
-              <option value="easy">Easy</option>
-              <option value="medium" selected>Medium</option>
-              <option value="hard">Hard</option>
-            </select>
-          </div>
-          <div class="mb-3">
-            <label for="questionTags" class="form-label">Tags (optional)</label>
-            <div id="availableTags" class="mb-2">
-              <!-- Available tags will be loaded here -->
-            </div>
-            <div class="input-group">
-              <input type="text" class="form-control" id="newTagName" placeholder="Create new tag (e.g., python, sql)">
-              <button type="button" class="btn btn-outline-secondary" onclick="createNewTag()">Add Tag</button>
-            </div>
-            <small class="text-muted">Select existing tags or create new ones</small>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Selected Tags:</label>
-            <div id="selectedTags">
-              <span class="text-muted">No tags selected</span>
-            </div>
-          </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-primary" onclick="saveQuestion()">Save Question</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Auto-Assemble Interview Modal -->
-<div class="modal fade" id="autoAssembleModal" tabindex="-1">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Auto-Assemble Interview</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <form id="autoAssembleForm">
-          <div class="mb-3">
-            <label for="interviewTitle" class="form-label">Interview Title</label>
-            <input type="text" class="form-control" id="interviewTitle" placeholder="e.g., Python Backend Interview" required>
-          </div>
-
-          <div class="mb-3">
-            <label for="questionCount" class="form-label">Number of Questions</label>
-            <input type="number" class="form-control" id="questionCount" min="1" max="50" value="10" required>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Select Tags to Include</label>
-            <div id="autoAssembleAvailableTags" class="mb-2">
-              <!-- Available tags will be loaded here -->
-            </div>
-            <small class="text-muted">Select at least one tag to filter questions</small>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Selected Tags:</label>
-            <div id="autoAssembleSelectedTags">
-              <span class="text-muted">No tags selected</span>
-            </div>
-          </div>
-
-          <div class="mb-3 form-check">
-            <input type="checkbox" class="form-check-input" id="disregardDifficulty">
-            <label class="form-check-label" for="disregardDifficulty">
-              Disregard difficulty (select questions randomly regardless of difficulty level)
-            </label>
-          </div>
-
-          <div class="mb-3" id="difficultyDistributionSection">
-            <label class="form-label">Difficulty Distribution (%)</label>
-            <div class="row">
-              <div class="col-md-4">
-                <label for="easyPercentage" class="form-label">Easy</label>
-                <input type="number" class="form-control" id="easyPercentage" min="0" max="100" value="30">
-              </div>
-              <div class="col-md-4">
-                <label for="mediumPercentage" class="form-label">Medium</label>
-                <input type="number" class="form-control" id="mediumPercentage" min="0" max="100" value="50">
-              </div>
-              <div class="col-md-4">
-                <label for="hardPercentage" class="form-label">Hard</label>
-                <input type="number" class="form-control" id="hardPercentage" min="0" max="100" value="20">
-              </div>
-            </div>
-            <small class="text-muted">Percentages should total 100%</small>
-          </div>
-
-          <div class="mb-3">
-            <label for="questionBankSelect" class="form-label">Question Bank (Optional)</label>
-            <select class="form-control" id="questionBankSelect">
-              <option value="">All Question Banks</option>
-              <!-- Question banks will be loaded here -->
-            </select>
-            <small class="text-muted">Leave blank to search across all question banks</small>
-          </div>
-
-          <div class="mb-3 form-check">
-            <input type="checkbox" class="form-check-input" id="randomizeQuestions" checked>
-            <label class="form-check-label" for="randomizeQuestions">
-              Randomize question selection
-            </label>
-          </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-success" onclick="assembleInterview()">Assemble Interview</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Interview Results Modal -->
-<div class="modal fade" id="assemblyResultsModal" tabindex="-1">
-  <div class="modal-dialog modal-xl">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="resultsTitle">Interview Preview</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <div id="assemblyResults">
-          <!-- Results will be displayed here -->
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary" onclick="saveAssembledInterview()">Save as Interview Template</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Validation Error Modal -->
-<div class="modal fade" id="validationErrorModal" tabindex="-1">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header error-modal-header">
-        <h5 class="modal-title">
-          <i class="bi bi-exclamation-triangle-fill me-2"></i>
-          Unable to Assemble Interview
-        </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body error-modal-body">
-        <div class="alert alert-danger mb-3">
-          <h6 class="alert-heading" id="errorMainMessage">Error Message</h6>
-          <p class="mb-0" id="errorDescription"></p>
-        </div>
-
-        <div id="errorBreakdownSection" style="display: none;">
-          <h6 class="mb-3">Question Availability Breakdown:</h6>
-          <div class="table-responsive">
-            <table class="table table-bordered">
-              <thead>
-                <tr>
-                  <th>Difficulty</th>
-                  <th>Requested</th>
-                  <th>Available</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody id="errorBreakdownTable">
-                <!-- Breakdown rows will be added here -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="alert alert-info mt-3" id="errorHelpMessage">
-          <strong>What can you do?</strong>
-          <ul class="mb-0 mt-2" id="errorSuggestions">
-            <!-- Suggestions will be added here -->
-          </ul>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary" data-bs-dismiss="modal" onclick="reopenAutoAssembleModal()">
-          <i class="bi bi-arrow-left me-1"></i>
-          Adjust Settings
+      <div class="col-md-4 text-end">
+        <button class="btn btn-primary me-2"
+                data-bs-toggle="modal"
+                data-bs-target="#createBankModal">
+          <i class="bi bi-plus-circle"></i> Create Question Bank
+        </button>
+        <button class="btn btn-success"
+                data-bs-toggle="modal"
+                data-bs-target="#autoAssembleModal">
+          <i class="bi bi-magic"></i> Auto-Assemble Interview
         </button>
       </div>
     </div>
-  </div>
-</div>
-
-<!-- Generic Notification Modal -->
-<div class="modal fade" id="notificationModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header" id="notificationModalHeader">
-        <h5 class="modal-title" id="notificationModalTitle">
-          <i id="notificationModalIcon" class="me-2"></i>
-          <span id="notificationModalTitleText">Notification</span>
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" id="notificationModalCloseBtn"></button>
-      </div>
-      <div class="modal-body">
-        <p id="notificationModalMessage"></p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn" id="notificationModalOkBtn" data-bs-dismiss="modal">OK</button>
+    <!-- Question Banks List -->
+    <div class="row">
+      <div class="col-12">
+        <div id="questionBanksList" class="row">
+          <!-- Question banks will be loaded here dynamically -->
+          <div class="text-center p-5">
+            <div class="spinner-border" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
-</div>
-
-<!-- Confirmation Modal -->
-<div class="modal fade" id="confirmationModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header confirmation-header">
-        <h5 class="modal-title">
-          <i class="bi bi-question-circle-fill me-2"></i>
-          Confirm Action
-        </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <p id="confirmationModalMessage"></p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-danger" id="confirmationModalConfirmBtn">Confirm</button>
+  <!-- Create Question Bank Modal -->
+  <div class="modal fade" id="createBankModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Create Question Bank</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="createBankForm">
+            <div class="mb-3">
+              <label for="bankName" class="form-label">Name</label>
+              <input type="text" class="form-control" id="bankName" required>
+            </div>
+            <div class="mb-3">
+              <label for="bankDescription" class="form-label">Description</label>
+              <textarea class="form-control" id="bankDescription" rows="3"></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="createQuestionBank()">Create</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
-
+  <!-- View Question Bank Modal -->
+  <div class="modal fade" id="viewBankModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="viewBankTitle">Question Bank</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div id="viewBankContent">
+            <!-- Questions will be loaded here -->
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button"
+                  class="btn btn-primary"
+                  onclick="showAddQuestionModal()">Add Question</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Add Question Modal -->
+  <div class="modal fade" id="addQuestionModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Add Question</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="addQuestionForm">
+            <div class="mb-3">
+              <label for="questionText" class="form-label">Question</label>
+              <textarea class="form-control" id="questionText" rows="3" required></textarea>
+            </div>
+            <div class="mb-3">
+              <label for="questionDifficulty" class="form-label">Difficulty</label>
+              <select class="form-control" id="questionDifficulty">
+                <option value="easy">Easy</option>
+                <option value="medium" selected>Medium</option>
+                <option value="hard">Hard</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="questionTags" class="form-label">Tags (optional)</label>
+              <div id="availableTags" class="mb-2">
+                <!-- Available tags will be loaded here -->
+              </div>
+              <div class="input-group">
+                <input type="text"
+                       class="form-control"
+                       id="newTagName"
+                       placeholder="Create new tag (e.g., python, sql)">
+                <button type="button"
+                        class="btn btn-outline-secondary"
+                        onclick="createNewTag()">Add Tag</button>
+              </div>
+              <small class="text-muted">Select existing tags or create new ones</small>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Selected Tags:</label>
+              <div id="selectedTags">
+                <span class="text-muted">No tags selected</span>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="saveQuestion()">Save Question</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Auto-Assemble Interview Modal -->
+  <div class="modal fade" id="autoAssembleModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Auto-Assemble Interview</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="autoAssembleForm">
+            <div class="mb-3">
+              <label for="interviewTitle" class="form-label">Interview Title</label>
+              <input type="text"
+                     class="form-control"
+                     id="interviewTitle"
+                     placeholder="e.g., Python Backend Interview"
+                     required>
+            </div>
+            <div class="mb-3">
+              <label for="questionCount" class="form-label">Number of Questions</label>
+              <input type="number"
+                     class="form-control"
+                     id="questionCount"
+                     min="1"
+                     max="50"
+                     value="10"
+                     required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Select Tags to Include</label>
+              <div id="autoAssembleAvailableTags" class="mb-2">
+                <!-- Available tags will be loaded here -->
+              </div>
+              <small class="text-muted">Select at least one tag to filter questions</small>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Selected Tags:</label>
+              <div id="autoAssembleSelectedTags">
+                <span class="text-muted">No tags selected</span>
+              </div>
+            </div>
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="disregardDifficulty">
+              <label class="form-check-label" for="disregardDifficulty">
+                Disregard difficulty (select questions randomly regardless of difficulty level)
+              </label>
+            </div>
+            <div class="mb-3" id="difficultyDistributionSection">
+              <label class="form-label">Difficulty Distribution (%)</label>
+              <div class="row">
+                <div class="col-md-4">
+                  <label for="easyPercentage" class="form-label">Easy</label>
+                  <input type="number"
+                         class="form-control"
+                         id="easyPercentage"
+                         min="0"
+                         max="100"
+                         value="30">
+                </div>
+                <div class="col-md-4">
+                  <label for="mediumPercentage" class="form-label">Medium</label>
+                  <input type="number"
+                         class="form-control"
+                         id="mediumPercentage"
+                         min="0"
+                         max="100"
+                         value="50">
+                </div>
+                <div class="col-md-4">
+                  <label for="hardPercentage" class="form-label">Hard</label>
+                  <input type="number"
+                         class="form-control"
+                         id="hardPercentage"
+                         min="0"
+                         max="100"
+                         value="20">
+                </div>
+              </div>
+              <small class="text-muted">Percentages should total 100%</small>
+            </div>
+            <div class="mb-3">
+              <label for="questionBankSelect" class="form-label">Question Bank (Optional)</label>
+              <select class="form-control" id="questionBankSelect">
+                <option value="">All Question Banks</option>
+                <!-- Question banks will be loaded here -->
+              </select>
+              <small class="text-muted">Leave blank to search across all question banks</small>
+            </div>
+            <div class="mb-3 form-check">
+              <input type="checkbox"
+                     class="form-check-input"
+                     id="randomizeQuestions"
+                     checked>
+              <label class="form-check-label" for="randomizeQuestions">Randomize question selection</label>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-success" onclick="assembleInterview()">Assemble Interview</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Interview Results Modal -->
+  <div class="modal fade" id="assemblyResultsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="resultsTitle">Interview Preview</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div id="assemblyResults">
+            <!-- Results will be displayed here -->
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button"
+                  class="btn btn-primary"
+                  onclick="saveAssembledInterview()">Save as Interview Template</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Validation Error Modal -->
+  <div class="modal fade" id="validationErrorModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header error-modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            Unable to Assemble Interview
+          </h5>
+          <button type="button"
+                  class="btn-close btn-close-white"
+                  data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body error-modal-body">
+          <div class="alert alert-danger mb-3">
+            <h6 class="alert-heading" id="errorMainMessage">Error Message</h6>
+            <p class="mb-0" id="errorDescription"></p>
+          </div>
+          <div id="errorBreakdownSection" style="display: none;">
+            <h6 class="mb-3">Question Availability Breakdown:</h6>
+            <div class="table-responsive">
+              <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th>Difficulty</th>
+                    <th>Requested</th>
+                    <th>Available</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="errorBreakdownTable">
+                  <!-- Breakdown rows will be added here -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="alert alert-info mt-3" id="errorHelpMessage">
+            <strong>What can you do?</strong>
+            <ul class="mb-0 mt-2" id="errorSuggestions">
+              <!-- Suggestions will be added here -->
+            </ul>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button"
+                  class="btn btn-primary"
+                  data-bs-dismiss="modal"
+                  onclick="reopenAutoAssembleModal()">
+            <i class="bi bi-arrow-left me-1"></i>
+            Adjust Settings
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Generic Notification Modal -->
+  <div class="modal fade" id="notificationModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header" id="notificationModalHeader">
+          <h5 class="modal-title" id="notificationModalTitle">
+            <i id="notificationModalIcon" class="me-2"></i>
+            <span id="notificationModalTitleText">Notification</span>
+          </h5>
+          <button type="button"
+                  class="btn-close"
+                  data-bs-dismiss="modal"
+                  id="notificationModalCloseBtn"></button>
+        </div>
+        <div class="modal-body">
+          <p id="notificationModalMessage"></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button"
+                  class="btn"
+                  id="notificationModalOkBtn"
+                  data-bs-dismiss="modal">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Confirmation Modal -->
+  <div class="modal fade" id="confirmationModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header confirmation-header">
+          <h5 class="modal-title">
+            <i class="bi bi-question-circle-fill me-2"></i>
+            Confirm Action
+          </h5>
+          <button type="button"
+                  class="btn-close btn-close-white"
+                  data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p id="confirmationModalMessage"></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger" id="confirmationModalConfirmBtn">Confirm</button>
+        </div>
+      </div>
+    </div>
+  </div>
 {% endblock content %}
-
 {% block scripts %}
-{{ block.super }}
-<script>
+  {{ block.super }}
+  <script>
   let currentBankId = null;
 
   // Load question banks on page load
@@ -1607,5 +1638,5 @@
       button.disabled = false;
     });
   }
-</script>
+  </script>
 {% endblock scripts %}

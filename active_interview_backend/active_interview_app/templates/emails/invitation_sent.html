@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Interview Invitation</title>
-  <style>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interview Invitation</title>
+    <style>
     .local-time {
       font-weight: bold;
     }
@@ -12,84 +12,115 @@
       font-size: 0.9em;
       color: #6c757d;
     }
-  </style>
-</head>
-<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <div style="background-color: #1F7BA6; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
-    <h1 style="margin: 0; font-size: 24px;">You're Invited to an Interview!</h1>
-  </div>
-
-  <div style="background-color: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px;">
-    <p>Hello,</p>
-
-    <p>You have been invited to take an interview with <strong>{{ interviewer.get_full_name|default:interviewer.username }}</strong>.</p>
-
-    <div style="background-color: #d1ecf1; border-left: 4px solid #0c5460; padding: 15px; margin: 20px 0; border-radius: 4px;">
-      <p style="margin: 0; font-weight: bold; color: #0c5460;">Interview Details</p>
-      <ul style="margin: 10px 0 0 0; padding-left: 20px; color: #0c5460;">
-        <li><strong>Position:</strong> {{ invitation.template.name }}</li>
-        <li>
-          <strong>Scheduled Time:</strong>
-          <span class="local-time" data-utc="{{ invitation.scheduled_time|date:'c' }}">
-            {{ invitation.scheduled_time|date:"F j, Y \a\\t g:i A" }} UTC
-          </span>
-        </li>
-        <li><strong>Duration:</strong> {{ invitation.duration_minutes }} minutes</li>
-        <li>
-          <strong>Window Closes:</strong>
-          <span class="local-time" data-utc="{{ window_end|date:'c' }}">
-            {{ window_end|date:"F j, Y \a\\t g:i A" }} UTC
-          </span>
-        </li>
-      </ul>
+    </style>
+  </head>
+  <body style="font-family: Arial, sans-serif;
+               line-height: 1.6;
+               color: #333;
+               max-width: 600px;
+               margin: 0 auto;
+               padding: 20px">
+    <div style="background-color: #1F7BA6;
+                color: white;
+                padding: 20px;
+                text-align: center;
+                border-radius: 8px 8px 0 0">
+      <h1 style="margin: 0; font-size: 24px;">You're Invited to an Interview!</h1>
     </div>
-
-    <h3 style="color: #1F7BA6; margin-top: 30px;">How to Join</h3>
-    <p>You can access the interview starting at the scheduled time by clicking the button below:</p>
-
-    <div style="text-align: center; margin: 30px 0;">
-      <a href="{{ join_url }}" style="display: inline-block; background-color: #1F7BA6; color: white; padding: 15px 40px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">
-        Start Interview
-      </a>
+    <div style="background-color: #f8f9fa;
+                padding: 30px;
+                border-radius: 0 0 8px 8px">
+      <p>Hello,</p>
+      <p>
+        You have been invited to take an interview with <strong>{{ interviewer.get_full_name|default:interviewer.username }}</strong>.
+      </p>
+      <div style="background-color: #d1ecf1;
+                  border-left: 4px solid #0c5460;
+                  padding: 15px;
+                  margin: 20px 0;
+                  border-radius: 4px">
+        <p style="margin: 0; font-weight: bold; color: #0c5460;">Interview Details</p>
+        <ul style="margin: 10px 0 0 0; padding-left: 20px; color: #0c5460;">
+          <li>
+            <strong>Position:</strong> {{ invitation.template.name }}
+          </li>
+          <li>
+            <strong>Scheduled Time:</strong>
+            <span class="local-time"
+                  data-utc="{{ invitation.scheduled_time|date:'c' }}">
+              {{ invitation.scheduled_time|date:"F j, Y \a\\t g:i A" }} UTC
+            </span>
+          </li>
+          <li>
+            <strong>Duration:</strong> {{ invitation.duration_minutes }} minutes
+          </li>
+          <li>
+            <strong>Window Closes:</strong>
+            <span class="local-time" data-utc="{{ window_end|date:'c' }}">{{ window_end|date:"F j, Y \a\\t g:i A" }} UTC</span>
+          </li>
+        </ul>
+      </div>
+      <h3 style="color: #1F7BA6; margin-top: 30px;">How to Join</h3>
+      <p>You can access the interview starting at the scheduled time by clicking the button below:</p>
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="{{ join_url }}"
+           style="display: inline-block;
+                  background-color: #1F7BA6;
+                  color: white;
+                  padding: 15px 40px;
+                  text-decoration: none;
+                  border-radius: 5px;
+                  font-weight: bold;
+                  font-size: 16px">Start Interview</a>
+      </div>
+      <div style="background-color: #fff3cd;
+                  border-left: 4px solid #856404;
+                  padding: 15px;
+                  margin: 20px 0;
+                  border-radius: 4px">
+        <p style="margin: 0; font-weight: bold; color: #856404;">Important Information</p>
+        <ul style="margin: 10px 0 0 0; padding-left: 20px; color: #856404;">
+          <li>
+            <strong>You can start the interview any time within the window shown above</strong>
+          </li>
+          <li>If you're not registered, you'll need to create an account first (it's quick!)</li>
+          <li>Make sure you have a stable internet connection</li>
+          <li>Find a quiet place where you won't be interrupted</li>
+          <li>The interview will automatically save your progress</li>
+        </ul>
+      </div>
+      {% if invitation.template.description %}
+        <h3 style="color: #1F7BA6; margin-top: 30px;">About This Interview</h3>
+        <p style="background: white;
+                  padding: 15px;
+                  border-radius: 4px;
+                  border: 1px solid #dee2e6">{{ invitation.template.description }}</p>
+      {% endif %}
+      <div style="background-color: #d1ecf1;
+                  padding: 15px;
+                  margin: 20px 0;
+                  border-radius: 4px">
+        <p style="margin: 0; font-size: 14px;">
+          <strong>Calendar Invitation</strong>
+        </p>
+        <p style="margin: 5px 0 0 0; font-size: 14px;">
+          A calendar event has been attached to this email. You can add it to your calendar to receive reminders.
+        </p>
+      </div>
+      <p>Good luck!</p>
+      <p style="margin-top: 30px;">
+        <strong>{{ interviewer.get_full_name|default:interviewer.username }}</strong>
+        <br>
+        {% if interviewer.email %}{{ interviewer.email }}{% endif %}
+      </p>
+      <hr style="border: none; border-top: 1px solid #dee2e6; margin: 30px 0;">
+      <p style="font-size: 12px; color: #6c757d; text-align: center;">
+        This invitation was sent to {{ invitation.candidate_email }}
+        <br>
+        Active Interview Service | Professional Interview Practice
+      </p>
     </div>
-
-    <div style="background-color: #fff3cd; border-left: 4px solid #856404; padding: 15px; margin: 20px 0; border-radius: 4px;">
-      <p style="margin: 0; font-weight: bold; color: #856404;">Important Information</p>
-      <ul style="margin: 10px 0 0 0; padding-left: 20px; color: #856404;">
-        <li><strong>You can start the interview any time within the window shown above</strong></li>
-        <li>If you're not registered, you'll need to create an account first (it's quick!)</li>
-        <li>Make sure you have a stable internet connection</li>
-        <li>Find a quiet place where you won't be interrupted</li>
-        <li>The interview will automatically save your progress</li>
-      </ul>
-    </div>
-
-    {% if invitation.template.description %}
-    <h3 style="color: #1F7BA6; margin-top: 30px;">About This Interview</h3>
-    <p style="background: white; padding: 15px; border-radius: 4px; border: 1px solid #dee2e6;">
-      {{ invitation.template.description }}
-    </p>
-    {% endif %}
-
-    <div style="background-color: #d1ecf1; padding: 15px; margin: 20px 0; border-radius: 4px;">
-      <p style="margin: 0; font-size: 14px;"><strong>Calendar Invitation</strong></p>
-      <p style="margin: 5px 0 0 0; font-size: 14px;">A calendar event has been attached to this email. You can add it to your calendar to receive reminders.</p>
-    </div>
-
-    <p>Good luck!</p>
-
-    <p style="margin-top: 30px;"><strong>{{ interviewer.get_full_name|default:interviewer.username }}</strong><br>
-    {% if interviewer.email %}{{ interviewer.email }}{% endif %}</p>
-
-    <hr style="border: none; border-top: 1px solid #dee2e6; margin: 30px 0;">
-
-    <p style="font-size: 12px; color: #6c757d; text-align: center;">
-      This invitation was sent to {{ invitation.candidate_email }}<br>
-      Active Interview Service | Professional Interview Practice
-    </p>
-  </div>
-
-  <script>
+    <script>
     // Convert UTC times to user's local timezone
     // Note: Some email clients block JavaScript, so we show UTC as fallback
     (function() {
@@ -119,6 +150,6 @@
         }
       });
     })();
-  </script>
-</body>
+    </script>
+  </body>
 </html>

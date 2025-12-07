@@ -1,22 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="description" content="Interactive AI job interviews">
-  <meta name="keywords" content="AI, Interviews, Jobs">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ChatGPT Demo</title>
-</head>
-<body>
-  <h1>ChatGPT Demo</h1>
-  <div id="chat-container">
-    <div id="chat-messages"></div>
-    <input type="text" id="user-input" placeholder="Type your message...">
-    <button onclick="sendMessage()">Send</button>
-  </div>
-
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="description" content="Interactive AI job interviews">
+    <meta name="keywords" content="AI, Interviews, Jobs">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatGPT Demo</title>
+  </head>
+  <body>
+    <h1>ChatGPT Demo</h1>
+    <div id="chat-container">
+      <div id="chat-messages"></div>
+      <input type="text" id="user-input" placeholder="Type your message...">
+      <button onclick="sendMessage()">Send</button>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
     function sendMessage() {
       var userInput = $('#user-input').val();
       if (userInput.trim() !== '') {
@@ -41,6 +40,6 @@
         sendMessage();
       }
     });
-  </script>
-</body>
+    </script>
+  </body>
 </html>

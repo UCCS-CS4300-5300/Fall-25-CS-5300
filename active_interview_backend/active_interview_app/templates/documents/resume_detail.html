@@ -1,9 +1,7 @@
 {% extends "base.html" %}
-
 {% block title %}
   {{ resume.title }} - Resume Details
 {% endblock title %}
-
 {% block content %}
   <style>
     .resume-page {
@@ -335,12 +333,16 @@
       }
     }
   </style>
-
   <div class="resume-page">
     <div class="page-header">
-      <h1>{% if is_owner %}Viewing Your Documents{% else %}Viewing {{ resume.user.username }}'s Documents{% endif %}</h1>
+      <h1>
+        {% if is_owner %}
+          Viewing Your Documents
+        {% else %}
+          Viewing {{ resume.user.username }}'s Documents
+        {% endif %}
+      </h1>
     </div>
-
     <div class="resume-layout">
       <!-- Left Column: Resume Content & Parsed Data -->
       <div class="left-column">
@@ -363,70 +365,64 @@
               {% endif %}
             </div>
             {% if resume.parsed_at %}
-              <div class="text-muted" style="font-size: 0.9rem;">
-                Parsed: {{ resume.parsed_at|date:"M d, Y g:i A" }}
-              </div>
+              <div class="text-muted" style="font-size: 0.9rem;">Parsed: {{ resume.parsed_at|date:"M d, Y g:i A" }}</div>
             {% endif %}
           </div>
-
           {% if resume.parsing_status == 'error' and resume.parsing_error %}
             <div class="alert alert-danger mt-2 mb-0" style="font-size: 0.9rem;">
               <strong>Error:</strong> {{ resume.parsing_error }}
             </div>
           {% endif %}
-
           {% if resume.parsing_status == 'pending' %}
             <div class="alert alert-info mt-2 mb-0" style="font-size: 0.9rem;">
               This resume has not been parsed yet. Parsing will occur automatically on the next upload or system update.
             </div>
           {% endif %}
         </div>
-
         <!-- Parsed Data: Skills -->
         {% if resume.parsing_status == 'success' %}
           <div class="resume-section parsed-data-section">
-            <h3><i class="bi bi-code-square"></i> Skills</h3>
+            <h3>
+              <i class="bi bi-code-square"></i> Skills
+            </h3>
             {% if resume.skills and resume.skills|length > 0 %}
               <div class="d-flex flex-wrap">
-                {% for skill in resume.skills %}
-                  <span class="skill-badge">{{ skill }}</span>
-                {% endfor %}
+                {% for skill in resume.skills %}<span class="skill-badge">{{ skill }}</span>{% endfor %}
               </div>
             {% else %}
-              <div class="no-data-message">
-                No skills extracted from resume.
-              </div>
+              <div class="no-data-message">No skills extracted from resume.</div>
             {% endif %}
           </div>
-
           <!-- Parsed Data: Work Experience -->
           <div class="resume-section parsed-data-section">
-            <h3><i class="bi bi-briefcase"></i> Work Experience</h3>
+            <h3>
+              <i class="bi bi-briefcase"></i> Work Experience
+            </h3>
             {% if resume.experience and resume.experience|length > 0 %}
               {% for exp in resume.experience %}
                 <div class="experience-card">
                   <h4>{{ exp.title|default:"Position" }}</h4>
                   <div class="company">{{ exp.company|default:"Company Name" }}</div>
                   <div class="duration">{{ exp.duration|default:"Duration Unknown" }}</div>
-                  {% if exp.description %}
-                    <div class="description">{{ exp.description }}</div>
-                  {% endif %}
+                  {% if exp.description %}<div class="description">{{ exp.description }}</div>{% endif %}
                 </div>
               {% endfor %}
             {% else %}
-              <div class="no-data-message">
-                No work experience extracted from resume.
-              </div>
+              <div class="no-data-message">No work experience extracted from resume.</div>
             {% endif %}
           </div>
-
           <!-- Parsed Data: Education -->
           <div class="resume-section parsed-data-section">
-            <h3><i class="bi bi-mortarboard"></i> Education</h3>
+            <h3>
+              <i class="bi bi-mortarboard"></i> Education
+            </h3>
             {% if resume.education and resume.education|length > 0 %}
               {% for edu in resume.education %}
                 <div class="education-card">
-                  <h4>{{ edu.degree|default:"Degree" }}{% if edu.field %} in {{ edu.field }}{% endif %}</h4>
+                  <h4>
+                    {{ edu.degree|default:"Degree" }}
+                    {% if edu.field %}in {{ edu.field }}{% endif %}
+                  </h4>
                   <div class="institution">{{ edu.institution|default:"Institution" }}</div>
                   <div class="degree-info">
                     {% if edu.year %}
@@ -438,18 +434,21 @@
                 </div>
               {% endfor %}
             {% else %}
-              <div class="no-data-message">
-                No education information extracted from resume.
-              </div>
+              <div class="no-data-message">No education information extracted from resume.</div>
             {% endif %}
           </div>
         {% endif %}
-
         <!-- Raw Resume Content -->
         <div class="resume-section">
           <div class="section-header-with-toggle">
-            <h2><i class="bi bi-file-text"></i> Raw Resume Content</h2>
-            <button class="toggle-btn" data-bs-toggle="collapse" data-bs-target="#rawResumeContent" aria-expanded="false" aria-controls="rawResumeContent">
+            <h2>
+              <i class="bi bi-file-text"></i> Raw Resume Content
+            </h2>
+            <button class="toggle-btn"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#rawResumeContent"
+                    aria-expanded="false"
+                    aria-controls="rawResumeContent">
               <span class="expand-text">Expand</span>
               <span class="collapse-text">Collapse</span>
             </button>
@@ -459,7 +458,6 @@
           </div>
         </div>
       </div>
-
       <!-- Right Column: Documents -->
       <div class="right-column">
         <!-- Resumes Section -->
@@ -473,52 +471,62 @@
             <ul class="document-list">
               {% for document in resumes %}
                 {% if document.title and document.title != "1" %}
-                <li class="document-item">
-                  <span class="document-name">
-                    {% if document.title and document.title != "1" %}
-                      {{ document.title }}
-                    {% elif document.file %}
-                      {{ document.original_filename }}
-                    {% endif %}
-                  </span>
-                  <div class="document-actions">
-                    <a href="{% url 'resume_detail' resume_id=document.id %}">View</a>
-                    {% if is_owner %}
-                      <a href="{% url 'edit_resume' document.id %}">Edit</a>
-                      <button type="button" class="delete-btn" data-bs-toggle="modal" data-bs-target="#deleteResumeModal{{ document.id }}">Delete</button>
-                    {% endif %}
-                  </div>
-                </li>
+                  <li class="document-item">
+                    <span class="document-name">
+                      {% if document.title and document.title != "1" %}
+                        {{ document.title }}
+                      {% elif document.file %}
+                        {{ document.original_filename }}
+                      {% endif %}
+                    </span>
+                    <div class="document-actions">
+                      <a href="{% url 'resume_detail' resume_id=document.id %}">View</a>
+                      {% if is_owner %}
+                        <a href="{% url 'edit_resume' document.id %}">Edit</a>
+                        <button type="button"
+                                class="delete-btn"
+                                data-bs-toggle="modal"
+                                data-bs-target="#deleteResumeModal{{ document.id }}">Delete</button>
+                      {% endif %}
+                    </div>
+                  </li>
                 {% endif %}
               {% endfor %}
             </ul>
             {% if is_owner %}
               {% for document in resumes %}
-                <div class="modal fade" id="deleteResumeModal{{ document.id }}" tabindex="-1" aria-labelledby="deleteResumeLabel{{ document.id }}" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                  <div class="modal-content">
-                    <div class="modal-header">
-                      <h5 class="modal-title" id="deleteResumeLabel{{ document.id }}">Confirm Delete</h5>
-                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                      Are you sure you want to delete <strong>{{ document.title|default:document.original_filename }}</strong>?
-                    </div>
-                    <div class="modal-footer">
-                      <form method="post" action="{% url 'delete_resume' resume_id=document.id %}">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-danger">Yes, Delete</button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                      </form>
+                <div class="modal fade"
+                     id="deleteResumeModal{{ document.id }}"
+                     tabindex="-1"
+                     aria-labelledby="deleteResumeLabel{{ document.id }}"
+                     aria-hidden="true">
+                  <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="deleteResumeLabel{{ document.id }}">Confirm Delete</h5>
+                        <button type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                      </div>
+                      <div class="modal-body">
+                        Are you sure you want to delete <strong>{{ document.title|default:document.original_filename }}</strong>?
+                      </div>
+                      <div class="modal-footer">
+                        <form method="post"
+                              action="{% url 'delete_resume' resume_id=document.id %}">
+                          {% csrf_token %}
+                          <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        </form>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
               {% endfor %}
             {% endif %}
           {% endif %}
         </div>
-
         <!-- Job Listings Section -->
         <div class="resume-section">
           <h2>Uploaded Job Listings</h2>
@@ -535,31 +543,41 @@
                     <a href="{% url 'job_posting_detail' job_id=job.id %}">View</a>
                     {% if is_owner %}
                       <a href="{% url 'edit_job_posting' job.id %}">Edit</a>
-                      <button type="button" class="delete-btn" data-bs-toggle="modal" data-bs-target="#deleteJobModal{{ job.id }}">Delete</button>
+                      <button type="button"
+                              class="delete-btn"
+                              data-bs-toggle="modal"
+                              data-bs-target="#deleteJobModal{{ job.id }}">Delete</button>
                     {% endif %}
                   </div>
                 </li>
                 {% if is_owner %}
-                  <div class="modal fade" id="deleteJobModal{{ job.id }}" tabindex="-1" aria-labelledby="deleteJobLabel{{ job.id }}" aria-hidden="true">
-                  <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                      <div class="modal-header">
-                        <h5 class="modal-title" id="deleteJobLabel{{ job.id }}">Confirm Delete</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                      </div>
-                      <div class="modal-body">
-                        Are you sure you want to delete <strong>{{ job.title }}</strong>?
-                      </div>
-                      <div class="modal-footer">
-                        <form method="post" action="{% url 'delete_job' job_id=job.id %}">
-                          {% csrf_token %}
-                          <button type="submit" class="btn btn-danger">Yes, Delete</button>
-                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        </form>
+                  <div class="modal fade"
+                       id="deleteJobModal{{ job.id }}"
+                       tabindex="-1"
+                       aria-labelledby="deleteJobLabel{{ job.id }}"
+                       aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title" id="deleteJobLabel{{ job.id }}">Confirm Delete</h5>
+                          <button type="button"
+                                  class="btn-close"
+                                  data-bs-dismiss="modal"
+                                  aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                          Are you sure you want to delete <strong>{{ job.title }}</strong>?
+                        </div>
+                        <div class="modal-footer">
+                          <form method="post" action="{% url 'delete_job' job_id=job.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                          </form>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
                 {% endif %}
               {% endfor %}
             </ul>

@@ -1,9 +1,7 @@
 {% extends "base.html" %}
-
 {% block title %}
   AIS - Upload Resume
 {% endblock title %}
-
 {% block content %}
   <style>
     /* Upload page specific styles using CSS variables */
@@ -124,48 +122,39 @@
       border-color: var(--info);
     }
   </style>
-
   <div class="upload-container">
     <h2 class="upload-title">Upload Your Resume</h2>
-
     <form action="{% url 'upload_file' %}"
           method="post"
           enctype="multipart/form-data"
           id="uploadForm"
           onsubmit="return showUploadSpinner()">
       {% csrf_token %}
-
       <div class="form-group">
         <label class="form-label" for="id_file">Choose File (PDF or Word):</label>
         {{ form.file }}
         <p class="help-text">Supported formats: PDF, DOCX. Your resume will be automatically parsed by AI.</p>
       </div>
-
       <div class="form-group">
         <label class="form-label" for="id_title">Resume Title (Optional):</label>
         {{ form.title }}
         <p class="help-text">Give your resume a memorable name (e.g., "Software Engineer Resume 2024")</p>
       </div>
-
       <button type="submit" class="btn-upload" id="uploadBtn">
         <span class="loading-spinner-button"
               id="uploadSpinner"
               role="status"
               aria-hidden="true"
-              style="display:none;"></span>
+              style="display:none"></span>
         <span id="uploadBtnText">Upload Resume</span>
       </button>
     </form>
   </div>
-
   {% if messages %}
     <ul class="messages">
-      {% for message in messages %}
-        <li class="{{ message.tags }}">{{ message }}</li>
-      {% endfor %}
+      {% for message in messages %}<li class="{{ message.tags }}">{{ message }}</li>{% endfor %}
     </ul>
   {% endif %}
-
   <script>
     /**
      * Show loading spinner when upload form is submitted

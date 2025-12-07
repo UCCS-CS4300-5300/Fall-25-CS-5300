@@ -1,18 +1,13 @@
 {% extends "base.html" %}
-
 {% block title %}
   AIS - Homepage
 {% endblock title %}
-
 {% block content %}
-
-{% load static %}
-
-<link href="{% static 'css/main.css' %}" rel="stylesheet" type="text/css">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-
-
-<style>
+  {% load static %}
+  <link href="{% static 'css/main.css' %}" rel="stylesheet" type="text/css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css"
+        rel="stylesheet">
+  <style>
   .flex-container{
     max-height: 400px;
     max-width: 100%;
@@ -125,60 +120,67 @@
     max-height: 65%;
     line-height: 1.5;
   }
-</style>
-<div class="images">
-  <br>
-  <br>
-  <img class="logo_img" alt="logo" height="75px" width="75px" src="{% static 'images/favicon.png' %}" >
-  <br>
-  <br>
-</div>
-
-<div class="flex-container">
-  <br>
-  <br>
-    <img class="centered-container" id="chat-img" alt="chat example" height="300px" width="300px" src="{% static 'images/chat_ex.png' %}" >
-  <br>
-  <br>
-</div>
-<div id="welcome-div">
-  <br>
-  <br>
-  <span class="box" >
-    <p id="welcome-para">
-      Welcome to the Active Interview Service! Active Interview is designed to help 
-      anyone prepare for an upcoming interview. AIS can use your resume and info about the job you are 
-      applying for to create customized, specific interview questions to simulate a real interview.
-    </p>
-  </span>
-</div>
+  </style>
+  <div class="images">
+    <br>
+    <br>
+    <img class="logo_img"
+         alt="logo"
+         height="75px"
+         width="75px"
+         src="{% static 'images/favicon.png' %}">
+    <br>
+    <br>
+  </div>
+  <div class="flex-container">
+    <br>
+    <br>
+    <img class="centered-container"
+         id="chat-img"
+         alt="chat example"
+         height="300px"
+         width="300px"
+         src="{% static 'images/chat_ex.png' %}">
+    <br>
+    <br>
+  </div>
+  <div id="welcome-div">
+    <br>
+    <br>
+    <span class="box">
+      <p id="welcome-para">
+        Welcome to the Active Interview Service! Active Interview is designed to help
+        anyone prepare for an upcoming interview. AIS can use your resume and info about the job you are
+        applying for to create customized, specific interview questions to simulate a real interview.
+      </p>
+    </span>
+  </div>
   <br>
   <br>
   <br>
   <h1>Getting Started</h1>
-<div class="container">
-<div class="row">
-    <div class="col-sm">
-      <br>
-      <p class="instructions">1. Create an AIS account, or log in to an existing account</p>
-      <br>
-    </div>
-    <div class="col-sm">
-       <br>
-       <p class="instructions">2. Upload your resume</p>
-    </div>
-    <div class="col-sm">
-      <br>
+  <div class="container">
+    <div class="row">
+      <div class="col-sm">
+        <br>
+        <p class="instructions">1. Create an AIS account, or log in to an existing account</p>
+        <br>
+      </div>
+      <div class="col-sm">
+        <br>
+        <p class="instructions">2. Upload your resume</p>
+      </div>
+      <div class="col-sm">
+        <br>
         <p class="instructions">3. Click Start a Chat</p>
-      
+      </div>
     </div>
-</div>
-</div>
-
-{% if not user.is_authenticated %}
-  <a type="button" class="registerbutton text-center" href="{% url 'register_page' %}">Log In or Register</a>
-{% endif %}
-
-<br>
-<br>
+  </div>
+  {% if not user.is_authenticated %}
+    <a type="button"
+       class="registerbutton text-center"
+       href="{% url 'register_page' %}">Log In or Register</a>
+  {% endif %}
+  <br>
+  <br>
 {% endblock content %}
