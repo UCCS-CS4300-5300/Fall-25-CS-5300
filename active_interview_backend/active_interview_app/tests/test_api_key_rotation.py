@@ -32,8 +32,7 @@ from active_interview_app.api_key_rotation_models import (
     KeyRotationSchedule,
     KeyRotationLog,
     get_encryption_key
-)
-from cryptography.fernet import Fernet
+)  # noqa: F401
 
 
 class APIKeyPoolModelTest(TestCase):
@@ -574,8 +573,8 @@ class KeyRotationLogModelTest(TestCase):
         )
 
         # Delete the keys
-        old_key_id = self.old_key.id
-        new_key_id = self.new_key.id
+        _old_key_id = self.old_key.id  # noqa: F841
+        _new_key_id = self.new_key.id  # noqa: F841
         self.old_key.delete()
         self.new_key.delete()
 
@@ -700,7 +699,7 @@ class RotateAPIKeysCommandTest(TestCase):
     def test_rotate_command_not_due(self):
         """Test rotate command when rotation is not due"""
         # Create schedule with future rotation date
-        schedule = KeyRotationSchedule.objects.create(
+        _schedule = KeyRotationSchedule.objects.create(  # noqa: F841
             provider='openai',
             is_enabled=True,
             rotation_frequency=KeyRotationSchedule.WEEKLY,
@@ -722,7 +721,7 @@ class RotateAPIKeysCommandTest(TestCase):
     def test_rotate_command_disabled_schedule(self):
         """Test rotate command when schedule is disabled"""
         # Create disabled schedule
-        schedule = KeyRotationSchedule.objects.create(
+        _schedule = KeyRotationSchedule.objects.create(  # noqa: F841
             provider='openai',
             is_enabled=False,
             rotation_frequency=KeyRotationSchedule.WEEKLY
@@ -826,7 +825,7 @@ class OpenAIUtilsIntegrationTest(TestCase):
         key1.save()
 
         # Get client (should use key1)
-        client1 = get_openai_client()
+        _client1 = get_openai_client()  # noqa: F841
         self.assertEqual(mock_openai.call_count, 1)
         mock_openai.assert_called_with(api_key='sk-key1')
 
@@ -842,7 +841,7 @@ class OpenAIUtilsIntegrationTest(TestCase):
         key2.activate()
 
         # Get client again (should refresh with key2)
-        client2 = get_openai_client()
+        _client2 = get_openai_client()  # noqa: F841
         self.assertEqual(mock_openai.call_count, 2)
         mock_openai.assert_called_with(api_key='sk-key2')
 
