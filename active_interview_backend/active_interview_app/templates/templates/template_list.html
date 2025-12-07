@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% block title %}
-    AIS - Interview Templates
+  AIS - Interview Templates
 {% endblock title %}
 {% block content %}
-    <style>
+  <style>
     .template-page {
       max-width: 1200px;
       margin: 2rem auto;
@@ -204,94 +204,95 @@
         justify-content: flex-start;
       }
     }
-    </style>
-    <div class="template-page">
-        <!-- Page Header -->
-        <div class="page-header">
-            <h1>Interview Templates</h1>
-        </div>
-        <!-- Create Button -->
-        <div style="text-align: center;">
-            <div class="action-buttons">
-                <a href="{% url 'create_template' %}" class="btn btn-primary btn-lg">
-                    <i class="bi bi-plus-circle"></i> Create New Template
-                </a>
-            </div>
-        </div>
-        <!-- Templates List Section -->
-        <div class="template-section">
-            <h2>My Templates</h2>
-            {% if templates|length == 0 %}
-                <div class="empty-state">
-                    <p>No templates created yet</p>
-                    <p>Create your first interview template to start organizing your interview structure.</p>
-                </div>
-            {% else %}
-                <ul class="document-list">
-                    {% for template in templates %}
-                        <li class="document-item">
-                            <div>
-                                <div class="document-name">
-                                    {{ template.name }}
-                                    {% if template.is_complete %}
-                                        <span class="status-badge complete">Complete</span>
-                                    {% else %}
-                                        <span class="status-badge wip">WIP</span>
-                                    {% endif %}
-                                </div>
-                                {% if template.description %}<div class="document-meta">{{ template.description }}</div>{% endif %}
-                                <div class="document-meta">
-                                    Created {{ template.created_at|date:"M d, Y" }} | Weight: {{ template.get_total_weight }}%
-                                </div>
-                            </div>
-                            <div class="document-actions">
-                                <a href="{% url 'template_detail' template_id=template.id %}">View</a>
-                                <a href="{% url 'edit_template' template.id %}">Edit</a>
-                                {% if template.is_complete %}
-                                    <a href="{% url 'invitation_create_from_template' template_id=template.id %}">Invite Candidate</a>
-                                {% else %}
-                                    <span class="disabled-link" title="Template must be complete (100% weight) before inviting candidates">Invite Candidate</span>
-                                {% endif %}
-                                <button type="button"
-                                        class="delete-btn"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#deleteTemplateModal{{ template.id }}">Delete</button>
-                            </div>
-                        </li>
-                    {% endfor %}
-                </ul>
-                <!-- Delete Modals -->
-                {% for template in templates %}
-                    <div class="modal fade"
-                         id="deleteTemplateModal{{ template.id }}"
-                         tabindex="-1"
-                         aria-labelledby="deleteTemplateLabel{{ template.id }}"
-                         aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="deleteTemplateLabel{{ template.id }}">Confirm Delete</h5>
-                                    <button type="button"
-                                            class="btn-close"
-                                            data-bs-dismiss="modal"
-                                            aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    Are you sure you want to delete <strong>{{ template.name }}</strong>?
-                                </div>
-                                <div class="modal-footer">
-                                    <form method="post"
-                                          action="{% url 'delete_template' template_id=template.id %}">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-danger">Yes, Delete</button>
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        </div>
+  </style>
+  <div class="template-page">
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1>Interview Templates</h1>
     </div>
+    <!-- Create Button -->
+    <div style="text-align: center;">
+      <div class="action-buttons">
+        <a href="{% url 'create_template' %}" class="btn btn-primary btn-lg">
+          <i class="bi bi-plus-circle"></i> Create New Template
+        </a>
+      </div>
+    </div>
+    <!-- Templates List Section -->
+    <div class="template-section">
+      <h2>My Templates</h2>
+      {% if templates|length == 0 %}
+        <div class="empty-state">
+          <p>No templates created yet</p>
+          <p>Create your first interview template to start organizing your interview structure.</p>
+        </div>
+      {% else %}
+        <ul class="document-list">
+          {% for template in templates %}
+            <li class="document-item">
+              <div>
+                <div class="document-name">
+                  {{ template.name }}
+                  {% if template.is_complete %}
+                    <span class="status-badge complete">Complete</span>
+                  {% else %}
+                    <span class="status-badge wip">WIP</span>
+                  {% endif %}
+                </div>
+                {% if template.description %}<div class="document-meta">{{ template.description }}</div>{% endif %}
+                <div class="document-meta">
+                  Created {{ template.created_at|date:"M d, Y" }} | Weight: {{ template.get_total_weight }}%
+                </div>
+              </div>
+              <div class="document-actions">
+                <a href="{% url 'template_detail' template_id=template.id %}">View</a>
+                <a href="{% url 'edit_template' template.id %}">Edit</a>
+                {% if template.is_complete %}
+                  <a href="{% url 'invitation_create_from_template' template_id=template.id %}">Invite Candidate</a>
+                {% else %}
+                  <span class="disabled-link"
+                        title="Template must be complete (100% weight) before inviting candidates">Invite Candidate</span>
+                {% endif %}
+                <button type="button"
+                        class="delete-btn"
+                        data-bs-toggle="modal"
+                        data-bs-target="#deleteTemplateModal{{ template.id }}">Delete</button>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+        <!-- Delete Modals -->
+        {% for template in templates %}
+          <div class="modal fade"
+               id="deleteTemplateModal{{ template.id }}"
+               tabindex="-1"
+               aria-labelledby="deleteTemplateLabel{{ template.id }}"
+               aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="deleteTemplateLabel{{ template.id }}">Confirm Delete</h5>
+                  <button type="button"
+                          class="btn-close"
+                          data-bs-dismiss="modal"
+                          aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  Are you sure you want to delete <strong>{{ template.name }}</strong>?
+                </div>
+                <div class="modal-footer">
+                  <form method="post"
+                        action="{% url 'delete_template' template_id=template.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      {% endif %}
+    </div>
+  </div>
 {% endblock content %}

@@ -1,27 +1,22 @@
 {% extends "base.html" %}
-
 {% block title %}
   AIS - Logged Out
 {% endblock title %}
-
 {% block content %}
-<body>
-  <!-- All styles moved to main.css Authentication Components section -->
-
-  <div class="container">
-    <div class="logout-page">
-      <h2>You've Been Logged Out</h2>
-
-      <div class="logout-message">
-        <p>You have successfully logged out of your account.</p>
-        <p>Thank you for using Active Interview Service!</p>
-      </div>
-
-      <div class="action-buttons">
-        <a href="{% url 'login' %}" class="btn btn-primary">Login Again</a>
-        <a href="{% url 'index' %}" class="btn btn-secondary">Return to Home</a>
+  <body>
+    <!-- All styles moved to main.css Authentication Components section -->
+    <div class="container">
+      <div class="logout-page">
+        <h2>You've Been Logged Out</h2>
+        <div class="logout-message">
+          <p>You have successfully logged out of your account.</p>
+          <p>Thank you for using Active Interview Service!</p>
+        </div>
+        <div class="action-buttons">
+          <a href="{% url 'login' %}" class="btn btn-primary">Login Again</a>
+          <a href="{% url 'index' %}" class="btn btn-secondary">Return to Home</a>
+        </div>
       </div>
     </div>
-  </div>
-</body>
+  </body>
 {% endblock content %}

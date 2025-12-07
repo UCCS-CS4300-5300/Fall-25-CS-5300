@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% block title %}
-    AIS - Profile
+  AIS - Profile
 {% endblock title %}
 {% block content %}
-    <style>
+  <style>
     .profile-page {
       max-width: 1200px;
       margin: 2rem auto;
@@ -319,410 +319,469 @@
         justify-content: flex-start;
       }
     }
-    </style>
-    <div class="profile-page">
-        <!-- Page Header -->
-        <div class="page-header">
-            <h1>Profile</h1>
-            <div class="username">{{ user.username }}</div>
-        </div>
-        <!-- Two Column Layout -->
-        <div class="profile-layout">
-            <!-- Left Column: User Info & Role -->
-            <div class="left-column">
-                <div class="profile-section">
-                    <h2>User Information</h2>
-                    <!-- User Details -->
-                    <div class="user-info-grid">
-                        <div class="info-item">
-                            <div class="info-label">Username</div>
-                            <div class="info-value">{{ user.username }}</div>
-                        </div>
-                        {% if user.email %}
-                            <div class="info-item">
-                                <div class="info-label">Email</div>
-                                <div class="info-value">{{ user.email }}</div>
-                            </div>
-                        {% endif %}
-                        {% if user.first_name %}
-                            <div class="info-item">
-                                <div class="info-label">First Name</div>
-                                <div class="info-value">{{ user.first_name }}</div>
-                            </div>
-                        {% endif %}
-                        {% if user.last_name %}
-                            <div class="info-item">
-                                <div class="info-label">Last Name</div>
-                                <div class="info-value">{{ user.last_name }}</div>
-                            </div>
-                        {% endif %}
-                    </div>
-                    <!-- Role Information -->
-                    <div class="role-info">
-                        <div>
-                            <strong>Current Role:</strong>
-                            <span class="role-badge {{ user.profile.role }}">{{ user.profile.role|title }}</span>
-                        </div>
-                        {% if user.profile.role == 'candidate' %}
-                            {% if has_pending_request %}
-                                <div class="alert-info">You have a pending role change request. An admin will review it soon.</div>
-                            {% else %}
-                                <div class="mt-1rem">
-                                    <a href="{% url 'request_role_change' %}" class="btn-request-role">Request Interviewer Role</a>
-                                    <p class="help-text">Want to conduct interviews? Request to become an interviewer.</p>
-                                </div>
-                            {% endif %}
-                        {% endif %}
-                    </div>
-
-                    <!-- Privacy & Data Settings (Issue #63) -->
-                    <div class="privacy-settings-section" style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid var(--border);">
-                        <h3 style="color: var(--text-primary); font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-shield-lock" viewBox="0 0 16 16" style="margin-right: 0.5rem;">
-                                <path d="M5.338 1.59a61 61 0 0 0-2.837.856.48.48 0 0 0-.328.39c-.554 4.157.726 7.19 2.253 9.188a10.7 10.7 0 0 0 2.287 2.233c.346.244.652.42.893.533q.18.085.293.118a1 1 0 0 0 .101.025 1 1 0 0 0 .1-.025q.114-.034.294-.118c.24-.113.547-.29.893-.533a10.7 10.7 0 0 0 2.287-2.233c1.527-1.997 2.807-5.031 2.253-9.188a.48.48 0 0 0-.328-.39c-.651-.213-1.75-.56-2.837-.855C9.552 1.29 8.531 1.067 8 1.067c-.53 0-1.552.223-2.662.524zM5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.465 9.99a11.8 11.8 0 0 1-2.517 2.453 7 7 0 0 1-1.048.625c-.28.132-.581.24-.829.24s-.548-.108-.829-.24a7 7 0 0 1-1.048-.625 11.8 11.8 0 0 1-2.517-2.453C1.928 10.487.545 7.169 1.141 2.692A1.54 1.54 0 0 1 2.185 1.43 63 63 0 0 1 5.072.56"/>
-                                <path d="M9.5 6.5a1.5 1.5 0 0 1-1 1.415l.385 1.99a.5.5 0 0 1-.491.595h-.788a.5.5 0 0 1-.49-.595l.384-1.99a1.5 1.5 0 1 1 2-1.415"/>
-                            </svg>
-                            Privacy & Data
-                        </h3>
-                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
-                            Manage your personal data, request exports, or delete your account.
-                        </p>
-                        <a href="{% url 'user_data_settings' %}" class="btn-primary" style="display: inline-block; padding: 0.75rem 1.5rem; background-color: var(--primary); color: var(--text-white); border-radius: var(--radius); text-decoration: none; font-weight: 500; transition: all 0.2s ease;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear" viewBox="0 0 16 16" style="margin-right: 0.5rem;">
-                                <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/>
-                                <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z"/>
-                            </svg>
-                            Data Settings
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Account Settings Section -->
-                <div class="profile-section">
-                    <h2>Account Settings</h2>
-                    <div class="settings-info">
-                        <p class="help-text">Manage your account security and preferences</p>
-                    </div>
-                    <div class="settings-actions">
-                        <a href="{% url 'password_change' %}" class="btn-request-role">
-                            <i class="bi bi-key"></i> Change Password
-                        </a>
-                        <p class="help-text">Update your password to keep your account secure.</p>
-                    </div>
-                </div>
-
-                <!-- Monthly Spending Section (Issue #15.10) -->
-                {% if spending_data %}
-                <div class="profile-section">
-                    <h2>Monthly API Spending</h2>
-                    <div class="user-info-grid">
-                        <div class="info-item">
-                            <div class="info-label">Current Month</div>
-                            <div class="info-value">{{ spending_data.year }}-{{ spending_data.month|stringformat:"02d" }}</div>
-                        </div>
-
-                        <div class="info-item">
-                            <div class="info-label">Total Spent</div>
-                            <div class="info-value" style="font-weight: 700; font-size: 1.25rem;">${{ spending_data.total_cost|floatformat:2 }}</div>
-                        </div>
-
-                        {% if spending_data.cap_status.has_cap %}
-                        <div class="info-item">
-                            <div class="info-label">Monthly Cap</div>
-                            <div class="info-value">${{ spending_data.cap_status.cap_amount|floatformat:2 }}</div>
-                        </div>
-
-                        <div class="info-item">
-                            <div class="info-label">Remaining Budget</div>
-                            <div class="info-value" style="color: {% if spending_data.cap_status.is_over_cap %}var(--error){% elif spending_data.cap_status.alert_level == 'critical' or spending_data.cap_status.alert_level == 'warning' %}var(--warning){% else %}var(--success){% endif %};">
-                                ${{ spending_data.cap_status.remaining|floatformat:2 }}
-                            </div>
-                        </div>
-
-                        <div class="info-item">
-                            <div class="info-label">Usage</div>
-                            <div class="info-value">
-                                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                    <span style="font-size: 1.125rem; font-weight: 600;">{{ spending_data.cap_status.percentage|floatformat:1 }}%</span>
-                                    {% if spending_data.cap_status.is_over_cap %}
-                                        <span class="badge bg-danger" style="font-size: 0.7rem;">OVER CAP</span>
-                                    {% elif spending_data.cap_status.alert_level == 'critical' %}
-                                        <span class="badge bg-warning text-dark" style="font-size: 0.7rem;">CRITICAL</span>
-                                    {% elif spending_data.cap_status.alert_level == 'warning' %}
-                                        <span class="badge bg-warning text-dark" style="font-size: 0.7rem;">WARNING</span>
-                                    {% endif %}
-                                </div>
-                                <div style="width: 100%; height: 8px; background: var(--surface); border-radius: 4px; margin-top: 0.5rem; overflow: hidden;">
-                                    <div style="height: 100%; width: {{ spending_data.cap_status.percentage|floatformat:1 }}%; background: {% if spending_data.cap_status.is_over_cap %}var(--error){% elif spending_data.cap_status.alert_level == 'critical' or spending_data.cap_status.alert_level == 'warning' %}var(--warning){% else %}var(--success){% endif %}; transition: width 0.3s ease;"></div>
-                                </div>
-                            </div>
-                        </div>
-                        {% endif %}
-
-                        <div class="info-item">
-                            <div class="info-label">API Requests</div>
-                            <div class="info-value">{{ spending_data.total_requests|default:0 }} total ({{ spending_data.llm_requests|default:0 }} LLM)</div>
-                        </div>
-                    </div>
-
-                    <!-- Available Models & Usage Breakdown -->
-                    <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 2px solid var(--border);">
-                        <h3 style="color: var(--text-primary); font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem;">
-                            Available AI Models
-                        </h3>
-                        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1rem;">
-                            {% if spending_data.active_tier == 'premium' %}
-                                <span style="color: #9333ea; font-weight: 600;">● Currently using Premium tier</span> - Highest quality models
-                            {% elif spending_data.active_tier == 'standard' %}
-                                <span style="color: #f59e0b; font-weight: 600;">● Currently using Standard tier</span> - Approaching budget cap ({{ spending_data.cap_status.percentage|floatformat:1 }}%)
-                            {% elif spending_data.active_tier == 'fallback' %}
-                                <span style="color: #ef4444; font-weight: 600;">● Currently using Fallback tier</span> - Budget cap exceeded
-                            {% endif %}
-                        </p>
-                        <div class="user-info-grid" style="gap: 0.75rem;">
-                            <!-- Premium Tier -->
-                            <div class="info-item" style="border-left-color: #9333ea; {% if spending_data.active_tier == 'premium' %}background: rgba(147, 51, 234, 0.05);{% endif %}">
-                                <div class="info-label" style="display: flex; align-items: center; gap: 0.5rem;">
-                                    <span>💎 Premium Tier</span>
-                                    {% if spending_data.active_tier == 'premium' %}
-                                        <span class="badge bg-success" style="font-size: 0.65rem;">ACTIVE</span>
-                                    {% endif %}
-                                </div>
-                                <div class="info-value" style="font-size: 0.85rem;">
-                                    <div style="color: var(--text-secondary); margin-bottom: 0.25rem;">
-                                        Model: GPT-4o
-                                    </div>
-                                    {% if spending_data.premium_requests > 0 %}
-                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--border);">
-                                            <span style="font-weight: 600; color: var(--text-primary);">${{ spending_data.premium_cost|floatformat:2 }}</span>
-                                            <span style="color: var(--text-secondary);">{{ spending_data.premium_requests }} calls this month</span>
-                                        </div>
-                                    {% else %}
-                                        <div style="color: var(--text-secondary); font-style: italic; margin-top: 0.5rem;">
-                                            No usage this month
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-
-                            <!-- Standard Tier -->
-                            <div class="info-item" style="border-left-color: #3b82f6; {% if spending_data.active_tier == 'standard' %}background: rgba(59, 130, 246, 0.05);{% endif %}">
-                                <div class="info-label" style="display: flex; align-items: center; gap: 0.5rem;">
-                                    <span>⭐ Standard Tier</span>
-                                    {% if spending_data.active_tier == 'standard' %}
-                                        <span class="badge bg-warning text-dark" style="font-size: 0.65rem;">ACTIVE</span>
-                                    {% endif %}
-                                </div>
-                                <div class="info-value" style="font-size: 0.85rem;">
-                                    <div style="color: var(--text-secondary); margin-bottom: 0.25rem;">
-                                        Model: GPT-4-turbo
-                                    </div>
-                                    {% if spending_data.standard_requests > 0 %}
-                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--border);">
-                                            <span style="font-weight: 600; color: var(--text-primary);">${{ spending_data.standard_cost|floatformat:2 }}</span>
-                                            <span style="color: var(--text-secondary);">{{ spending_data.standard_requests }} calls this month</span>
-                                        </div>
-                                    {% else %}
-                                        <div style="color: var(--text-secondary); font-style: italic; margin-top: 0.5rem;">
-                                            No usage this month
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-
-                            <!-- Fallback Tier -->
-                            <div class="info-item" style="border-left-color: #10b981; {% if spending_data.active_tier == 'fallback' %}background: rgba(239, 68, 68, 0.05);{% endif %}">
-                                <div class="info-label" style="display: flex; align-items: center; gap: 0.5rem;">
-                                    <span>💰 Fallback Tier</span>
-                                    {% if spending_data.active_tier == 'fallback' %}
-                                        <span class="badge bg-danger" style="font-size: 0.65rem;">ACTIVE</span>
-                                    {% endif %}
-                                </div>
-                                <div class="info-value" style="font-size: 0.85rem;">
-                                    <div style="color: var(--text-secondary); margin-bottom: 0.25rem;">
-                                        Model: GPT-3.5-turbo
-                                    </div>
-                                    {% if spending_data.fallback_requests > 0 %}
-                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--border);">
-                                            <span style="font-weight: 600; color: var(--text-primary);">${{ spending_data.fallback_cost|floatformat:2 }}</span>
-                                            <span style="color: var(--text-secondary);">{{ spending_data.fallback_requests }} calls this month</span>
-                                        </div>
-                                    {% else %}
-                                        <div style="color: var(--text-secondary); font-style: italic; margin-top: 0.5rem;">
-                                            No usage this month
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {% if spending_data.cap_status.has_cap %}
-                    <div style="margin-top: 1rem; padding: 1rem; background: var(--surface); border-radius: var(--radius); border-left: 3px solid {% if spending_data.cap_status.is_over_cap %}var(--error){% elif spending_data.cap_status.alert_level == 'critical' %}var(--warning){% else %}var(--info){% endif %};">
-                        <p style="margin: 0; font-size: 0.875rem; color: var(--text-secondary);">
-                            {% if spending_data.cap_status.is_over_cap %}
-                                <strong style="color: var(--error);">⚠️ Budget Exceeded:</strong> The system has automatically switched to cost-effective models (GPT-3.5-turbo) to control spending.
-                            {% elif spending_data.cap_status.alert_level == 'critical' %}
-                                <strong style="color: var(--warning);">⚠️ Approaching Limit:</strong> You've used over 90% of your monthly budget. The system will switch to mid-tier models at 85% and fallback models at 100%.
-                            {% elif spending_data.cap_status.alert_level == 'warning' %}
-                                <strong style="color: var(--warning);">ℹ️ Budget Warning:</strong> You've used over 75% of your monthly budget. The system will automatically switch to cheaper models at 85%.
-                            {% else %}
-                                <strong style="color: var(--info);">✓ Within Budget:</strong> Your spending is within normal limits. The system is using premium models (GPT-4o).
-                            {% endif %}
-                        </p>
-                    </div>
-                    {% endif %}
-                </div>
-                {% endif %}
-            </div>
-            <!-- Right Column: Documents -->
-            <div class="right-column">
-                <!-- Resumes Section -->
-                <div class="profile-section">
-                    <h2>Uploaded Resumes</h2>
-                    {% if resumes|length == 0 %}
-                        <div class="empty-state">
-                            <p>No resumes uploaded yet</p>
-                        </div>
-                    {% else %}
-                        <ul class="document-list">
-                            {% for document in resumes %}
-                                {% if document.title and document.title != "1" %}
-                                    <li class="document-item">
-                                        <div class="document-name-row">
-                                            <span class="document-name">
-                                                {% if document.title and document.title != "1" %}
-                                                    {{ document.title }}
-                                                {% elif document.file %}
-                                                    {{ document.original_filename }}
-                                                {% endif %}
-                                            </span>
-                                            <!-- Parsing Status Badge -->
-                                            {% if document.parsing_status == 'success' %}
-                                                <span class="badge bg-success resume-status-badge">
-                                                    <i class="bi bi-check-circle"></i> Parsed
-                                                </span>
-                                            {% elif document.parsing_status == 'error' %}
-                                                <span class="badge bg-danger resume-status-badge">
-                                                    <i class="bi bi-x-circle"></i> Parse Error
-                                                </span>
-                                            {% elif document.parsing_status == 'in_progress' %}
-                                                <span class="badge bg-warning text-dark resume-status-badge">
-                                                    <i class="bi bi-hourglass-split"></i> Parsing...
-                                                </span>
-                                            {% elif document.parsing_status == 'pending' %}
-                                                <span class="badge bg-secondary resume-status-badge">
-                                                    <i class="bi bi-clock"></i> Pending
-                                                </span>
-                                            {% endif %}
-                                        </div>
-                                        <!-- Quick Stats (only if successfully parsed) -->
-                                        {% if document.parsing_status == 'success' %}
-                                            <div class="resume-stats-row">
-                                                ({{ document.skills|length }} skill{{ document.skills|length|pluralize }},
-                                                {{ document.experience|length }} job{{ document.experience|length|pluralize }},
-                                                {{ document.education|length }} degree{{ document.education|length|pluralize }})
-                                            </div>
-                                        {% endif %}
-                                        <div class="document-actions">
-                                            <a href="{% url 'resume_detail' resume_id=document.id %}">View</a>
-                                            <a href="{% url 'edit_resume' document.id %}">Edit</a>
-                                            <button type="button"
-                                                    class="delete-btn"
-                                                    data-bs-toggle="modal"
-                                                    data-bs-target="#deleteResumeModal{{ document.id }}">
-                                                Delete
-                                            </button>
-                                        </div>
-                                    </li>
-                                {% endif %}
-                            {% endfor %}
-                        </ul>
-                        {% for document in resumes %}
-                            <div class="modal fade"
-                                 id="deleteResumeModal{{ document.id }}"
-                                 tabindex="-1"
-                                 aria-labelledby="deleteResumeLabel{{ document.id }}"
-                                 aria-hidden="true">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title" id="deleteResumeLabel{{ document.id }}">Confirm Delete</h5>
-                                            <button type="button"
-                                                    class="btn-close"
-                                                    data-bs-dismiss="modal"
-                                                    aria-label="Close"></button>
-                                        </div>
-                                        <div class="modal-body">
-                                            Are you sure you want to delete <strong>{{ document.title|default:document.original_filename }}</strong>?
-                                        </div>
-                                        <div class="modal-footer">
-                                            <form method="post"
-                                                  action="{% url 'delete_resume' resume_id=document.id %}">
-                                                {% csrf_token %}
-                                                <button type="submit" class="btn btn-danger">Yes, Delete</button>
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-                </div>
-                <!-- Job Listings Section -->
-                <div class="profile-section">
-                    <h2>Uploaded Job Listings</h2>
-                    {% if job_listings|length == 0 %}
-                        <div class="empty-state">
-                            <p>No job listings uploaded yet</p>
-                        </div>
-                    {% else %}
-                        <ul class="document-list">
-                            {% for job in job_listings %}
-                                <li class="document-item">
-                                    <span class="document-name">{{ job.title }}</span>
-                                    <div class="document-actions">
-                                        <a href="{% url 'job_posting_detail' job_id=job.id %}">View</a>
-                                        <a href="{% url 'edit_job_posting' job.id %}">Edit</a>
-                                        <button type="button"
-                                                class="delete-btn"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#deleteJobModal{{ job.id }}">Delete</button>
-                                    </div>
-                                </li>
-                                <div class="modal fade"
-                                     id="deleteJobModal{{ job.id }}"
-                                     tabindex="-1"
-                                     aria-labelledby="deleteJobLabel{{ job.id }}"
-                                     aria-hidden="true">
-                                    <div class="modal-dialog modal-dialog-centered">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title" id="deleteJobLabel{{ job.id }}">Confirm Delete</h5>
-                                                <button type="button"
-                                                        class="btn-close"
-                                                        data-bs-dismiss="modal"
-                                                        aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                Are you sure you want to delete <strong>{{ job.title }}</strong>?
-                                            </div>
-                                            <div class="modal-footer">
-                                                <form method="post" action="{% url 'delete_job' job_id=job.id %}">
-                                                    {% csrf_token %}
-                                                    <button type="submit" class="btn btn-danger">Yes, Delete</button>
-                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        </ul>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
+  </style>
+  <div class="profile-page">
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1>Profile</h1>
+      <div class="username">{{ user.username }}</div>
     </div>
+    <!-- Two Column Layout -->
+    <div class="profile-layout">
+      <!-- Left Column: User Info & Role -->
+      <div class="left-column">
+        <div class="profile-section">
+          <h2>User Information</h2>
+          <!-- User Details -->
+          <div class="user-info-grid">
+            <div class="info-item">
+              <div class="info-label">Username</div>
+              <div class="info-value">{{ user.username }}</div>
+            </div>
+            {% if user.email %}
+              <div class="info-item">
+                <div class="info-label">Email</div>
+                <div class="info-value">{{ user.email }}</div>
+              </div>
+            {% endif %}
+            {% if user.first_name %}
+              <div class="info-item">
+                <div class="info-label">First Name</div>
+                <div class="info-value">{{ user.first_name }}</div>
+              </div>
+            {% endif %}
+            {% if user.last_name %}
+              <div class="info-item">
+                <div class="info-label">Last Name</div>
+                <div class="info-value">{{ user.last_name }}</div>
+              </div>
+            {% endif %}
+          </div>
+          <!-- Role Information -->
+          <div class="role-info">
+            <div>
+              <strong>Current Role:</strong>
+              <span class="role-badge {{ user.profile.role }}">{{ user.profile.role|title }}</span>
+            </div>
+            {% if user.profile.role == 'candidate' %}
+              {% if has_pending_request %}
+                <div class="alert-info">You have a pending role change request. An admin will review it soon.</div>
+              {% else %}
+                <div class="mt-1rem">
+                  <a href="{% url 'request_role_change' %}" class="btn-request-role">Request Interviewer Role</a>
+                  <p class="help-text">Want to conduct interviews? Request to become an interviewer.</p>
+                </div>
+              {% endif %}
+            {% endif %}
+          </div>
+          <!-- Privacy & Data Settings (Issue #63) -->
+          <div class="privacy-settings-section"
+               style="margin-top: 2rem;
+                      padding-top: 2rem;
+                      border-top: 2px solid var(--border)">
+            <h3 style="color: var(--text-primary);
+                       font-size: 1.125rem;
+                       font-weight: 600;
+                       margin-bottom: 1rem">
+              <svg xmlns="http://www.w3.org/2000/svg"
+                   width="18"
+                   height="18"
+                   fill="currentColor"
+                   class="bi bi-shield-lock"
+                   viewBox="0 0 16 16"
+                   style="margin-right: 0.5rem">
+                <path d="M5.338 1.59a61 61 0 0 0-2.837.856.48.48 0 0 0-.328.39c-.554 4.157.726 7.19 2.253 9.188a10.7 10.7 0 0 0 2.287 2.233c.346.244.652.42.893.533q.18.085.293.118a1 1 0 0 0 .101.025 1 1 0 0 0 .1-.025q.114-.034.294-.118c.24-.113.547-.29.893-.533a10.7 10.7 0 0 0 2.287-2.233c1.527-1.997 2.807-5.031 2.253-9.188a.48.48 0 0 0-.328-.39c-.651-.213-1.75-.56-2.837-.855C9.552 1.29 8.531 1.067 8 1.067c-.53 0-1.552.223-2.662.524zM5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.465 9.99a11.8 11.8 0 0 1-2.517 2.453 7 7 0 0 1-1.048.625c-.28.132-.581.24-.829.24s-.548-.108-.829-.24a7 7 0 0 1-1.048-.625 11.8 11.8 0 0 1-2.517-2.453C1.928 10.487.545 7.169 1.141 2.692A1.54 1.54 0 0 1 2.185 1.43 63 63 0 0 1 5.072.56" />
+                <path d="M9.5 6.5a1.5 1.5 0 0 1-1 1.415l.385 1.99a.5.5 0 0 1-.491.595h-.788a.5.5 0 0 1-.49-.595l.384-1.99a1.5 1.5 0 1 1 2-1.415" />
+              </svg>
+              Privacy & Data
+            </h3>
+            <p style="color: var(--text-secondary);
+                      font-size: 0.9rem;
+                      margin-bottom: 1rem">Manage your personal data, request exports, or delete your account.</p>
+            <a href="{% url 'user_data_settings' %}"
+               class="btn-primary"
+               style="display: inline-block;
+                      padding: 0.75rem 1.5rem;
+                      background-color: var(--primary);
+                      color: var(--text-white);
+                      border-radius: var(--radius);
+                      text-decoration: none;
+                      font-weight: 500;
+                      transition: all 0.2s ease">
+              <svg xmlns="http://www.w3.org/2000/svg"
+                   width="16"
+                   height="16"
+                   fill="currentColor"
+                   class="bi bi-gear"
+                   viewBox="0 0 16 16"
+                   style="margin-right: 0.5rem">
+                <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0" />
+                <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z" />
+              </svg>
+              Data Settings
+            </a>
+          </div>
+        </div>
+        <!-- Account Settings Section -->
+        <div class="profile-section">
+          <h2>Account Settings</h2>
+          <div class="settings-info">
+            <p class="help-text">Manage your account security and preferences</p>
+          </div>
+          <div class="settings-actions">
+            <a href="{% url 'password_change' %}" class="btn-request-role">
+              <i class="bi bi-key"></i> Change Password
+            </a>
+            <p class="help-text">Update your password to keep your account secure.</p>
+          </div>
+        </div>
+        <!-- Monthly Spending Section (Issue #15.10) -->
+        {% if spending_data %}
+          <div class="profile-section">
+            <h2>Monthly API Spending</h2>
+            <div class="user-info-grid">
+              <div class="info-item">
+                <div class="info-label">Current Month</div>
+                <div class="info-value">{{ spending_data.year }}-{{ spending_data.month|stringformat:"02d" }}</div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">Total Spent</div>
+                <div class="info-value" style="font-weight: 700; font-size: 1.25rem;">
+                  ${{ spending_data.total_cost|floatformat:2 }}
+                </div>
+              </div>
+              {% if spending_data.cap_status.has_cap %}
+                <div class="info-item">
+                  <div class="info-label">Monthly Cap</div>
+                  <div class="info-value">${{ spending_data.cap_status.cap_amount|floatformat:2 }}</div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">Remaining Budget</div>
+                  <div class="info-value"
+                       style="color: {% if spending_data.cap_status.is_over_cap %}var(--error){% elif spending_data.cap_status.alert_level == 'critical' or spending_data.cap_status.alert_level == 'warning' %}var(--warning){% else %}var(--success){% endif %}">
+                    ${{ spending_data.cap_status.remaining|floatformat:2 }}
+                  </div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">Usage</div>
+                  <div class="info-value">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                      <span style="font-size: 1.125rem; font-weight: 600;">{{ spending_data.cap_status.percentage|floatformat:1 }}%</span>
+                      {% if spending_data.cap_status.is_over_cap %}
+                        <span class="badge bg-danger" style="font-size: 0.7rem;">OVER CAP</span>
+                      {% elif spending_data.cap_status.alert_level == 'critical' %}
+                        <span class="badge bg-warning text-dark" style="font-size: 0.7rem;">CRITICAL</span>
+                      {% elif spending_data.cap_status.alert_level == 'warning' %}
+                        <span class="badge bg-warning text-dark" style="font-size: 0.7rem;">WARNING</span>
+                      {% endif %}
+                    </div>
+                    <div style="width: 100%;
+                                height: 8px;
+                                background: var(--surface);
+                                border-radius: 4px;
+                                margin-top: 0.5rem;
+                                overflow: hidden">
+                      <div style="height: 100%;
+                                  width: {{ spending_data.cap_status.percentage|floatformat:1 }}%;
+                                  background: {% if spending_data.cap_status.is_over_cap %}var(--error){% elif spending_data.cap_status.alert_level == 'critical' or spending_data.cap_status.alert_level == 'warning' %}var(--warning){% else %}var(--success){% endif %};
+                                  transition: width 0.3s ease"></div>
+                    </div>
+                  </div>
+                </div>
+              {% endif %}
+              <div class="info-item">
+                <div class="info-label">API Requests</div>
+                <div class="info-value">
+                  {{ spending_data.total_requests|default:0 }} total ({{ spending_data.llm_requests|default:0 }} LLM)
+                </div>
+              </div>
+            </div>
+            <!-- Available Models & Usage Breakdown -->
+            <div style="margin-top: 1.5rem;
+                        padding-top: 1.5rem;
+                        border-top: 2px solid var(--border)">
+              <h3 style="color: var(--text-primary);
+                         font-size: 1rem;
+                         font-weight: 600;
+                         margin-bottom: 0.5rem">Available AI Models</h3>
+              <p style="color: var(--text-secondary);
+                        font-size: 0.85rem;
+                        margin-bottom: 1rem">
+                {% if spending_data.active_tier == 'premium' %}
+                  <span style="color: #9333ea; font-weight: 600;">● Currently using Premium tier</span> - Highest quality models
+                {% elif spending_data.active_tier == 'standard' %}
+                  <span style="color: #f59e0b; font-weight: 600;">● Currently using Standard tier</span> - Approaching budget cap ({{ spending_data.cap_status.percentage|floatformat:1 }}%)
+                {% elif spending_data.active_tier == 'fallback' %}
+                  <span style="color: #ef4444; font-weight: 600;">● Currently using Fallback tier</span> - Budget cap exceeded
+                {% endif %}
+              </p>
+              <div class="user-info-grid" style="gap: 0.75rem;">
+                <!-- Premium Tier -->
+                <div class="info-item"
+                     style="border-left-color: #9333ea;
+                            {% if spending_data.active_tier == 'premium' %}background: rgba(147, 51, 234, 0.05);{% endif %}">
+                  <div class="info-label"
+                       style="display: flex;
+                              align-items: center;
+                              gap: 0.5rem">
+                    <span>💎 Premium Tier</span>
+                    {% if spending_data.active_tier == 'premium' %}
+                      <span class="badge bg-success" style="font-size: 0.65rem;">ACTIVE</span>
+                    {% endif %}
+                  </div>
+                  <div class="info-value" style="font-size: 0.85rem;">
+                    <div style="color: var(--text-secondary); margin-bottom: 0.25rem;">Model: GPT-4o</div>
+                    {% if spending_data.premium_requests > 0 %}
+                      <div style="display: flex;
+                                  justify-content: space-between;
+                                  align-items: center;
+                                  margin-top: 0.5rem;
+                                  padding-top: 0.5rem;
+                                  border-top: 1px solid var(--border)">
+                        <span style="font-weight: 600; color: var(--text-primary);">${{ spending_data.premium_cost|floatformat:2 }}</span>
+                        <span style="color: var(--text-secondary);">{{ spending_data.premium_requests }} calls this month</span>
+                      </div>
+                    {% else %}
+                      <div style="color: var(--text-secondary);
+                                  font-style: italic;
+                                  margin-top: 0.5rem">No usage this month</div>
+                    {% endif %}
+                  </div>
+                </div>
+                <!-- Standard Tier -->
+                <div class="info-item"
+                     style="border-left-color: #3b82f6;
+                            {% if spending_data.active_tier == 'standard' %}background: rgba(59, 130, 246, 0.05);{% endif %}">
+                  <div class="info-label"
+                       style="display: flex;
+                              align-items: center;
+                              gap: 0.5rem">
+                    <span>⭐ Standard Tier</span>
+                    {% if spending_data.active_tier == 'standard' %}
+                      <span class="badge bg-warning text-dark" style="font-size: 0.65rem;">ACTIVE</span>
+                    {% endif %}
+                  </div>
+                  <div class="info-value" style="font-size: 0.85rem;">
+                    <div style="color: var(--text-secondary); margin-bottom: 0.25rem;">Model: GPT-4-turbo</div>
+                    {% if spending_data.standard_requests > 0 %}
+                      <div style="display: flex;
+                                  justify-content: space-between;
+                                  align-items: center;
+                                  margin-top: 0.5rem;
+                                  padding-top: 0.5rem;
+                                  border-top: 1px solid var(--border)">
+                        <span style="font-weight: 600; color: var(--text-primary);">${{ spending_data.standard_cost|floatformat:2 }}</span>
+                        <span style="color: var(--text-secondary);">{{ spending_data.standard_requests }} calls this month</span>
+                      </div>
+                    {% else %}
+                      <div style="color: var(--text-secondary);
+                                  font-style: italic;
+                                  margin-top: 0.5rem">No usage this month</div>
+                    {% endif %}
+                  </div>
+                </div>
+                <!-- Fallback Tier -->
+                <div class="info-item"
+                     style="border-left-color: #10b981;
+                            {% if spending_data.active_tier == 'fallback' %}background: rgba(239, 68, 68, 0.05);{% endif %}">
+                  <div class="info-label"
+                       style="display: flex;
+                              align-items: center;
+                              gap: 0.5rem">
+                    <span>💰 Fallback Tier</span>
+                    {% if spending_data.active_tier == 'fallback' %}
+                      <span class="badge bg-danger" style="font-size: 0.65rem;">ACTIVE</span>
+                    {% endif %}
+                  </div>
+                  <div class="info-value" style="font-size: 0.85rem;">
+                    <div style="color: var(--text-secondary); margin-bottom: 0.25rem;">Model: GPT-3.5-turbo</div>
+                    {% if spending_data.fallback_requests > 0 %}
+                      <div style="display: flex;
+                                  justify-content: space-between;
+                                  align-items: center;
+                                  margin-top: 0.5rem;
+                                  padding-top: 0.5rem;
+                                  border-top: 1px solid var(--border)">
+                        <span style="font-weight: 600; color: var(--text-primary);">${{ spending_data.fallback_cost|floatformat:2 }}</span>
+                        <span style="color: var(--text-secondary);">{{ spending_data.fallback_requests }} calls this month</span>
+                      </div>
+                    {% else %}
+                      <div style="color: var(--text-secondary);
+                                  font-style: italic;
+                                  margin-top: 0.5rem">No usage this month</div>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% if spending_data.cap_status.has_cap %}
+              <div style="margin-top: 1rem;
+                          padding: 1rem;
+                          background: var(--surface);
+                          border-radius: var(--radius);
+                          border-left: 3px solid {% if spending_data.cap_status.is_over_cap %}var(--error){% elif spending_data.cap_status.alert_level == 'critical' %}var(--warning){% else %}var(--info){% endif %}">
+                <p style="margin: 0; font-size: 0.875rem; color: var(--text-secondary);">
+                  {% if spending_data.cap_status.is_over_cap %}
+                    <strong style="color: var(--error);">⚠️ Budget Exceeded:</strong> The system has automatically switched to cost-effective models (GPT-3.5-turbo) to control spending.
+                  {% elif spending_data.cap_status.alert_level == 'critical' %}
+                    <strong style="color: var(--warning);">⚠️ Approaching Limit:</strong> You've used over 90% of your monthly budget. The system will switch to mid-tier models at 85% and fallback models at 100%.
+                  {% elif spending_data.cap_status.alert_level == 'warning' %}
+                    <strong style="color: var(--warning);">ℹ️ Budget Warning:</strong> You've used over 75% of your monthly budget. The system will automatically switch to cheaper models at 85%.
+                  {% else %}
+                    <strong style="color: var(--info);">✓ Within Budget:</strong> Your spending is within normal limits. The system is using premium models (GPT-4o).
+                  {% endif %}
+                </p>
+              </div>
+            {% endif %}
+          </div>
+        {% endif %}
+      </div>
+      <!-- Right Column: Documents -->
+      <div class="right-column">
+        <!-- Resumes Section -->
+        <div class="profile-section">
+          <h2>Uploaded Resumes</h2>
+          {% if resumes|length == 0 %}
+            <div class="empty-state">
+              <p>No resumes uploaded yet</p>
+            </div>
+          {% else %}
+            <ul class="document-list">
+              {% for document in resumes %}
+                {% if document.title and document.title != "1" %}
+                  <li class="document-item">
+                    <div class="document-name-row">
+                      <span class="document-name">
+                        {% if document.title and document.title != "1" %}
+                          {{ document.title }}
+                        {% elif document.file %}
+                          {{ document.original_filename }}
+                        {% endif %}
+                      </span>
+                      <!-- Parsing Status Badge -->
+                      {% if document.parsing_status == 'success' %}
+                        <span class="badge bg-success resume-status-badge">
+                          <i class="bi bi-check-circle"></i> Parsed
+                        </span>
+                      {% elif document.parsing_status == 'error' %}
+                        <span class="badge bg-danger resume-status-badge">
+                          <i class="bi bi-x-circle"></i> Parse Error
+                        </span>
+                      {% elif document.parsing_status == 'in_progress' %}
+                        <span class="badge bg-warning text-dark resume-status-badge">
+                          <i class="bi bi-hourglass-split"></i> Parsing...
+                        </span>
+                      {% elif document.parsing_status == 'pending' %}
+                        <span class="badge bg-secondary resume-status-badge">
+                          <i class="bi bi-clock"></i> Pending
+                        </span>
+                      {% endif %}
+                    </div>
+                    <!-- Quick Stats (only if successfully parsed) -->
+                    {% if document.parsing_status == 'success' %}
+                      <div class="resume-stats-row">
+                        ({{ document.skills|length }} skill{{ document.skills|length|pluralize }},
+                        {{ document.experience|length }} job{{ document.experience|length|pluralize }},
+                        {{ document.education|length }} degree{{ document.education|length|pluralize }})
+                      </div>
+                    {% endif %}
+                    <div class="document-actions">
+                      <a href="{% url 'resume_detail' resume_id=document.id %}">View</a>
+                      <a href="{% url 'edit_resume' document.id %}">Edit</a>
+                      <button type="button"
+                              class="delete-btn"
+                              data-bs-toggle="modal"
+                              data-bs-target="#deleteResumeModal{{ document.id }}">Delete</button>
+                    </div>
+                  </li>
+                {% endif %}
+              {% endfor %}
+            </ul>
+            {% for document in resumes %}
+              <div class="modal fade"
+                   id="deleteResumeModal{{ document.id }}"
+                   tabindex="-1"
+                   aria-labelledby="deleteResumeLabel{{ document.id }}"
+                   aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title" id="deleteResumeLabel{{ document.id }}">Confirm Delete</h5>
+                      <button type="button"
+                              class="btn-close"
+                              data-bs-dismiss="modal"
+                              aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                      Are you sure you want to delete <strong>{{ document.title|default:document.original_filename }}</strong>?
+                    </div>
+                    <div class="modal-footer">
+                      <form method="post"
+                            action="{% url 'delete_resume' resume_id=document.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          {% endif %}
+        </div>
+        <!-- Job Listings Section -->
+        <div class="profile-section">
+          <h2>Uploaded Job Listings</h2>
+          {% if job_listings|length == 0 %}
+            <div class="empty-state">
+              <p>No job listings uploaded yet</p>
+            </div>
+          {% else %}
+            <ul class="document-list">
+              {% for job in job_listings %}
+                <li class="document-item">
+                  <span class="document-name">{{ job.title }}</span>
+                  <div class="document-actions">
+                    <a href="{% url 'job_posting_detail' job_id=job.id %}">View</a>
+                    <a href="{% url 'edit_job_posting' job.id %}">Edit</a>
+                    <button type="button"
+                            class="delete-btn"
+                            data-bs-toggle="modal"
+                            data-bs-target="#deleteJobModal{{ job.id }}">Delete</button>
+                  </div>
+                </li>
+                <div class="modal fade"
+                     id="deleteJobModal{{ job.id }}"
+                     tabindex="-1"
+                     aria-labelledby="deleteJobLabel{{ job.id }}"
+                     aria-hidden="true">
+                  <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="deleteJobLabel{{ job.id }}">Confirm Delete</h5>
+                        <button type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                      </div>
+                      <div class="modal-body">
+                        Are you sure you want to delete <strong>{{ job.title }}</strong>?
+                      </div>
+                      <div class="modal-footer">
+                        <form method="post" action="{% url 'delete_job' job_id=job.id %}">
+                          {% csrf_token %}
+                          <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
 {% endblock content %}

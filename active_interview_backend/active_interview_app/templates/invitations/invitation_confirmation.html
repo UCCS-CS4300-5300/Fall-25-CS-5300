@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% block title %}
-    AIS - Invitation Sent
+  AIS - Invitation Sent
 {% endblock title %}
 {% block content %}
-    <style>
+  <style>
     .confirmation-page {
       max-width: 800px;
       margin: 2rem auto;
@@ -168,74 +168,66 @@
       margin: 0;
       font-size: 0.95rem;
     }
-    </style>
-
-    <div class="confirmation-page">
-        <div class="page-header">
-            <div class="success-icon">✓</div>
-            <h1>Invitation Sent Successfully!</h1>
-            <p>The candidate will receive an email with interview details</p>
-        </div>
-
-        <div class="confirmation-section">
-            <h2>Invitation Details</h2>
-
-            <div class="detail-row">
-                <span class="detail-label">Template:</span>
-                <span class="detail-value">{{ invitation.template.name }}</span>
-            </div>
-
-            <div class="detail-row">
-                <span class="detail-label">Candidate Email:</span>
-                <span class="detail-value">{{ invitation.candidate_email }}</span>
-            </div>
-
-            <div class="detail-row">
-                <span class="detail-label">Scheduled Time:</span>
-                <span class="detail-value">{{ invitation.scheduled_time|date:"F j, Y, g:i A" }}</span>
-            </div>
-
-            <div class="detail-row">
-                <span class="detail-label">Duration:</span>
-                <span class="detail-value">{{ invitation.duration_minutes }} minutes</span>
-            </div>
-
-            <div class="detail-row">
-                <span class="detail-label">Window Closes:</span>
-                <span class="detail-value">{{ window_end|date:"F j, Y, g:i A" }}</span>
-            </div>
-
-            <div class="detail-row">
-                <span class="detail-label">Status:</span>
-                <span class="detail-value">{{ invitation.get_status_display }}</span>
-            </div>
-
-            <div class="join-link-section">
-                <p>Interview Join Link:</p>
-                <div class="join-link" title="Click to copy">
-                    {{ join_url }}
-                </div>
-            </div>
-
-            <div class="info-box">
-                <p><strong>What happens next:</strong></p>
-                <p>• An email invitation has been sent to {{ invitation.candidate_email }}</p>
-                <p>• The candidate can access the interview starting at {{ invitation.scheduled_time|date:"g:i A" }} on {{ invitation.scheduled_time|date:"F j, Y" }}</p>
-                <p>• You'll receive a notification when the candidate completes the interview</p>
-            </div>
-        </div>
-
-        <div class="button-group">
-            <a href="{{ google_calendar_url }}" target="_blank" class="btn-primary" title="Add this interview to your Google Calendar">
-                📅 Add to Google Calendar
-            </a>
-            <a href="{% url 'invitation_create' %}" class="btn-secondary">Send Another Invitation</a>
-            <a href="{% url 'invitation_dashboard' %}" class="btn-secondary">View All Invitations</a>
-            <a href="{% url 'template_detail' invitation.template.id %}" class="btn-secondary">Back to Template</a>
-        </div>
+  </style>
+  <div class="confirmation-page">
+    <div class="page-header">
+      <div class="success-icon">✓</div>
+      <h1>Invitation Sent Successfully!</h1>
+      <p>The candidate will receive an email with interview details</p>
     </div>
-
-    <script>
+    <div class="confirmation-section">
+      <h2>Invitation Details</h2>
+      <div class="detail-row">
+        <span class="detail-label">Template:</span>
+        <span class="detail-value">{{ invitation.template.name }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Candidate Email:</span>
+        <span class="detail-value">{{ invitation.candidate_email }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Scheduled Time:</span>
+        <span class="detail-value">{{ invitation.scheduled_time|date:"F j, Y, g:i A" }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Duration:</span>
+        <span class="detail-value">{{ invitation.duration_minutes }} minutes</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Window Closes:</span>
+        <span class="detail-value">{{ window_end|date:"F j, Y, g:i A" }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Status:</span>
+        <span class="detail-value">{{ invitation.get_status_display }}</span>
+      </div>
+      <div class="join-link-section">
+        <p>Interview Join Link:</p>
+        <div class="join-link" title="Click to copy">{{ join_url }}</div>
+      </div>
+      <div class="info-box">
+        <p>
+          <strong>What happens next:</strong>
+        </p>
+        <p>• An email invitation has been sent to {{ invitation.candidate_email }}</p>
+        <p>
+          • The candidate can access the interview starting at {{ invitation.scheduled_time|date:"g:i A" }} on {{ invitation.scheduled_time|date:"F j, Y" }}
+        </p>
+        <p>• You'll receive a notification when the candidate completes the interview</p>
+      </div>
+    </div>
+    <div class="button-group">
+      <a href="{{ google_calendar_url }}"
+         target="_blank"
+         class="btn-primary"
+         title="Add this interview to your Google Calendar">📅 Add to Google Calendar</a>
+      <a href="{% url 'invitation_create' %}" class="btn-secondary">Send Another Invitation</a>
+      <a href="{% url 'invitation_dashboard' %}" class="btn-secondary">View All Invitations</a>
+      <a href="{% url 'template_detail' invitation.template.id %}"
+         class="btn-secondary">Back to Template</a>
+    </div>
+  </div>
+  <script>
         // Copy to clipboard functionality
         document.querySelector('.join-link').addEventListener('click', function() {
             const text = this.textContent;
@@ -247,5 +239,5 @@
                 }, 500);
             });
         });
-    </script>
+  </script>
 {% endblock content %}

@@ -5,51 +5,56 @@
 {% block content %}
   <!-- Following hierarchical class system from style guide -->
   {% load static %}
-
   <div class="container-page container-standard">
     <div style="text-align: center; margin: 2rem 0;">
       <h1 class="text-brand">Exportable Report: {{ chat.title }}</h1>
     </div>
-
     <!-- Export Actions -->
-    <div style="display: flex; gap: 1rem; justify-content: center; margin: 2rem 0; flex-wrap: wrap;">
+    <div style="display: flex;
+                gap: 1rem;
+                justify-content: center;
+                margin: 2rem 0;
+                flex-wrap: wrap">
       <!-- PDF Download Button with Spinner -->
       <button onclick="downloadPDFReport({{ chat.id }})"
               id="download_pdf_report"
               class="btn btn-danger"
-              style="padding: 1rem 2rem; font-size: 1rem; display: flex; align-items: center; justify-content: center;">
+              style="padding: 1rem 2rem;
+                     font-size: 1rem;
+                     display: flex;
+                     align-items: center;
+                     justify-content: center">
         <span class="loading-spinner-button"
               id="pdf-spinner"
               role="status"
               aria-hidden="true"
-              style="display:none;"></span>
+              style="display:none"></span>
         <span id="pdf-text">Download as PDF</span>
       </button>
-
       <!-- CSV Download Button with Spinner -->
       <button onclick="downloadCSVReport({{ chat.id }})"
               id="download_csv_report"
               class="btn btn-success"
-              style="padding: 1rem 2rem; font-size: 1rem; display: flex; align-items: center; justify-content: center;">
+              style="padding: 1rem 2rem;
+                     font-size: 1rem;
+                     display: flex;
+                     align-items: center;
+                     justify-content: center">
         <span class="loading-spinner-button"
               id="csv-spinner"
               role="status"
               aria-hidden="true"
-              style="display:none;"></span>
+              style="display:none"></span>
         <span id="csv-text">Download as CSV</span>
       </button>
-
       <!-- Back Button (no spinner needed) -->
       <a href="{% url 'chat-view' chat_id=chat.id %}"
          class="btn btn-secondary"
-         style="padding: 1rem 2rem; font-size: 1rem;">
-        Back to Interview
-      </a>
+         style="padding: 1rem 2rem;
+                font-size: 1rem">Back to Interview</a>
     </div>
-
     <!-- Load reports.js for download functions -->
     <script src="{% static 'js/reports.js' %}"></script>
-
     <!-- Interview Metadata -->
     <div class="box box-section">
       <h2>Interview Details</h2>
@@ -71,160 +76,217 @@
           <td>{{ report.generated_at|date:"F d, Y \a\t h:i A" }}</td>
         </tr>
         {% if chat.job_listing %}
-        <tr>
-          <td>Job Position:</td>
-          <td>{{ chat.job_listing.title }}</td>
-        </tr>
+          <tr>
+            <td>Job Position:</td>
+            <td>{{ chat.job_listing.title }}</td>
+          </tr>
         {% endif %}
         {% if chat.resume %}
-        <tr>
-          <td>Resume:</td>
-          <td>{{ chat.resume.title }}</td>
-        </tr>
+          <tr>
+            <td>Resume:</td>
+            <td>{{ chat.resume.title }}</td>
+          </tr>
         {% endif %}
       </table>
     </div>
-
     <!-- Performance Scores -->
     {% if report.overall_score is not none %}
-    <div class="box box-section">
-      <h2>Performance Assessment</h2>
-      <div class="list-grid list-grid-2" style="gap: 1rem; margin: 1rem 0;">
-        <div class="box box-score">
-          <h3 class="text-secondary-color text-sm" style="text-transform: uppercase; margin-bottom: 0.5rem;">Professionalism</h3>
-          <div class="text-brand" style="font-size: 2rem; font-weight: bold;">{{ report.professionalism_score|default:"N/A" }}</div>
-          <div class="text-secondary-color text-sm" style="margin-top: 0.5rem;">/100 (Weight: {{ report.professionalism_weight }}%)</div>
-        </div>
-        <div class="box box-score">
-          <h3 class="text-secondary-color text-sm" style="text-transform: uppercase; margin-bottom: 0.5rem;">Subject Knowledge</h3>
-          <div class="text-brand" style="font-size: 2rem; font-weight: bold;">{{ report.subject_knowledge_score|default:"N/A" }}</div>
-          <div class="text-secondary-color text-sm" style="margin-top: 0.5rem;">/100 (Weight: {{ report.subject_knowledge_weight }}%)</div>
-        </div>
-        <div class="box box-score">
-          <h3 class="text-secondary-color text-sm" style="text-transform: uppercase; margin-bottom: 0.5rem;">Clarity</h3>
-          <div class="text-brand" style="font-size: 2rem; font-weight: bold;">{{ report.clarity_score|default:"N/A" }}</div>
-          <div class="text-secondary-color text-sm" style="margin-top: 0.5rem;">/100 (Weight: {{ report.clarity_weight }}%)</div>
-        </div>
-        <div class="box box-score">
-          <h3 class="text-secondary-color text-sm" style="text-transform: uppercase; margin-bottom: 0.5rem;">Overall Score</h3>
-          <div class="text-brand" style="font-size: 2rem; font-weight: bold;">{{ report.overall_score|default:"N/A" }}</div>
-          <div class="text-secondary-color text-sm" style="margin-top: 0.5rem;">/100</div>
+      <div class="box box-section">
+        <h2>Performance Assessment</h2>
+        <div class="list-grid list-grid-2" style="gap: 1rem; margin: 1rem 0;">
+          <div class="box box-score">
+            <h3 class="text-secondary-color text-sm"
+                style="text-transform: uppercase;
+                       margin-bottom: 0.5rem">Professionalism</h3>
+            <div class="text-brand" style="font-size: 2rem; font-weight: bold;">
+              {{ report.professionalism_score|default:"N/A" }}
+            </div>
+            <div class="text-secondary-color text-sm" style="margin-top: 0.5rem;">
+              /100 (Weight: {{ report.professionalism_weight }}%)
+            </div>
+          </div>
+          <div class="box box-score">
+            <h3 class="text-secondary-color text-sm"
+                style="text-transform: uppercase;
+                       margin-bottom: 0.5rem">Subject Knowledge</h3>
+            <div class="text-brand" style="font-size: 2rem; font-weight: bold;">
+              {{ report.subject_knowledge_score|default:"N/A" }}
+            </div>
+            <div class="text-secondary-color text-sm" style="margin-top: 0.5rem;">
+              /100 (Weight: {{ report.subject_knowledge_weight }}%)
+            </div>
+          </div>
+          <div class="box box-score">
+            <h3 class="text-secondary-color text-sm"
+                style="text-transform: uppercase;
+                       margin-bottom: 0.5rem">Clarity</h3>
+            <div class="text-brand" style="font-size: 2rem; font-weight: bold;">{{ report.clarity_score|default:"N/A" }}</div>
+            <div class="text-secondary-color text-sm" style="margin-top: 0.5rem;">/100 (Weight: {{ report.clarity_weight }}%)</div>
+          </div>
+          <div class="box box-score">
+            <h3 class="text-secondary-color text-sm"
+                style="text-transform: uppercase;
+                       margin-bottom: 0.5rem">Overall Score</h3>
+            <div class="text-brand" style="font-size: 2rem; font-weight: bold;">{{ report.overall_score|default:"N/A" }}</div>
+            <div class="text-secondary-color text-sm" style="margin-top: 0.5rem;">/100</div>
+          </div>
         </div>
       </div>
-    </div>
     {% endif %}
-
     <!-- Score Breakdown & Rationales -->
     {% if report.overall_score is not none %}
-    <div class="box box-section">
-      <h2>Score Breakdown &amp; Rationales</h2>
-      <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
-        Understanding how your final score was computed:
-      </p>
-
-      <!-- Score Computation Explanation -->
-      <div class="box box-info" style="margin-bottom: 2rem; padding: 1.5rem; background: var(--bg-warning, #fff8e1); border: 2px solid var(--border-warning, #ffd54f);">
-        <h3 style="color: var(--text-warning, #f57f17); margin-bottom: 0.75rem; font-size: 1.1rem;">💡 How Your Score is Calculated</h3>
-        <p style="margin: 0 0 0.5rem 0; line-height: 1.6; color: var(--text-secondary, #555);">
-          Your interview performance is evaluated across three key categories, each with specific weights that reflect their importance.
-          The final score is computed as a weighted average of these section scores.
-        </p>
-        <div style="margin-top: 1rem; padding: 1rem; background: var(--surface, white); border-radius: 4px; font-family: monospace; font-size: 0.95rem;">
-          <strong style="color: var(--primary, #1a73e8);">Section Scores with Weights:</strong><br>
-          • Professionalism ({{ report.professionalism_weight }}%): {{ report.professionalism_score }}/100<br>
-          • Subject Knowledge ({{ report.subject_knowledge_weight }}%): {{ report.subject_knowledge_score }}/100<br>
-          • Clarity ({{ report.clarity_weight }}%): {{ report.clarity_score }}/100<br>
-          <div style="margin-top: 1rem; padding: 1rem; background: var(--bg-info, #e3f2fd); border-left: 4px solid var(--primary, #1a73e8); border-radius: 4px;">
-            <strong style="color: var(--primary, #1a73e8);">Score Calculation: Weighted Score Calculation</strong><br>
-            <span style="font-size: 0.9rem;">
-              ({{ report.professionalism_score }} × {{ report.professionalism_weight }}%) +
-              ({{ report.subject_knowledge_score }} × {{ report.subject_knowledge_weight }}%) +
-              ({{ report.clarity_score }} × {{ report.clarity_weight }}%)
-            </span>
+      <div class="box box-section">
+        <h2>Score Breakdown &amp; Rationales</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Understanding how your final score was computed:</p>
+        <!-- Score Computation Explanation -->
+        <div class="box box-info"
+             style="margin-bottom: 2rem;
+                    padding: 1.5rem;
+                    background: var(--bg-warning, #fff8e1);
+                    border: 2px solid var(--border-warning, #ffd54f)">
+          <h3 style="color: var(--text-warning, #f57f17);
+                     margin-bottom: 0.75rem;
+                     font-size: 1.1rem">💡 How Your Score is Calculated</h3>
+          <p style="margin: 0 0 0.5rem 0;
+                    line-height: 1.6;
+                    color: var(--text-secondary, #555)">
+            Your interview performance is evaluated across three key categories, each with specific weights that reflect their importance.
+            The final score is computed as a weighted average of these section scores.
+          </p>
+          <div style="margin-top: 1rem;
+                      padding: 1rem;
+                      background: var(--surface, white);
+                      border-radius: 4px;
+                      font-family: monospace;
+                      font-size: 0.95rem">
+            <strong style="color: var(--primary, #1a73e8);">Section Scores with Weights:</strong>
+            <br>
+            • Professionalism ({{ report.professionalism_weight }}%): {{ report.professionalism_score }}/100
+            <br>
+            • Subject Knowledge ({{ report.subject_knowledge_weight }}%): {{ report.subject_knowledge_score }}/100
+            <br>
+            • Clarity ({{ report.clarity_weight }}%): {{ report.clarity_score }}/100
+            <br>
+            <div style="margin-top: 1rem;
+                        padding: 1rem;
+                        background: var(--bg-info, #e3f2fd);
+                        border-left: 4px solid var(--primary, #1a73e8);
+                        border-radius: 4px">
+              <strong style="color: var(--primary, #1a73e8);">Score Calculation: Weighted Score Calculation</strong>
+              <br>
+              <span style="font-size: 0.9rem;">
+                ({{ report.professionalism_score }} × {{ report.professionalism_weight }}%) +
+                ({{ report.subject_knowledge_score }} × {{ report.subject_knowledge_weight }}%) +
+                ({{ report.clarity_score }} × {{ report.clarity_weight }}%)
+              </span>
+            </div>
+            <div style="margin-top: 0.5rem;
+                        padding-top: 0.5rem;
+                        border-top: 2px solid var(--primary, #1a73e8)">
+              <strong style="color: var(--primary, #1a73e8); font-size: 1.1rem;">Final Weighted Score / Final Overall Score:</strong> <span style="font-size: 1.2rem; color: var(--success, #2e7d32);">{{ report.overall_score }}/100</span>
+            </div>
           </div>
-          <div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 2px solid var(--primary, #1a73e8);">
-          <strong style="color: var(--primary, #1a73e8); font-size: 1.1rem;">Final Weighted Score / Final Overall Score:</strong> <span style="font-size: 1.2rem; color: var(--success, #2e7d32);">{{ report.overall_score }}/100</span>
-          </div>
-        </div>
-        <p style="margin: 1rem 0 0 0; font-size: 0.9rem; color: var(--text-secondary, #777); font-style: italic;">
-          💡 Use these insights to identify your strengths and areas for improvement in future interviews.
-        </p>
-      </div>
-
-      <h3 class="text-brand" style="margin-bottom: 1rem; font-size: 1.2rem;">Detailed Section Scores & Rationales</h3>
-
-      <!-- Professionalism -->
-      <div class="box box-info" style="margin-bottom: 1rem; padding: 1.5rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-          <h3 class="text-brand" style="margin: 0;">Professionalism: {{ report.professionalism_score }}/100</h3>
-          <div>
-            <span class="text-secondary-color">({{ report.professionalism_weight }}% weight)</span>
-          </div>
-        </div>
-        <div style="background-color: var(--bg-secondary); padding: 1rem; border-radius: 4px; margin-top: 0.5rem;">
-          <strong style="color: var(--text-secondary); font-size: 0.875rem;">Rationale:</strong>
-          <p style="color: var(--text-primary); margin: 0.5rem 0 0 0; line-height: 1.6;">
-            {{ report.professionalism_rationale|default:"No rationale available." }}
+          <p style="margin: 1rem 0 0 0;
+                    font-size: 0.9rem;
+                    color: var(--text-secondary, #777);
+                    font-style: italic">
+            💡 Use these insights to identify your strengths and areas for improvement in future interviews.
           </p>
         </div>
-      </div>
-
-      <!-- Subject Knowledge -->
-      <div class="box box-info" style="margin-bottom: 1rem; padding: 1.5rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-          <h3 class="text-brand" style="margin: 0;">Subject Knowledge: {{ report.subject_knowledge_score }}/100</h3>
-          <div>
-            <span class="text-secondary-color">({{ report.subject_knowledge_weight }}% weight)</span>
+        <h3 class="text-brand" style="margin-bottom: 1rem; font-size: 1.2rem;">Detailed Section Scores & Rationales</h3>
+        <!-- Professionalism -->
+        <div class="box box-info" style="margin-bottom: 1rem; padding: 1.5rem;">
+          <div style="display: flex;
+                      justify-content: space-between;
+                      align-items: center;
+                      margin-bottom: 0.75rem">
+            <h3 class="text-brand" style="margin: 0;">Professionalism: {{ report.professionalism_score }}/100</h3>
+            <div>
+              <span class="text-secondary-color">({{ report.professionalism_weight }}% weight)</span>
+            </div>
+          </div>
+          <div style="background-color: var(--bg-secondary);
+                      padding: 1rem;
+                      border-radius: 4px;
+                      margin-top: 0.5rem">
+            <strong style="color: var(--text-secondary); font-size: 0.875rem;">Rationale:</strong>
+            <p style="color: var(--text-primary);
+                      margin: 0.5rem 0 0 0;
+                      line-height: 1.6">{{ report.professionalism_rationale|default:"No rationale available." }}</p>
           </div>
         </div>
-        <div style="background-color: var(--bg-secondary); padding: 1rem; border-radius: 4px; margin-top: 0.5rem;">
-          <strong style="color: var(--text-secondary); font-size: 0.875rem;">Rationale:</strong>
-          <p style="color: var(--text-primary); margin: 0.5rem 0 0 0; line-height: 1.6;">
-            {{ report.subject_knowledge_rationale|default:"No rationale available." }}
-          </p>
-        </div>
-      </div>
-
-      <!-- Clarity -->
-      <div class="box box-info" style="margin-bottom: 1rem; padding: 1.5rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-          <h3 class="text-brand" style="margin: 0;">Clarity: {{ report.clarity_score }}/100</h3>
-          <div>
-            <span class="text-secondary-color">({{ report.clarity_weight }}% weight)</span>
+        <!-- Subject Knowledge -->
+        <div class="box box-info" style="margin-bottom: 1rem; padding: 1.5rem;">
+          <div style="display: flex;
+                      justify-content: space-between;
+                      align-items: center;
+                      margin-bottom: 0.75rem">
+            <h3 class="text-brand" style="margin: 0;">Subject Knowledge: {{ report.subject_knowledge_score }}/100</h3>
+            <div>
+              <span class="text-secondary-color">({{ report.subject_knowledge_weight }}% weight)</span>
+            </div>
+          </div>
+          <div style="background-color: var(--bg-secondary);
+                      padding: 1rem;
+                      border-radius: 4px;
+                      margin-top: 0.5rem">
+            <strong style="color: var(--text-secondary); font-size: 0.875rem;">Rationale:</strong>
+            <p style="color: var(--text-primary);
+                      margin: 0.5rem 0 0 0;
+                      line-height: 1.6">{{ report.subject_knowledge_rationale|default:"No rationale available." }}</p>
           </div>
         </div>
-        <div style="background-color: var(--bg-secondary); padding: 1rem; border-radius: 4px; margin-top: 0.5rem;">
-          <strong style="color: var(--text-secondary); font-size: 0.875rem;">Rationale:</strong>
-          <p style="color: var(--text-primary); margin: 0.5rem 0 0 0; line-height: 1.6;">
-            {{ report.clarity_rationale|default:"No rationale available." }}
-          </p>
+        <!-- Clarity -->
+        <div class="box box-info" style="margin-bottom: 1rem; padding: 1.5rem;">
+          <div style="display: flex;
+                      justify-content: space-between;
+                      align-items: center;
+                      margin-bottom: 0.75rem">
+            <h3 class="text-brand" style="margin: 0;">Clarity: {{ report.clarity_score }}/100</h3>
+            <div>
+              <span class="text-secondary-color">({{ report.clarity_weight }}% weight)</span>
+            </div>
+          </div>
+          <div style="background-color: var(--bg-secondary);
+                      padding: 1rem;
+                      border-radius: 4px;
+                      margin-top: 0.5rem">
+            <strong style="color: var(--text-secondary); font-size: 0.875rem;">Rationale:</strong>
+            <p style="color: var(--text-primary);
+                      margin: 0.5rem 0 0 0;
+                      line-height: 1.6">{{ report.clarity_rationale|default:"No rationale available." }}</p>
+          </div>
+        </div>
+        <!-- Overall Score Explanation -->
+        <div class="box box-info"
+             style="padding: 1.5rem;
+                    background-color: var(--bg-brand-subtle, #e8f0fe)">
+          <div style="display: flex;
+                      justify-content: space-between;
+                      align-items: center;
+                      margin-bottom: 0.75rem">
+            <h3 class="text-brand" style="margin: 0;">Overall Score</h3>
+            <span class="text-brand" style="font-size: 1.5rem; font-weight: bold;">{{ report.overall_score }}/100</span>
+          </div>
+          <div style="background-color: white;
+                      padding: 1rem;
+                      border-radius: 4px;
+                      margin-top: 0.5rem">
+            <strong style="color: var(--text-secondary); font-size: 0.875rem;">Rationale:</strong>
+            <p style="color: var(--text-primary);
+                      margin: 0.5rem 0 0 0;
+                      line-height: 1.6">{{ report.overall_rationale|default:"No rationale available." }}</p>
+          </div>
         </div>
       </div>
-
-      <!-- Overall Score Explanation -->
-      <div class="box box-info" style="padding: 1.5rem; background-color: var(--bg-brand-subtle, #e8f0fe);">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-          <h3 class="text-brand" style="margin: 0;">Overall Score</h3>
-          <span class="text-brand" style="font-size: 1.5rem; font-weight: bold;">{{ report.overall_score }}/100</span>
-        </div>
-        <div style="background-color: white; padding: 1rem; border-radius: 4px; margin-top: 0.5rem;">
-          <strong style="color: var(--text-secondary); font-size: 0.875rem;">Rationale:</strong>
-          <p style="color: var(--text-primary); margin: 0.5rem 0 0 0; line-height: 1.6;">
-            {{ report.overall_rationale|default:"No rationale available." }}
-          </p>
-        </div>
-      </div>
-    </div>
     {% endif %}
-
     <!-- AI Feedback -->
     {% if report.feedback_text %}
-    <div class="box box-section">
-      <h2>AI Feedback</h2>
-      <div class="box box-info" style="white-space: pre-wrap; line-height: 1.6;">{{ report.feedback_text }}</div>
-    </div>
+      <div class="box box-section">
+        <h2>AI Feedback</h2>
+        <div class="box box-info" style="white-space: pre-wrap; line-height: 1.6;">{{ report.feedback_text }}</div>
+      </div>
     {% endif %}
-
     <!-- Interviewer Feedback (for invited interviews) -->
     {% if invitation %}
       {% if invitation.interviewer_feedback %}
@@ -232,13 +294,18 @@
           <h2 style="color: var(--success);">
             <i class="bi bi-person-check-fill"></i> Interviewer Feedback
           </h2>
-          <div class="box box-info" style="background: var(--surface); border-color: var(--success);">
-            <p style="white-space: pre-wrap; line-height: 1.6; color: var(--text-primary); margin-bottom: 1rem;">{{ invitation.interviewer_feedback }}</p>
+          <div class="box box-info"
+               style="background: var(--surface);
+                      border-color: var(--success)">
+            <p style="white-space: pre-wrap;
+                      line-height: 1.6;
+                      color: var(--text-primary);
+                      margin-bottom: 1rem">{{ invitation.interviewer_feedback }}</p>
             {% if invitation.reviewed_at %}
-            <hr style="border-color: var(--border);">
-            <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">
-              <i class="bi bi-clock"></i> Reviewed on {{ invitation.reviewed_at|date:"F j, Y \a\t g:i A" }} by {{ invitation.interviewer.get_full_name|default:invitation.interviewer.username }}
-            </p>
+              <hr style="border-color: var(--border);">
+              <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">
+                <i class="bi bi-clock"></i> Reviewed on {{ invitation.reviewed_at|date:"F j, Y \a\t g:i A" }} by {{ invitation.interviewer.get_full_name|default:invitation.interviewer.username }}
+              </p>
             {% endif %}
           </div>
         </div>
@@ -247,7 +314,9 @@
           <h2 style="color: var(--info);">
             <i class="bi bi-hourglass-split"></i> Interviewer Feedback
           </h2>
-          <div class="box box-info" style="background: var(--surface); border-color: var(--info);">
+          <div class="box box-info"
+               style="background: var(--surface);
+                      border-color: var(--info)">
             <p style="color: var(--text-secondary); margin: 0;">
               The interviewer is still reviewing your interview. Feedback will be available soon.
             </p>
@@ -255,55 +324,79 @@
         </div>
       {% endif %}
     {% endif %}
-
     <!-- Recommended Exercises -->
     <div class="box box-section">
       <h2>Recommended Exercises</h2>
       <div class="box box-info">
         <h3 class="text-brand" style="margin-bottom: 1rem;">To improve your interview skills, we recommend:</h3>
         <ul style="line-height: 1.8; color: var(--text-primary);">
-          <li><strong>Practice STAR Method:</strong> Structure your answers using Situation, Task, Action, and Result to provide clear, concise responses.</li>
-          <li><strong>Mock Interviews:</strong> Continue practicing with our AI interviewer or with peers to build confidence and fluency.</li>
-          <li><strong>Research Common Questions:</strong> Review frequently asked questions for your industry and prepare thoughtful responses.</li>
-          <li><strong>Technical Skills:</strong> Keep your technical skills sharp through coding challenges, projects, or online courses.</li>
-          <li><strong>Behavioral Preparation:</strong> Reflect on your past experiences and prepare examples that showcase your skills and problem-solving abilities.</li>
-          <li><strong>Company Research:</strong> Learn about the companies you're interviewing with to tailor your responses and ask informed questions.</li>
+          <li>
+            <strong>Practice STAR Method:</strong> Structure your answers using Situation, Task, Action, and Result to provide clear, concise responses.
+          </li>
+          <li>
+            <strong>Mock Interviews:</strong> Continue practicing with our AI interviewer or with peers to build confidence and fluency.
+          </li>
+          <li>
+            <strong>Research Common Questions:</strong> Review frequently asked questions for your industry and prepare thoughtful responses.
+          </li>
+          <li>
+            <strong>Technical Skills:</strong> Keep your technical skills sharp through coding challenges, projects, or online courses.
+          </li>
+          <li>
+            <strong>Behavioral Preparation:</strong> Reflect on your past experiences and prepare examples that showcase your skills and problem-solving abilities.
+          </li>
+          <li>
+            <strong>Company Research:</strong> Learn about the companies you're interviewing with to tailor your responses and ask informed questions.
+          </li>
         </ul>
       </div>
     </div>
-
     <!-- Interview Statistics -->
     <div class="box box-section">
       <h2>Interview Statistics</h2>
       <div style="display: flex; gap: 2rem; flex-wrap: wrap; margin: 1rem 0;">
         <div style="flex: 1; min-width: 200px;">
-          <strong class="text-secondary-color" style="display: block; margin-bottom: 0.25rem;">Total Questions Asked:</strong>
+          <strong class="text-secondary-color"
+                  style="display: block;
+                         margin-bottom: 0.25rem">Total Questions Asked:</strong>
           <span class="text-primary-color">{{ report.total_questions_asked }}</span>
         </div>
         <div style="flex: 1; min-width: 200px;">
-          <strong class="text-secondary-color" style="display: block; margin-bottom: 0.25rem;">Total Responses Given:</strong>
+          <strong class="text-secondary-color"
+                  style="display: block;
+                         margin-bottom: 0.25rem">Total Responses Given:</strong>
           <span class="text-primary-color">{{ report.total_responses_given }}</span>
         </div>
         {% if report.interview_duration_minutes %}
-        <div style="flex: 1; min-width: 200px;">
-          <strong class="text-secondary-color" style="display: block; margin-bottom: 0.25rem;">Interview Duration:</strong>
-          <span class="text-primary-color">{{ report.interview_duration_minutes }} minutes</span>
-        </div>
+          <div style="flex: 1; min-width: 200px;">
+            <strong class="text-secondary-color"
+                    style="display: block;
+                           margin-bottom: 0.25rem">Interview Duration:</strong>
+            <span class="text-primary-color">{{ report.interview_duration_minutes }} minutes</span>
+          </div>
         {% endif %}
       </div>
     </div>
-
     <!-- Export Actions (Bottom) -->
-    <div style="display: flex; gap: 1rem; justify-content: center; margin: 2rem 0; flex-wrap: wrap;">
-      <a href="{% url 'download_pdf_report' chat.id %}" id="download_pdf_report_bottom" class="btn btn-danger" style="padding: 1rem 2rem; font-size: 1rem;">
-        Download as PDF
-      </a>
-      <a href="{% url 'download_csv_report' chat.id %}" id="download_csv_report_bottom" class="btn btn-success" style="padding: 1rem 2rem; font-size: 1rem;">
-        Download as CSV
-      </a>
-      <a href="{% url 'chat-view' chat_id=chat.id %}" class="btn btn-secondary" style="padding: 1rem 2rem; font-size: 1rem;">
-        Back to Interview
-      </a>
+    <div style="display: flex;
+                gap: 1rem;
+                justify-content: center;
+                margin: 2rem 0;
+                flex-wrap: wrap">
+      <a href="{% url 'download_pdf_report' chat.id %}"
+         id="download_pdf_report_bottom"
+         class="btn btn-danger"
+         style="padding: 1rem 2rem;
+                font-size: 1rem">Download as PDF</a>
+      <a href="{% url 'download_csv_report' chat.id %}"
+         id="download_csv_report_bottom"
+         class="btn btn-success"
+         style="padding: 1rem 2rem;
+                font-size: 1rem">Download as CSV</a>
+      <a href="{% url 'chat-view' chat_id=chat.id %}"
+         class="btn btn-secondary"
+         style="padding: 1rem 2rem;
+                font-size: 1rem">Back to Interview</a>
     </div>
   </div>
 {% endblock content %}

@@ -1,12 +1,10 @@
 {% extends "base.html" %}
-
 {% block title %}
   AIS - Sign Out
 {% endblock title %}
-
 {% block content %}
-<body>
-  <style>
+  <body>
+    <style>
     .logout-confirm-page {
       display: flex;
       flex-direction: column;
@@ -110,30 +108,31 @@
         flex: 1;
       }
     }
-  </style>
-
-  <div class="container">
-    <div class="logout-confirm-page">
-      <h2>Sign Out</h2>
-
-      <div class="logout-confirmation">
-        <p>Are you sure you want to sign out?</p>
-        {% if user.is_authenticated %}
-          <p>Currently logged in as <strong>{{ user.username }}</strong></p>
-        {% endif %}
-      </div>
-
-      <div class="action-buttons">
-        <form method="post">
-          {% csrf_token %}
-          {% if redirect_field_value %}
-            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
+    </style>
+    <div class="container">
+      <div class="logout-confirm-page">
+        <h2>Sign Out</h2>
+        <div class="logout-confirmation">
+          <p>Are you sure you want to sign out?</p>
+          {% if user.is_authenticated %}
+            <p>
+              Currently logged in as <strong>{{ user.username }}</strong>
+            </p>
           {% endif %}
-          <button type="submit" class="btn btn-danger w-100">Yes, Sign Out</button>
-        </form>
-        <a href="{% url 'index' %}" class="btn btn-secondary">Cancel</a>
+        </div>
+        <div class="action-buttons">
+          <form method="post">
+            {% csrf_token %}
+            {% if redirect_field_value %}
+              <input type="hidden"
+                     name="{{ redirect_field_name }}"
+                     value="{{ redirect_field_value }}" />
+            {% endif %}
+            <button type="submit" class="btn btn-danger w-100">Yes, Sign Out</button>
+          </form>
+          <a href="{% url 'index' %}" class="btn btn-secondary">Cancel</a>
+        </div>
       </div>
     </div>
-  </div>
-</body>
+  </body>
 {% endblock content %}

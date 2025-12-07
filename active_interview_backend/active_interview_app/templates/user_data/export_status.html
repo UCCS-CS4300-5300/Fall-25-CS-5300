@@ -1,159 +1,172 @@
 {% extends "base.html" %}
 {% load static %}
-
-{% block title %}Export Status - Active Interview Service{% endblock title %}
-
+{% block title %}
+  Export Status - Active Interview Service
+{% endblock title %}
 {% block content %}
-<div class="container-page container-narrow container-centered">
-  <div class="box box-section">
-    <div class="text-center mb-4">
-      {% if export_request.status == 'completed' and not is_expired %}
-        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="var(--success)" class="bi bi-check-circle mb-3" viewBox="0 0 16 16">
-          <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
-          <path d="m10.97 4.97-.02.022-3.473 4.425-2.093-2.094a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05"/>
-        </svg>
-        <h1 style="color: var(--success);">Export Ready!</h1>
-        <p class="text-secondary-color">Your data export is ready to download</p>
-      {% elif export_request.status == 'processing' or export_request.status == 'pending' %}
-        <div class="spinner-border text-primary mb-3" role="status" style="width: 4rem; height: 4rem;">
-          <span class="visually-hidden">Loading...</span>
-        </div>
-        <h1 class="text-brand">Processing Export...</h1>
-        <p class="text-secondary-color">Your export is being prepared</p>
-      {% elif export_request.status == 'expired' %}
-        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="var(--warning)" class="bi bi-clock mb-3" viewBox="0 0 16 16">
-          <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z"/>
-          <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0"/>
-        </svg>
-        <h1 style="color: var(--warning);">Export Expired</h1>
-        <p class="text-secondary-color">This export link has expired</p>
-      {% else %}
-        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="var(--error)" class="bi bi-x-circle mb-3" viewBox="0 0 16 16">
-          <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
-          <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
-        </svg>
-        <h1 style="color: var(--error);">Export Failed</h1>
-        <p class="text-secondary-color">An error occurred during export</p>
-      {% endif %}
-    </div>
-
-    <!-- Export Details -->
-    <div class="box" style="background: var(--surface); border: 2px solid var(--border); padding: 1.5rem; margin-bottom: 1.5rem;">
-      <h3 class="text-lg text-bold mb-3">Export Details</h3>
-
-      <div class="info-item mb-3">
-        <div class="info-label">Request ID</div>
-        <div class="info-value">#{{ export_request.id }}</div>
+  <div class="container-page container-narrow container-centered">
+    <div class="box box-section">
+      <div class="text-center mb-4">
+        {% if export_request.status == 'completed' and not is_expired %}
+          <svg xmlns="http://www.w3.org/2000/svg"
+               width="64"
+               height="64"
+               fill="var(--success)"
+               class="bi bi-check-circle mb-3"
+               viewBox="0 0 16 16">
+            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16" />
+            <path d="m10.97 4.97-.02.022-3.473 4.425-2.093-2.094a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05" />
+          </svg>
+          <h1 style="color: var(--success);">Export Ready!</h1>
+          <p class="text-secondary-color">Your data export is ready to download</p>
+        {% elif export_request.status == 'processing' or export_request.status == 'pending' %}
+          <div class="spinner-border text-primary mb-3"
+               role="status"
+               style="width: 4rem;
+                      height: 4rem">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <h1 class="text-brand">Processing Export...</h1>
+          <p class="text-secondary-color">Your export is being prepared</p>
+        {% elif export_request.status == 'expired' %}
+          <svg xmlns="http://www.w3.org/2000/svg"
+               width="64"
+               height="64"
+               fill="var(--warning)"
+               class="bi bi-clock mb-3"
+               viewBox="0 0 16 16">
+            <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z" />
+            <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0" />
+          </svg>
+          <h1 style="color: var(--warning);">Export Expired</h1>
+          <p class="text-secondary-color">This export link has expired</p>
+        {% else %}
+          <svg xmlns="http://www.w3.org/2000/svg"
+               width="64"
+               height="64"
+               fill="var(--error)"
+               class="bi bi-x-circle mb-3"
+               viewBox="0 0 16 16">
+            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16" />
+            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708" />
+          </svg>
+          <h1 style="color: var(--error);">Export Failed</h1>
+          <p class="text-secondary-color">An error occurred during export</p>
+        {% endif %}
       </div>
-
-      <div class="info-item mb-3">
-        <div class="info-label">Status</div>
-        <div class="info-value">
-          {% if export_request.status == 'completed' and not is_expired %}
-            <span class="badge bg-success">Ready for Download</span>
-          {% elif export_request.status == 'processing' %}
-            <span class="badge bg-info">Processing</span>
-          {% elif export_request.status == 'pending' %}
-            <span class="badge bg-warning">Pending</span>
-          {% elif export_request.status == 'expired' %}
-            <span class="badge bg-secondary">Expired</span>
-          {% else %}
-            <span class="badge bg-danger">Failed</span>
-          {% endif %}
-        </div>
-      </div>
-
-      <div class="info-item mb-3">
-        <div class="info-label">Requested</div>
-        <div class="info-value">{{ export_request.requested_at|date:"F d, Y \a\t g:i A" }}</div>
-      </div>
-
-      {% if export_request.completed_at %}
+      <!-- Export Details -->
+      <div class="box"
+           style="background: var(--surface);
+                  border: 2px solid var(--border);
+                  padding: 1.5rem;
+                  margin-bottom: 1.5rem">
+        <h3 class="text-lg text-bold mb-3">Export Details</h3>
         <div class="info-item mb-3">
-          <div class="info-label">Completed</div>
-          <div class="info-value">{{ export_request.completed_at|date:"F d, Y \a\t g:i A" }}</div>
+          <div class="info-label">Request ID</div>
+          <div class="info-value">#{{ export_request.id }}</div>
         </div>
-      {% endif %}
-
-      {% if export_request.expires_at %}
         <div class="info-item mb-3">
-          <div class="info-label">Expires</div>
+          <div class="info-label">Status</div>
           <div class="info-value">
-            {{ export_request.expires_at|date:"F d, Y \a\t g:i A" }}
-            {% if is_expired %}
-              <span class="text-sm" style="color: var(--error);">(Expired)</span>
+            {% if export_request.status == 'completed' and not is_expired %}
+              <span class="badge bg-success">Ready for Download</span>
+            {% elif export_request.status == 'processing' %}
+              <span class="badge bg-info">Processing</span>
+            {% elif export_request.status == 'pending' %}
+              <span class="badge bg-warning">Pending</span>
+            {% elif export_request.status == 'expired' %}
+              <span class="badge bg-secondary">Expired</span>
+            {% else %}
+              <span class="badge bg-danger">Failed</span>
             {% endif %}
           </div>
         </div>
-      {% endif %}
-
-      {% if export_request.file_size_bytes %}
         <div class="info-item mb-3">
-          <div class="info-label">File Size</div>
-          <div class="info-value">{{ export_request.file_size_bytes|filesizeformat }}</div>
+          <div class="info-label">Requested</div>
+          <div class="info-value">{{ export_request.requested_at|date:"F d, Y \a\t g:i A" }}</div>
         </div>
-      {% endif %}
-
-      {% if export_request.download_count > 0 %}
-        <div class="info-item mb-3">
-          <div class="info-label">Downloads</div>
-          <div class="info-value">{{ export_request.download_count }}</div>
-        </div>
-      {% endif %}
-
-      {% if export_request.error_message %}
-        <div class="box" style="background: var(--error); color: var(--text-white); border: 2px solid var(--error); padding: 1rem; margin-top: 1rem;">
-          <p class="text-bold mb-1">Error Details:</p>
-          <p class="text-sm mb-0">{{ export_request.error_message }}</p>
-        </div>
-      {% endif %}
-    </div>
-
-    <!-- Action Buttons -->
-    <div class="d-flex flex-column gap-2">
-      {% if export_request.status == 'completed' and not is_expired %}
-        <a href="{% url 'download_data_export' export_request.id %}" class="btn btn-primary">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
-            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
-            <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
-          </svg>
-          Download ZIP File
-        </a>
-      {% elif export_request.status == 'expired' or export_request.status == 'failed' %}
-        <a href="{% url 'request_data_export' %}" class="btn btn-primary">Request New Export</a>
-      {% elif export_request.status == 'processing' or export_request.status == 'pending' %}
-        <button type="button" class="btn btn-secondary" onclick="location.reload()">
-          Refresh Status
-        </button>
-        <p class="text-sm text-secondary-color text-center mb-0">
-          This page will automatically refresh every 10 seconds
-        </p>
-      {% endif %}
-
-      <a href="{% url 'user_data_settings' %}" class="btn btn-secondary">Back to Settings</a>
-    </div>
-
-    {% if export_request.status == 'completed' and not is_expired %}
-      <div class="box box-info mt-4">
-        <p class="text-sm mb-0">
-          <strong>📋 Note:</strong> The download link will expire on {{ export_request.expires_at|date:"F d, Y" }}.
-          After expiration, you will need to request a new export.
-        </p>
+        {% if export_request.completed_at %}
+          <div class="info-item mb-3">
+            <div class="info-label">Completed</div>
+            <div class="info-value">{{ export_request.completed_at|date:"F d, Y \a\t g:i A" }}</div>
+          </div>
+        {% endif %}
+        {% if export_request.expires_at %}
+          <div class="info-item mb-3">
+            <div class="info-label">Expires</div>
+            <div class="info-value">
+              {{ export_request.expires_at|date:"F d, Y \a\t g:i A" }}
+              {% if is_expired %}<span class="text-sm" style="color: var(--error);">(Expired)</span>{% endif %}
+            </div>
+          </div>
+        {% endif %}
+        {% if export_request.file_size_bytes %}
+          <div class="info-item mb-3">
+            <div class="info-label">File Size</div>
+            <div class="info-value">{{ export_request.file_size_bytes|filesizeformat }}</div>
+          </div>
+        {% endif %}
+        {% if export_request.download_count > 0 %}
+          <div class="info-item mb-3">
+            <div class="info-label">Downloads</div>
+            <div class="info-value">{{ export_request.download_count }}</div>
+          </div>
+        {% endif %}
+        {% if export_request.error_message %}
+          <div class="box"
+               style="background: var(--error);
+                      color: var(--text-white);
+                      border: 2px solid var(--error);
+                      padding: 1rem;
+                      margin-top: 1rem">
+            <p class="text-bold mb-1">Error Details:</p>
+            <p class="text-sm mb-0">{{ export_request.error_message }}</p>
+          </div>
+        {% endif %}
       </div>
-    {% endif %}
+      <!-- Action Buttons -->
+      <div class="d-flex flex-column gap-2">
+        {% if export_request.status == 'completed' and not is_expired %}
+          <a href="{% url 'download_data_export' export_request.id %}"
+             class="btn btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 width="16"
+                 height="16"
+                 fill="currentColor"
+                 class="bi bi-download"
+                 viewBox="0 0 16 16">
+              <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z" />
+              <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z" />
+            </svg>
+            Download ZIP File
+          </a>
+        {% elif export_request.status == 'expired' or export_request.status == 'failed' %}
+          <a href="{% url 'request_data_export' %}" class="btn btn-primary">Request New Export</a>
+        {% elif export_request.status == 'processing' or export_request.status == 'pending' %}
+          <button type="button" class="btn btn-secondary" onclick="location.reload()">Refresh Status</button>
+          <p class="text-sm text-secondary-color text-center mb-0">This page will automatically refresh every 10 seconds</p>
+        {% endif %}
+        <a href="{% url 'user_data_settings' %}" class="btn btn-secondary">Back to Settings</a>
+      </div>
+      {% if export_request.status == 'completed' and not is_expired %}
+        <div class="box box-info mt-4">
+          <p class="text-sm mb-0">
+            <strong>📋 Note:</strong> The download link will expire on {{ export_request.expires_at|date:"F d, Y" }}.
+            After expiration, you will need to request a new export.
+          </p>
+        </div>
+      {% endif %}
+    </div>
   </div>
-</div>
-
-{% if export_request.status == 'processing' or export_request.status == 'pending' %}
-<script>
+  {% if export_request.status == 'processing' or export_request.status == 'pending' %}
+    <script>
   // Auto-refresh every 10 seconds while processing
   setTimeout(function() {
     location.reload();
   }, 10000);
-</script>
-{% endif %}
-
-<style>
+    </script>
+  {% endif %}
+  <style>
   .container-centered {
     display: flex;
     align-items: center;
@@ -205,5 +218,5 @@
     font-size: 0.85rem;
     font-weight: 500;
   }
-</style>
+  </style>
 {% endblock content %}

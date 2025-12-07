@@ -1,18 +1,20 @@
 {% extends "base-sidebar.html" %}
-
 {% block title %}
   AIS - {{ chat.title }}
 {% endblock title %}
-
 {% block content %}
   <!-- All styles moved to main.css Chat Input Components section -->
   {% load static %}
   <div class="centered-container flex-grow-1 d-flex flex-column">
     <h3 class="whiteTextOverride px-3 pt-3">{{ chat.title }}</h3>
-
     <!-- Time Remaining Banner for Invited Interviews (Issue #138) -->
     {% if chat.interview_type == 'INVITED' and not time_expired %}
-      <div id="time-banner" class="alert alert-info mx-3 mb-0" role="alert" style="display: flex; justify-content: space-between; align-items: center;">
+      <div id="time-banner"
+           class="alert alert-info mx-3 mb-0"
+           role="alert"
+           style="display: flex;
+                  justify-content: space-between;
+                  align-items: center">
         <span>
           <i class="bi bi-clock-fill"></i>
           <strong>Time Remaining:</strong>
@@ -21,7 +23,10 @@
         <small>Interview will auto-complete when time expires</small>
       </div>
       <!-- 5-Minute Warning Banner (Hidden initially) -->
-      <div id="final-warning" class="alert alert-warning mx-3 mb-0 final-warning" role="alert" style="display: none;">
+      <div id="final-warning"
+           class="alert alert-warning mx-3 mb-0 final-warning"
+           role="alert"
+           style="display: none">
         <div class="d-flex flex-column align-items-center">
           <div class="mb-2">
             <i class="bi bi-exclamation-triangle-fill"></i>
@@ -119,8 +124,8 @@
         <a href="{% url 'export_report' chat_id=chat.id %}" class="alert-link">View Report</a>
       </div>
     {% endif %}
-
-    <div id="chat-scroll" class="d-flex flex-column-reverse flex-grow-1 overflow-y-auto overflow-x-hidden pe-0">
+    <div id="chat-scroll"
+         class="d-flex flex-column-reverse flex-grow-1 overflow-y-auto overflow-x-hidden pe-0">
       <div class="row flex-column-reverse">
         <div id="chat-messages">
           {% comment %} Pre-populate existing messages here {% endcomment %}
@@ -131,7 +136,6 @@
                 <div class="card user-text-bubble">
                   <div class="card-body">
                     <p class="card-text">{{ message.content|linebreaksbr }}</p>
-                    
                   </div>
                 </div>
               </div>
@@ -139,9 +143,11 @@
               <div class="col bot-text-container">
                 <div class="card bot-text-bubble">
                   <div class="card-body">
-                      <div class="ai_messages"> 
-                      <p class="card-text" id="ai_message">{{ message.content|linebreaksbr }} </p>
-                      <button class="button-chat-send btn btn-primary ms-2" i="text2speech_button" onclick="textToSpeech(this)">Speak</button>
+                    <div class="ai_messages">
+                      <p class="card-text" id="ai_message">{{ message.content|linebreaksbr }}</p>
+                      <button class="button-chat-send btn btn-primary ms-2"
+                              i="text2speech_button"
+                              onclick="textToSpeech(this)">Speak</button>
                     </div>
                   </div>
                 </div>
@@ -154,28 +160,42 @@
     <div class="input-card card mb-3 mt-3">
       <div class="card-body">
         <div class="d-flex">
-          <textarea id="user-input" class="chat-input flex-grow-1 border-0 p-2"
-            placeholder="{% if time_expired %}Interview time has expired{% else %}Enter text here...{% endif %}"
-            {% if time_expired %}disabled{% endif %}></textarea>
-          <button class="button-chat-send btn btn-primary ms-2" id="speech-text" onclick="speechToText()"
-            {% if time_expired %}disabled{% endif %}>Speak</button>
-          <button class="button-chat-send btn btn-primary ms-2" type="button" onclick="sendMessage()"
-            {% if time_expired %}disabled{% endif %}>Send</button>
+          <textarea id="user-input"
+                    class="chat-input flex-grow-1 border-0 p-2"
+                    placeholder="{% if time_expired %}Interview time has expired{% else %}Enter text here...{% endif %}"
+                    {% if time_expired %}disabled{% endif %}></textarea>
+          <button class="button-chat-send btn btn-primary ms-2"
+                  id="speech-text"
+                  onclick="speechToText()"
+                  {% if time_expired %}disabled{% endif %}>Speak</button>
+          <button class="button-chat-send btn btn-primary ms-2"
+                  type="button"
+                  onclick="sendMessage()"
+                  {% if time_expired %}disabled{% endif %}>Send</button>
         </div>
         <!-- Connection notification and status row -->
         <div class="d-flex justify-content-between align-items-center mt-2">
           <!-- Connection Dropped Notification (Inline) -->
-          <div id="connectionDroppedNotification" class="connection-notification" style="display: none;">
+          <div id="connectionDroppedNotification"
+               class="connection-notification"
+               style="display: none">
             <div class="d-flex align-items-center">
               <div class="flex-grow-1">
                 <div class="d-flex align-items-center mb-1">
                   <i class="bi bi-wifi-off me-2"></i>
                   <strong>Connection Lost</strong>
                 </div>
-                <p class="mb-2 small">Disconnected at <span id="connectionDropTime"></span>. Your messages will be saved locally.</p>
-                <button type="button" class="btn btn-primary btn-sm" onclick="retryConnection()">Retry</button>
+                <p class="mb-2 small">
+                  Disconnected at <span id="connectionDropTime"></span>. Your messages will be saved locally.
+                </p>
+                <button type="button"
+                        class="btn btn-primary btn-sm"
+                        onclick="retryConnection()">Retry</button>
               </div>
-              <button type="button" class="btn-close ms-2" onclick="dismissConnectionNotification()" aria-label="Close"></button>
+              <button type="button"
+                      class="btn-close ms-2"
+                      onclick="dismissConnectionNotification()"
+                      aria-label="Close"></button>
             </div>
           </div>
           <!-- Connection Status Indicator -->
@@ -187,7 +207,6 @@
       </div>
     </div>
   </div>
-
   <!--
     Connection & sync indicator styles moved to main.css
     CSS Classes Used (for test compatibility):
@@ -204,14 +223,15 @@
     - animation: rotate 2s linear infinite
   -->
 {% endblock content %}
-
 {% block scripts %}
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.2.4/purify.min.js" integrity="sha512-Y1p/STLW/B+l+MPJ5K5OdILMwJa2gMFXXmC/qsyDuGH9uc1MZMUo6/8YQUg9Ut4ns8KGCrCtt+58UwmNFFiVvA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.2.4/purify.min.js"
+          integrity="sha512-Y1p/STLW/B+l+MPJ5K5OdILMwJa2gMFXXmC/qsyDuGH9uc1MZMUo6/8YQUg9Ut4ns8KGCrCtt+58UwmNFFiVvA=="
+          crossorigin="anonymous"
+          referrerpolicy="no-referrer"></script>
   {% load static %}
   <script src="{% static 'js/connection-handler.js' %}"></script>
   <script>
-
   // ==========================================================================
   // Connection Handler Integration
   // ==========================================================================
@@ -349,9 +369,7 @@
 
     {% comment %} $(document).ready(function() {
       updateScroll();
-    }); {% endcomment %}
-    
-
+}); {% endcomment %}
     const chatInput = document.getElementById('user-input');
     chatInput.addEventListener('input', function() {
       // Reset height to recalc scrollHeight

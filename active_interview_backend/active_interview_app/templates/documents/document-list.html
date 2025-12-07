@@ -1,9 +1,7 @@
 {% extends "base.html" %}
-
 {% block title %}
   AIS - Documents
 {% endblock title %}
-
 {% block content %}
   <style>
     /* Page header and document-page styles moved to main.css */
@@ -368,18 +366,13 @@
       }
     }
   </style>
-
   <div class="document-page">
     <!-- Messages now displayed globally in base.html -->
-
     <!-- Page Header -->
     <div class="page-header">
       <h1>Document Management</h1>
-      <p>
-        Upload your resume and add job listings to create personalized interview experiences
-      </p>
+      <p>Upload your resume and add job listings to create personalized interview experiences</p>
     </div>
-
     <!-- Resume Upload Section -->
     <div class="upload-section">
       <h2>Upload Your Resume</h2>
@@ -389,19 +382,15 @@
             id="uploadForm"
             onsubmit="return showUploadSpinner()">
         {% csrf_token %}
-
         <div class="form-group">
           <label for="resume-title">Resume Title</label>
-          <input
-            type="text"
-            name="title"
-            id="resume-title"
-            placeholder="e.g., Software Engineer Resume 2025"
-            maxlength="48"
-            required
-          >
+          <input type="text"
+                 name="title"
+                 id="resume-title"
+                 placeholder="e.g., Software Engineer Resume 2025"
+                 maxlength="48"
+                 required>
         </div>
-
         <div class="form-group">
           <label for="file">Choose File</label>
           <div class="file-input-wrapper">
@@ -411,112 +400,115 @@
               </svg>
               <span>Click to upload PDF or Word document</span>
             </label>
-            <input
-              type="file"
-              name="file"
-              id="file"
-              accept=".pdf,.doc,.docx"
-              required
-              aria-label="Upload your resume file"
-              aria-describedby="file-upload-desc"
-            >
+            <input type="file"
+                   name="file"
+                   id="file"
+                   accept=".pdf,.doc,.docx"
+                   required
+                   aria-label="Upload your resume file"
+                   aria-describedby="file-upload-desc">
             <span id="file-upload-desc" class="visually-hidden">Upload a PDF or Word document containing your resume. Accepted formats: .pdf, .doc, .docx</span>
           </div>
           <div class="file-name-display" id="file-name-display"></div>
         </div>
-
         <button type="submit" class="btn-upload" name="submit" id="uploadBtn">
           <span class="loading-spinner-button"
                 id="uploadSpinner"
                 role="status"
                 aria-hidden="true"
-                style="display:none;"></span>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" id="uploadIcon">
-            <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 13A6 6 0 1 1 8 2a6 6 0 0 1 0 12z"/>
-            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                style="display:none"></span>
+          <svg width="16"
+               height="16"
+               viewBox="0 0 16 16"
+               fill="currentColor"
+               id="uploadIcon">
+            <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 13A6 6 0 1 1 8 2a6 6 0 0 1 0 12z" />
+            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z" />
           </svg>
           <span id="uploadBtnText">Upload Resume</span>
         </button>
       </form>
     </div>
-
     <hr class="section-divider">
-
     <!-- Job Listing Section (Issues #21, #51, #52, #53) -->
     <div class="upload-section">
       <h2>Add Job Listing</h2>
-      <form method="post" id="jobListingForm" onsubmit="return analyzeJobListing(event)">
+      <form method="post"
+            id="jobListingForm"
+            onsubmit="return analyzeJobListing(event)">
         {% csrf_token %}
-
         <div class="form-group">
           <label for="job-title">Job Listing Title</label>
-          <input
-            type="text"
-            name="title"
-            id="job-title"
-            placeholder="e.g., Senior Software Engineer at Company XYZ"
-            maxlength="100"
-            required
-          >
+          <input type="text"
+                 name="title"
+                 id="job-title"
+                 placeholder="e.g., Senior Software Engineer at Company XYZ"
+                 maxlength="100"
+                 required>
         </div>
-
         <div class="form-group">
           <label for="job-description">Job Description</label>
-          <textarea
-            name="paste-text"
-            id="job-description"
-            placeholder="Paste the job listing details here...&#10;&#10;Include:&#10;• Job requirements&#10;• Responsibilities&#10;• Qualifications&#10;• Company information&#10;&#10;Click 'Analyze Job Description' to extract skills and get interview template recommendations."
-            required
-          ></textarea>
+          <textarea name="paste-text"
+                    id="job-description"
+                    placeholder="Paste the job listing details here...&#10;&#10;Include:&#10;• Job requirements&#10;• Responsibilities&#10;• Qualifications&#10;• Company information&#10;&#10;Click 'Analyze Job Description' to extract skills and get interview template recommendations."
+                    required></textarea>
         </div>
-
         <button type="submit" class="btn-upload" id="analyzeJobBtn" name="submit">
           <span class="loading-spinner-button"
                 id="jobSpinner"
                 role="status"
                 aria-hidden="true"
-                style="display:none;"></span>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" id="analyzeIcon">
-            <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 13A6 6 0 1 1 8 2a6 6 0 0 1 0 12z"/>
-            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                style="display:none"></span>
+          <svg width="16"
+               height="16"
+               viewBox="0 0 16 16"
+               fill="currentColor"
+               id="analyzeIcon">
+            <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 13A6 6 0 1 1 8 2a6 6 0 0 1 0 12z" />
+            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z" />
           </svg>
           <span id="analyzeBtnText">Analyze Job Description</span>
         </button>
       </form>
-
       <!-- Analysis Results Section (hidden by default) -->
       <div id="job-analysis-results" style="display:none; margin-top: 2rem;">
         <div class="analysis-card">
           <h3 style="color: var(--text-primary); margin-bottom: 1.5rem;">Analysis Results</h3>
-
           <!-- Seniority Level -->
           <div style="margin-bottom: 1.5rem;">
-            <h4 style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem;">Seniority Level</h4>
+            <h4 style="color: var(--text-secondary);
+                       font-size: 0.9rem;
+                       margin-bottom: 0.5rem">Seniority Level</h4>
             <div id="seniority-display">
               <span class="seniority-badge" id="seniority-badge"></span>
             </div>
           </div>
-
           <!-- Required Skills -->
           <div style="margin-bottom: 1.5rem;">
-            <h4 style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem;">Required Skills</h4>
+            <h4 style="color: var(--text-secondary);
+                       font-size: 0.9rem;
+                       margin-bottom: 0.5rem">Required Skills</h4>
             <div class="skill-tags" id="skills-display"></div>
           </div>
-
           <!-- Recommended Template -->
           <div id="template-recommendation" style="display:none;">
-            <h4 style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem;">Recommended Interview Template</h4>
+            <h4 style="color: var(--text-secondary);
+                       font-size: 0.9rem;
+                       margin-bottom: 0.5rem">Recommended Interview Template</h4>
             <div class="template-preview" id="template-preview"></div>
           </div>
-
           <!-- No Template Message -->
-          <div id="no-template-message" style="display:none; padding: 1rem; background: var(--surface); border-radius: var(--radius); color: var(--text-secondary);">
+          <div id="no-template-message"
+               style="display:none;
+                      padding: 1rem;
+                      background: var(--surface);
+                      border-radius: var(--radius);
+                      color: var(--text-secondary)">
             <p>No matching interview template found. You can create a custom template for this role.</p>
           </div>
         </div>
       </div>
     </div>
-
     <!-- Markdown Preview (if available) -->
     {% if markdown_text %}
       <div class="markdown-preview">
@@ -525,7 +517,6 @@
       </div>
     {% endif %}
   </div>
-
   <script>
     // File input handling
     const fileInput = document.getElementById('file');
@@ -704,27 +695,17 @@
             </p>
 
             <div class="template-actions" style="display: flex; gap: 0.75rem; margin-top: 1rem;">
-              <a href="/templates/${data.recommended_template}/edit/?from=job-analysis&job_id=${data.job_listing_id}"
-                 class="btn-template-action btn-secondary"
-                 style="flex: 1; padding: 0.75rem; text-align: center; text-decoration: none;
-                        background: var(--surface); color: var(--text-primary);
-                        border: 1px solid var(--border); border-radius: var(--radius);
-                        transition: all 0.2s;">
+              <a href="/templates/${data.recommended_template}/edit/?from=job-analysis&job_id=${data.job_listing_id}" class="btn-template-action btn-secondary" style="flex: 1; padding: 0.75rem; text-align: center; text-decoration: none; background: var(--surface); color: var(--text-primary); border: 1px solid var(--border); border-radius: var(--radius); transition: all 0.2s;">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="vertical-align: middle; margin-right: 0.5rem;">
-                  <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708l-3-3zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207l6.5-6.5zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.499.499 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11l.178-.178z"/>
+                  <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708l-3-3zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207l6.5-6.5zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.499.499 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11l.178-.178z" />
                 </svg>
                 Edit Template
               </a>
 
-              <a href="/chat/create/?template_id=${data.recommended_template}&job_id=${data.job_listing_id}"
-                 class="btn-template-action btn-primary"
-                 style="flex: 1; padding: 0.75rem; text-align: center; text-decoration: none;
-                        background: var(--primary); color: var(--text-white);
-                        border: none; border-radius: var(--radius);
-                        transition: all 0.2s;">
+              <a href="/chat/create/?template_id=${data.recommended_template}&job_id=${data.job_listing_id}" class="btn-template-action btn-primary" style="flex: 1; padding: 0.75rem; text-align: center; text-decoration: none; background: var(--primary); color: var(--text-white); border: none; border-radius: var(--radius); transition: all 0.2s;">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="vertical-align: middle; margin-right: 0.5rem;">
-                  <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-                  <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                  <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
+                  <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z" />
                 </svg>
                 Use This Template
               </a>
@@ -737,5 +718,4 @@
       }
     }
   </script>
-
 {% endblock content %}

@@ -1,57 +1,82 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Interview Completed</title>
-</head>
-<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <div style="background-color: #28a745; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
-    <h1 style="margin: 0; font-size: 24px;">Interview Completed!</h1>
-  </div>
-
-  <div style="background-color: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px;">
-    <p>Hello {{ interviewer.get_full_name|default:interviewer.username }},</p>
-
-    <p>Great news! The candidate has completed the interview you sent.</p>
-
-    <div style="background-color: #d4edda; border-left: 4px solid #28a745; padding: 15px; margin: 20px 0; border-radius: 4px;">
-      <p style="margin: 0; font-weight: bold; color: #155724;">Interview Details</p>
-      <ul style="margin: 10px 0 0 0; padding-left: 20px; color: #155724;">
-        <li><strong>Template:</strong> {{ invitation.template.name }}</li>
-        <li><strong>Candidate:</strong> {{ invitation.candidate_email }}</li>
-        <li><strong>Scheduled:</strong> {{ invitation.scheduled_time|date:"F j, Y \a\\t g:i A" }}</li>
-        <li><strong>Completed:</strong> {{ invitation.completed_at|date:"F j, Y \a\\t g:i A" }}</li>
-      </ul>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interview Completed</title>
+  </head>
+  <body style="font-family: Arial, sans-serif;
+               line-height: 1.6;
+               color: #333;
+               max-width: 600px;
+               margin: 0 auto;
+               padding: 20px">
+    <div style="background-color: #28a745;
+                color: white;
+                padding: 20px;
+                text-align: center;
+                border-radius: 8px 8px 0 0">
+      <h1 style="margin: 0; font-size: 24px;">Interview Completed!</h1>
     </div>
-
-    <h3 style="color: #1F7BA6; margin-top: 30px;">What's Next?</h3>
-    <p>You can now review the candidate's responses and AI-generated feedback:</p>
-
-    <div style="text-align: center; margin: 30px 0;">
-      <a href="{{ results_url }}" style="display: inline-block; background-color: #1F7BA6; color: white; padding: 15px 40px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">
-        View Results
-      </a>
+    <div style="background-color: #f8f9fa;
+                padding: 30px;
+                border-radius: 0 0 8px 8px">
+      <p>Hello {{ interviewer.get_full_name|default:interviewer.username }},</p>
+      <p>Great news! The candidate has completed the interview you sent.</p>
+      <div style="background-color: #d4edda;
+                  border-left: 4px solid #28a745;
+                  padding: 15px;
+                  margin: 20px 0;
+                  border-radius: 4px">
+        <p style="margin: 0; font-weight: bold; color: #155724;">Interview Details</p>
+        <ul style="margin: 10px 0 0 0; padding-left: 20px; color: #155724;">
+          <li>
+            <strong>Template:</strong> {{ invitation.template.name }}
+          </li>
+          <li>
+            <strong>Candidate:</strong> {{ invitation.candidate_email }}
+          </li>
+          <li>
+            <strong>Scheduled:</strong> {{ invitation.scheduled_time|date:"F j, Y \a\\t g:i A" }}
+          </li>
+          <li>
+            <strong>Completed:</strong> {{ invitation.completed_at|date:"F j, Y \a\\t g:i A" }}
+          </li>
+        </ul>
+      </div>
+      <h3 style="color: #1F7BA6; margin-top: 30px;">What's Next?</h3>
+      <p>You can now review the candidate's responses and AI-generated feedback:</p>
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="{{ results_url }}"
+           style="display: inline-block;
+                  background-color: #1F7BA6;
+                  color: white;
+                  padding: 15px 40px;
+                  text-decoration: none;
+                  border-radius: 5px;
+                  font-weight: bold;
+                  font-size: 16px">View Results</a>
+      </div>
+      <div style="background-color: #d1ecf1;
+                  border-left: 4px solid #0c5460;
+                  padding: 15px;
+                  margin: 20px 0;
+                  border-radius: 4px">
+        <p style="margin: 0; font-weight: bold; color: #0c5460;">Reminder</p>
+        <ul style="margin: 10px 0 0 0; padding-left: 20px; color: #0c5460;">
+          <li>Review the AI-generated performance scores and feedback</li>
+          <li>Add your own feedback for the candidate</li>
+          <li>Mark the interview as "Reviewed" when you're done</li>
+          <li>The candidate will be notified once you've completed your review</li>
+        </ul>
+      </div>
+      <p style="margin-top: 30px;">Thank you for using Active Interview Service!</p>
+      <hr style="border: none; border-top: 1px solid #dee2e6; margin: 30px 0;">
+      <p style="font-size: 12px; color: #6c757d; text-align: center;">
+        This notification was sent to {{ interviewer.email }}
+        <br>
+        Active Interview Service | Professional Interview Practice
+      </p>
     </div>
-
-    <div style="background-color: #d1ecf1; border-left: 4px solid #0c5460; padding: 15px; margin: 20px 0; border-radius: 4px;">
-      <p style="margin: 0; font-weight: bold; color: #0c5460;">Reminder</p>
-      <ul style="margin: 10px 0 0 0; padding-left: 20px; color: #0c5460;">
-        <li>Review the AI-generated performance scores and feedback</li>
-        <li>Add your own feedback for the candidate</li>
-        <li>Mark the interview as "Reviewed" when you're done</li>
-        <li>The candidate will be notified once you've completed your review</li>
-      </ul>
-    </div>
-
-    <p style="margin-top: 30px;">Thank you for using Active Interview Service!</p>
-
-    <hr style="border: none; border-top: 1px solid #dee2e6; margin: 30px 0;">
-
-    <p style="font-size: 12px; color: #6c757d; text-align: center;">
-      This notification was sent to {{ interviewer.email }}<br>
-      Active Interview Service | Professional Interview Practice
-    </p>
-  </div>
-</body>
+  </body>
 </html>

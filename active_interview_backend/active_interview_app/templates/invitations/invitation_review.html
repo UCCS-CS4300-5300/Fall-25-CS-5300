@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% block title %}
-    AIS - Review Interview
+  AIS - Review Interview
 {% endblock title %}
 {% block content %}
-    <style>
+  <style>
     .review-page {
       max-width: 1200px;
       margin: 2rem auto;
@@ -275,123 +275,114 @@
         text-align: center;
       }
     }
-    </style>
-
-    <div class="review-page">
-        <!-- Page Header -->
-        <div class="page-header">
-            <h1>Review Interview</h1>
-            <p>Provide feedback for candidate: <strong>{{ invitation.candidate_email }}</strong></p>
-        </div>
-
-        <!-- Interview Metadata -->
-        <div class="review-section">
-            <h2>Interview Details</h2>
-            <div class="metadata-grid">
-                <div class="metadata-item">
-                    <span class="metadata-label">Template</span>
-                    <span class="metadata-value">{{ invitation.template.name }}</span>
-                </div>
-                <div class="metadata-item">
-                    <span class="metadata-label">Scheduled Time</span>
-                    <span class="metadata-value">{{ invitation.scheduled_time|date:"M d, Y g:i A" }}</span>
-                </div>
-                <div class="metadata-item">
-                    <span class="metadata-label">Duration</span>
-                    <span class="metadata-value">{{ invitation.duration_minutes }} minutes</span>
-                </div>
-                <div class="metadata-item">
-                    <span class="metadata-label">Status</span>
-                    <span class="metadata-value">
-                        <span class="status-badge status-{{ invitation.status }}">
-                            {{ invitation.get_status_display }}
-                        </span>
-                    </span>
-                </div>
-                <div class="metadata-item">
-                    <span class="metadata-label">Review Status</span>
-                    <span class="metadata-value">
-                        {% if invitation.interviewer_review_status == 'completed' %}
-                            <span class="status-badge status-reviewed">Reviewed</span>
-                        {% else %}
-                            <span class="status-badge status-pending">Pending Review</span>
-                        {% endif %}
-                    </span>
-                </div>
-                {% if invitation.completed_at %}
-                <div class="metadata-item">
-                    <span class="metadata-label">Completed At</span>
-                    <span class="metadata-value">{{ invitation.completed_at|date:"M d, Y g:i A" }}</span>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Interview Transcript -->
-        <div class="review-section">
-            <h2>Interview Transcript</h2>
-            {% if chat.messages %}
-            <div class="chat-messages">
-                {% for message in chat.messages %}
-                {% if message.role != 'system' %}
-                <div class="message message-{{ message.role }}">
-                    <div class="message-role">{{ message.role|title }}</div>
-                    <div class="message-content">{{ message.content }}</div>
-                </div>
-                {% endif %}
-                {% endfor %}
-            </div>
-            {% else %}
-            <p style="color: var(--text-secondary);">No messages available.</p>
-            {% endif %}
-        </div>
-
-        <!-- Interviewer Feedback Form -->
-        <div class="review-section">
-            <h2>Interviewer Feedback</h2>
-
-            {% if invitation.interviewer_feedback %}
-            <div class="existing-feedback">
-                <h4>Current Feedback:</h4>
-                <p>{{ invitation.interviewer_feedback }}</p>
-            </div>
-            {% endif %}
-
-            <form method="post" class="feedback-form">
-                {% csrf_token %}
-                <div class="form-group">
-                    <label class="form-label" for="interviewer_feedback">
-                        Your Feedback
-                        {% if not invitation.interviewer_feedback %}<span style="color: var(--error);">*</span>{% endif %}
-                    </label>
-                    <textarea
-                        class="form-control"
-                        id="interviewer_feedback"
-                        name="interviewer_feedback"
-                        placeholder="Provide your feedback on the candidate's interview performance..."
-                        {% if invitation.interviewer_review_status == 'completed' %}disabled{% endif %}
-                    >{{ invitation.interviewer_feedback }}</textarea>
-                </div>
-
-                <div class="action-buttons">
-                    <a href="{% url 'invitation_dashboard' %}" class="btn btn-secondary">
-                        Back to Dashboard
-                    </a>
-                    {% if chat.is_finalized %}
-                    <a href="{% url 'export_report' chat.id %}" class="btn btn-secondary" target="_blank">
-                        📄 View AI Report
-                    </a>
-                    {% endif %}
-                    {% if invitation.interviewer_review_status != 'completed' %}
-                    <button type="submit" name="mark_reviewed" value="false" class="btn btn-primary">
-                        Save Feedback
-                    </button>
-                    <button type="submit" name="mark_reviewed" value="true" class="btn btn-success">
-                        Mark as Reviewed & Notify Candidate
-                    </button>
-                    {% endif %}
-                </div>
-            </form>
-        </div>
+  </style>
+  <div class="review-page">
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1>Review Interview</h1>
+      <p>
+        Provide feedback for candidate: <strong>{{ invitation.candidate_email }}</strong>
+      </p>
     </div>
+    <!-- Interview Metadata -->
+    <div class="review-section">
+      <h2>Interview Details</h2>
+      <div class="metadata-grid">
+        <div class="metadata-item">
+          <span class="metadata-label">Template</span>
+          <span class="metadata-value">{{ invitation.template.name }}</span>
+        </div>
+        <div class="metadata-item">
+          <span class="metadata-label">Scheduled Time</span>
+          <span class="metadata-value">{{ invitation.scheduled_time|date:"M d, Y g:i A" }}</span>
+        </div>
+        <div class="metadata-item">
+          <span class="metadata-label">Duration</span>
+          <span class="metadata-value">{{ invitation.duration_minutes }} minutes</span>
+        </div>
+        <div class="metadata-item">
+          <span class="metadata-label">Status</span>
+          <span class="metadata-value">
+            <span class="status-badge status-{{ invitation.status }}">{{ invitation.get_status_display }}</span>
+          </span>
+        </div>
+        <div class="metadata-item">
+          <span class="metadata-label">Review Status</span>
+          <span class="metadata-value">
+            {% if invitation.interviewer_review_status == 'completed' %}
+              <span class="status-badge status-reviewed">Reviewed</span>
+            {% else %}
+              <span class="status-badge status-pending">Pending Review</span>
+            {% endif %}
+          </span>
+        </div>
+        {% if invitation.completed_at %}
+          <div class="metadata-item">
+            <span class="metadata-label">Completed At</span>
+            <span class="metadata-value">{{ invitation.completed_at|date:"M d, Y g:i A" }}</span>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+    <!-- Interview Transcript -->
+    <div class="review-section">
+      <h2>Interview Transcript</h2>
+      {% if chat.messages %}
+        <div class="chat-messages">
+          {% for message in chat.messages %}
+            {% if message.role != 'system' %}
+              <div class="message message-{{ message.role }}">
+                <div class="message-role">{{ message.role|title }}</div>
+                <div class="message-content">{{ message.content }}</div>
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      {% else %}
+        <p style="color: var(--text-secondary);">No messages available.</p>
+      {% endif %}
+    </div>
+    <!-- Interviewer Feedback Form -->
+    <div class="review-section">
+      <h2>Interviewer Feedback</h2>
+      {% if invitation.interviewer_feedback %}
+        <div class="existing-feedback">
+          <h4>Current Feedback:</h4>
+          <p>{{ invitation.interviewer_feedback }}</p>
+        </div>
+      {% endif %}
+      <form method="post" class="feedback-form">
+        {% csrf_token %}
+        <div class="form-group">
+          <label class="form-label" for="interviewer_feedback">
+            Your Feedback
+            {% if not invitation.interviewer_feedback %}<span style="color: var(--error);">*</span>{% endif %}
+          </label>
+          <textarea class="form-control"
+                    id="interviewer_feedback"
+                    name="interviewer_feedback"
+                    placeholder="Provide your feedback on the candidate's interview performance..."
+                    {% if invitation.interviewer_review_status == 'completed' %}disabled{% endif %}>{{ invitation.interviewer_feedback }}</textarea>
+        </div>
+        <div class="action-buttons">
+          <a href="{% url 'invitation_dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+          {% if chat.is_finalized %}
+            <a href="{% url 'export_report' chat.id %}"
+               class="btn btn-secondary"
+               target="_blank">📄 View AI Report</a>
+          {% endif %}
+          {% if invitation.interviewer_review_status != 'completed' %}
+            <button type="submit"
+                    name="mark_reviewed"
+                    value="false"
+                    class="btn btn-primary">Save Feedback</button>
+            <button type="submit"
+                    name="mark_reviewed"
+                    value="true"
+                    class="btn btn-success">Mark as Reviewed & Notify Candidate</button>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+  </div>
 {% endblock content %}
