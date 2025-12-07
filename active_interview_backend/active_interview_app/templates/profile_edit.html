@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% block title %}
+  Edit Profile - AIS
+{% endblock title %}
+{% block content %}
+  <style>
+    .edit-profile-page {
+      max-width: 700px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+    }
+
+    .profile-edit-box {
+      background: var(--surface-hover);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 2rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .profile-edit-box h2 {
+      color: var(--text-primary);
+      font-size: 1.75rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .profile-edit-box h2::before {
+      content: "";
+      display: inline-block;
+      width: 4px;
+      height: 1.75rem;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+
+    .read-only-field {
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      background: var(--surface);
+      border-radius: var(--radius);
+      border-left: 3px solid var(--primary);
+    }
+
+    .read-only-label {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .read-only-value {
+      color: var(--text-primary);
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+      display: block;
+      color: var(--text-primary);
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background-color: var(--surface);
+      color: var(--text-primary);
+      font-size: 1rem;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(31, 123, 166, 0.1);
+    }
+
+    .help-text {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    .errorlist {
+      list-style: none;
+      padding: 0;
+      margin: 0.5rem 0;
+    }
+
+    .errorlist li {
+      background: var(--error);
+      color: var(--text-white);
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius-sm);
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .btn {
+      padding: 0.75rem 2rem;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      display: inline-block;
+      text-align: center;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: var(--text-white);
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-dark);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow);
+    }
+
+    .btn-secondary {
+      background-color: var(--surface);
+      color: var(--text-primary);
+      border: 2px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--surface-hover);
+      border-color: var(--primary);
+      transform: translateY(-1px);
+    }
+
+    @media (max-width: 768px) {
+      .edit-profile-page {
+        padding: 0 1rem;
+      }
+
+      .form-actions {
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
+      }
+    }
+  </style>
+  <div class="edit-profile-page">
+    <div class="profile-edit-box">
+      <h2>Edit Profile</h2>
+      <!-- Profile Edit Form -->
+      <form method="post">
+        {% csrf_token %}
+        <!-- Username Field -->
+        <div class="form-group">
+          <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+          {{ form.username }}
+          {% if form.username.help_text %}<div class="help-text">{{ form.username.help_text }}</div>{% endif %}
+          {{ form.username.errors }}
+        </div>
+        <!-- Email Field -->
+        <div class="form-group">
+          <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+          {{ form.email }}
+          {% if form.email.help_text %}<div class="help-text">{{ form.email.help_text }}</div>{% endif %}
+          {{ form.email.errors }}
+        </div>
+        <!-- First Name Field -->
+        <div class="form-group">
+          <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
+          {{ form.first_name }}
+          {% if form.first_name.help_text %}<div class="help-text">{{ form.first_name.help_text }}</div>{% endif %}
+          {{ form.first_name.errors }}
+        </div>
+        <!-- Last Name Field -->
+        <div class="form-group">
+          <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label>
+          {{ form.last_name }}
+          {% if form.last_name.help_text %}<div class="help-text">{{ form.last_name.help_text }}</div>{% endif %}
+          {{ form.last_name.errors }}
+        </div>
+        <!-- Form Actions -->
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+          <a href="{% url 'profile' %}" class="btn btn-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock content %}

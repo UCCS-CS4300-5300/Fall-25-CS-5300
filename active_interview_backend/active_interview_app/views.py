@@ -1230,6 +1230,42 @@ def profile(request):
     })
 
 
+# Issue #119: Profile Edit View
+@login_required
+def edit_profile(request):
+    """
+    Allow users to edit their profile information.
+
+    Issue #119: Users can update their username, email, first name, and last name.
+    """
+    from .forms import UserProfileEditForm
+    from django.contrib import messages
+
+    if request.method == 'POST':
+        form = UserProfileEditForm(
+            request.POST,
+            instance=request.user,
+            user=request.user
+        )
+
+        if form.is_valid():
+            form.save()
+            messages.success(
+                request,
+                'Your profile has been updated successfully!'
+            )
+            return redirect('profile')
+    else:
+        form = UserProfileEditForm(
+            instance=request.user,
+            user=request.user
+        )
+
+    return render(request, 'profile_edit.html', {
+        'form': form
+    })
+
+
 @login_required
 def view_user_profile(request, user_id):
     """
