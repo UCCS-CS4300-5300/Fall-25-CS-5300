@@ -51,7 +51,7 @@ class Command(BaseCommand):
                 raise CommandError(f'User "{username}" does not exist')
 
         # Create new cap (this automatically deactivates old ones)
-        cap = MonthlySpendingCap.objects.create(
+        MonthlySpendingCap.objects.create(
             cap_amount_usd=amount,
             is_active=True,
             created_by=user

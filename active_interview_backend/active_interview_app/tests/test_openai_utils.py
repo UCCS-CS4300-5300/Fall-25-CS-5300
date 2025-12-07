@@ -8,7 +8,7 @@ Updated for Issue #13 to include tests for API key pool integration.
 import pytest
 from django.test import TestCase, override_settings
 from django.contrib.auth.models import User
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock  # noqa: F401
 from active_interview_app.openai_utils import (
     get_openai_client,
     ai_available,
@@ -51,8 +51,8 @@ class OpenAIUtilsTest(TestCase):
         mock_openai.return_value = mock_client
 
         # Call twice
-        client1 = get_openai_client()
-        client2 = get_openai_client()
+        client1 = get_openai_client()  # noqa: F841
+        client2 = get_openai_client()  # noqa: F841
 
         # Should only initialize once
         mock_openai.assert_called_once()
@@ -322,7 +322,7 @@ class APIKeyPoolIntegrationTest(TestCase):
         key1.save()
 
         # Get client (should use key1)
-        client1 = get_openai_client()
+        client1 = get_openai_client()  # noqa: F841
         self.assertEqual(mock_openai.call_count, 1)
         mock_openai.assert_called_with(api_key='sk-key1')
 
@@ -338,7 +338,7 @@ class APIKeyPoolIntegrationTest(TestCase):
         key2.activate()
 
         # Get client again (should refresh with key2)
-        client2 = get_openai_client()
+        client2 = get_openai_client()  # noqa: F841
         self.assertEqual(mock_openai.call_count, 2)
         mock_openai.assert_called_with(api_key='sk-key2')
 
@@ -361,15 +361,15 @@ class APIKeyPoolIntegrationTest(TestCase):
         key.save()
 
         # Get client normally
-        client1 = get_openai_client()
+        client1 = get_openai_client()  # noqa: F841
         self.assertEqual(mock_openai.call_count, 1)
 
         # Get client again (should use cached)
-        client2 = get_openai_client()
+        client2 = get_openai_client()  # noqa: F841
         self.assertEqual(mock_openai.call_count, 1)  # Still 1, used cache
 
         # Force refresh
-        client3 = get_openai_client(force_refresh=True)
+        _client3 = get_openai_client(force_refresh=True)  # noqa: F841
         self.assertEqual(mock_openai.call_count, 2)  # Created new client
 
     @override_settings(OPENAI_API_KEY='sk-fallback')

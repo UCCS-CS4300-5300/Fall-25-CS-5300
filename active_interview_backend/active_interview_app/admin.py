@@ -1,12 +1,11 @@
 from django.contrib import admin
 from django.urls import reverse
-from django.utils.html import format_html
 from .models import (
     Chat, UploadedJobListing, UploadedResume,
     ExportableReport, UserProfile, RoleChangeRequest,
     DataExportRequest, DeletionRequest,
     Tag, QuestionBank, Question, InterviewTemplate, InvitedInterview,
-    RateLimitViolation
+    RateLimitViolation, AuditLog
 )
 from .token_usage_models import TokenUsage
 from .merge_stats_models import MergeTokenStats
@@ -1024,3 +1023,184 @@ class RateLimitViolationAdmin(admin.ModelAdmin):
         extra_context = extra_context or {}
         extra_context['dashboard_url'] = reverse('ratelimit_dashboard')
         return super().changelist_view(request, extra_context=extra_context)
+
+
+# Audit Log Admin - Issues #66, #67, #68
+@admin.register(AuditLog)
+class AuditLogAdmin(admin.ModelAdmin):
+    """
+    Read-only admin interface for audit logs.
+    Superuser-only access with comprehensive search and filtering.
+    Includes CSV/JSON export capabilities.
+    """
+    list_display = (
+        'timestamp',
+        'user',
+        'action_type',
+        'resource_type',
+        'ip_address',
+        'description_preview'
+    )
+    list_filter = (
+        'action_type',
+        'timestamp',
+        'resource_type'
+    )
+    search_fields = (
+        'user__username',
+        'user__email',
+        'description',
+        'ip_address',
+        'resource_id'
+    )
+    readonly_fields = (
+        'timestamp',
+        'user',
+        'action_type',
+        'resource_type',
+        'resource_id',
+        'description',
+        'ip_address',
+        'user_agent',
+        'extra_data'
+    )
+    date_hierarchy = 'timestamp'
+    ordering = ('-timestamp',)
+    actions = ['export_as_csv', 'export_as_json']
+
+    fieldsets = (
+        ('Action Details', {
+            'fields': (
+                'timestamp',
+                'action_type',
+                'description'
+            )
+        }),
+        ('User Information', {
+            'fields': (
+                'user',
+                'ip_address',
+                'user_agent'
+            )
+        }),
+        ('Resource Information', {
+            'fields': (
+                'resource_type',
+                'resource_id'
+            )
+        }),
+        ('Additional Data', {
+            'fields': ('extra_data',),
+            'classes': ('collapse',)
+        })
+    )
+
+    def description_preview(self, obj):
+        """Show truncated description in list view."""
+        if len(obj.description) > 100:
+            return obj.description[:100] + '...'
+        return obj.description
+    description_preview.short_description = 'Description'
+
+    def has_add_permission(self, request):
+        """Prevent manual creation of audit logs."""
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        """Prevent editing of audit logs (immutable)."""
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        """Prevent deletion of audit logs (compliance requirement)."""
+        return False
+
+    def get_queryset(self, request):
+        """
+        Optimize query with select_related.
+        Only superusers can view audit logs.
+        """
+        qs = super().get_queryset(request)
+        return qs.select_related('user')
+
+    def changelist_view(self, request, extra_context=None):
+        """Add custom context to changelist view."""
+        extra_context = extra_context or {}
+        extra_context['title'] = 'Audit Logs (Read-Only)'
+        return super().changelist_view(request, extra_context=extra_context)
+
+    def export_as_csv(self, request, queryset):
+        """Export selected audit logs as CSV."""
+        import csv
+        from django.http import HttpResponse
+        from django.utils import timezone
+
+        # Create the HttpResponse object with CSV header
+        response = HttpResponse(content_type='text/csv')
+        timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
+        response['Content-Disposition'] = f'attachment; filename="audit_logs_{timestamp}.csv"'
+
+        writer = csv.writer(response)
+        # Write header
+        writer.writerow([
+            'Timestamp',
+            'User',
+            'Action Type',
+            'Description',
+            'Resource Type',
+            'Resource ID',
+            'IP Address',
+            'User Agent'
+        ])
+
+        # Write data
+        for log in queryset:
+            writer.writerow([
+                log.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+                log.user.username if log.user else 'Anonymous',
+                log.get_action_type_display(),
+                log.description,
+                log.resource_type,
+                log.resource_id,
+                log.ip_address or '',
+                log.user_agent
+            ])
+
+        return response
+
+    export_as_csv.short_description = "Export selected logs as CSV"
+
+    def export_as_json(self, request, queryset):
+        """Export selected audit logs as JSON."""
+        import json
+        from django.http import HttpResponse
+        from django.utils import timezone
+
+        # Build JSON data
+        data = []
+        for log in queryset:
+            data.append({
+                'id': log.id,
+                'timestamp': log.timestamp.isoformat(),
+                'user': log.user.username if log.user else None,
+                'user_id': log.user.id if log.user else None,
+                'action_type': log.action_type,
+                'action_type_display': log.get_action_type_display(),
+                'description': log.description,
+                'resource_type': log.resource_type,
+                'resource_id': log.resource_id,
+                'ip_address': log.ip_address,
+                'user_agent': log.user_agent,
+                'extra_data': log.extra_data
+            })
+
+        # Create response
+        response = HttpResponse(
+            json.dumps(data, indent=2),
+            content_type='application/json'
+        )
+        timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
+        response['Content-Disposition'] = f'attachment; filename="audit_logs_{timestamp}.json"'
+
+        return response
+
+    export_as_json.short_description = "Export selected logs as JSON"
