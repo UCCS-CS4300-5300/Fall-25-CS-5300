@@ -32,22 +32,34 @@
           <a class="nav-link" href="{% url "candidate_invitations" %}">My Invitations</a>
         </li>
         {% if user.profile.role == 'admin' or user.profile.role == 'interviewer' %}
-          <li class="nav-item">
-            <a class="nav-link" href="{% url "question_banks" %}">Question Banks</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{% url "template_list" %}">Templates</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{% url "invitation_dashboard" %}">Invitations</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{% url "candidate_search" %}">Search Candidates</a>
-          </li>
-        {% endif %}
-        {% if user.profile.role == 'admin' %}
-          <li class="nav-item">
-            <a class="nav-link" href="{% url "role_requests_list" %}">Role Requests</a>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle"
+               href="#"
+               role="button"
+               data-bs-toggle="dropdown"
+               aria-expanded="false">Admin</a>
+            <ul class="dropdown-menu">
+              <li>
+                <a class="dropdown-item" href="{% url "question_banks" %}">Question Banks</a>
+              </li>
+              <li>
+                <a class="dropdown-item" href="{% url "template_list" %}">Templates</a>
+              </li>
+              <li>
+                <a class="dropdown-item" href="{% url "invitation_dashboard" %}">Invitations</a>
+              </li>
+              <li>
+                <a class="dropdown-item" href="{% url "candidate_search" %}">Search Candidates</a>
+              </li>
+              {% if user.profile.role == 'admin' %}
+                <li>
+                  <hr class="dropdown-divider">
+                </li>
+                <li>
+                  <a class="dropdown-item" href="{% url "role_requests_list" %}">Role Requests</a>
+                </li>
+              {% endif %}
+            </ul>
           </li>
         {% endif %}
       {% endif %}
