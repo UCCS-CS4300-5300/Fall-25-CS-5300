@@ -3,7 +3,6 @@ Comprehensive admin tests to increase coverage above 80%.
 Tests display methods, queryset optimizations, and admin configurations.
 """
 from django.test import TestCase
-from django.test import TestCase
 from django.contrib.auth.models import User
 from django.contrib.admin.sites import AdminSite
 from datetime import datetime, timezone, timedelta
