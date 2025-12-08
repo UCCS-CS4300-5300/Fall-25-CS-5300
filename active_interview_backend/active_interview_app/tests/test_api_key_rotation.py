@@ -26,6 +26,7 @@ from datetime import timedelta
 from unittest.mock import patch, MagicMock
 from io import StringIO
 from django.core.management import call_command
+from cryptography.fernet import Fernet
 
 from active_interview_app.api_key_rotation_models import (
     APIKeyPool,

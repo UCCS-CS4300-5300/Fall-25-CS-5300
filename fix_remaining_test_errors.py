@@ -9,6 +9,7 @@ import re
 
 BASE_DIR = r"C:\Users\jacks\CS4300 Project\Fall-25-CS-5300\active_interview_backend\active_interview_app\tests"
 
+
 def remove_unused_imports(filepath, imports_to_remove):
     """Remove unused imports from a file"""
     with open(filepath, 'r', encoding='utf-8') as f:
@@ -23,6 +24,7 @@ def remove_unused_imports(filepath, imports_to_remove):
     with open(filepath, 'w', encoding='utf-8') as f:
         f.write(content)
 
+
 def remove_unused_variables(filepath, line_numbers):
     """Remove unused variable assignments"""
     with open(filepath, 'r', encoding='utf-8') as f:
@@ -35,6 +37,7 @@ def remove_unused_variables(filepath, line_numbers):
 
     with open(filepath, 'w', encoding='utf-8') as f:
         f.writelines(lines)
+
 
 def fix_indentation(filepath, fixes):
     """Fix indentation errors"""
@@ -50,6 +53,7 @@ def fix_indentation(filepath, fixes):
 
     with open(filepath, 'w', encoding='utf-8') as f:
         f.writelines(lines)
+
 
 print("Fixing remaining lint errors in test files...\n")
 

@@ -163,7 +163,7 @@ except Exception as e:
     error_type = type(e).__name__
     error_msg = str(e)
 
-    print(f"# AI Review Failed")
+    print("# AI Review Failed")
     print(f"\n**Error Type:** {error_type}")
     print(f"\n**Error Message:** {error_msg}")
     print("\n**Possible Causes:**")
