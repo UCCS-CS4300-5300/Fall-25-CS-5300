@@ -28,7 +28,7 @@ httpx==0.28.1
 idna==3.10
 jiter==0.11.1
 jsbeautifier==1.15.4
-json5==0.10.0
+json5==0.12.1
 lxml==5.4.0
 Markdown==3.7
 markdownify==1.1.0
