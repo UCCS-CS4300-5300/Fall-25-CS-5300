@@ -934,6 +934,10 @@ class IntegratedUserStoriesTest(TestCase):
         from unittest.mock import patch, MagicMock
         from .test_utils import create_mock_openai_response
 
+        # Clean up any existing reports for this chat
+        # (report_utils returns existing reports instead of creating new ones)
+        ExportableReport.objects.filter(chat=self.chat).delete()
+
         self.client.login(username='candidate', password=TEST_PASSWORD)
 
         # Step 1: Finalize interview (triggers report generation)
