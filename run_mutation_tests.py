@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Mutation Testing Runner for Active Interview Backend
 
@@ -36,6 +37,12 @@ from pathlib import Path
 from datetime import datetime
 import time
 
+# Fix Windows console encoding for Unicode characters
+if sys.platform == 'win32':
+    import codecs
+    sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
+    sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'strict')
+
 
 class MutationTestRunner:
     """Manages mutation testing execution and reporting."""
@@ -70,7 +77,7 @@ class MutationTestRunner:
         """Check if mutmut is installed."""
         try:
             result = subprocess.run(
-                ['python', '-m', 'mutmut', '--version'],
+                ['python3', '-m', 'mutmut', '--version'],
                 capture_output=True,
                 text=True
             )
@@ -94,7 +101,7 @@ class MutationTestRunner:
 
         start_time = time.time()
         result = subprocess.run(
-            ['python', 'manage.py', 'test', 'active_interview_app.tests', '--verbosity=0'],
+            ['python3', 'manage.py', 'test', 'active_interview_app.tests', '--verbosity=0'],
             capture_output=True,
             text=True
         )
@@ -141,24 +148,24 @@ class MutationTestRunner:
 
         os.chdir(self.base_dir)
 
-        # Build command
-        cmd = ['python', '-m', 'mutmut', 'run']
+        # Mutmut 3.x uses setup.cfg for configuration, not command-line args
+        # We need to update setup.cfg instead of passing --paths-to-mutate
 
-        # Add module-specific path if specified
+        # Check if module-specific testing is requested
         if self.module:
             module_path = f'active_interview_backend/active_interview_app/{self.module}.py'
             if not Path(module_path).exists():
                 print(f"✗ Error: Module file not found: {module_path}")
                 return False
-            cmd.extend(['--paths-to-mutate', module_path])
+
+            # Update setup.cfg temporarily for module-specific testing
+            self._update_setup_cfg_for_module(module_path)
             print(f"Testing module: {self.module}.py")
         else:
             print("Testing all Python files in active_interview_app/")
 
-        # Add mutation limit if specified
-        if self.limit:
-            cmd.extend(['--tests-dir', 'active_interview_backend/active_interview_app/tests/'])
-            print(f"Limiting to {self.limit} mutations (for quick testing)")
+        # Build command - mutmut 3.x only supports --max-children option
+        cmd = ['python3', '-m', 'mutmut', 'run', '--max-children', '1']
 
         print(f"\nCommand: {' '.join(cmd)}\n")
         print("This may take a while... Each mutation requires running the full test suite.")
@@ -177,6 +184,24 @@ class MutationTestRunner:
 
         return result.returncode == 0
 
+    def _update_setup_cfg_for_module(self, module_path):
+        """Update setup.cfg to test a specific module."""
+        setup_cfg = self.base_dir / 'setup.cfg'
+        if setup_cfg.exists():
+            with open(setup_cfg, 'r') as f:
+                content = f.read()
+
+            # Replace paths_to_mutate line
+            import re
+            content = re.sub(
+                r'paths_to_mutate=.*',
+                f'paths_to_mutate={module_path}',
+                content
+            )
+
+            with open(setup_cfg, 'w') as f:
+                f.write(content)
+
     def generate_results(self):
         """Generate and display mutation test results."""
         self.print_header("MUTATION TEST RESULTS")
@@ -185,7 +210,7 @@ class MutationTestRunner:
 
         # Get results
         result = subprocess.run(
-            ['python', '-m', 'mutmut', 'results'],
+            ['python3', '-m', 'mutmut', 'results'],
             capture_output=True,
             text=True
         )
@@ -318,22 +343,204 @@ class MutationTestRunner:
         os.chdir(self.base_dir)
 
         print("Creating HTML report...")
+        print("Note: mutmut 3.x removed the 'html' command.")
+        print("Generating custom HTML report instead...")
+
+        # Try the new mutmut results format first
         result = subprocess.run(
-            ['python', '-m', 'mutmut', 'html'],
+            ['python3', '-m', 'mutmut', 'results'],
             capture_output=True,
             text=True
         )
 
         if result.returncode == 0:
-            html_dir = self.base_dir / 'html'
-            if html_dir.exists():
-                index_file = html_dir / 'index.html'
-                print(f"✓ HTML report generated: {index_file}")
-                print(f"\nOpen in browser: file:///{index_file}")
-            else:
-                print("✗ HTML directory not found")
+            # Create custom HTML report
+            self._create_custom_html_report(result.stdout)
         else:
-            print(f"✗ Error generating HTML report: {result.stderr}")
+            print(f"✗ Error getting mutation results: {result.stderr}")
+            print("\nAlternative: Use the mutmut TUI interface:")
+            print("  python -m mutmut show")
+
+    def _create_custom_html_report(self, results_text):
+        """Create a custom HTML report from mutation results."""
+        html_dir = self.base_dir / 'html'
+        html_dir.mkdir(exist_ok=True)
+
+        summary = self.results['summary']
+        score = summary['mutation_score']
+
+        # Determine grade and color
+        if score >= 80:
+            grade = "A - Excellent"
+            grade_color = "#28a745"
+        elif score >= 60:
+            grade = "B - Good"
+            grade_color = "#17a2b8"
+        elif score >= 40:
+            grade = "C - Fair"
+            grade_color = "#ffc107"
+        else:
+            grade = "F - Needs Improvement"
+            grade_color = "#dc3545"
+
+        html_content = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mutation Testing Report - {self.results['module']}</title>
+    <style>
+        * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+                background: #f5f5f5; padding: 20px; line-height: 1.6; }}
+        .container {{ max-width: 1200px; margin: 0 auto; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }}
+        .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 8px 8px 0 0; }}
+        .header h1 {{ font-size: 28px; margin-bottom: 10px; }}
+        .header .meta {{ opacity: 0.9; font-size: 14px; }}
+        .score-section {{ padding: 30px; text-align: center; background: #f8f9fa; border-bottom: 3px solid {grade_color}; }}
+        .score-circle {{ width: 200px; height: 200px; margin: 0 auto 20px; border-radius: 50%;
+                        background: conic-gradient({grade_color} {score*3.6}deg, #e9ecef {score*3.6}deg);
+                        display: flex; align-items: center; justify-content: center; position: relative; }}
+        .score-circle::before {{ content: ''; position: absolute; width: 160px; height: 160px;
+                                background: white; border-radius: 50%; }}
+        .score-value {{ position: relative; z-index: 1; font-size: 48px; font-weight: bold; color: {grade_color}; }}
+        .grade {{ font-size: 24px; color: {grade_color}; font-weight: bold; margin-top: 10px; }}
+        .stats {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; padding: 30px; }}
+        .stat-card {{ background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #667eea; }}
+        .stat-card.killed {{ border-left-color: #28a745; }}
+        .stat-card.survived {{ border-left-color: #dc3545; }}
+        .stat-card.timeout {{ border-left-color: #ffc107; }}
+        .stat-card.suspicious {{ border-left-color: #6c757d; }}
+        .stat-label {{ font-size: 14px; color: #6c757d; text-transform: uppercase; margin-bottom: 8px; }}
+        .stat-value {{ font-size: 32px; font-weight: bold; }}
+        .section {{ padding: 30px; border-top: 1px solid #e9ecef; }}
+        .section h2 {{ font-size: 20px; margin-bottom: 15px; color: #333; }}
+        .info-box {{ background: #e7f3ff; border-left: 4px solid #2196F3; padding: 15px; margin: 15px 0; border-radius: 4px; }}
+        .info-box.warning {{ background: #fff3cd; border-left-color: #ffc107; }}
+        .info-box.success {{ background: #d4edda; border-left-color: #28a745; }}
+        .info-box.danger {{ background: #f8d7da; border-left-color: #dc3545; }}
+        .code {{ background: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-family: monospace; font-size: 14px; }}
+        ul {{ margin: 15px 0 15px 30px; }}
+        li {{ margin: 8px 0; }}
+        .footer {{ padding: 20px; text-align: center; color: #6c757d; font-size: 14px; border-top: 1px solid #e9ecef; }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Mutation Testing Report</h1>
+            <div class="meta">
+                <div>Module: <strong>{self.results['module']}</strong></div>
+                <div>Generated: {self.results['timestamp']}</div>
+            </div>
+        </div>
+
+        <div class="score-section">
+            <div class="score-circle">
+                <div class="score-value">{score:.0f}%</div>
+            </div>
+            <div class="grade">Grade: {grade}</div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-label">Total Mutations</div>
+                <div class="stat-value">{summary['total']}</div>
+            </div>
+            <div class="stat-card killed">
+                <div class="stat-label">✓ Killed</div>
+                <div class="stat-value">{summary['killed']}</div>
+                <div style="font-size: 14px; color: #6c757d; margin-top: 5px;">
+                    {(summary['killed']/summary['total']*100) if summary['total'] > 0 else 0:.1f}%
+                </div>
+            </div>
+            <div class="stat-card survived">
+                <div class="stat-label">✗ Survived</div>
+                <div class="stat-value">{summary['survived']}</div>
+                <div style="font-size: 14px; color: #6c757d; margin-top: 5px;">
+                    {(summary['survived']/summary['total']*100) if summary['total'] > 0 else 0:.1f}%
+                </div>
+            </div>
+            <div class="stat-card timeout">
+                <div class="stat-label">⏱ Timeout</div>
+                <div class="stat-value">{summary['timeout']}</div>
+            </div>
+            <div class="stat-card suspicious">
+                <div class="stat-label">⚠ Suspicious</div>
+                <div class="stat-value">{summary['suspicious']}</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>What These Results Mean</h2>
+
+            <div class="info-box success">
+                <strong>✓ Killed Mutations ({summary['killed']})</strong><br>
+                Tests detected the mutation and failed. This is GOOD! Your tests successfully caught the defect.
+            </div>
+
+            <div class="info-box danger">
+                <strong>✗ Survived Mutations ({summary['survived']})</strong><br>
+                Tests passed even though code was mutated. This is BAD. These mutations indicate gaps in your test coverage.
+            </div>
+
+            <div class="info-box warning">
+                <strong>⏱ Timeout Mutations ({summary['timeout']})</strong><br>
+                Mutation caused tests to hang or take too long. Likely created an infinite loop.
+            </div>
+
+            <div class="info-box">
+                <strong>⚠ Suspicious Mutations ({summary['suspicious']})</strong><br>
+                Unexpected test behavior occurred. These should be investigated manually.
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Next Steps</h2>
+            {'<div class="info-box danger"><strong>Action Required:</strong><br>You have ' + str(summary['survived']) + ' survived mutations. These indicate test coverage gaps.</div>' if summary['survived'] > 0 else '<div class="info-box success"><strong>Excellent!</strong><br>No mutations survived. Your test suite is very effective.</div>'}
+
+            <h3 style="margin: 20px 0 10px 0;">View Mutation Details:</h3>
+            <ul>
+                <li>List all results: <span class="code">python -m mutmut results</span></li>
+                <li>View specific mutation: <span class="code">python -m mutmut show &lt;id&gt;</span></li>
+                <li>Apply mutation to see change: <span class="code">python -m mutmut apply &lt;id&gt;</span></li>
+            </ul>
+
+            {'''<h3 style="margin: 20px 0 10px 0;">Improve Test Coverage:</h3>
+            <ol style="margin-left: 30px;">
+                <li>Review each survived mutation using <span class="code">mutmut show</span></li>
+                <li>Understand what code change was made</li>
+                <li>Ask: "Why didn't any test catch this?"</li>
+                <li>Add a test case that would detect this mutation</li>
+                <li>Re-run mutation tests to verify improvement</li>
+            </ol>''' if summary['survived'] > 0 else ''}
+        </div>
+
+        <div class="section">
+            <h2>Mutation Score Interpretation</h2>
+            <ul>
+                <li><strong>80-100%:</strong> Excellent - Your tests are highly effective</li>
+                <li><strong>60-80%:</strong> Good - Reasonably effective, room for improvement</li>
+                <li><strong>40-60%:</strong> Fair - Significant gaps in test coverage</li>
+                <li><strong>0-40%:</strong> Poor - Most mutations survive, weak test coverage</li>
+            </ul>
+        </div>
+
+        <div class="footer">
+            <p>Generated by Active Interview Backend Mutation Testing Suite</p>
+            <p>Powered by mutmut v3.x</p>
+        </div>
+    </div>
+</body>
+</html>"""
+
+        index_file = html_dir / 'index.html'
+        with open(index_file, 'w', encoding='utf-8') as f:
+            f.write(html_content)
+
+        print(f"✓ HTML report generated: {index_file}")
+        print(f"\nOpen in browser:")
+        print(f"  file:///{index_file.absolute()}")
 
     def save_json_report(self):
         """Save results as JSON for programmatic access."""
