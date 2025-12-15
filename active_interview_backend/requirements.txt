@@ -43,7 +43,7 @@ psycopg2-binary==2.9.11
 pycodestyle==2.13.0
 pycparser==2.22
 pycryptodome==3.23.0
-pydantic==2.10.6
+pydantic==2.12.5
 pydantic_core==2.27.2
 pyflakes==3.3.2
 PyMuPDF==1.26.6
