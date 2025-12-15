@@ -65,7 +65,7 @@ style==1.1.0
 tqdm==4.67.1
 trio==0.29.0
 trio-websocket==0.12.2
-typing_extensions==4.12.2
+typing_extensions==4.15.0
 tzdata==2025.1
 update==0.0.1
 urllib3==2.5.0
