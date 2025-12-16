@@ -44,7 +44,7 @@ def generate_and_save_report(chat, include_rushed_qualifier=False):
 
     # Extract scores from chat (AI call 1)
     scores = _extract_scores_from_chat(chat)
-    report.professionalism_score = scores['XXProfessionalismXX']
+    report.professionalism_score = scores['Professionalism']
     report.subject_knowledge_score = scores['Subject Knowledge']
     report.clarity_score = scores['Clarity']
     report.overall_score = scores['Overall']

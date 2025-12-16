@@ -685,17 +685,24 @@ class IntegrationTests(TestCase):
             ]
         )
 
-    @patch('active_interview_app.views.get_openai_client')
-    def test_chat_view_post_tracks_latency(self, mock_get_client):
+    @patch('active_interview_app.views.record_openai_usage')
+    @patch('active_interview_app.views.ai_available', return_value=True)
+    @patch('active_interview_app.views.get_client_and_model')
+    def test_chat_view_post_tracks_latency(self, mock_get_client_and_model, mock_ai_available, mock_record_usage):
         """Test that ChatView POST tracks latency."""
-        # Mock OpenAI response
+        # Mock OpenAI response with proper attributes
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
         mock_response.choices[0].message.content = "This is a test response."
+        mock_response.model = 'gpt-4'
+        mock_response.usage.prompt_tokens = 10
+        mock_response.usage.completion_tokens = 20
+        mock_response.usage.total_tokens = 30
 
         mock_client = MagicMock()
         mock_client.chat.completions.create.return_value = mock_response
-        mock_get_client.return_value = mock_client
+        # get_client_and_model returns (client, model, tier_info)
+        mock_get_client_and_model.return_value = (mock_client, 'gpt-4', {'tier': 'test'})
 
         # Make POST request
         response = self.client.post(

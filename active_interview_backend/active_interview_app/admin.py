@@ -99,9 +99,6 @@ class InvitedInterviewAdmin(admin.ModelAdmin):
         qs = super().get_queryset(request)
         return qs.select_related('interviewer', 'template', 'chat')
 
-
-# RBAC Admin - Issue #69
-@admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
     list_display = (
         'user',

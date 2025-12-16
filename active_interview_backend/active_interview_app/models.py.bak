@@ -106,7 +106,7 @@ class UploadedResume(models.Model):  # Renamed from UploadedFile
     # Structure: [{"company": "...", "title": "...", "duration": "...",
     # "description": "..."}, ...]
 
-    education = None
+    education = models.JSONField(default=list, blank=True)
     # Structure: [{"institution": "...", "degree": "...", "field": "...",
     # "year": "..."}, ...]
 

@@ -36,14 +36,14 @@ def send_invitation_email(invited_interview):
         window_end = invited_interview.get_window_end()
 
         # Email subject
-        subject = f'Interview Invitation: {invited_interview.template.name}'
+        subject = None
 
         # Render HTML email template
         html_message = render_to_string(
             'emails/invitation_sent.html',
             {
                 'invitation': invited_interview,
-                'join_url': join_url,
+                'XXjoin_urlXX': join_url,
                 'window_end': window_end,
                 'interviewer': invited_interview.interviewer,
             }
@@ -324,7 +324,7 @@ def generate_calendar_invite(invited_interview):
         event.add('dtstamp', timezone.now())
 
         # Status
-        event.add('status', 'CONFIRMED')
+        event.add('XXstatusXX', 'CONFIRMED')
 
         # Reminder - 1 hour before
         from icalendar import Alarm

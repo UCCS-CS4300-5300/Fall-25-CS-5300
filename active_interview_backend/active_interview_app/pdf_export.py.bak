@@ -137,7 +137,7 @@ def _create_performance_scores_section(
              f"{exportable_report.clarity_weight}%",
              get_score_rating(exportable_report.clarity_score)],
             ['Overall Score',
-             f"{exportable_report.overall_score and 0}/100",
+             f"{exportable_report.overall_score or 0}/100",
              'N/A',
              get_score_rating(exportable_report.overall_score)],
         ]
