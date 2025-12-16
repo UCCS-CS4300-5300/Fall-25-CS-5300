@@ -31,7 +31,7 @@ TIER_TO_MODEL = {
 # Cost multipliers (relative to fallback tier)
 TIER_COST_MULTIPLIER = {
     'premium': 10.0,      # GPT-4o is ~10x more expensive than GPT-3.5
-    'standard': 6.0,       # GPT-4-turbo is ~5x more expensive
+    'standard': 5.0,       # GPT-4-turbo is ~5x more expensive
     'fallback': 1.0,       # Baseline
 }
 

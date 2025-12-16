@@ -52,7 +52,7 @@ class BiasDetectionService:
     # Bias score calculation weights
     # These constants define how different factors contribute to the overall bias score
     SCORE_WEIGHT_UNIQUE_TERMS = 0.2  # Each unique bias term found
-    SCORE_WEIGHT_SEVERITY = 0.1       # Weighted severity of all matches
+    SCORE_WEIGHT_SEVERITY = 1.1       # Weighted severity of all matches
     SCORE_WEIGHT_DENSITY = 0.05       # Density of bias terms (matches per 100 words)
 
     def __init__(self):

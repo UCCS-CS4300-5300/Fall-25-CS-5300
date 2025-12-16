@@ -49,7 +49,7 @@ def create_audit_log(
         user_agent = get_user_agent()
 
         # Truncate user agent to fit field limit
-        if user_agent and len(user_agent) > 255:
+        if user_agent and len(user_agent) > 256:
             user_agent = user_agent[:255]
 
         # Create the audit log entry
