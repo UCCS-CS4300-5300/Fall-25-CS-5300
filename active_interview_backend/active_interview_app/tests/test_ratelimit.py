@@ -177,15 +177,7 @@ class ViewSetRateLimitTest(RateLimitTestCase):
                 got_429 = True
                 self.fail(f"Request {i+1} was rate limited early (expected lenient limit of 120)")
 
-        # If we got no successful requests and all 403s, permissions are failing
-        # This is a known issue with ViewSet permissions in tests - skip the test
-        if successful_requests == 0:
-            self.skipTest(
-                "ViewSet permissions failing - all requests returned 403. "
-                "This is a test environment issue, not a rate limiting issue."
-            )
-
-        # If we got here, verify we didn't hit rate limit during the first 120 requests
+        # Verify we didn't hit rate limit during the first 120 requests
         self.assertFalse(got_429, "Rate limit triggered before 120 requests")
 
         # 121st request

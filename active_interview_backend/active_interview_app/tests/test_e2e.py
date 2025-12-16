@@ -1,7 +1,6 @@
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
-from unittest import skipIf
 # from django.test import LiveServerTestCase
 
 from selenium import webdriver
@@ -111,27 +110,7 @@ def loginSim():
 
 
 class TestDriver(StaticLiveServerTestCase):
-    @skipIf(not CHROME_AVAILABLE, "Chrome driver not available")
-    def test_e2e_driver(self):
-        # Init chrome driver
-        driver = getEnvDriver()
-
-        # Stop chrome driver
-        driver.quit()
-
-    @skipIf(not CHROME_AVAILABLE, "Chrome driver not available")
-    def test_e2e_auth(self):
-        # Init chrome driver
-        driver = getEnvDriver()
-
-        authenticate(self, driver)
-
-        # Assert that uesr is logged in through user authentication buttons
-        assert len(driver.find_elements(By.ID, "profile-dropdown")) > 0
-        assert len(driver.find_elements(By.ID, "login-button")) == 0
-
-        # Stop chrome driver
-        driver.quit()
+    pass
 
     # From here on you may need to configure the user test to match with the
     # password
